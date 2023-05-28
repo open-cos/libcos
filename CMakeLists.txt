@@ -8,7 +8,7 @@ add_library(libcos SHARED
         include/libcos/CosDocument.h
         src/CosObject.c
         include/libcos/CosObject.h
-        src/common/CosVector.c src/common/CosVector.h src/common/CosString.c src/common/CosString.h)
+        src/common/CosVector.c src/common/CosVector.h src/common/CosString.c src/common/CosString.h src/common/Assert.c src/common/Assert.h)
 
 target_include_directories(libcos
         PUBLIC include/

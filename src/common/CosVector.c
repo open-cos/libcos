@@ -4,11 +4,11 @@
 
 #include "common/CosVector.h"
 
+#include "common/Assert.h"
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define COS_ASSERT(condition) do { if ((condition) == false) { abort(); } } while(0)
 
 struct CosVector {
     void **elements;
@@ -96,7 +96,8 @@ cos_vector_add_element(CosVector *vector,
     }
 
     // We should have enough space for (at least) one element.
-    COS_ASSERT(vector->capacity > vector->length);
+    COS_ASSERT(vector->capacity > vector->length,
+               "Vector does not have sufficient capacity");
 
     vector->elements[vector->length] = element;
     vector->length++;
@@ -172,7 +173,8 @@ cos_vector_resize_(CosVector *vector)
     const unsigned int original_capacity = vector->capacity;
 
     const unsigned int new_capacity = (original_capacity > 0) ? (original_capacity * 2) : 1;
-    COS_ASSERT(new_capacity > 0);
+    COS_ASSERT(new_capacity > 0,
+               "New capacity of vector is invalid");
 
     const size_t new_size = new_capacity * vector->element_size;
 
