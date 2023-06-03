@@ -2,9 +2,8 @@
 // Created by david on 30/05/23.
 //
 
-#include "CosInputStream.h"
+#include "libcos/io/CosInputStream.h"
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 

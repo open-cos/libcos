@@ -2,7 +2,7 @@
 // Created by david on 29/05/23.
 //
 
-#include "CosInputStream.h"
+#include "libcos/io/CosInputStream.h"
 
 #include <stdio.h>
 
