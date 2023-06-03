@@ -7,7 +7,9 @@
 
 #include <libcos/CosDocument.h>
 
-typedef struct CosDocument CosDocument;
+struct CosDocument;
+
+struct CosObject;
 typedef struct CosObject CosObject;
 
 typedef enum CosObjectType {
@@ -20,7 +22,7 @@ typedef enum CosObjectType {
 CosObjectType
 cos_object_get_type(CosObject *obj);
 
-CosDocument *
+struct CosDocument *
 cos_object_get_document(CosObject *obj);
 
 typedef struct CosArrayObject CosArrayObject;

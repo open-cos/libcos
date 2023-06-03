@@ -7,8 +7,9 @@
 
 #include <libcos/CosObject.h>
 
-typedef struct CosObject CosObject;
+struct CosObject;
 
+struct CosDocument;
 typedef struct CosDocument CosDocument;
 
 CosDocument *
@@ -18,7 +19,7 @@ void cos_document_free(CosDocument *doc);
 
 int cos_document_get_version(CosDocument *doc);
 
-CosObject *
+struct CosObject *
 cos_document_get_root(CosDocument *doc);
 
 #endif //LIBCOS_COS_DOCUMENT_H
