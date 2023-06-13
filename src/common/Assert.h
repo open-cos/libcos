@@ -5,13 +5,7 @@
 #ifndef LIBCOS_ASSERT_H
 #define LIBCOS_ASSERT_H
 
-void
-cos_assert_impl_(const char *condition,
-                 const char *function_name,
-                 const char *file,
-                 int line,
-                 const char *message,
-                 ...);
+#include <libcos/common/CosDefines.h>
 
 #define COS_ASSERT(condition, message, ...)  \
     do {                                     \
@@ -24,5 +18,15 @@ cos_assert_impl_(const char *condition,
                              ##__VA_ARGS__); \
         }                                    \
     } while (0)
+
+void
+cos_assert_impl_(const char *condition,
+                 const char *function_name,
+                 const char *file,
+                 int line,
+                 const char *message,
+                 ...)
+    COS_FORMAT_PRINTF(5, 6)
+        COS_NORETURN;
 
 #endif //LIBCOS_ASSERT_H

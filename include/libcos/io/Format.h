@@ -5,7 +5,7 @@
 #ifndef LIBCOS_FORMAT_H
 #define LIBCOS_FORMAT_H
 
-#include <libcos/common/CosAttributes.h>
+#include <libcos/common/CosDefines.h>
 
 #include <stdarg.h>
 
