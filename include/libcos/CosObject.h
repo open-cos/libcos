@@ -14,9 +14,14 @@ typedef struct CosObject CosObject;
 
 typedef enum CosObjectType {
     CosObjectType_Boolean,
+    CosObjectType_String,
+    CosObjectType_Name,
+    CosObjectType_Integer,
+    CosObjectType_Real,
     CosObjectType_Array,
     CosObjectType_Dictionary,
-    CosObjectType_String,
+    CosObjectType_Stream,
+    CosObjectType_Null,
 } CosObjectType;
 
 CosObjectType

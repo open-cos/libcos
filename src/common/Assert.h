@@ -15,7 +15,7 @@ cos_assert_impl_(const char *condition,
 
 #define COS_ASSERT(condition, message, ...)  \
     do {                                     \
-        if ((condition) == false) {          \
+        if (!(condition)) {                  \
             cos_assert_impl_(#condition,     \
                              __func__,       \
                              __FILE__,       \

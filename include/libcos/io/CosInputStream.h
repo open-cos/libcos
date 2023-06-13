@@ -41,7 +41,17 @@ cos_input_stream_read(CosInputStream *input_stream,
                       size_t count);
 
 int
-cos_input_stream_get(CosInputStream *input_stream);
+cos_input_stream_getc(CosInputStream *input_stream);
+
+int
+cos_input_stream_ungetc(CosInputStream *input_stream,
+                        char character);
+
+int
+cos_input_stream_peek(CosInputStream *input_stream);
+
+char *
+cos_input_stream_read_line(CosInputStream *input_stream);
 
 int
 cos_input_stream_get_error(CosInputStream *input_stream);
