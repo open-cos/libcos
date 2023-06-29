@@ -28,6 +28,18 @@ cos_string_append(CosString *string,
                   const char *characters,
                   size_t length);
 
+/**
+ * Append a single character to the string.
+ *
+ * @param string The string.
+ * @param character The character to append.
+ *
+ * @return true if the character was appended successfully, false otherwise.
+ */
+bool
+cos_string_append_char(CosString *string,
+                       char character);
+
 CosString *
 cos_string_copy(const CosString *string);
 

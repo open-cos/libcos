@@ -72,9 +72,6 @@ cos_input_stream_ungetc(CosInputStream *input_stream,
                         char character)
 {
 
-    cos_vector_add_element(input_stream->buffer,
-                           &character);
-
     return character;
 }
 

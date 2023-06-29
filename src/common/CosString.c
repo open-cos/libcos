@@ -76,7 +76,6 @@ cos_string_append(CosString *string,
     }
 
 
-
     cos_string_grow(string);
 
     memcpy(string->characters + string->count,
@@ -86,6 +85,17 @@ cos_string_append(CosString *string,
     string->count += length;
 
     return true;
+}
+
+bool
+cos_string_append_char(CosString *string,
+                       char character)
+{
+    const char characters[2] = {character, '\0'};
+
+    return cos_string_append(string,
+                             characters,
+                             1);
 }
 
 CosString *

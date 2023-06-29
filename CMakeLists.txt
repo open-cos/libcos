@@ -19,11 +19,26 @@ add_library(libcos SHARED
         src/io/CosInputStream.c
         src/io/CosMemoryInputStream.c
         src/io/Format.c
-        src/parse/CosTokenizer.c src/parse/CosTokenizer.h include/libcos/CosBasicTypes.h src/common/CosError.c include/libcos/common/CosError.h include/libcos/io/Format.h include/libcos/common/CosDefines.h include/libcos/common/CosAttributes.h)
+        src/parse/CosTokenizer.c src/parse/CosTokenizer.h include/libcos/CosBasicTypes.h src/common/CosError.c include/libcos/common/CosError.h include/libcos/io/Format.h include/libcos/common/CosDefines.h src/common/CharacterSet.h src/common/CharacterSet.c)
 
 target_include_directories(libcos
         PUBLIC include/
         PRIVATE src/)
+
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(libcos PRIVATE
+            -Wall -Wextra -Werror)
+elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(libcos PRIVATE
+            -Wall
+            -Wextra
+            -Weverything
+            -Wno-padded -Wno-unused-parameter -Wno-unused-variable
+            -Werror=incompatible-pointer-types)
+elseif (C_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(libcos PRIVATE
+            /W4 /WX)
+endif ()
 
 target_compile_options(libcos PRIVATE
         # clang/GCC warnings
@@ -34,3 +49,4 @@ target_compile_options(libcos PRIVATE
         # MSVC warnings
         $<$<CXX_COMPILER_ID:MSVC>:
         /W4>)
+

@@ -25,10 +25,15 @@ cos_vector_get_capacity(const CosVector *vector);
 unsigned int
 cos_vector_get_length(const CosVector *vector);
 
-void * const *
+void *
 cos_vector_get_elements(const CosVector *vector);
 
 //
+
+void
+cos_vector_set_element(CosVector *vector,
+                       unsigned int index,
+                       void *element);
 
 bool
 cos_vector_add_element(CosVector *vector,

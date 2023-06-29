@@ -11,11 +11,11 @@
 #include <string.h>
 
 struct CosVector {
-    void **elements;
-
     size_t element_size;
     unsigned int capacity;
     unsigned int length;
+
+    unsigned char *elements COS_NONSTRING;
 };
 
 static bool
@@ -23,6 +23,11 @@ cos_vector_needs_resize_(const CosVector *vector);
 
 static bool
 cos_vector_resize_(CosVector *vector);
+
+static bool
+cos_vector_shift_(CosVector *vector,
+                  unsigned int index,
+                  ptrdiff_t amount);
 
 CosVector *
 cos_vector_alloc(size_t element_size)
@@ -79,10 +84,23 @@ cos_vector_get_length(const CosVector *vector)
     return vector->length;
 }
 
-void * const *
+void *
 cos_vector_get_elements(const CosVector *vector)
 {
     return vector->elements;
+}
+
+void
+cos_vector_set_element(CosVector *vector,
+                       unsigned int index,
+                       void *element)
+{
+    const size_t offset = index * vector->element_size;
+    void * const destination = &(vector->elements[offset]);
+
+    memcpy(destination,
+           element,
+           vector->element_size);
 }
 
 bool
@@ -99,7 +117,13 @@ cos_vector_add_element(CosVector *vector,
     COS_ASSERT(vector->capacity > vector->length,
                "Vector does not have sufficient capacity");
 
-    vector->elements[vector->length] = element;
+    const size_t offset = vector->length * vector->element_size;
+    void * const destination = &(vector->elements[offset]);
+
+    memcpy(destination,
+           element,
+           vector->element_size);
+
     vector->length++;
 
     return true;
@@ -122,15 +146,18 @@ cos_vector_insert_element(CosVector *vector,
 
     if (index < vector->length) {
         // How many elements need to be shifted.
-        const unsigned int move_count = vector->length - index;
-        if (move_count > 0) {
-            memmove(vector->elements[index] + 1,
-                    vector->elements[index],
-                    move_count * vector->element_size);
+        const unsigned int shift_count = vector->length - index;
+        if (shift_count > 0) {
+            cos_vector_shift_(vector,
+                              index,
+                              shift_count);
         }
     }
 
-    vector->elements[index] = element;
+    cos_vector_set_element(vector,
+                           index,
+                           element);
+
     vector->length++;
 
     return true;
@@ -146,9 +173,9 @@ cos_vector_remove_element(CosVector *vector,
 
     const unsigned int move_count = vector->length - index;
     if (move_count > 0) {
-        memmove(vector->elements[index],
-                vector->elements[index] + 1,
-                move_count * vector->element_size);
+        cos_vector_shift_(vector,
+                          index,
+                          move_count);
     }
 
     vector->length--;
@@ -178,13 +205,51 @@ cos_vector_resize_(CosVector *vector)
 
     const size_t new_size = new_capacity * vector->element_size;
 
-    void ** const elements = realloc(vector->elements, new_size);
+    unsigned char * const elements = realloc(vector->elements, new_size);
     if (!elements) {
         return false;
     }
 
     vector->elements = elements;
     vector->capacity = new_capacity;
+
+    return true;
+}
+
+static bool
+cos_vector_shift_(CosVector *vector,
+                  unsigned int index,
+                  ptrdiff_t amount)
+{
+    if (!vector) {
+        return false;
+    }
+    if (index >= vector->length) {
+        return false;
+    }
+    if (amount > 0 && (index + amount) > vector->capacity) {
+        return false;
+    }
+    if (amount < 0 && (index + amount) < 0) {
+        return false;
+    }
+
+    if (amount == 0) {
+        return true;
+    }
+
+    const size_t source_offset = index * vector->element_size;
+    const size_t destination_offset = (index + amount) * vector->element_size;
+
+    const void * const source = &(vector->elements[source_offset]);
+    void * const destination = &(vector->elements[destination_offset]);
+
+    const size_t move_element_count = (size_t)((amount > 0) ? amount : -amount);
+    const size_t move_byte_count = move_element_count * vector->element_size;
+
+    memmove(destination,
+            source,
+            move_byte_count);
 
     return true;
 }

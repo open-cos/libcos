@@ -15,8 +15,10 @@ typedef struct CosToken CosToken;
 
 typedef enum CosToken_Type {
     CosToken_Type_Unknown,
+
     CosToken_Type_Boolean,
-    CosToken_Type_String,
+    CosToken_Type_Literal_String,
+    CosToken_Type_Hex_String,
     CosToken_Type_Name,
     CosToken_Type_Integer,
     CosToken_Type_Real,
@@ -40,8 +42,15 @@ cos_tokenizer_alloc(CosInputStream *input_stream);
 void
 cos_tokenizer_free(CosTokenizer *tokenizer);
 
+/**
+ * Get the input stream associated with the tokenizer.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return The input stream associated with the tokenizer.
+ */
 CosInputStream *
-cos_tokenizer_get_input_stream(CosTokenizer *tokenizer);
+cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer);
 
 CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer);
