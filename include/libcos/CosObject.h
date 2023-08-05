@@ -5,12 +5,11 @@
 #ifndef LIBCOS_COS_OBJECT_H
 #define LIBCOS_COS_OBJECT_H
 
+#include "libcos/common/CosError.h"
 #include <libcos/CosDocument.h>
+#include <libcos/common/CosTypes.h>
 
-struct CosDocument;
-
-struct CosObject;
-typedef struct CosObject CosObject;
+#include <stdbool.h>
 
 typedef enum CosObjectType {
     CosObjectType_Boolean,
@@ -27,12 +26,15 @@ typedef enum CosObjectType {
 CosObjectType
 cos_object_get_type(CosObject *obj);
 
-struct CosDocument *
+CosDocument *
 cos_object_get_document(CosObject *obj);
 
-typedef struct CosArrayObject CosArrayObject;
+CosObject *
+cos_array_object_alloc(void);
 
-unsigned int
-cos_array_get_len(CosArrayObject *obj);
+bool
+cos_array_object_append(CosObject *array_object,
+                        CosObject *object,
+                        CosError **error);
 
 #endif //LIBCOS_COS_OBJECT_H

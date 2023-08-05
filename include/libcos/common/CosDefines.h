@@ -51,4 +51,15 @@
 #define COS_NONSTRING
 #endif
 
+/**
+ * @def COS_WARN_UNUSED_RESULT
+ *
+ * @brief Marks a function as returning a value that should be used.
+ */
+#if COS_HAS_ATTRIBUTE(warn_unused_result)
+#define COS_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#define COS_WARN_UNUSED_RESULT
+#endif
+
 #endif /* LIBCOS_COS_DEFINES_H */

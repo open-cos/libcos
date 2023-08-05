@@ -50,6 +50,7 @@ ObjCSpaceBeforeProtocolList: true
 PointerAlignment: Right
 ReflowComments: false
 SpaceAfterCStyleCast: false
+InsertNewlineAtEOF: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: true
 SpaceBeforeAssignmentOperators: true
@@ -73,3 +74,12 @@ SeparateDefinitionBlocks: Always
 ---
 Language: Cpp
 SeparateDefinitionBlocks: Always
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^"[[:alnum:].]+"'
+    Priority:        2
+  - Regex:           '^<[[:alnum:].]+>'
+    Priority:        4
+  - Regex:           '.*'
+    Priority:        1
+    SortPriority:    0

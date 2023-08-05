@@ -9,6 +9,8 @@
 #include "common/CosString.h"
 #include "libcos/io/CosInputStream.h"
 
+#include "CosToken.h"
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,14 +23,24 @@ struct CosSourceLocation {
 struct CosTokenizer {
     CosInputStream *input_stream;
 
-    int peeked;
-    bool has_peeked;
+    int peeked_char;
+    bool has_peeked_char;
+
+    CosToken *peeked_token;
+
+    CosToken current_token;
+    CosToken peeked_tokens;
 };
 
-struct CosToken {
-    CosToken_Type type;
-    CosString *value;
-};
+void
+cos_token_free(CosToken *token)
+{
+    //    if (token->value) {
+    //        cos_string_free(token->value);
+    //    }
+
+    free(token);
+}
 
 static int
 cos_tokenizer_get_next_char(CosTokenizer *tokenizer);
@@ -78,8 +90,9 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
     }
 
     tokenizer->input_stream = input_stream;
-    tokenizer->peeked = EOF;
-    tokenizer->has_peeked = false;
+    tokenizer->peeked_char = EOF;
+    tokenizer->has_peeked_char = false;
+    tokenizer->peeked_token = NULL;
 
     return tokenizer;
 }
@@ -87,6 +100,14 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
 void
 cos_tokenizer_free(CosTokenizer *tokenizer)
 {
+    if (!tokenizer) {
+        return;
+    }
+
+    if (tokenizer->peeked_token) {
+        cos_token_free(tokenizer->peeked_token);
+    }
+
     free(tokenizer);
 }
 
@@ -99,6 +120,13 @@ cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer)
 CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer)
 {
+    // If we have a peeked token, return it.
+    if (tokenizer->peeked_token) {
+        CosToken * const token = tokenizer->peeked_token;
+        tokenizer->peeked_token = NULL;
+        return token;
+    }
+
     CosToken *token = malloc(sizeof(CosToken));
     if (!token) {
         return NULL;
@@ -184,6 +212,16 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
     return token;
 }
 
+CosToken *
+cos_tokenizer_peek_token(CosTokenizer *tokenizer)
+{
+    if (!tokenizer->peeked_token) {
+        tokenizer->peeked_token = cos_tokenizer_next_token(tokenizer);
+    }
+
+    return tokenizer->peeked_token;
+}
+
 static int
 cos_tokenizer_get_next_char(CosTokenizer *tokenizer)
 {
@@ -191,9 +229,9 @@ cos_tokenizer_get_next_char(CosTokenizer *tokenizer)
         return EOF;
     }
 
-    if (tokenizer->has_peeked) {
-        tokenizer->has_peeked = false;
-        return tokenizer->peeked;
+    if (tokenizer->has_peeked_char) {
+        tokenizer->has_peeked_char = false;
+        return tokenizer->peeked_char;
     }
     else {
         return cos_input_stream_getc(tokenizer->input_stream);
@@ -207,12 +245,12 @@ cos_tokenizer_peek_next_char(CosTokenizer *tokenizer)
         return EOF;
     }
 
-    if (!tokenizer->has_peeked) {
-        tokenizer->peeked = cos_input_stream_getc(tokenizer->input_stream);
-        tokenizer->has_peeked = true;
+    if (!tokenizer->has_peeked_char) {
+        tokenizer->peeked_char = cos_input_stream_getc(tokenizer->input_stream);
+        tokenizer->has_peeked_char = true;
     }
 
-    return tokenizer->peeked;
+    return tokenizer->peeked_char;
 }
 
 static bool
@@ -431,7 +469,7 @@ cos_tokenizer_read_comment(CosTokenizer *tokenizer)
         return NULL;
     }
     else if (c == CosCharacterSet_PercentSign) {
-//        comment = cos_input_stream_read_line(input_stream);
+        //        comment = cos_input_stream_read_line(input_stream);
     }
 
     return string;

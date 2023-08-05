@@ -41,3 +41,14 @@ cos_error_copy(CosError *error)
     return cos_error_alloc(error->code,
                            error->message);
 }
+
+void
+cos_error_propagate(CosError *source_error,
+                    CosError **destination_error)
+{
+    if (!source_error || !destination_error) {
+        return;
+    }
+
+    *destination_error = source_error;
+}

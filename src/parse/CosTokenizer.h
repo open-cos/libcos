@@ -5,36 +5,14 @@
 #ifndef LIBCOS_COS_TOKENIZER_H
 #define LIBCOS_COS_TOKENIZER_H
 
+#include <libcos/common/CosDefines.h>
 #include <libcos/io/CosInputStream.h>
 
 struct CosTokenizer;
 typedef struct CosTokenizer CosTokenizer;
 
-struct CosToken;
-typedef struct CosToken CosToken;
-
-typedef enum CosToken_Type {
-    CosToken_Type_Unknown,
-
-    CosToken_Type_Boolean,
-    CosToken_Type_Literal_String,
-    CosToken_Type_Hex_String,
-    CosToken_Type_Name,
-    CosToken_Type_Integer,
-    CosToken_Type_Real,
-    CosToken_Type_Stream,
-    CosToken_Type_Null,
-    CosToken_Type_EndOfLine,
-
-    CosToken_Type_ArrayStart,
-    CosToken_Type_ArrayEnd,
-    CosToken_Type_DictionaryStart,
-    CosToken_Type_DictionaryEnd,
-
-    CosToken_Type_Comment,
-
-    CosToken_Type_EOF,
-} CosToken_Type;
+void
+cos_token_free(struct CosToken *token);
 
 CosTokenizer *
 cos_tokenizer_alloc(CosInputStream *input_stream);
@@ -52,7 +30,25 @@ cos_tokenizer_free(CosTokenizer *tokenizer);
 CosInputStream *
 cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer);
 
+/**
+ * Peek the next token without consuming it.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return The next token.
+ */
+struct CosToken *
+cos_tokenizer_peek_token(CosTokenizer *tokenizer);
+
+/**
+ * Consume the next token.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return The next token.
+ */
 CosToken *
-cos_tokenizer_next_token(CosTokenizer *tokenizer);
+cos_tokenizer_next_token(CosTokenizer *tokenizer)
+    COS_WARN_UNUSED_RESULT;
 
 #endif /* LIBCOS_COS_TOKENIZER_H */
