@@ -48,7 +48,6 @@ cos_tokenizer_peek_token(CosTokenizer *tokenizer);
  * @return The next token.
  */
 CosToken *
-cos_tokenizer_next_token(CosTokenizer *tokenizer)
-    COS_WARN_UNUSED_RESULT;
+cos_tokenizer_next_token(CosTokenizer *tokenizer);
 
 #endif /* LIBCOS_COS_TOKENIZER_H */

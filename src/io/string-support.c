@@ -2,7 +2,7 @@
 // Created by david on 10/06/23.
 //
 
-#include "libcos/io/Format.h"
+#include "libcos/io/string-support.h"
 
 #include "common/Assert.h"
 
@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char *
 cos_asprintf(const char *fmt, ...)
@@ -68,4 +69,41 @@ cos_vasprintf(const char *format,
                buffer_size);
 
     return buffer;
+}
+
+char *
+cos_strdup(const char *str)
+{
+    if (!str) {
+        return NULL;
+    }
+
+    return cos_strndup(str,
+                       strlen(str));
+}
+
+char *
+cos_strndup(const char *str,
+            size_t n)
+{
+    if (!str) {
+        return NULL;
+    }
+
+    const size_t str_len = strlen(str);
+
+    const size_t copy_len = (str_len < n) ? str_len : n;
+
+    char * const str_copy = malloc((copy_len + 1) * sizeof(char));
+    if (!str_copy) {
+        return NULL;
+    }
+
+    strncpy(str_copy,
+            str,
+            copy_len);
+
+    str_copy[copy_len] = '\0';
+
+    return str_copy;
 }

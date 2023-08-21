@@ -4,7 +4,7 @@
 
 #include "Assert.h"
 
-#include <libcos/io/Format.h>
+#include <libcos/io/string-support.h>
 
 #include <stdio.h>
 #include <stdlib.h>

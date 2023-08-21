@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 struct CosParser {
+    CosDocument *document;
     CosTokenizer *tokenizer;
 };
 
@@ -33,8 +34,17 @@ cos_parser_handle_array(CosParser *parser,
                         const CosToken *start_token,
                         CosError **error);
 
+CosObject *
+cos_string_object_alloc(CosDocument *
+                            document,
+                        char * const
+                            string,
+                        size_t
+                            length);
+
 CosParser *
-cos_parser_alloc(CosInputStream *input_stream)
+cos_parser_alloc(CosDocument *document,
+                 CosInputStream *input_stream)
 {
     if (!input_stream) {
         return NULL;
@@ -44,6 +54,8 @@ cos_parser_alloc(CosInputStream *input_stream)
     if (!parser) {
         goto fail;
     }
+
+    parser->document = document;
 
     parser->tokenizer = cos_tokenizer_alloc(input_stream);
     if (!parser->tokenizer) {
@@ -88,7 +100,7 @@ cos_parser_next_object(CosParser *parser,
     const CosToken *token = NULL;
     while ((token = cos_tokenizer_next_token(parser->tokenizer)) != NULL) {
 
-        switch (cos_token_get_type(token)) {
+        switch (token->type) {
             case CosToken_Type_Unknown:
                 break;
             case CosToken_Type_Boolean:
@@ -141,12 +153,26 @@ cos_parser_handle_literal_string(CosParser *parser,
 
     CosToken * const token = cos_tokenizer_next_token(parser->tokenizer);
     if (token) {
-//        const char * const string = cos_token_get_string_value(token);
-//        if (string) {
-//
-//        }
+        size_t string_length = 0;
+        char * const string = cos_token_copy_string_value(token,
+                                                          &string_length);
+        if (string) {
+            CosObject * const string_object = cos_string_object_alloc(parser->document,
+                                                                      string,
+                                                                      string_length);
+            free(string);
+            return string_object;
+        }
     }
 
+    return NULL;
+}
+
+CosObject *
+cos_string_object_alloc(CosDocument *document,
+                        char * const string,
+                        size_t length)
+{
     return NULL;
 }
 
@@ -164,9 +190,9 @@ cos_parser_handle_array(CosParser *parser,
     CosToken *token = NULL;
     while ((token = cos_tokenizer_peek_token(parser->tokenizer)) != NULL) {
         // Check for array end.
-        if (cos_token_get_type(token) == CosToken_Type_ArrayEnd) {
+        if (token->type == CosToken_Type_ArrayEnd) {
             // Consume the peeked token.
-            cos_token_free(cos_tokenizer_next_token(parser->tokenizer));
+            cos_tokenizer_next_token(parser->tokenizer);
             break;
         }
 

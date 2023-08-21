@@ -6,6 +6,25 @@
 
 #include "parse/tokenizer/CosTokenValue.h"
 
+#include <string.h>
+
+char *
+cos_token_copy_string_value(const CosToken *token,
+                            size_t *out_size)
+{
+    if (!token) {
+        return NULL;
+    }
+
+    const char *string_value;
+    if (cos_token_value_get_string(token->value,
+                               &string_value)) {
+
+    }
+
+    return NULL;
+}
+
 bool
 cos_token_get_boolean_value(const CosToken *token, bool *value)
 {

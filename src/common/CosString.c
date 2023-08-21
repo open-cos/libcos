@@ -4,29 +4,13 @@
 
 #include "CosString.h"
 
+#include "CosString-Impl.h"
+#include "common/Assert.h"
+
+#include <libcos/io/string-support.h>
+
 #include <stdlib.h>
 #include <string.h>
-
-struct CosString {
-
-    /**
-     * The nul-terminated character array.
-     */
-    char *characters;
-
-    /**
-     * The number of characters in the string, including the nul-terminator.
-     */
-    size_t count;
-
-    /**
-     * The total allocated size of the character array.
-     */
-    size_t capacity;
-};
-
-static bool
-cos_string_grow(CosString *string);
 
 CosString *
 cos_string_alloc(void)
@@ -36,9 +20,44 @@ cos_string_alloc(void)
         return NULL;
     }
 
-    string->characters = NULL;
-    string->count = 0;
-    string->capacity = 0;
+    string->str = NULL;
+    string->size = 0;
+
+    return string;
+}
+
+CosString *
+cos_string_alloc_with_str(const char *str)
+{
+    if (!str) {
+        return NULL;
+    }
+
+    return cos_string_alloc_with_strn(str,
+                                      strlen(str));
+}
+
+CosString *
+cos_string_alloc_with_strn(const char *str,
+                           size_t n)
+{
+    if (!str) {
+        return NULL;
+    }
+
+    CosString * const string = cos_string_alloc();
+    if (!string) {
+        return NULL;
+    }
+
+    char * const str_copy = cos_strndup(str, n);
+    if (!str_copy) {
+        free(string);
+        return NULL;
+    }
+
+    string->str = str_copy;
+    string->size = strlen(str_copy) + 1;
 
     return string;
 }
@@ -50,52 +69,20 @@ cos_string_free(CosString *string)
         return;
     }
 
-    free(string->characters);
+    free(string->str);
     free(string);
 }
 
 size_t
 cos_string_get_length(const CosString *string)
 {
-    return (string->count > 0) ? (string->count - 1) : 0;
+    return (string->size > 0) ? (string->size - 1) : 0;
 }
 
-char *
-cos_string_get_characters(const CosString *string)
+const char *
+cos_string_get_str(const CosString *string)
 {
-    return string->characters;
-}
-
-bool
-cos_string_append(CosString *string,
-                  const char *characters,
-                  size_t length)
-{
-    if (!string) {
-        return false;
-    }
-
-
-    cos_string_grow(string);
-
-    memcpy(string->characters + string->count,
-           characters,
-           length + 1);
-
-    string->count += length;
-
-    return true;
-}
-
-bool
-cos_string_append_char(CosString *string,
-                       char character)
-{
-    const char characters[2] = {character, '\0'};
-
-    return cos_string_append(string,
-                             characters,
-                             1);
+    return string->str;
 }
 
 CosString *
@@ -106,41 +93,18 @@ cos_string_copy(const CosString *string)
         return NULL;
     }
 
-    const size_t count = string->count;
+    const size_t count = string->size;
     if (count > 0) {
-        char * const characters = malloc(count * sizeof(char));
-        if (!characters) {
+        char * const str_copy = cos_strndup(string->str,
+                                            count);
+        if (!str_copy) {
             free(string_copy);
             return NULL;
         }
 
-        string_copy->characters = memcpy(characters,
-                                         string->characters,
-                                         count);
-
-        string_copy->count = count;
-        string_copy->capacity = count;
+        string_copy->str = str_copy;
+        string_copy->size = count;
     }
 
     return string_copy;
-}
-
-static bool
-cos_string_grow(CosString *string)
-{
-    const size_t original_capacity = string->capacity;
-
-    const size_t new_capacity = (original_capacity > 0) ? (original_capacity * 2) : 1;
-    //    COS_ASSERT(new_capacity > 0);
-
-    char * const characters = realloc(string->characters,
-                                      new_capacity * sizeof(char));
-    if (!characters) {
-        return false;
-    }
-
-    string->characters = characters;
-    string->capacity = new_capacity;
-
-    return true;
 }

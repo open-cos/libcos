@@ -62,4 +62,15 @@
 #define COS_WARN_UNUSED_RESULT
 #endif
 
+/**
+ * @def COS_MALLOC
+ *
+ * @brief Marks a function as returning a pointer to memory that should be freed.
+ */
+#if COS_HAS_ATTRIBUTE(malloc)
+#define COS_MALLOC __attribute__((malloc))
+#else
+#define COS_MALLOC
+#endif
+
 #endif /* LIBCOS_COS_DEFINES_H */

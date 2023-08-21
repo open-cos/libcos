@@ -71,10 +71,9 @@ struct CosToken {
     CosTokenValue *value;
 };
 
-bool
-cos_token_get_string_value(const CosToken *token,
-                           char *buffer,
-                           size_t buffer_size);
+char *
+cos_token_copy_string_value(const CosToken *token,
+                            size_t *out_size);
 
 bool
 cos_token_get_boolean_value(const CosToken *token,

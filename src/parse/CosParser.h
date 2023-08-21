@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COS_PARSER_H
 #define LIBCOS_COS_PARSER_H
 
+#include <libcos/CosDocument.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/io/CosInputStream.h>
@@ -15,7 +16,8 @@ struct CosParser;
 typedef struct CosParser CosParser;
 
 CosParser *
-cos_parser_alloc(CosInputStream *input_stream);
+cos_parser_alloc(CosDocument *document,
+                 CosInputStream *input_stream);
 
 void
 cos_parser_free(CosParser *parser);
