@@ -47,7 +47,7 @@ cos_data_get_size(const CosData *data)
     return data->size;
 }
 
-CosByte *
+const CosByte *
 cos_data_get_bytes(const CosData *data)
 {
     if (!data) {

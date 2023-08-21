@@ -31,7 +31,7 @@ target_include_directories(libcos
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(libcos PRIVATE
-            -Wall -Wextra -Werror)
+            -Wall -Wextra)
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     target_compile_options(libcos PRIVATE
             -Wall

@@ -5,6 +5,8 @@
 #ifndef LIBCOS_COS_TOKEN_VALUE_H
 #define LIBCOS_COS_TOKEN_VALUE_H
 
+#include "common/CosData.h"
+
 #include <stdbool.h>
 
 typedef struct CosTokenValue CosTokenValue;
@@ -13,6 +15,7 @@ struct CosTokenValue {
     enum {
         CosTokenValue_Type_Boolean,
         CosTokenValue_Type_String,
+        CosTokenValue_Type_Data,
         CosTokenValue_Type_IntegerNumber,
         CosTokenValue_Type_RealNumber,
     } type;
@@ -20,6 +23,7 @@ struct CosTokenValue {
     union {
         bool boolean;
         const char *string;
+        CosData *data;
         int integer_number;
         double real_number;
     } value;
@@ -43,6 +47,17 @@ cos_token_value_make_string(const char *value)
         .type = CosTokenValue_Type_String,
         .value = {
             .string = value,
+        },
+    };
+}
+
+static inline CosTokenValue
+cos_token_value_make_data(CosData *value)
+{
+    return (CosTokenValue){
+        .type = CosTokenValue_Type_Data,
+        .value = {
+            .data = value,
         },
     };
 }
@@ -93,6 +108,20 @@ cos_token_value_get_string(const CosTokenValue *token_value,
 
     if (result) {
         *result = token_value->value.string;
+    }
+    return true;
+}
+
+static inline bool
+cos_token_value_get_data(const CosTokenValue *token_value,
+                         CosData **result)
+{
+    if (!token_value || token_value->type != CosTokenValue_Type_Data) {
+        return false;
+    }
+
+    if (result) {
+        *result = token_value->value.data;
     }
     return true;
 }

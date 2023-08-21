@@ -7,7 +7,9 @@
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
+#include "common/CosData.h"
 #include "common/CosString.h"
+
 #include <libcos/common/CosDefines.h>
 #include <libcos/io/CosInputStream.h>
 
@@ -74,6 +76,14 @@ struct CosToken {
 char *
 cos_token_copy_string_value(const CosToken *token,
                             size_t *out_size);
+
+bool
+cos_token_get_string_value(const CosToken *token,
+                           CosString **out_string);
+
+bool
+cos_token_get_data_value(const CosToken *token,
+                         CosData **out_data);
 
 bool
 cos_token_get_boolean_value(const CosToken *token,

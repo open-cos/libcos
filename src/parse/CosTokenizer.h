@@ -5,14 +5,13 @@
 #ifndef LIBCOS_COS_TOKENIZER_H
 #define LIBCOS_COS_TOKENIZER_H
 
+#include "parse/CosToken.h"
+
 #include <libcos/common/CosDefines.h>
 #include <libcos/io/CosInputStream.h>
 
 struct CosTokenizer;
 typedef struct CosTokenizer CosTokenizer;
-
-void
-cos_token_free(struct CosToken *token);
 
 CosTokenizer *
 cos_tokenizer_alloc(CosInputStream *input_stream);
