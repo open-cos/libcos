@@ -62,8 +62,10 @@ struct CosToken {
      */
     CosToken_Type type;
 
-    const char *text;
-    size_t text_length;
+    /**
+     * @brief The text of the token.
+     */
+    CosStringRef text;
 
     /**
      * @brief The value of the token.

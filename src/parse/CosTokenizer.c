@@ -7,13 +7,14 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "common/CosString.h"
+#include "common/CosVector.h"
 #include "libcos/io/CosInputStream.h"
-
-#include "CosToken.h"
 
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "CosToken.h"
 
 struct CosSourceLocation {
     unsigned int line;
@@ -30,6 +31,8 @@ struct CosTokenizer {
 
     CosToken current_token;
     CosToken peeked_tokens;
+
+    CosVector *text_buffer;
 };
 
 void
@@ -47,6 +50,10 @@ cos_tokenizer_get_next_char(CosTokenizer *tokenizer);
 
 static int
 cos_tokenizer_peek_next_char(CosTokenizer *tokenizer);
+
+static bool
+cos_tokenizer_accept(CosTokenizer *tokenizer,
+                     char character);
 
 /**
  * Advances the tokenizer if the next character matches the given character.
@@ -86,7 +93,7 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
 {
     CosTokenizer * const tokenizer = malloc(sizeof(CosTokenizer));
     if (!tokenizer) {
-        return NULL;
+        goto fail;
     }
 
     tokenizer->input_stream = input_stream;
@@ -94,7 +101,18 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
     tokenizer->has_peeked_char = false;
     tokenizer->peeked_token = NULL;
 
+    tokenizer->text_buffer = cos_vector_alloc(sizeof(char));
+    if (!tokenizer->text_buffer) {
+        goto fail;
+    }
+
     return tokenizer;
+
+fail:
+    if (tokenizer) {
+        cos_tokenizer_free(tokenizer);
+    }
+    return NULL;
 }
 
 void
@@ -120,6 +138,10 @@ cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer)
 CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer)
 {
+    if (!tokenizer) {
+        return NULL;
+    }
+
     // If we have a peeked token, return it.
     if (tokenizer->peeked_token) {
         CosToken * const token = tokenizer->peeked_token;
@@ -204,6 +226,133 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
             token->type = CosToken_Type_EOF;
         } break;
 
+        case 't': {
+            // "true" or "trailer".
+            if (cos_tokenizer_match(tokenizer, 'r')) {
+                if (cos_tokenizer_match(tokenizer, 'u') &&
+                    cos_tokenizer_match(tokenizer, 'e')) {
+                    token->type = CosToken_Type_Keyword_True;
+                }
+                else if (cos_tokenizer_match(tokenizer, 'a') &&
+                         cos_tokenizer_match(tokenizer, 'i') &&
+                         cos_tokenizer_match(tokenizer, 'l') &&
+                         cos_tokenizer_match(tokenizer, 'e') &&
+                         cos_tokenizer_match(tokenizer, 'r')) {
+                    token->type = CosToken_Type_Keyword_Trailer;
+                }
+                else {
+                    // Unexpected character.
+                }
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
+        case 'f': {
+            // "false".
+            if (cos_tokenizer_match(tokenizer, 'a') &&
+                cos_tokenizer_match(tokenizer, 'l') &&
+                cos_tokenizer_match(tokenizer, 's') &&
+                cos_tokenizer_match(tokenizer, 'e')) {
+                token->type = CosToken_Type_Keyword_False;
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
+        case 'n': {
+            // "null".
+            if (cos_tokenizer_match(tokenizer, 'u') &&
+                cos_tokenizer_match(tokenizer, 'l') &&
+                cos_tokenizer_match(tokenizer, 'l')) {
+                token->type = CosToken_Type_Keyword_Null;
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
+        case 'R': {
+            // "R" (indirect object reference).
+            token->type = CosToken_Type_Keyword_R;
+        } break;
+
+        case 'o': {
+            // "obj" (beginning of an object).
+            if (cos_tokenizer_match(tokenizer, 'b') &&
+                cos_tokenizer_match(tokenizer, 'j')) {
+                token->type = CosToken_Type_Keyword_Obj;
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
+        case 'e': {
+            // "endobj" (end of an object) or "endstream".
+            if (cos_tokenizer_match(tokenizer, 'n') &&
+                cos_tokenizer_match(tokenizer, 'd') &&
+                cos_tokenizer_match(tokenizer, 'o') &&
+                cos_tokenizer_match(tokenizer, 'b') &&
+                cos_tokenizer_match(tokenizer, 'j')) {
+                token->type = CosToken_Type_Keyword_EndObj;
+            }
+            else if (cos_tokenizer_match(tokenizer, 'n') &&
+                     cos_tokenizer_match(tokenizer, 'd') &&
+                     cos_tokenizer_match(tokenizer, 's') &&
+                     cos_tokenizer_match(tokenizer, 't') &&
+                     cos_tokenizer_match(tokenizer, 'r') &&
+                     cos_tokenizer_match(tokenizer, 'e') &&
+                     cos_tokenizer_match(tokenizer, 'a') &&
+                     cos_tokenizer_match(tokenizer, 'm')) {
+                token->type = CosToken_Type_Keyword_EndStream;
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
+        case 's': {
+            // "stream" (beginning of a stream) or "startxref".
+            if (cos_tokenizer_match(tokenizer, 't')) {
+                if (cos_tokenizer_match(tokenizer, 'r') &&
+                    cos_tokenizer_match(tokenizer, 'e') &&
+                    cos_tokenizer_match(tokenizer, 'a') &&
+                    cos_tokenizer_match(tokenizer, 'm')) {
+                    token->type = CosToken_Type_Keyword_Stream;
+                }
+                else if (cos_tokenizer_match(tokenizer, 'a') &&
+                         cos_tokenizer_match(tokenizer, 'r') &&
+                         cos_tokenizer_match(tokenizer, 't') &&
+                         cos_tokenizer_match(tokenizer, 'x') &&
+                         cos_tokenizer_match(tokenizer, 'r') &&
+                         cos_tokenizer_match(tokenizer, 'e') &&
+                         cos_tokenizer_match(tokenizer, 'f')) {
+                    token->type = CosToken_Type_Keyword_StartXRef;
+                }
+                else {
+                    // Unexpected character.
+                }
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
+        case 'x': {
+            // "xref" (cross-reference table).
+            if (cos_tokenizer_match(tokenizer, 'r') &&
+                cos_tokenizer_match(tokenizer, 'e') &&
+                cos_tokenizer_match(tokenizer, 'f')) {
+                token->type = CosToken_Type_Keyword_XRef;
+            }
+            else {
+                // Unexpected character.
+            }
+        } break;
+
         default:
             // Unexpected character.
             break;
@@ -229,13 +378,19 @@ cos_tokenizer_get_next_char(CosTokenizer *tokenizer)
         return EOF;
     }
 
+    int c = 0;
+
     if (tokenizer->has_peeked_char) {
         tokenizer->has_peeked_char = false;
-        return tokenizer->peeked_char;
+        c = tokenizer->peeked_char;
     }
     else {
-        return cos_input_stream_getc(tokenizer->input_stream);
+        c = cos_input_stream_getc(tokenizer->input_stream);
     }
+
+    cos_vector_add_element(tokenizer->text_buffer, &c);
+
+    return c;
 }
 
 static int
@@ -251,6 +406,32 @@ cos_tokenizer_peek_next_char(CosTokenizer *tokenizer)
     }
 
     return tokenizer->peeked_char;
+}
+
+static bool
+cos_tokenizer_accept(CosTokenizer *tokenizer,
+                     char character)
+{
+    if (!tokenizer) {
+        return false;
+    }
+
+    return cos_vector_add_element(tokenizer->text_buffer,
+                                  &character);
+}
+
+static CosToken
+cos_tokenizer_make_token(CosTokenizer *tokenizer,
+                         CosToken_Type type,
+                         CosTokenValue *value)
+{
+
+
+    const CosToken token = {
+        .type = type,
+        .value = value,
+    };
+    return token;
 }
 
 static bool
@@ -353,7 +534,8 @@ cos_tokenizer_read_literal_string(CosTokenizer *tokenizer)
                 break;
         }
 
-        cos_string_append_char(string, (char)c);
+        cos_tokenizer_accept(tokenizer,
+                             (char)c);
     }
 
     return string;
