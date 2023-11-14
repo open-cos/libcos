@@ -9,6 +9,7 @@
 #include "common/CharacterSet.h"
 #include "common/CosData.h"
 #include "common/CosString.h"
+#include "parse/tokenizer/CosTokenValue.h"
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/io/CosInputStream.h>
@@ -72,10 +73,13 @@ struct CosToken {
      *
      * This is only valid for certain token types.
      */
-    CosTokenValue *value;
+    CosTokenValue value;
 };
 
-char *
+bool
+cos_token_has_value(const CosToken *token);
+
+unsigned char *
 cos_token_copy_string_value(const CosToken *token,
                             size_t *out_size);
 

@@ -9,7 +9,18 @@ typedef struct CosData CosData;
 typedef struct CosString CosString;
 typedef struct CosStringRef CosStringRef;
 
+typedef struct CosDataBuffer CosDataBuffer;
+
 typedef struct CosDocument CosDocument;
-typedef struct CosObject CosObject;
+typedef struct CosObj CosObj;
+
+typedef struct CosObjRef CosObjRef;
+typedef struct CosIndirectObjectId CosIndirectObjectId;
+
+typedef struct CosBoolObj CosBoolObj;
+typedef struct CosNameObj CosNameObj;
+typedef struct CosArrayObj CosArrayObj;
+typedef struct CosDictObj CosDictObj;
+typedef struct CosStringObj CosStringObj;
 
 #endif /* LIBCOS_COMMON_COS_TYPES_H */

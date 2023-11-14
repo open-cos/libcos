@@ -19,6 +19,17 @@
         }                                    \
     } while (0)
 
+#define COS_PARAMETER_ASSERT(condition)            \
+    do {                                           \
+        if (!(condition)) {                        \
+            cos_assert_impl_(#condition,           \
+                             __func__,             \
+                             __FILE__,             \
+                             __LINE__,             \
+                             "invalid parameter"); \
+        }                                          \
+    } while (0)
+
 void
 cos_assert_impl_(const char *condition,
                  const char *function_name,

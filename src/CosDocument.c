@@ -3,7 +3,8 @@
 //
 
 #include "libcos/CosDocument.h"
-#include "libcos/CosObject.h"
+
+#include "libcos/CosObj.h"
 
 #include <stdlib.h>
 
@@ -11,7 +12,7 @@ struct CosDocument {
     int version;
     int x;
 
-    CosObject *root;
+    CosObj *root;
 };
 
 CosDocument *
@@ -31,7 +32,7 @@ int cos_document_get_version(CosDocument *doc)
     return doc->version;
 }
 
-CosObject *
+CosObj *
 cos_document_get_root(CosDocument *doc)
 {
     return doc->root;

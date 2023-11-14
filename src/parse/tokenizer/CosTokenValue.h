@@ -13,6 +13,7 @@ typedef struct CosTokenValue CosTokenValue;
 
 struct CosTokenValue {
     enum {
+        CosTokenValue_Type_None,
         CosTokenValue_Type_Boolean,
         CosTokenValue_Type_String,
         CosTokenValue_Type_Data,
@@ -22,7 +23,7 @@ struct CosTokenValue {
 
     union {
         bool boolean;
-        const char *string;
+        const unsigned char *string;
         CosData *data;
         int integer_number;
         double real_number;
@@ -30,7 +31,15 @@ struct CosTokenValue {
 };
 
 static inline CosTokenValue
-cos_token_value_make_boolean(bool value)
+cos_token_value_none(void)
+{
+    return (CosTokenValue){
+        .type = CosTokenValue_Type_None,
+    };
+}
+
+static inline CosTokenValue
+cos_token_value_boolean(bool value)
 {
     return (CosTokenValue){
         .type = CosTokenValue_Type_Boolean,
@@ -41,7 +50,7 @@ cos_token_value_make_boolean(bool value)
 }
 
 static inline CosTokenValue
-cos_token_value_make_string(const char *value)
+cos_token_value_string(const char *value)
 {
     return (CosTokenValue){
         .type = CosTokenValue_Type_String,
@@ -52,7 +61,7 @@ cos_token_value_make_string(const char *value)
 }
 
 static inline CosTokenValue
-cos_token_value_make_data(CosData *value)
+cos_token_value_data(CosData *value)
 {
     return (CosTokenValue){
         .type = CosTokenValue_Type_Data,
@@ -63,7 +72,7 @@ cos_token_value_make_data(CosData *value)
 }
 
 static inline CosTokenValue
-cos_token_value_make_integer_number(int value)
+cos_token_value_integer_number(int value)
 {
     return (CosTokenValue){
         .type = CosTokenValue_Type_IntegerNumber,
@@ -74,7 +83,7 @@ cos_token_value_make_integer_number(int value)
 }
 
 static inline CosTokenValue
-cos_token_value_make_real_number(double value)
+cos_token_value_real_number(double value)
 {
     return (CosTokenValue){
         .type = CosTokenValue_Type_RealNumber,
@@ -100,7 +109,7 @@ cos_token_value_get_boolean(const CosTokenValue *token_value,
 
 static inline bool
 cos_token_value_get_string(const CosTokenValue *token_value,
-                           const char **result)
+                           const unsigned char **result)
 {
     if (!token_value || token_value->type != CosTokenValue_Type_String) {
         return false;

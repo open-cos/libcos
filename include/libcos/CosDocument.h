@@ -5,7 +5,7 @@
 #ifndef LIBCOS_COS_DOCUMENT_H
 #define LIBCOS_COS_DOCUMENT_H
 
-#include <libcos/CosObject.h>
+#include <libcos/CosObj.h>
 
 struct CosObject;
 
@@ -19,7 +19,7 @@ void cos_document_free(CosDocument *doc);
 
 int cos_document_get_version(CosDocument *doc);
 
-struct CosObject *
+struct CosObj *
 cos_document_get_root(CosDocument *doc);
 
 #endif //LIBCOS_COS_DOCUMENT_H

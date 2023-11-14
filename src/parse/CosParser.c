@@ -5,42 +5,49 @@
 #include "CosParser.h"
 
 #include "common/Assert.h"
+#include "libcos/CosArrayObj.h"
 #include "libcos/CosDocument.h"
+#include "libcos/CosStringObj.h"
 #include "libcos/common/CosTypes.h"
 #include "parse/CosTokenizer.h"
-#include <libcos/CosObject.h>
+
+#include <libcos/CosObj.h>
 #include <libcos/common/CosError.h>
 #include <libcos/io/CosInputStream.h>
 
-#include "CosToken.h"
-
 #include <stdlib.h>
+
+#include "CosToken.h"
 
 struct CosParser {
     CosDocument *document;
     CosTokenizer *tokenizer;
 };
 
-static CosObject *
+static CosObj *
 cos_parser_next_object(CosParser *parser,
                        CosError **error);
 
-static CosObject *
+static CosObj *
 cos_parser_handle_literal_string(CosParser *parser,
                                  CosError **error);
 
-static CosObject *
+static CosObj *
 cos_parser_handle_array(CosParser *parser,
                         const CosToken *start_token,
                         CosError **error);
 
-CosObject *
+CosObj *
 cos_string_object_alloc(CosDocument *
                             document,
                         char * const
                             string,
                         size_t
                             length);
+
+static bool
+cos_tokenizer_is_at_end(CosTokenizer *
+                            tokenizer);
 
 CosParser *
 cos_parser_alloc(CosDocument *document,
@@ -84,7 +91,7 @@ cos_parser_free(CosParser *parser)
     free(parser);
 }
 
-CosObject *
+CosObj *
 cos_parser_next_object(CosParser *parser,
                        CosError **error)
 {
@@ -95,7 +102,7 @@ cos_parser_next_object(CosParser *parser,
         return NULL;
     }
 
-    CosObject *object = NULL;
+    CosObj *object = NULL;
 
     const CosToken *token = NULL;
     while ((token = cos_tokenizer_next_token(parser->tokenizer)) != NULL) {
@@ -145,7 +152,7 @@ cos_parser_next_object(CosParser *parser,
     return object;
 }
 
-CosObject *
+CosObj *
 cos_parser_handle_literal_string(CosParser *parser,
                                  CosError **error)
 {
@@ -157,9 +164,8 @@ cos_parser_handle_literal_string(CosParser *parser,
         char * const string = cos_token_copy_string_value(token,
                                                           &string_length);
         if (string) {
-            CosObject * const string_object = cos_string_object_alloc(parser->document,
-                                                                      string,
-                                                                      string_length);
+            CosObj * const string_object = cos_string_obj_alloc(string,
+                                                                string_length);
             free(string);
             return string_object;
         }
@@ -168,7 +174,7 @@ cos_parser_handle_literal_string(CosParser *parser,
     return NULL;
 }
 
-CosObject *
+CosObj *
 cos_string_object_alloc(CosDocument *document,
                         char * const string,
                         size_t length)
@@ -176,7 +182,7 @@ cos_string_object_alloc(CosDocument *document,
     return NULL;
 }
 
-static CosObject *
+static CosObj *
 cos_parser_handle_array(CosParser *parser,
                         const CosToken *start_token,
                         CosError **error)
@@ -185,7 +191,21 @@ cos_parser_handle_array(CosParser *parser,
 
     CosError *local_error = NULL;
 
-    CosObject * const array_object = cos_array_object_alloc();
+    CosArrayObj * const array_object = cos_array_obj_alloc();
+
+    while (!cos_tokenizer_is_at_end(parser->tokenizer)) {
+        {
+            CosToken *peeked_token = cos_tokenizer_peek_token(parser->tokenizer);
+            if (!peeked_token) {
+                goto loop_fail;
+            }
+            if (peeked_token->type == CosToken_Type_ArrayEnd) {
+                // Consume the peeked token.
+                cos_tokenizer_next_token(parser->tokenizer);
+                break;
+            }
+        }
+    }
 
     CosToken *token = NULL;
     while ((token = cos_tokenizer_peek_token(parser->tokenizer)) != NULL) {
@@ -197,8 +217,8 @@ cos_parser_handle_array(CosParser *parser,
         }
 
         // Parse the next object.
-        CosObject * const object = cos_parser_next_object(parser,
-                                                          &local_error);
+        CosObj * const object = cos_parser_next_object(parser,
+                                                       &local_error);
         if (!object) {
             goto loop_fail;
         }
@@ -219,5 +239,11 @@ cos_parser_handle_array(CosParser *parser,
         return NULL;
     }
 
-    return array_object;
+    return (CosObj *)array_object;
+}
+
+static bool
+cos_tokenizer_is_at_end(CosTokenizer *tokenizer)
+{
+    return 0;
 }

@@ -8,7 +8,18 @@
 
 #include <string.h>
 
-char *
+
+bool
+cos_token_has_value(const CosToken *token)
+{
+    if (!token) {
+        return false;
+    }
+
+    return token->value.type != CosTokenValue_Type_None;
+}
+
+unsigned char *
 cos_token_copy_string_value(const CosToken *token,
                             size_t *out_size)
 {
@@ -16,10 +27,9 @@ cos_token_copy_string_value(const CosToken *token,
         return NULL;
     }
 
-    const char *string_value;
-    if (cos_token_value_get_string(token->value,
-                               &string_value)) {
-
+    const unsigned char *string_value;
+    if (cos_token_value_get_string(&(token->value),
+                                   &string_value)) {
     }
 
     return NULL;

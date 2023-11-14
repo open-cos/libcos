@@ -5,10 +5,24 @@
 #ifndef LIBCOS_COS_DEFINES_H
 #define LIBCOS_COS_DEFINES_H
 
+#if defined(__cplusplus)
+#define COS_DECLS_BEGIN extern "C" {
+#define COS_DECLS_END }
+#else
+#define COS_DECLS_BEGIN
+#define COS_DECLS_END
+#endif
+
 #if defined(__has_attribute)
 #define COS_HAS_ATTRIBUTE(x) __has_attribute(x)
 #else
 #define COS_HAS_ATTRIBUTE(x) 0
+#endif
+
+#if defined(__has_extension)
+#define COS_HAS_EXTENSION(x) __has_extension(x)
+#else
+#define COS_HAS_EXTENSION(x) 0
 #endif
 
 /**
@@ -71,6 +85,22 @@
 #define COS_ATTR_MALLOC __attribute__((malloc))
 #else
 #define COS_ATTR_MALLOC
+#endif
+
+#if COS_HAS_EXTENSION(nullability)
+#define COS_Nullable _Nullable
+#define COS_Nonnull _Nonnull
+#else
+#define COS_Nullable /* nothing */
+#define COS_Nonnull  /* nothing */
+#endif
+
+#if COS_HAS_EXTENSION(assume_nonnull)
+#define COS_ASSUME_NONNULL_BEGIN _Pragma("clang assume_nonnull begin")
+#define COS_ASSUME_NONNULL_END _Pragma("clang assume_nonnull end")
+#else
+#define COS_ASSUME_NONNULL_BEGIN
+#define COS_ASSUME_NONNULL_END
 #endif
 
 #endif /* LIBCOS_COS_DEFINES_H */

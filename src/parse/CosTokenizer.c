@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
+#include "common/CosDataBuffer.h"
 #include "common/CosString.h"
 #include "common/CosVector.h"
 #include "libcos/io/CosInputStream.h"
@@ -32,7 +33,7 @@ struct CosTokenizer {
     CosToken current_token;
     CosToken peeked_tokens;
 
-    CosVector *text_buffer;
+    CosDataBuffer *text_buffer;
 };
 
 void
@@ -67,7 +68,7 @@ static bool
 cos_tokenizer_match(CosTokenizer *tokenizer,
                     char character);
 
-static CosString *
+static CosData *
 cos_tokenizer_read_name(CosTokenizer *tokenizer);
 
 static CosString *
@@ -101,7 +102,7 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
     tokenizer->has_peeked_char = false;
     tokenizer->peeked_token = NULL;
 
-    tokenizer->text_buffer = cos_vector_alloc(sizeof(char));
+    tokenizer->text_buffer = cos_data_buffer_alloc();
     if (!tokenizer->text_buffer) {
         goto fail;
     }
@@ -125,6 +126,8 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     if (tokenizer->peeked_token) {
         cos_token_free(tokenizer->peeked_token);
     }
+
+    cos_data_buffer_free(tokenizer->text_buffer);
 
     free(tokenizer);
 }
@@ -168,12 +171,12 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
 
         case CosCharacterSet_Solidus: {
             token->type = CosToken_Type_Name;
-            token->value = cos_tokenizer_read_name(tokenizer);
+//            token->value = cos_tokenizer_read_name(tokenizer);
         } break;
 
         case CosCharacterSet_LeftParenthesis: {
             token->type = CosToken_Type_Literal_String;
-            token->value = cos_tokenizer_read_literal_string(tokenizer);
+//            token->value = cos_tokenizer_read_literal_string(tokenizer);
         } break;
 
         case CosCharacterSet_LessThanSign: {
@@ -182,7 +185,7 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
             }
             else {
                 token->type = CosToken_Type_Hex_String;
-                token->value = cos_tokenizer_read_hex_string(tokenizer);
+//                token->value = cos_tokenizer_read_hex_string(tokenizer);
             }
         } break;
 
@@ -197,7 +200,7 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
 
         case CosCharacterSet_PercentSign: {
             token->type = CosToken_Type_Comment;
-            token->value = cos_tokenizer_read_comment(tokenizer);
+//            token->value = cos_tokenizer_read_comment(tokenizer);
         } break;
 
         case CosCharacterSet_DigitZero:
@@ -388,7 +391,7 @@ cos_tokenizer_get_next_char(CosTokenizer *tokenizer)
         c = cos_input_stream_getc(tokenizer->input_stream);
     }
 
-    cos_vector_add_element(tokenizer->text_buffer, &c);
+//    cos_vector_add_element(tokenizer->text_buffer, &c);
 
     return c;
 }
@@ -416,8 +419,9 @@ cos_tokenizer_accept(CosTokenizer *tokenizer,
         return false;
     }
 
-    return cos_vector_add_element(tokenizer->text_buffer,
-                                  &character);
+    return cos_data_buffer_push_back(tokenizer->text_buffer,
+                                     (CosByte)character,
+                                     NULL);
 }
 
 static CosToken
@@ -426,9 +430,9 @@ cos_tokenizer_make_token(CosTokenizer *tokenizer,
                          CosTokenValue *value)
 {
 
-
     const CosToken token = {
         .type = type,
+        .text = {0},
         .value = value,
     };
     return token;
@@ -453,14 +457,12 @@ cos_tokenizer_match(CosTokenizer *tokenizer,
     }
 }
 
-static CosString *
+static CosData *
 cos_tokenizer_read_name(CosTokenizer *tokenizer)
 {
     if (!tokenizer) {
         return NULL;
     }
-
-    CosString * const string = cos_string_alloc();
 
     int character;
     while ((character = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
@@ -469,11 +471,11 @@ cos_tokenizer_read_name(CosTokenizer *tokenizer)
             break;
         }
 
-        cos_string_append_char(string,
-                               character);
+        cos_tokenizer_accept(tokenizer,
+                             (char)character);
     }
 
-    return string;
+    return cos_data_alloc();
 }
 
 static CosString *

@@ -16,6 +16,9 @@ AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: All
 AlwaysBreakTemplateDeclarations: Yes
+AttributeMacros:
+  - COS_Nullable
+  - COS_Nonnull
 BreakBeforeBraces: Custom
 BinPackArguments: false
 BinPackParameters: false
