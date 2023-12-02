@@ -75,7 +75,7 @@ enum CosCharacterSet {
  * @return true if the character is whitespace, false otherwise.
  */
 bool
-cos_is_whitespace(char character);
+cos_is_whitespace(int character);
 
 /**
  * @brief Check if a character is a delimiter.
@@ -85,7 +85,7 @@ cos_is_whitespace(char character);
  * @return true if the character is a delimiter, false otherwise.
  */
 bool
-cos_is_delimiter(char character);
+cos_is_delimiter(int character);
 
 bool
 cos_is_end_of_line(char character);

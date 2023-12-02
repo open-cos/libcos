@@ -4,7 +4,7 @@
 #include "CharacterSet.h"
 
 bool
-cos_is_whitespace(char character)
+cos_is_whitespace(int character)
 {
     switch (character) {
         case CosCharacterSet_Nul:
@@ -21,7 +21,7 @@ cos_is_whitespace(char character)
 }
 
 bool
-cos_is_delimiter(char character)
+cos_is_delimiter(int character)
 {
     switch (character) {
         case CosCharacterSet_LeftParenthesis:
