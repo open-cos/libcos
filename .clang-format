@@ -38,6 +38,7 @@ BraceWrapping:
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
+InsertBraces: true
 BreakInheritanceList: AfterComma
 ColumnLimit: 0
 CompactNamespaces: false
@@ -46,7 +47,7 @@ IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: true
-MaxEmptyLinesToKeep: 2
+MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 FixNamespaceComments: true
 ObjCSpaceAfterProperty: true
