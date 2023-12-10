@@ -809,24 +809,49 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(buffer != NULL);
 
+    int hex_value = 0;
+    bool odd_number_of_hex_digits = false;
+
     int character = EOF;
     while ((character = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
-        if (character == CosCharacterSet_GreaterThanSign) {
+        if (COS_LIKELY(cos_is_hex_digit(character))) {
+            // This is a hex digit.
+            const char hex_digit_value = cos_hex_digit_to_int_(character);
+            if (odd_number_of_hex_digits) {
+                // This is the second hex digit of a byte.
+                // Fill in the hex value from the most significant digit to the least significant digit.
+                hex_value = (hex_value << 4) | hex_digit_value;
+
+                // Write the byte to the buffer.
+                cos_data_buffer_push_back(buffer,
+                                          (unsigned char)hex_value,
+                                          NULL);
+
+                // Reset the hex value.
+                hex_value = 0;
+            }
+            else {
+                // This is the first hex digit of a byte.
+                // Fill in the hex value from the most significant digit to the least significant digit.
+                hex_value = (unsigned char)hex_digit_value;
+            }
+            odd_number_of_hex_digits = !odd_number_of_hex_digits;
+        }
+        else if (character == CosCharacterSet_GreaterThanSign) {
             // This is the end of the hex string.
+            if (odd_number_of_hex_digits) {
+                // Write the last byte to the buffer.
+                hex_value = (hex_value << 4);
+                cos_data_buffer_push_back(buffer,
+                                          (unsigned char)hex_value,
+                                          NULL);
+            }
             return true;
         }
-        else if (cos_is_whitespace(character)) {
-            // Whites-space characters shall be ignored.
+        else {
+            // Skip all non-hex characters, including whitespace.
             continue;
         }
-        else if (!cos_is_hex_digit(character)) {
-            // Skip all non-hex characters.
-            continue;
-        }
-
-        cos_data_buffer_push_back(buffer,
-                                  (unsigned char)character,
-                                  NULL);
     }
 
     // Error: unterminated hex string.
