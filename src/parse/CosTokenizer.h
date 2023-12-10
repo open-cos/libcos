@@ -10,24 +10,17 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/io/CosInputStream.h>
 
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
+
 struct CosTokenizer;
 typedef struct CosTokenizer CosTokenizer;
 
-CosTokenizer *
+CosTokenizer * COS_Nullable
 cos_tokenizer_alloc(CosInputStream *input_stream);
 
 void
 cos_tokenizer_free(CosTokenizer *tokenizer);
-
-/**
- * Get the input stream associated with the tokenizer.
- *
- * @param tokenizer The tokenizer.
- *
- * @return The input stream associated with the tokenizer.
- */
-CosInputStream *
-cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer);
 
 /**
  * Peek the next token without consuming it.
@@ -36,7 +29,7 @@ cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer);
  *
  * @return The next token.
  */
-struct CosToken *
+CosToken *
 cos_tokenizer_peek_token(CosTokenizer *tokenizer);
 
 /**
@@ -48,5 +41,8 @@ cos_tokenizer_peek_token(CosTokenizer *tokenizer);
  */
 CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_TOKENIZER_H */

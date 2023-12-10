@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(libcos C)
 
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_library(libcos SHARED
         include/libcos/CosDocument.h
@@ -33,8 +34,6 @@ add_library(libcos SHARED
         include/libcos/common/CosTypes.h
         src/objects/CosObjectStorage.c
         src/objects/CosObjectStorage.h
-        src/parse/CosToken.c
-        src/parse/tokenizer/CosTokenValue.c
         src/parse/tokenizer/CosTokenValue.h
         src/common/CosString-Impl.h
         src/common/CosData.c
@@ -60,6 +59,10 @@ add_library(libcos SHARED
         src/objects/CosStringObj.c
         src/common/CosHashTable.c
         src/common/CosHashTable.h
+        src/lex/CosLexer.c
+        src/lex/CosLexer.h
+        src/io/CosInputStreamReader.c
+        src/io/CosInputStreamReader.h
 )
 
 target_include_directories(libcos
@@ -69,6 +72,7 @@ target_include_directories(libcos
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(libcos PRIVATE
             -Wall -Wextra
+            -Werror=return-type -Werror=incompatible-pointer-types
             -fsanitize=address
             -fsanitize=undefined
             -fno-sanitize-recover=all
@@ -82,7 +86,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Wall
             -Wextra
             -Weverything
-            -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-unsafe-buffer-usage -Wno-nullability-extension
+            -Wint-conversion
+            -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
             -Werror=incompatible-pointer-types
             -Werror=return-type)
 elseif (C_COMPILER_ID STREQUAL "MSVC")

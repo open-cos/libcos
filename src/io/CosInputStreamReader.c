@@ -100,6 +100,14 @@ cos_input_stream_reader_peek(CosInputStreamReader *input_stream_reader)
     return cos_input_stream_reader_get_current_(input_stream_reader);
 }
 
+bool
+cos_input_stream_reader_ungetc(CosInputStreamReader *input_stream_reader)
+{
+    COS_PARAMETER_ASSERT(input_stream_reader != NULL);
+
+    return cos_input_stream_reader_backup_(input_stream_reader);
+}
+
 static int
 cos_input_stream_reader_get_current_(CosInputStreamReader *input_stream_reader)
 {

@@ -19,6 +19,12 @@
 #define COS_HAS_ATTRIBUTE(x) 0
 #endif
 
+#if defined(__has_builtin)
+#define COS_HAS_BUILTIN(x) __has_builtin(x)
+#else
+#define COS_HAS_BUILTIN(x) 0
+#endif
+
 #if defined(__has_extension)
 #define COS_HAS_EXTENSION(x) __has_extension(x)
 #else
@@ -85,6 +91,33 @@
 #define COS_ATTR_MALLOC __attribute__((malloc))
 #else
 #define COS_ATTR_MALLOC
+#endif
+
+#if COS_HAS_ATTRIBUTE(access)
+#define COS_ATTR_ACCESS(access_mode, ref_index) __attribute__((access(access_mode, ref_index)))
+#define COS_ATTR_ACCESS_SIZE(access_mode, ref_index, size_index) __attribute__((access(access_mode, ref_index, size_index)))
+#else
+#define COS_ATTR_ACCESS(access_mode, ref_index)
+#define COS_ATTR_ACCESS_SIZE(access_mode, ref_index, size_index)
+#endif
+
+#define COS_ATTR_ACCESS_READONLY(ref_index) COS_ATTR_ACCESS(read_only, ref_index)
+#define COS_ATTR_ACCESS_READ_WRITE(ref_index) COS_ATTR_ACCESS(read_write, ref_index)
+#define COS_ATTR_ACCESS_WRITE_ONLY(ref_index) COS_ATTR_ACCESS(write_only, ref_index)
+#define COS_ATTR_ACCESS_NONE(ref_index) COS_ATTR_ACCESS(none, ref_index)
+
+#if COS_HAS_ATTRIBUTE(fallthrough)
+#define COS_ATTR_FALLTHROUGH __attribute__((fallthrough))
+#else
+#define COS_ATTR_FALLTHROUGH
+#endif
+
+#if COS_HAS_BUILTIN(__builtin_expect)
+#define COS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define COS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define COS_LIKELY(x) (x)
+#define COS_UNLIKELY(x) (x)
 #endif
 
 #if COS_HAS_EXTENSION(nullability)

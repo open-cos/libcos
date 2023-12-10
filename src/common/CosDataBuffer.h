@@ -13,6 +13,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+struct CosDataBuffer {
+    CosByte *bytes;
+    size_t size;
+    size_t capacity;
+};
+
 /**
  * @brief Allocates a new data buffer.
  *
@@ -23,6 +29,17 @@ cos_data_buffer_alloc(void)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
+void
+cos_data_buffer_init(CosDataBuffer *data_buffer);
+
+void
+cos_data_buffer_destroy(CosDataBuffer *data_buffer);
+
+bool
+cos_data_buffer_reserve(CosDataBuffer *data_buffer,
+                        size_t capacity,
+                        CosError **error);
+
 /**
  * @brief Frees a data buffer.
  *
@@ -30,35 +47,6 @@ cos_data_buffer_alloc(void)
  */
 void
 cos_data_buffer_free(CosDataBuffer *data_buffer);
-
-/**
- * @brief Returns the size of the data buffer.
- *
- * @param data_buffer The data buffer.
- * @return The size of the data buffer.
- */
-size_t
-cos_data_buffer_get_size(const CosDataBuffer *data_buffer);
-
-/**
- * @brief Returns a pointer to the bytes of the data buffer.
- *
- * @param data_buffer The data buffer.
- *
- * @return A pointer to the bytes of the data buffer.
- */
-CosByte *
-cos_data_buffer_get_bytes(const CosDataBuffer *data_buffer);
-
-/**
- * @brief Returns the capacity of the data buffer.
- *
- * @param data_buffer The data buffer.
- *
- * @return The capacity of the data buffer.
- */
-size_t
-cos_data_buffer_get_capacity(const CosDataBuffer *data_buffer);
 
 /**
  * @brief Resets the data buffer.
@@ -94,13 +82,17 @@ cos_data_buffer_push_back(CosDataBuffer *data_buffer,
  *
  * @param bytes The bytes to append.
  *
- * @param size The number of bytes to append.
+ * @param count The number of bytes to append.
+ *
+* @param error On input, a pointer to an error object, or @c NULL.
+* On output, if an error occurred, the error object will be set with the error information.
  *
  * @return @c true if the bytes were appended, otherwise @c false.
  */
 bool
 cos_data_buffer_append(CosDataBuffer *data_buffer,
                        const CosByte *bytes,
-                       size_t size);
+                       size_t count,
+                       CosError **error);
 
 #endif /* LIBCOS_COMMON_COS_DATA_BUFFER_H */

@@ -53,3 +53,55 @@ cos_is_end_of_line(char character)
             return false;
     }
 }
+
+bool
+cos_is_hex_digit(int character)
+{
+    switch (character) {
+        case CosCharacterSet_DigitZero:
+        case CosCharacterSet_DigitOne:
+        case CosCharacterSet_DigitTwo:
+        case CosCharacterSet_DigitThree:
+        case CosCharacterSet_DigitFour:
+        case CosCharacterSet_DigitFive:
+        case CosCharacterSet_DigitSix:
+        case CosCharacterSet_DigitSeven:
+        case CosCharacterSet_DigitEight:
+        case CosCharacterSet_DigitNine:
+        case CosCharacterSet_LatinCapitalLetterA:
+        case CosCharacterSet_LatinCapitalLetterB:
+        case CosCharacterSet_LatinCapitalLetterC:
+        case CosCharacterSet_LatinCapitalLetterD:
+        case CosCharacterSet_LatinCapitalLetterE:
+        case CosCharacterSet_LatinCapitalLetterF:
+        case CosCharacterSet_LatinSmallLetterA:
+        case CosCharacterSet_LatinSmallLetterB:
+        case CosCharacterSet_LatinSmallLetterC:
+        case CosCharacterSet_LatinSmallLetterD:
+        case CosCharacterSet_LatinSmallLetterE:
+        case CosCharacterSet_LatinSmallLetterF:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool
+cos_is_octal_digit(int character)
+{
+    switch (character) {
+        case CosCharacterSet_DigitZero:
+        case CosCharacterSet_DigitOne:
+        case CosCharacterSet_DigitTwo:
+        case CosCharacterSet_DigitThree:
+        case CosCharacterSet_DigitFour:
+        case CosCharacterSet_DigitFive:
+        case CosCharacterSet_DigitSix:
+        case CosCharacterSet_DigitSeven:
+            return true;
+
+        default:
+            return false;
+    }
+}

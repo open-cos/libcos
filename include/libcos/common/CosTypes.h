@@ -11,6 +11,9 @@ typedef struct CosStringRef CosStringRef;
 
 typedef struct CosDataBuffer CosDataBuffer;
 
+typedef struct CosLexer CosLexer;
+typedef struct CosParser CosParser;
+
 typedef struct CosDocument CosDocument;
 typedef struct CosObj CosObj;
 

@@ -25,6 +25,7 @@ enum CosCharacterSet {
     CosCharacterSet_CarriageReturn = 0x0D,
     CosCharacterSet_Space = 0x20,
 
+    CosCharacterSet_NumberSign = 0x23,
     CosCharacterSet_PercentSign = 0x25,
 
     CosCharacterSet_LeftParenthesis = 0x28,
@@ -58,13 +59,26 @@ enum CosCharacterSet {
      */
     CosCharacterSet_GreaterThanSign = 0x3E,
 
+    CosCharacterSet_LatinCapitalLetterA = 0x41,
+    CosCharacterSet_LatinCapitalLetterB = 0x42,
+    CosCharacterSet_LatinCapitalLetterC = 0x43,
+    CosCharacterSet_LatinCapitalLetterD = 0x44,
+    CosCharacterSet_LatinCapitalLetterE = 0x45,
+    CosCharacterSet_LatinCapitalLetterF = 0x46,
+
+    CosCharacterSet_LatinSmallLetterA = 0x61,
+    CosCharacterSet_LatinSmallLetterB = 0x62,
+    CosCharacterSet_LatinSmallLetterC = 0x63,
+    CosCharacterSet_LatinSmallLetterD = 0x64,
+    CosCharacterSet_LatinSmallLetterE = 0x65,
+    CosCharacterSet_LatinSmallLetterF = 0x66,
+
     CosCharacterSet_LeftSquareBracket = 0x5B,
     CosCharacterSet_ReverseSolidus = 0x5C,
     CosCharacterSet_RightSquareBracket = 0x5D,
 
     CosCharacterSet_LeftCurlyBracket = 0x7B,
     CosCharacterSet_RightCurlyBracket = 0x7D,
-
 };
 
 /**
@@ -89,5 +103,11 @@ cos_is_delimiter(int character);
 
 bool
 cos_is_end_of_line(char character);
+
+bool
+cos_is_hex_digit(int character);
+
+bool
+cos_is_octal_digit(int character);
 
 #endif /* LIBCOS_CHARACTER_SET_H */

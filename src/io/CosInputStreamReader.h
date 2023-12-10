@@ -27,6 +27,9 @@ cos_input_stream_reader_getc(CosInputStreamReader *input_stream_reader);
 int
 cos_input_stream_reader_peek(CosInputStreamReader *input_stream_reader);
 
+bool
+cos_input_stream_reader_ungetc(CosInputStreamReader *input_stream_reader);
+
 COS_ASSUME_NONNULL_END
 
 #endif /* LIBCOS_IO_COS_INPUT_STREAM_READER_H */
