@@ -42,7 +42,7 @@ cos_is_delimiter(int character)
 }
 
 bool
-cos_is_end_of_line(char character)
+cos_is_end_of_line(int character)
 {
     switch (character) {
         case CosCharacterSet_LineFeed:
@@ -99,6 +99,27 @@ cos_is_octal_digit(int character)
         case CosCharacterSet_DigitFive:
         case CosCharacterSet_DigitSix:
         case CosCharacterSet_DigitSeven:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool
+cos_is_decimal_digit(int character)
+{
+    switch (character) {
+        case CosCharacterSet_DigitZero:
+        case CosCharacterSet_DigitOne:
+        case CosCharacterSet_DigitTwo:
+        case CosCharacterSet_DigitThree:
+        case CosCharacterSet_DigitFour:
+        case CosCharacterSet_DigitFive:
+        case CosCharacterSet_DigitSix:
+        case CosCharacterSet_DigitSeven:
+        case CosCharacterSet_DigitEight:
+        case CosCharacterSet_DigitNine:
             return true;
 
         default:

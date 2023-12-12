@@ -95,4 +95,9 @@ cos_data_buffer_append(CosDataBuffer *data_buffer,
                        size_t count,
                        CosError **error);
 
+CosString * COS_Nullable
+cos_data_buffer_to_string(const CosDataBuffer *data_buffer)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
+
 #endif /* LIBCOS_COMMON_COS_DATA_BUFFER_H */

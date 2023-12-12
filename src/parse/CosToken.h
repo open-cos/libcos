@@ -38,8 +38,6 @@ typedef enum CosToken_Type {
     CosToken_Type_DictionaryStart,
     CosToken_Type_DictionaryEnd,
 
-    CosToken_Type_Comment,
-
     CosToken_Type_Keyword_True,
     CosToken_Type_Keyword_False,
     CosToken_Type_Keyword_Null,

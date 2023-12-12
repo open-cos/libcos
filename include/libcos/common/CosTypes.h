@@ -6,10 +6,9 @@
 #define LIBCOS_COMMON_COS_TYPES_H
 
 typedef struct CosData CosData;
+typedef struct CosDataBuffer CosDataBuffer;
 typedef struct CosString CosString;
 typedef struct CosStringRef CosStringRef;
-
-typedef struct CosDataBuffer CosDataBuffer;
 
 typedef struct CosLexer CosLexer;
 typedef struct CosParser CosParser;

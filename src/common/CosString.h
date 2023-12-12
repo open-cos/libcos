@@ -5,12 +5,29 @@
 #ifndef LIBCOS_COS_STRING_H
 #define LIBCOS_COS_STRING_H
 
+#include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
+
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
+
+/**
+ * A nul-terminated character array.
+ */
+struct CosString {
+    /**
+     * The nul-terminated character array.
+     */
+    char * COS_Nullable data;
+
+    /**
+     * The number of characters in the string, including the nul-terminator.
+     */
+    size_t size;
+};
 
 /**
  * Allocates a new empty string.
@@ -20,34 +37,42 @@
  * @note The returned string must be freed with @c cos_string_free().
  * @see cos_string_free()
  */
-CosString *
-cos_string_alloc(void);
+CosString * COS_Nullable
+cos_string_alloc(void)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
 
 /**
  * Allocates a new string with the given C-string.
  *
- * @param str The null-terminated C-string to copy.
+ * @param data The null-terminated C-string to copy.
  * @return The new string, or @c NULL if memory allocation failed.
  *
  * @note The returned string must be freed with @c cos_string_free().
  * @see cos_string_free()
  */
-CosString *
-cos_string_alloc_with_str(const char *str);
+CosString * COS_Nullable
+cos_string_alloc_with_str(const char *str)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT
+    COS_ATTR_ACCESS_READONLY(1);
 
 /**
  * Allocates a new string with the given C-string.
  *
- * @param str The C-string to copy.
+ * @param data The C-string to copy.
  * @param n The number of characters to copy.
  * @return The new string, or @c NULL if memory allocation failed.
  *
  * @note The returned string must be freed with @c cos_string_free().
  * @see cos_string_free()
  */
-CosString *
+CosString * COS_Nullable
 cos_string_alloc_with_strn(const char *str,
-                           size_t n);
+                           size_t n)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT
+    COS_ATTR_ACCESS_READONLY_SIZE(1, 2);
 
 /**
  * Frees a string.
@@ -68,26 +93,13 @@ cos_string_free(CosString *string);
  *
  * @note The returned string must be freed with @c cos_string_free().
  */
-CosString *
-cos_string_copy(const CosString *string);
+CosString * COS_Nullable
+cos_string_copy(const CosString *string)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT
+    COS_ATTR_ACCESS_READONLY(1);
 
-/**
- * Returns the length of the string.
- *
- * @param string The string.
- * @return The number of characters in the string, excluding the nul-terminator.
- */
-size_t
-cos_string_get_length(const CosString *string);
-
-/**
- * Returns the string's str.
- *
- * @param string The string.
- * @return A pointer to the nul-terminated character array.
- */
-const char *
-cos_string_get_str(const CosString *string);
+#pragma mark - String Reference
 
 /**
  * A reference to a nul-terminated character array.
@@ -96,7 +108,7 @@ struct CosStringRef {
     /**
      * The nul-terminated character array.
      */
-    const char *data;
+    const char * COS_Nullable data;
 
     /**
      * The number of characters in the string, including the nul-terminator.
@@ -104,7 +116,20 @@ struct CosStringRef {
     size_t count;
 };
 
+/**
+ * Creates a read-only string reference from the given string.
+ *
+ * @param string The string.
+ *
+ * @return The string reference.
+ *
+ * @note The string reference is valid only as long as the string is valid.
+ */
 CosStringRef
-cos_string_get_ref(const CosString *string);
+cos_string_make_ref(const CosString *string)
+    COS_ATTR_ACCESS_READONLY(1);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_STRING_H */

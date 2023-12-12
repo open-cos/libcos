@@ -4,10 +4,11 @@
 
 #include "CosDataBuffer.h"
 
+#include "common/Assert.h"
+#include "common/CosString.h"
 #include "common/memory-support.h"
 
 #include <malloc.h>
-#include <stdint.h>
 #include <string.h>
 
 static bool
@@ -144,6 +145,18 @@ cos_data_buffer_append(CosDataBuffer *data_buffer,
     data_buffer->size += count;
 
     return true;
+}
+
+CosString *
+cos_data_buffer_to_string(const CosDataBuffer *data_buffer)
+{
+    COS_PARAMETER_ASSERT(data_buffer != NULL);
+    if (!data_buffer) {
+        return NULL;
+    }
+
+    return cos_string_alloc_with_strn((const char *)data_buffer->bytes,
+                                      data_buffer->size);
 }
 
 static bool

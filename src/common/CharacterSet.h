@@ -102,12 +102,15 @@ bool
 cos_is_delimiter(int character);
 
 bool
-cos_is_end_of_line(char character);
+cos_is_end_of_line(int character);
 
 bool
 cos_is_hex_digit(int character);
 
 bool
 cos_is_octal_digit(int character);
+
+bool
+cos_is_decimal_digit(int character);
 
 #endif /* LIBCOS_CHARACTER_SET_H */

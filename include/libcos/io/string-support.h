@@ -36,7 +36,7 @@ cos_vasprintf(const char *format,
 /**
  * @brief Duplicates a string.
  *
- * @param str The string to duplicate.
+ * @param data The string to duplicate.
  * @return The duplicated string, or NULL if an error occurred.
  */
 char *
@@ -45,7 +45,7 @@ cos_strdup(const char *str);
 /**
  * @brief Duplicates a string.
  *
- * @param str The string to duplicate.
+ * @param data The string to duplicate.
  * @param n The number of characters to duplicate.
  * @return  The duplicated string, or NULL if an error occurred.
  */

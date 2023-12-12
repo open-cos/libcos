@@ -21,6 +21,9 @@ cos_input_stream_reader_alloc(CosInputStream *input_stream)
 void
 cos_input_stream_reader_free(CosInputStreamReader *input_stream_reader);
 
+bool
+cos_input_stream_reader_is_at_end(CosInputStreamReader *input_stream_reader);
+
 int
 cos_input_stream_reader_getc(CosInputStreamReader *input_stream_reader);
 

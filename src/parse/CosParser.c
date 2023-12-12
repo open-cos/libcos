@@ -141,8 +141,6 @@ cos_parser_next_object(CosParser *parser,
                 break;
             case CosToken_Type_DictionaryEnd:
                 break;
-            case CosToken_Type_Comment:
-                break;
 
             case CosToken_Type_EOF:
                 break;
@@ -164,8 +162,8 @@ cos_parser_handle_literal_string(CosParser *parser,
         char * const string = cos_token_copy_string_value(token,
                                                           &string_length);
         if (string) {
-            CosObj * const string_object = cos_string_obj_alloc(string,
-                                                                string_length);
+            CosObj * const string_object = (CosObj *)cos_string_obj_alloc(string,
+                                                                          string_length);
             free(string);
             return string_object;
         }
@@ -193,7 +191,7 @@ cos_parser_handle_array(CosParser *parser,
 
     CosArrayObj * const array_object = cos_array_obj_alloc();
 
-    while (!cos_tokenizer_is_at_end(parser->tokenizer)) {
+    while (!cos_tokenizer_is_at_end_(parser->tokenizer)) {
         {
             CosToken *peeked_token = cos_tokenizer_peek_token(parser->tokenizer);
             if (!peeked_token) {

@@ -106,6 +106,8 @@
 #define COS_ATTR_ACCESS_WRITE_ONLY(ref_index) COS_ATTR_ACCESS(write_only, ref_index)
 #define COS_ATTR_ACCESS_NONE(ref_index) COS_ATTR_ACCESS(none, ref_index)
 
+#define COS_ATTR_ACCESS_READONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_only, ref_index, size_index)
+
 #if COS_HAS_ATTRIBUTE(fallthrough)
 #define COS_ATTR_FALLTHROUGH __attribute__((fallthrough))
 #else

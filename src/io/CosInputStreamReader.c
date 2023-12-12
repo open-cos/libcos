@@ -82,6 +82,14 @@ cos_input_stream_reader_free(CosInputStreamReader *input_stream_reader)
     free(input_stream_reader);
 }
 
+bool
+cos_input_stream_reader_is_at_end(CosInputStreamReader *input_stream_reader)
+{
+    COS_PARAMETER_ASSERT(input_stream_reader != NULL);
+
+    return cos_input_stream_reader_get_current_(input_stream_reader) == EOF;
+}
+
 int
 cos_input_stream_reader_getc(CosInputStreamReader *input_stream_reader)
 {

@@ -35,7 +35,6 @@ add_library(libcos SHARED
         src/objects/CosObjectStorage.c
         src/objects/CosObjectStorage.h
         src/parse/tokenizer/CosTokenValue.h
-        src/common/CosString-Impl.h
         src/common/CosData.c
         src/common/CosData.h
         src/common/CosDataBuffer.c
