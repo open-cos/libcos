@@ -24,13 +24,26 @@ struct CosString {
     char * COS_Nullable data;
 
     /**
-     * The number of characters in the string, including the nul-terminator.
+     * The number of characters in the string, not including the nul-terminator.
      */
-    size_t size;
+    size_t length;
+
+    /**
+     * The number of characters that can be stored in the string.
+     *
+     * @invariant The capacity is always large enough to store @c length characters,
+     * plus the nul-terminator.
+     * @code
+     * capacity >= length + 1
+     * @endcode
+     */
+    size_t capacity;
 };
 
 /**
  * Allocates a new empty string.
+ *
+ * @param capacity_hint A hint for the initial capacity of the string.
  *
  * @return The new string, or @c NULL if memory allocation failed.
  *
@@ -38,9 +51,7 @@ struct CosString {
  * @see cos_string_free()
  */
 CosString * COS_Nullable
-cos_string_alloc(void)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
+cos_string_alloc(size_t capacity_hint) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT;
 
 /**
  * Allocates a new string with the given C-string.
@@ -52,9 +63,7 @@ cos_string_alloc(void)
  * @see cos_string_free()
  */
 CosString * COS_Nullable
-cos_string_alloc_with_str(const char *str)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT
+cos_string_alloc_with_str(const char *str) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READONLY(1);
 
 /**
@@ -68,10 +77,7 @@ cos_string_alloc_with_str(const char *str)
  * @see cos_string_free()
  */
 CosString * COS_Nullable
-cos_string_alloc_with_strn(const char *str,
-                           size_t n)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT
+cos_string_alloc_with_strn(const char *str, size_t n) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READONLY_SIZE(1, 2);
 
 /**
@@ -84,6 +90,37 @@ cos_string_alloc_with_strn(const char *str,
 void
 cos_string_free(CosString *string);
 
+#pragma mark Initialization
+
+/**
+ * Initializes a string with the default capacity.
+ *
+ * @param string The string to initialize.
+ *
+ * @return @c true if initialization succeeded, @c false otherwise.
+ */
+bool
+cos_string_init(CosString *string);
+
+/**
+ * Initializes a string with the given capacity.
+ *
+ * @param string The string to initialize.
+ * @param capacity_hint A hint for the initial capacity of the string.
+ *
+ * @return @c true if initialization succeeded, @c false otherwise.
+ */
+bool
+cos_string_init_capacity(CosString *string, size_t capacity_hint);
+
+/**
+ * Releases the resources used by the string.
+ *
+ * @param string The string to release.
+ */
+void
+cos_string_release(CosString *string);
+
 /**
  * Creates a copy of the string.
  *
@@ -94,12 +131,28 @@ cos_string_free(CosString *string);
  * @note The returned string must be freed with @c cos_string_free().
  */
 CosString * COS_Nullable
-cos_string_copy(const CosString *string)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT
+cos_string_copy(const CosString *string) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READONLY(1);
 
-#pragma mark - String Reference
+bool
+cos_string_append_str(CosString *string, const char *str) COS_ATTR_ACCESS_READONLY(2);
+
+bool
+cos_string_append_strn(CosString *string, const char *str, size_t n)
+    COS_ATTR_ACCESS_READONLY_SIZE(2, 3);
+
+/**
+ * Appends the given character to the string.
+ *
+ * @param string The string to be modified.
+ * @param c The character to append.
+ *
+ * @return @c true if the character was appended, @c false otherwise.
+ */
+bool
+cos_string_push_back(CosString *string, char c);
+
+#pragma mark String Reference
 
 /**
  * A reference to a nul-terminated character array.
@@ -111,10 +164,15 @@ struct CosStringRef {
     const char * COS_Nullable data;
 
     /**
-     * The number of characters in the string, including the nul-terminator.
+     * The number of characters in the string, not including the nul-terminator.
      */
-    size_t count;
+    size_t length;
 };
+
+#define cos_string_ref_const(str)                                                                  \
+    (CosStringRef){                                                                                              \
+        .data = (str), .length = ((str) ? (sizeof(str) - 1) : 0),                                  \
+    }
 
 /**
  * Creates a read-only string reference from the given string.
@@ -126,8 +184,19 @@ struct CosStringRef {
  * @note The string reference is valid only as long as the string is valid.
  */
 CosStringRef
-cos_string_make_ref(const CosString *string)
-    COS_ATTR_ACCESS_READONLY(1);
+cos_string_make_ref(const CosString *string) COS_ATTR_ACCESS_READONLY(1);
+
+/**
+ * Compares two string references for equality.
+ *
+ * @param lhs The first string reference.
+ * @param rhs The second string reference.
+ *
+ * @return An integer less than, equal to, or greater than zero if @p lhs is less than,
+ * equal to, or greater than @p rhs, respectively.
+ */
+int
+cos_string_ref_cmp(CosStringRef lhs, CosStringRef rhs);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
