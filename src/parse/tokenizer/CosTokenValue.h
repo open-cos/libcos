@@ -23,7 +23,7 @@ struct CosTokenValue {
 
     union {
         bool boolean;
-        const unsigned char *string;
+        CosString *string;
         CosData *data;
         int integer_number;
         double real_number;
@@ -33,9 +33,7 @@ struct CosTokenValue {
 static inline CosTokenValue
 cos_token_value_none(void)
 {
-    return (CosTokenValue){
-        .type = CosTokenValue_Type_None,
-    };
+    return (CosTokenValue){0};
 }
 
 static inline CosTokenValue
@@ -50,7 +48,7 @@ cos_token_value_boolean(bool value)
 }
 
 static inline CosTokenValue
-cos_token_value_string(const char *value)
+cos_token_value_string(CosString *value)
 {
     return (CosTokenValue){
         .type = CosTokenValue_Type_String,
@@ -108,8 +106,7 @@ cos_token_value_get_boolean(const CosTokenValue *token_value,
 }
 
 static inline bool
-cos_token_value_get_string(const CosTokenValue *token_value,
-                           const unsigned char **result)
+cos_token_value_get_string(const CosTokenValue *token_value, CosString **result)
 {
     if (!token_value || token_value->type != CosTokenValue_Type_String) {
         return false;
