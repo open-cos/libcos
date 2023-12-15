@@ -10,11 +10,11 @@
 #include "common/CosString.h"
 #include "common/CosVector.h"
 #include "io/CosInputStreamReader.h"
-#include "libcos/io/CosInputStream.h"
 
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "CosToken.h"
 
@@ -48,8 +48,7 @@ cos_tokenizer_peek_next_char(CosTokenizer *tokenizer);
  * @return true if the next character matches the given character, false otherwise.
  */
 static bool
-cos_tokenizer_match(CosTokenizer *tokenizer,
-                    char character);
+cos_tokenizer_match(CosTokenizer *tokenizer, char character);
 
 static void
 cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer);
@@ -61,15 +60,13 @@ static void
 cos_tokenizer_skip_comment_(CosTokenizer *tokenizer);
 
 static bool
-cos_tokenizer_read_name_(CosTokenizer *tokenizer,
-                         CosDataBuffer *buffer);
+cos_tokenizer_read_name_(CosTokenizer *tokenizer, CosDataBuffer *buffer);
 
 static int
 cos_tokenizer_handle_name_hex_escape_sequence_(CosTokenizer *tokenizer);
 
 static bool
-cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
-                                   CosDataBuffer *buffer);
+cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer);
 
 /**
  * Handles an escape sequence in a literal string.
@@ -80,8 +77,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
  * @return @c true if a character was written to @p result, @c false otherwise.
  */
 static bool
-cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer,
-                                                     unsigned char *result)
+cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, unsigned char *result)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /**
@@ -97,15 +93,19 @@ static int
 cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer);
 
 static bool
-cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
-                               CosDataBuffer *buffer,
-                               CosError **error);
+cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, CosError **error);
 
 static bool
 cos_tokenizer_read_number_(CosTokenizer *tokenizer,
                            int *int_result,
                            double *double_result,
                            CosError **error);
+
+static bool
+cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *error);
+
+static inline bool
+cos_check_keyword_(CosStringRef text, CosToken_Type *type);
 
 CosTokenizer *
 cos_tokenizer_alloc(CosInputStream *input_stream)
@@ -185,8 +185,12 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
 
-    int c = cos_input_stream_reader_getc(tokenizer->input_stream_reader);
+    const int c = cos_input_stream_reader_getc(tokenizer->input_stream_reader);
     switch (c) {
+        case EOF: {
+            token->type = CosToken_Type_EOF;
+        } break;
+
         case CosCharacterSet_LeftSquareBracket: {
             token->type = CosToken_Type_ArrayStart;
         } break;
@@ -197,8 +201,7 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
         case CosCharacterSet_Solidus: {
             // This is a name.
             CosDataBuffer * const buffer = cos_data_buffer_alloc();
-            if (cos_tokenizer_read_name_(tokenizer,
-                                         buffer)) {
+            if (cos_tokenizer_read_name_(tokenizer, buffer)) {
                 token->type = CosToken_Type_Name;
                 token->value = cos_token_value_data(NULL);
             }
@@ -213,8 +216,7 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
         case CosCharacterSet_LeftParenthesis: {
             // This is a literal string.
             CosDataBuffer * const buffer = cos_data_buffer_alloc();
-            if (cos_tokenizer_read_literal_string_(tokenizer,
-                                                   buffer)) {
+            if (cos_tokenizer_read_literal_string_(tokenizer, buffer)) {
                 token->type = CosToken_Type_Literal_String;
                 token->value = cos_token_value_data(NULL);
             }
@@ -234,9 +236,7 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
             else {
                 // This is a hex string.
                 CosDataBuffer * const buffer = cos_data_buffer_alloc();
-                if (cos_tokenizer_read_hex_string_(tokenizer,
-                                                   buffer,
-                                                   NULL)) {
+                if (cos_tokenizer_read_hex_string_(tokenizer, buffer, NULL)) {
                     token->type = CosToken_Type_Hex_String;
                     token->value = cos_token_value_data(NULL);
                 }
@@ -272,154 +272,45 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
             cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
 
             // We know that this is a number (integer or real).
-            cos_tokenizer_read_number_(tokenizer,
-                                       NULL,
-                                       NULL,
-                                       NULL);
+            cos_tokenizer_read_number_(tokenizer, NULL, NULL, NULL);
         } break;
         case CosCharacterSet_PlusSign:
         case CosCharacterSet_HyphenMinus: {
             // We know that this is a number (integer or real).
-            cos_tokenizer_read_number_(tokenizer,
-                                       NULL,
-                                       NULL,
-                                       NULL);
+            cos_tokenizer_read_number_(tokenizer, NULL, NULL, NULL);
         } break;
 
-        case EOF: {
-            token->type = CosToken_Type_EOF;
-        } break;
+        default: {
+            // This could be a keyword or an unknown token.
+            CosString *string = cos_string_alloc(0);
+            if (!string) {
+                // Error: out of memory.
+                break;
+            }
 
-        case 't': {
-            // "true" or "trailer".
-            if (cos_tokenizer_match(tokenizer, 'r')) {
-                if (cos_tokenizer_match(tokenizer, 'u') &&
-                    cos_tokenizer_match(tokenizer, 'e')) {
-                    token->type = CosToken_Type_Keyword_True;
-                }
-                else if (cos_tokenizer_match(tokenizer, 'a') &&
-                         cos_tokenizer_match(tokenizer, 'i') &&
-                         cos_tokenizer_match(tokenizer, 'l') &&
-                         cos_tokenizer_match(tokenizer, 'e') &&
-                         cos_tokenizer_match(tokenizer, 'r')) {
-                    token->type = CosToken_Type_Keyword_Trailer;
+            CosError error;
+            if (cos_tokenizer_read_token_(tokenizer, string, &error)) {
+                // This might be a keyword.
+                CosToken_Type type = CosToken_Type_Unknown;
+                if (cos_check_keyword_(cos_string_make_ref(string), &type)) {
+                    // This is a keyword.
+                    token->type = type;
+
+                    cos_string_free(string);
                 }
                 else {
-                    // Unexpected character.
+                    // Error: unrecognized token.
+                    token->type = CosToken_Type_Unknown;
+                    token->value = cos_token_value_string(string);
                 }
             }
             else {
-                // Unexpected character.
+                // Error: invalid token.
+                token->type = CosToken_Type_Unknown;
+
+                cos_string_free(string);
             }
         } break;
-
-        case 'f': {
-            // "false".
-            if (cos_tokenizer_match(tokenizer, 'a') &&
-                cos_tokenizer_match(tokenizer, 'l') &&
-                cos_tokenizer_match(tokenizer, 's') &&
-                cos_tokenizer_match(tokenizer, 'e')) {
-                token->type = CosToken_Type_Keyword_False;
-            }
-            else {
-                // Unexpected character.
-            }
-        } break;
-
-        case 'n': {
-            // "null".
-            if (cos_tokenizer_match(tokenizer, 'u') &&
-                cos_tokenizer_match(tokenizer, 'l') &&
-                cos_tokenizer_match(tokenizer, 'l')) {
-                token->type = CosToken_Type_Keyword_Null;
-            }
-            else {
-                // Unexpected character.
-            }
-        } break;
-
-        case 'R': {
-            // "R" (indirect object reference).
-            token->type = CosToken_Type_Keyword_R;
-        } break;
-
-        case 'o': {
-            // "obj" (beginning of an object).
-            if (cos_tokenizer_match(tokenizer, 'b') &&
-                cos_tokenizer_match(tokenizer, 'j')) {
-                token->type = CosToken_Type_Keyword_Obj;
-            }
-            else {
-                // Unexpected character.
-            }
-        } break;
-
-        case 'e': {
-            // "endobj" (end of an object) or "endstream".
-            if (cos_tokenizer_match(tokenizer, 'n') &&
-                cos_tokenizer_match(tokenizer, 'd') &&
-                cos_tokenizer_match(tokenizer, 'o') &&
-                cos_tokenizer_match(tokenizer, 'b') &&
-                cos_tokenizer_match(tokenizer, 'j')) {
-                token->type = CosToken_Type_Keyword_EndObj;
-            }
-            else if (cos_tokenizer_match(tokenizer, 'n') &&
-                     cos_tokenizer_match(tokenizer, 'd') &&
-                     cos_tokenizer_match(tokenizer, 's') &&
-                     cos_tokenizer_match(tokenizer, 't') &&
-                     cos_tokenizer_match(tokenizer, 'r') &&
-                     cos_tokenizer_match(tokenizer, 'e') &&
-                     cos_tokenizer_match(tokenizer, 'a') &&
-                     cos_tokenizer_match(tokenizer, 'm')) {
-                token->type = CosToken_Type_Keyword_EndStream;
-            }
-            else {
-                // Unexpected character.
-            }
-        } break;
-
-        case 's': {
-            // "stream" (beginning of a stream) or "startxref".
-            if (cos_tokenizer_match(tokenizer, 't')) {
-                if (cos_tokenizer_match(tokenizer, 'r') &&
-                    cos_tokenizer_match(tokenizer, 'e') &&
-                    cos_tokenizer_match(tokenizer, 'a') &&
-                    cos_tokenizer_match(tokenizer, 'm')) {
-                    token->type = CosToken_Type_Keyword_Stream;
-                }
-                else if (cos_tokenizer_match(tokenizer, 'a') &&
-                         cos_tokenizer_match(tokenizer, 'r') &&
-                         cos_tokenizer_match(tokenizer, 't') &&
-                         cos_tokenizer_match(tokenizer, 'x') &&
-                         cos_tokenizer_match(tokenizer, 'r') &&
-                         cos_tokenizer_match(tokenizer, 'e') &&
-                         cos_tokenizer_match(tokenizer, 'f')) {
-                    token->type = CosToken_Type_Keyword_StartXRef;
-                }
-                else {
-                    // Unexpected character.
-                }
-            }
-            else {
-                // Unexpected character.
-            }
-        } break;
-
-        case 'x': {
-            // "xref" (cross-reference table).
-            if (cos_tokenizer_match(tokenizer, 'r') &&
-                cos_tokenizer_match(tokenizer, 'e') &&
-                cos_tokenizer_match(tokenizer, 'f')) {
-                token->type = CosToken_Type_Keyword_XRef;
-            }
-            else {
-                // Unexpected character.
-            }
-        } break;
-
-        default:
-            // Unexpected character.
-            break;
     }
 
     return token;
@@ -460,9 +351,7 @@ cos_tokenizer_peek_next_char(CosTokenizer *tokenizer)
 }
 
 static CosToken
-cos_tokenizer_make_token(CosTokenizer *tokenizer,
-                         CosToken_Type type,
-                         CosTokenValue *value)
+cos_tokenizer_make_token(CosTokenizer *tokenizer, CosToken_Type type, CosTokenValue *value)
 {
 
     const CosToken token = {
@@ -474,8 +363,7 @@ cos_tokenizer_make_token(CosTokenizer *tokenizer,
 }
 
 static bool
-cos_tokenizer_match(CosTokenizer *tokenizer,
-                    char character)
+cos_tokenizer_match(CosTokenizer *tokenizer, char character)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
@@ -565,8 +453,7 @@ cos_octal_digit_to_int_(int character)
 }
 
 static bool
-cos_tokenizer_read_name_(CosTokenizer *tokenizer,
-                         CosDataBuffer *buffer)
+cos_tokenizer_read_name_(CosTokenizer *tokenizer, CosDataBuffer *buffer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
@@ -599,9 +486,7 @@ cos_tokenizer_read_name_(CosTokenizer *tokenizer,
             }
         }
 
-        cos_data_buffer_push_back(buffer,
-                                  (unsigned char)character,
-                                  NULL);
+        cos_data_buffer_push_back(buffer, (unsigned char)character, NULL);
     }
 
     return true;
@@ -632,8 +517,7 @@ cos_tokenizer_handle_name_hex_escape_sequence_(CosTokenizer *tokenizer)
 }
 
 static bool
-cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
-                                   CosDataBuffer *buffer)
+cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
@@ -677,8 +561,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
                  * shall be treated as a byte value of (0Ah), irrespective of whether the end-of-line marker was
                  * a CARRIAGE RETURN (0Dh), a LINE FEED (0Ah), or both.
                  */
-                if (cos_tokenizer_match(tokenizer,
-                                        CosCharacterSet_LineFeed)) {
+                if (cos_tokenizer_match(tokenizer, CosCharacterSet_LineFeed)) {
                     // Treating the CRLF as LF.
                 }
                 c = CosCharacterSet_LineFeed;
@@ -688,9 +571,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
                 break;
         }
 
-        cos_data_buffer_push_back(buffer,
-                                  (unsigned char)c,
-                                  NULL);
+        cos_data_buffer_push_back(buffer, (unsigned char)c, NULL);
 
     continue_label:;
     }
@@ -700,8 +581,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
 }
 
 static bool
-cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer,
-                                                     unsigned char *result)
+cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, unsigned char *result)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
@@ -767,8 +647,7 @@ cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer,
         } break;
 
         case CosCharacterSet_CarriageReturn:
-            if (cos_tokenizer_match(tokenizer,
-                                    CosCharacterSet_LineFeed)) {
+            if (cos_tokenizer_match(tokenizer, CosCharacterSet_LineFeed)) {
                 // Treating the CRLF as LF.
             }
             COS_ATTR_FALLTHROUGH;
@@ -817,9 +696,7 @@ cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer)
 }
 
 static bool
-cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
-                               CosDataBuffer *buffer,
-                               CosError **error)
+cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, CosError **error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(buffer != NULL);
@@ -838,9 +715,7 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
                 hex_value = (hex_value << 4) | hex_digit_value;
 
                 // Write the byte to the buffer.
-                cos_data_buffer_push_back(buffer,
-                                          (unsigned char)hex_value,
-                                          NULL);
+                cos_data_buffer_push_back(buffer, (unsigned char)hex_value, NULL);
 
                 // Reset the hex value.
                 hex_value = 0;
@@ -856,9 +731,7 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
             if (odd_number_of_hex_digits) {
                 // Write the last byte to the buffer.
                 hex_value = (hex_value << 4);
-                cos_data_buffer_push_back(buffer,
-                                          (unsigned char)hex_value,
-                                          NULL);
+                cos_data_buffer_push_back(buffer, (unsigned char)hex_value, NULL);
             }
             return true;
         }
@@ -870,8 +743,7 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
 
     // Error: unterminated hex string.
     if (error) {
-        *error = cos_error_alloc(COS_ERROR_SYNTAX,
-                                 "Unterminated hex string");
+        *error = cos_error_alloc(COS_ERROR_SYNTAX, "Unterminated hex string");
     }
     return false;
 }
@@ -919,9 +791,7 @@ cos_tokenizer_read_number_(CosTokenizer *tokenizer,
             } break;
         }
 
-        cos_data_buffer_push_back(buffer,
-                                  (unsigned char)character,
-                                  NULL);
+        cos_data_buffer_push_back(buffer, (unsigned char)character, NULL);
         continue;
 
     end_label:
@@ -992,8 +862,7 @@ cos_tokenizer_skip_whitespace_character_(CosTokenizer *tokenizer)
 }
 
 static void
-cos_tokenizer_skip_character_(CosTokenizer *tokenizer,
-                              int character)
+cos_tokenizer_skip_character_(CosTokenizer *tokenizer, int character)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
@@ -1015,13 +884,116 @@ cos_tokenizer_skip_comment_(CosTokenizer *tokenizer)
         if (cos_is_end_of_line(c)) {
             // This is the end of the comment.
             if (c == CosCharacterSet_CarriageReturn) {
-                cos_tokenizer_skip_character_(tokenizer,
-                                              CosCharacterSet_LineFeed);
+                cos_tokenizer_skip_character_(tokenizer, CosCharacterSet_LineFeed);
             }
             return;
         }
         // Skip regular character in comment.
     }
+}
+
+static bool
+cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(string != NULL);
+
+    int c = EOF;
+    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+        if (cos_is_whitespace(c) || cos_is_delimiter(c)) {
+            // This is the end of the token.
+            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            return true;
+        }
+
+        if (!cos_string_push_back(string, (char)c)) {
+            // Error: out of memory.
+            if (error) {
+                *error = cos_error_make(COS_ERROR_MEMORY, "Out of memory");
+            }
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static inline bool
+cos_check_keyword_(CosStringRef text, CosToken_Type *type)
+{
+    COS_PARAMETER_ASSERT(type != NULL);
+
+    if (text.length == 0) {
+        return false;
+    }
+
+    switch (text.data[0]) {
+        case 't': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("true")) == 0) {
+                *type = CosToken_Type_Keyword_True;
+                return true;
+            }
+            else if (cos_string_ref_cmp(text, cos_string_ref_const("trailer")) == 0) {
+                *type = CosToken_Type_Keyword_Trailer;
+                return true;
+            }
+        } break;
+        case 'f': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("false")) == 0) {
+                *type = CosToken_Type_Keyword_False;
+                return true;
+            }
+        } break;
+        case 'n': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("null")) == 0) {
+                *type = CosToken_Type_Keyword_Null;
+                return true;
+            }
+        } break;
+        case 'R': {
+            if (text.length == 1) {
+                *type = CosToken_Type_Keyword_R;
+                return true;
+            }
+        } break;
+        case 'o': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("obj")) == 0) {
+                *type = CosToken_Type_Keyword_Obj;
+                return true;
+            }
+        } break;
+        case 'e': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("endobj")) == 0) {
+                *type = CosToken_Type_Keyword_EndObj;
+                return true;
+            }
+            else if (cos_string_ref_cmp(text, cos_string_ref_const("endstream")) == 0) {
+                *type = CosToken_Type_Keyword_EndStream;
+                return true;
+            }
+        } break;
+        case 's': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("stream")) == 0) {
+                *type = CosToken_Type_Keyword_Stream;
+                return true;
+            }
+            else if (cos_string_ref_cmp(text, cos_string_ref_const("startxref")) == 0) {
+                *type = CosToken_Type_Keyword_StartXRef;
+                return true;
+            }
+        } break;
+        case 'x': {
+            if (cos_string_ref_cmp(text, cos_string_ref_const("xref")) == 0) {
+                *type = CosToken_Type_Keyword_XRef;
+                return true;
+            }
+        } break;
+
+        default:
+            break;
+    }
+
+    return false;
 }
 
 COS_ASSUME_NONNULL_END
