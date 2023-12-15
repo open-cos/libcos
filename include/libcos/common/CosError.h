@@ -8,7 +8,7 @@
 struct CosError;
 typedef struct CosError CosError;
 
-enum CosErrorCode {
+typedef enum CosErrorCode {
     COS_ERROR_NONE,
     COS_ERROR_INVALID_ARGUMENT,
     COS_ERROR_INVALID_STATE,
@@ -18,25 +18,20 @@ enum CosErrorCode {
     COS_ERROR_MEMORY,
     COS_ERROR_NOT_IMPLEMENTED,
     COS_ERROR_UNKNOWN,
-};
+} CosErrorCode;
 
 struct CosError {
-    unsigned int code;
-    char *message;
+    CosErrorCode code;
+    const char *message;
 };
 
-CosError *
-cos_error_alloc(unsigned int code,
-                char *message);
-
-void
-cos_error_free(CosError *error);
+CosError
+cos_error_make(CosErrorCode code, const char *message);
 
 CosError *
-cos_error_copy(CosError *error);
+cos_error_alloc(CosErrorCode code, const char *message);
 
 void
-cos_error_propagate(CosError *source_error,
-                    CosError **destination_error);
+cos_error_propagate(CosError *source_error, CosError **destination_error);
 
 #endif /* LIBCOS_COS_ERROR_H */

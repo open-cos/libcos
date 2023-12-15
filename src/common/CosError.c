@@ -7,8 +7,7 @@
 #include <stdlib.h>
 
 CosError *
-cos_error_alloc(unsigned int code,
-                char *message)
+cos_error_alloc(CosErrorCode code, const char *message)
 {
     CosError * const error = malloc(sizeof(CosError));
     if (!error) {
@@ -22,33 +21,21 @@ cos_error_alloc(unsigned int code,
 }
 
 void
-cos_error_free(CosError *error)
-{
-    if (error->message) {
-        free(error->message);
-    }
-
-    free(error);
-}
-
-CosError *
-cos_error_copy(CosError *error)
-{
-    if (!error) {
-        return NULL;
-    }
-
-    return cos_error_alloc(error->code,
-                           error->message);
-}
-
-void
-cos_error_propagate(CosError *source_error,
-                    CosError **destination_error)
+cos_error_propagate(CosError *source_error, CosError **destination_error)
 {
     if (!source_error || !destination_error) {
         return;
     }
 
     *destination_error = source_error;
+}
+
+CosError
+cos_error_make(CosErrorCode code, const char *message)
+{
+    CosError result = {
+        .code = code,
+        .message = message,
+    };
+    return result;
 }
