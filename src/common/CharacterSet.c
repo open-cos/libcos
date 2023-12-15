@@ -24,16 +24,16 @@ bool
 cos_is_delimiter(int character)
 {
     switch (character) {
+        case CosCharacterSet_PercentSign:
         case CosCharacterSet_LeftParenthesis:
         case CosCharacterSet_RightParenthesis:
+        case CosCharacterSet_Solidus:
         case CosCharacterSet_LessThanSign:
         case CosCharacterSet_GreaterThanSign:
         case CosCharacterSet_LeftSquareBracket:
         case CosCharacterSet_RightSquareBracket:
         case CosCharacterSet_LeftCurlyBracket:
         case CosCharacterSet_RightCurlyBracket:
-        case CosCharacterSet_Solidus:
-        case CosCharacterSet_PercentSign:
             return true;
 
         default:
