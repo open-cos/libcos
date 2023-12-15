@@ -58,8 +58,6 @@ add_library(libcos SHARED
         src/objects/CosStringObj.c
         src/common/CosHashTable.c
         src/common/CosHashTable.h
-        src/lex/CosLexer.c
-        src/lex/CosLexer.h
         src/io/CosInputStreamReader.c
         src/io/CosInputStreamReader.h
 )
@@ -71,6 +69,7 @@ target_include_directories(libcos
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(libcos PRIVATE
             -Wall -Wextra
+            -Wno-unknown-pragmas
             -Werror=return-type -Werror=incompatible-pointer-types
             -fsanitize=address
             -fsanitize=undefined
@@ -86,9 +85,10 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Wextra
             -Weverything
             -Wint-conversion
-            -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
-            -Werror=incompatible-pointer-types
-            -Werror=return-type)
+            -Wstrict-prototypes
+            -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension -Wno-unsafe-buffer-usage
+            -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
+    )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(libcos PRIVATE
             /W4 /WX)
