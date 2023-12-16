@@ -25,4 +25,20 @@ typedef struct CosArrayObj CosArrayObj;
 typedef struct CosDictObj CosDictObj;
 typedef struct CosStringObj CosStringObj;
 
+typedef enum CosKeywordType {
+    CosKeywordType_Unknown,
+
+    CosKeywordType_True,
+    CosKeywordType_False,
+    CosKeywordType_Null,
+    CosKeywordType_R,
+    CosKeywordType_Obj,
+    CosKeywordType_EndObj,
+    CosKeywordType_Stream,
+    CosKeywordType_EndStream,
+    CosKeywordType_XRef,
+    CosKeywordType_Trailer,
+    CosKeywordType_StartXRef,
+} CosKeywordType;
+
 #endif /* LIBCOS_COMMON_COS_TYPES_H */

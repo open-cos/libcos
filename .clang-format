@@ -40,13 +40,13 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
 InsertBraces: true
 BreakInheritanceList: AfterComma
-ColumnLimit: 100
+ColumnLimit: 0
 CompactNamespaces: false
 ContinuationIndentWidth: 4
 IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 4
-KeepEmptyLinesAtTheStartOfBlocks: true
+KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 FixNamespaceComments: true
@@ -81,11 +81,11 @@ Language: Cpp
 SeparateDefinitionBlocks: Always
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^"[[:alnum:].]+"'
-    Priority:        4
-  - Regex:           '^<[[:alnum:].]+>'
-    Priority:        3
-  - Regex:           '^<.*>'
-    Priority:        2
-  - Regex:           '.*'
-    Priority:        1
+  - Regex: '^"[[:alnum:].]+"'
+    Priority: 4
+  - Regex: '^<[[:alnum:].]+>'
+    Priority: 3
+  - Regex: '^<.*>'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 1

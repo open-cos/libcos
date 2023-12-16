@@ -38,17 +38,7 @@ typedef enum CosToken_Type {
     CosToken_Type_DictionaryStart,
     CosToken_Type_DictionaryEnd,
 
-    CosToken_Type_Keyword_True,
-    CosToken_Type_Keyword_False,
-    CosToken_Type_Keyword_Null,
-    CosToken_Type_Keyword_R,
-    CosToken_Type_Keyword_Obj,
-    CosToken_Type_Keyword_EndObj,
-    CosToken_Type_Keyword_Stream,
-    CosToken_Type_Keyword_EndStream,
-    CosToken_Type_Keyword_XRef,
-    CosToken_Type_Keyword_Trailer,
-    CosToken_Type_Keyword_StartXRef,
+    CosToken_Type_Keyword,
 
     CosToken_Type_EOF,
 } CosToken_Type;
@@ -78,27 +68,21 @@ bool
 cos_token_has_value(const CosToken *token);
 
 unsigned char *
-cos_token_copy_string_value(const CosToken *token,
-                            size_t *out_size);
+cos_token_copy_string_value(const CosToken *token, size_t *out_size);
 
 bool
-cos_token_get_string_value(const CosToken *token,
-                           CosString **out_string);
+cos_token_get_string_value(const CosToken *token, CosString **out_string);
 
 bool
-cos_token_get_data_value(const CosToken *token,
-                         CosData **out_data);
+cos_token_get_data_value(const CosToken *token, CosData **out_data);
 
 bool
-cos_token_get_boolean_value(const CosToken *token,
-                            bool *value);
+cos_token_get_boolean_value(const CosToken *token, bool *value);
 
 bool
-cos_token_get_integer_value(const CosToken *token,
-                            int *value);
+cos_token_get_integer_value(const CosToken *token, int *value);
 
 bool
-cos_token_get_real_value(const CosToken *token,
-                         double *value);
+cos_token_get_real_value(const CosToken *token, double *value);
 
 #endif /* LIBCOS_COS_TOKEN_H */

@@ -11,10 +11,10 @@
 #include "common/CosVector.h"
 #include "io/CosInputStreamReader.h"
 
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "CosToken.h"
 
@@ -52,9 +52,6 @@ cos_tokenizer_match(CosTokenizer *tokenizer, char character);
 
 static void
 cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer);
-
-static bool
-cos_tokenizer_skip_whitespace_character_(CosTokenizer *tokenizer);
 
 static void
 cos_tokenizer_skip_comment_(CosTokenizer *tokenizer);
@@ -95,17 +92,76 @@ cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer);
 static bool
 cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, CosError **error);
 
+typedef enum CosNumberType {
+    CosNumberType_Integer,
+    CosNumberType_Real,
+} CosNumberType;
+
+typedef struct CosNumberValue CosNumberValue;
+
+struct CosNumberValue {
+    CosNumberType type;
+
+    union {
+        int integer_value;
+        double real_value;
+    } value;
+};
+
+static inline CosNumberValue
+cos_number_value_integer(int value)
+{
+    const CosNumberValue number_value = {
+        .type = CosNumberType_Integer,
+        .value.integer_value = value,
+    };
+    return number_value;
+}
+
+static inline CosNumberValue
+cos_number_value_real(double value)
+{
+    const CosNumberValue number_value = {
+        .type = CosNumberType_Real,
+        .value.real_value = value,
+    };
+    return number_value;
+}
+
 static bool
-cos_tokenizer_read_number_(CosTokenizer *tokenizer,
-                           int *int_result,
-                           double *double_result,
-                           CosError **error);
+cos_tokenizer_read_number_(CosTokenizer *tokenizer, CosNumberValue *number_value, CosError *error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2) COS_ATTR_ACCESS_WRITE_ONLY(3);
+
+/**
+ * @brief Scans a number.
+ *
+ * @param tokenizer The tokenizer.
+ * @param string The output parameter for the number string.
+ * @param number_type The output parameter for the number type (integer or real).
+ * @param error The output parameter for the error.
+ *
+ * @return @c true if the number was scanned successfully, @c false otherwise.
+ */
+static bool
+cos_scan_number_(CosTokenizer *tokenizer,
+                 CosString *string,
+                 CosNumberType *number_type,
+                 CosError *error) COS_ATTR_ACCESS_WRITE_ONLY(3) COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 static bool
 cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *error);
 
-static inline bool
-cos_check_keyword_(CosStringRef text, CosToken_Type *type);
+/**
+ * Checks whether the given string is a keyword.
+ *
+ * @param text The string to check.
+ * @param type The output parameter for the keyword type, if the string is a keyword.
+ *
+ * @return @c true if the string is a keyword, @c false otherwise.
+ */
+static inline CosKeywordType
+cos_check_keyword_(CosStringRef
+                       text) COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 CosTokenizer *
 cos_tokenizer_alloc(CosInputStream *input_stream)
@@ -268,16 +324,29 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
         case CosCharacterSet_DigitSeven:
         case CosCharacterSet_DigitEight:
         case CosCharacterSet_DigitNine:
-        case CosCharacterSet_FullStop: {
+        case CosCharacterSet_FullStop:
+        case CosCharacterSet_PlusSign:
+        case CosCharacterSet_HyphenMinus: {
             cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
 
             // We know that this is a number (integer or real).
-            cos_tokenizer_read_number_(tokenizer, NULL, NULL, NULL);
-        } break;
-        case CosCharacterSet_PlusSign:
-        case CosCharacterSet_HyphenMinus: {
-            // We know that this is a number (integer or real).
-            cos_tokenizer_read_number_(tokenizer, NULL, NULL, NULL);
+            CosNumberValue number_value = {0};
+            CosError error;
+            if (cos_tokenizer_read_number_(tokenizer, &number_value, &error)) {
+                // This is a number.
+                if (number_value.type == CosNumberType_Integer) {
+                    token->type = CosToken_Type_Integer;
+                    token->value = cos_token_value_integer_number(number_value.value.integer_value);
+                }
+                else {
+                    token->type = CosToken_Type_Real;
+                    token->value = cos_token_value_real_number(number_value.value.real_value);
+                }
+            }
+            else {
+                // Error: invalid number.
+                token->type = CosToken_Type_Unknown;
+            }
         } break;
 
         default: {
@@ -291,10 +360,11 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
             CosError error;
             if (cos_tokenizer_read_token_(tokenizer, string, &error)) {
                 // This might be a keyword.
-                CosToken_Type type = CosToken_Type_Unknown;
-                if (cos_check_keyword_(cos_string_make_ref(string), &type)) {
+                const CosKeywordType keyword_type = cos_check_keyword_(cos_string_make_ref(string));
+                if (keyword_type != CosKeywordType_Unknown) {
                     // This is a keyword.
-                    token->type = type;
+                    token->type = CosToken_Type_Keyword;
+                    token->value = cos_token_value_keyword(keyword_type);
 
                     cos_string_free(string);
                 }
@@ -353,7 +423,6 @@ cos_tokenizer_peek_next_char(CosTokenizer *tokenizer)
 static CosToken
 cos_tokenizer_make_token(CosTokenizer *tokenizer, CosToken_Type type, CosTokenValue *value)
 {
-
     const CosToken token = {
         .type = type,
         .text = {0},
@@ -749,79 +818,112 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, C
 }
 
 static bool
-cos_tokenizer_read_number_(CosTokenizer *tokenizer,
-                           int *int_result,
-                           double *double_result,
-                           CosError **error)
+cos_tokenizer_read_number_(CosTokenizer *tokenizer, CosNumberValue *number_value, CosError *error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(number_value != NULL);
 
-    typedef enum CosNumberType {
-        CosNumberType_Integer,
-        CosNumberType_Real,
-    } CosNumberType;
+    bool result = true;
 
-    typedef struct CosNumberState {
-        CosNumberType type;
-        unsigned int digit_count;
-    } CosNumberState;
+    CosString * const string = cos_string_alloc(0);
+    if (!string) {
+        // Error: out of memory.
+        if (error) {
+            *error = cos_error_make(COS_ERROR_MEMORY, "Out of memory");
+        }
+        goto failure;
+    }
 
-    CosNumberState state = {
-        .type = CosNumberType_Integer,
-        .digit_count = 0,
-    };
+    CosNumberType number_type = CosNumberType_Integer;
+    if (!cos_scan_number_(tokenizer, string, &number_type, error)) {
+        // Error: invalid number.
+        goto failure;
+    }
 
-    CosDataBuffer * const buffer = cos_data_buffer_alloc();
-
-    int character = 0;
-    while ((character = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
-        switch (character) {
-
-            case CosCharacterSet_FullStop: {
-                state.type = CosNumberType_Real;
-            } break;
-
-            default: {
-                if (COS_UNLIKELY(!cos_is_decimal_digit(character))) {
-                    // This is the end of the number.
-                    cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
-                    goto end_label;
-                }
-                state.digit_count++;
-            } break;
+    if (number_type == CosNumberType_Integer) {
+        char *end_ptr = NULL;
+        errno = 0;
+        const long long_value = strtol(string->data, &end_ptr, 10);
+        if (end_ptr == string->data || errno == ERANGE) {
+            // Error: invalid integer.
+            goto failure;
         }
 
-        cos_data_buffer_push_back(buffer, (unsigned char)character, NULL);
-        continue;
-
-    end_label:
-        break;
-    }
-
-    if (state.digit_count == 0) {
-        // Error: invalid number.
-        cos_data_buffer_free(buffer);
-        return false;
-    }
-
-    CosString * const number_string = cos_data_buffer_to_string(buffer);
-    if (!number_string) {
-        // Error: out of memory.
-        cos_data_buffer_free(buffer);
-        return false;
-    }
-
-    cos_data_buffer_free(buffer);
-
-    if (state.type == CosNumberType_Integer) {
-        int integer_value = atoi(number_string->data);
+        *number_value = cos_number_value_integer((int)long_value);
     }
     else {
-        double real_value = atof(number_string->data);
-        return (real_value > 0);
+        char *end_ptr = NULL;
+        errno = 0;
+        const double double_value = strtod(string->data, &end_ptr);
+        if (end_ptr == string->data || errno == ERANGE) {
+            // Error: invalid real.
+            goto failure;
+        }
+
+        *number_value = cos_number_value_real(double_value);
     }
 
-    cos_string_free(number_string);
+    goto cleanup;
+
+failure:
+    result = false;
+
+cleanup:
+    cos_string_free(string);
+
+    return result;
+}
+
+static bool
+cos_scan_number_(CosTokenizer *tokenizer,
+                 CosString *string,
+                 CosNumberType *number_type,
+                 CosError *error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(string != NULL);
+    COS_PARAMETER_ASSERT(number_type != NULL);
+
+    bool has_sign = false;
+    bool has_decimal_point = false;
+    unsigned int digit_count = 0;
+
+    /*
+     * The following is a regular expression for a number:
+     * [\+-]?\d*(\.?\d*)?
+     *
+     * That is: an optional sign, followed by zero or more digits,
+     * followed by an optional decimal point and zero or more digits.
+     */
+
+    int c = EOF;
+    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+        if (cos_is_decimal_digit(c)) {
+            digit_count++;
+        }
+        else if ((c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) &&
+                 !(has_sign || has_decimal_point || digit_count > 0)) {
+            has_sign = true;
+        }
+        else if (c == CosCharacterSet_FullStop && !has_decimal_point) {
+            *number_type = CosNumberType_Real;
+            has_decimal_point = true;
+        }
+        else {
+            // This is the end of the number.
+            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            break;
+        }
+        cos_string_push_back(string, (char)c);
+    }
+
+    if (digit_count == 0) {
+        // Error: invalid number.
+        if (error) {
+            *error = cos_error_make(COS_ERROR_SYNTAX, "Invalid number: no digits");
+        }
+        return false;
+    }
 
     return true;
 }
@@ -831,46 +933,29 @@ cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
-    while (cos_tokenizer_skip_whitespace_character_(tokenizer)) {
-        // Skipped whitespace.
-    }
-}
-
-static bool
-cos_tokenizer_skip_whitespace_character_(CosTokenizer *tokenizer)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    if (cos_tokenizer_is_at_end_(tokenizer)) {
-        return false;
-    }
-
-    int c = cos_tokenizer_get_next_char(tokenizer);
-    if (cos_is_whitespace(c)) {
-        return true;
-    }
-    else if (c == CosCharacterSet_PercentSign) {
-        // Skip comment.
-        cos_tokenizer_skip_comment_(tokenizer);
-        return true;
-    }
-    else {
-        // This is not a whitespace character.
-        cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
-        return false;
+    int c = EOF;
+    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+        if (cos_is_whitespace(c)) {
+            continue;
+        }
+        else if (c == CosCharacterSet_PercentSign) {
+            // Skip comment.
+            cos_tokenizer_skip_comment_(tokenizer);
+        }
+        else {
+            // This is not a whitespace character.
+            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            break;
+        }
     }
 }
 
 static void
-cos_tokenizer_skip_character_(CosTokenizer *tokenizer, int character)
+cos_tokenizer_skip_character_(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
     int c = EOF;
-    if ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
-        if (c != character) {
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
-        }
+    if ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF && c != 10) {
+        cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
     }
 }
 
@@ -884,7 +969,7 @@ cos_tokenizer_skip_comment_(CosTokenizer *tokenizer)
         if (cos_is_end_of_line(c)) {
             // This is the end of the comment.
             if (c == CosCharacterSet_CarriageReturn) {
-                cos_tokenizer_skip_character_(tokenizer, CosCharacterSet_LineFeed);
+                cos_tokenizer_skip_character_(tokenizer);
             }
             return;
         }
@@ -918,74 +1003,62 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
     return true;
 }
 
-static inline bool
-cos_check_keyword_(CosStringRef text, CosToken_Type *type)
+static inline CosKeywordType
+cos_check_keyword_(CosStringRef text)
 {
-    COS_PARAMETER_ASSERT(type != NULL);
-
-    if (text.length == 0) {
-        return false;
+    // The longest keywords are 9 characters long.
+    if (text.length == 0 || text.length > 9) {
+        return CosKeywordType_Unknown;
     }
 
     switch (text.data[0]) {
         case 't': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("true")) == 0) {
-                *type = CosToken_Type_Keyword_True;
-                return true;
+                return CosKeywordType_True;
             }
             else if (cos_string_ref_cmp(text, cos_string_ref_const("trailer")) == 0) {
-                *type = CosToken_Type_Keyword_Trailer;
-                return true;
+                return CosKeywordType_Trailer;
             }
         } break;
         case 'f': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("false")) == 0) {
-                *type = CosToken_Type_Keyword_False;
-                return true;
+                return CosKeywordType_False;
             }
         } break;
         case 'n': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("null")) == 0) {
-                *type = CosToken_Type_Keyword_Null;
-                return true;
+                return CosKeywordType_Null;
             }
         } break;
         case 'R': {
             if (text.length == 1) {
-                *type = CosToken_Type_Keyword_R;
-                return true;
+                return CosKeywordType_R;
             }
         } break;
         case 'o': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("obj")) == 0) {
-                *type = CosToken_Type_Keyword_Obj;
-                return true;
+                return CosKeywordType_Obj;
             }
         } break;
         case 'e': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("endobj")) == 0) {
-                *type = CosToken_Type_Keyword_EndObj;
-                return true;
+                return CosKeywordType_EndObj;
             }
             else if (cos_string_ref_cmp(text, cos_string_ref_const("endstream")) == 0) {
-                *type = CosToken_Type_Keyword_EndStream;
-                return true;
+                return CosKeywordType_EndStream;
             }
         } break;
         case 's': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("stream")) == 0) {
-                *type = CosToken_Type_Keyword_Stream;
-                return true;
+                return CosKeywordType_Stream;
             }
             else if (cos_string_ref_cmp(text, cos_string_ref_const("startxref")) == 0) {
-                *type = CosToken_Type_Keyword_StartXRef;
-                return true;
+                return CosKeywordType_StartXRef;
             }
         } break;
         case 'x': {
             if (cos_string_ref_cmp(text, cos_string_ref_const("xref")) == 0) {
-                *type = CosToken_Type_Keyword_XRef;
-                return true;
+                return CosKeywordType_XRef;
             }
         } break;
 
@@ -993,7 +1066,7 @@ cos_check_keyword_(CosStringRef text, CosToken_Type *type)
             break;
     }
 
-    return false;
+    return CosKeywordType_Unknown;
 }
 
 COS_ASSUME_NONNULL_END

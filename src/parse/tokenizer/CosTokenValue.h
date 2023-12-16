@@ -19,6 +19,7 @@ struct CosTokenValue {
         CosTokenValue_Type_Data,
         CosTokenValue_Type_IntegerNumber,
         CosTokenValue_Type_RealNumber,
+        CosTokenValue_Type_Keyword,
     } type;
 
     union {
@@ -27,6 +28,7 @@ struct CosTokenValue {
         CosData *data;
         int integer_number;
         double real_number;
+        CosKeywordType keyword;
     } value;
 };
 
@@ -87,6 +89,17 @@ cos_token_value_real_number(double value)
         .type = CosTokenValue_Type_RealNumber,
         .value = {
             .real_number = value,
+        },
+    };
+}
+
+static inline CosTokenValue
+cos_token_value_keyword(CosKeywordType value)
+{
+    return (CosTokenValue){
+        .type = CosTokenValue_Type_Keyword,
+        .value = {
+            .keyword = value,
         },
     };
 }
