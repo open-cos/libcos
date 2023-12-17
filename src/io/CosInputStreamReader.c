@@ -55,16 +55,13 @@ cos_input_stream_reader_alloc(CosInputStream *input_stream)
 
     reader->buffer = buffer;
     reader->buffer_size = COS_INPUT_STREAM_READER_BUFFER_SIZE;
-    reader->buffer_position = 0;
+    reader->buffer_position = reader->buffer_size;
 
     return reader;
 
 failure:
     if (reader) {
         free(reader);
-    }
-    if (buffer) {
-        free(buffer);
     }
 
     return NULL;
