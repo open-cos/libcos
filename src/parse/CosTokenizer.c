@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "common/CosDataBuffer.h"
+#include "common/CosMacros.h"
 #include "common/CosString.h"
 #include "common/CosVector.h"
 #include "io/CosInputStreamReader.h"
@@ -15,6 +16,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "CosToken.h"
 
@@ -23,21 +25,21 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosTokenizer {
     CosInputStreamReader *input_stream_reader;
 
-    CosToken * COS_Nullable peeked_token;
-
-    CosToken current_token;
-
-    CosDataBuffer *text_buffer;
+    CosToken tokens[2];
+    size_t next_token_index;
+    bool has_peeked_token;
 };
 
-static inline bool
-cos_tokenizer_is_at_end_(CosTokenizer *tokenizer);
+static void
+cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
+                               CosToken *token)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 static inline int
-cos_tokenizer_get_next_char(CosTokenizer *tokenizer);
+cos_tokenizer_get_next_char_(CosTokenizer *tokenizer);
 
 static inline int
-cos_tokenizer_peek_next_char(CosTokenizer *tokenizer);
+cos_tokenizer_peek_next_char_(CosTokenizer *tokenizer);
 
 /**
  * Advances the tokenizer if the next character matches the given character.
@@ -48,7 +50,7 @@ cos_tokenizer_peek_next_char(CosTokenizer *tokenizer);
  * @return true if the next character matches the given character, false otherwise.
  */
 static bool
-cos_tokenizer_match(CosTokenizer *tokenizer, char character);
+cos_tokenizer_match_(CosTokenizer *tokenizer, char character);
 
 static void
 cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer);
@@ -74,7 +76,8 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer, CosDataBuffer *buffe
  * @return @c true if a character was written to @p result, @c false otherwise.
  */
 static bool
-cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, unsigned char *result)
+cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer,
+                                                     unsigned char *result)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /**
@@ -90,7 +93,9 @@ static int
 cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer);
 
 static bool
-cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, CosError **error);
+cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
+                               CosDataBuffer *buffer,
+                               CosError *error);
 
 typedef enum CosNumberType {
     CosNumberType_Integer,
@@ -129,8 +134,11 @@ cos_number_value_real(double value)
 }
 
 static bool
-cos_tokenizer_read_number_(CosTokenizer *tokenizer, CosNumberValue *number_value, CosError *error)
-    COS_ATTR_ACCESS_WRITE_ONLY(2) COS_ATTR_ACCESS_WRITE_ONLY(3);
+cos_tokenizer_read_number_(CosTokenizer *tokenizer,
+                           CosNumberValue *number_value,
+                           CosError *error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 /**
  * @brief Scans a number.
@@ -146,10 +154,14 @@ static bool
 cos_scan_number_(CosTokenizer *tokenizer,
                  CosString *string,
                  CosNumberType *number_type,
-                 CosError *error) COS_ATTR_ACCESS_WRITE_ONLY(3) COS_ATTR_ACCESS_WRITE_ONLY(4);
+                 CosError *error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 static bool
-cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *error);
+cos_tokenizer_read_token_(CosTokenizer *tokenizer,
+                          CosString *string,
+                          CosError *error);
 
 /**
  * Checks whether the given string is a keyword.
@@ -160,8 +172,8 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
  * @return @c true if the string is a keyword, @c false otherwise.
  */
 static inline CosKeywordType
-cos_check_keyword_(CosStringRef
-                       text) COS_ATTR_ACCESS_WRITE_ONLY(2);
+cos_check_keyword_(CosStringRef text)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 CosTokenizer *
 cos_tokenizer_alloc(CosInputStream *input_stream)
@@ -181,19 +193,12 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
 
     tokenizer->input_stream_reader = input_stream_reader;
 
-    tokenizer->peeked_token = NULL;
-
-    tokenizer->text_buffer = cos_data_buffer_alloc();
-    if (!tokenizer->text_buffer) {
-        goto failure;
-    }
+    memset(tokenizer->tokens, 0, sizeof(tokenizer->tokens));
+    tokenizer->next_token_index = 0;
 
     return tokenizer;
 
 failure:
-    if (input_stream_reader) {
-        cos_input_stream_reader_free(input_stream_reader);
-    }
     if (tokenizer) {
         free(tokenizer);
     }
@@ -210,7 +215,10 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
 
     cos_input_stream_reader_free(tokenizer->input_stream_reader);
 
-    cos_data_buffer_free(tokenizer->text_buffer);
+    // Reset the token values to free any dynamic memory.
+    for (size_t i = 0; i < COS_ARRAY_SIZE(tokenizer->tokens); i++) {
+        cos_token_value_reset(&(tokenizer->tokens[i].value));
+    }
 
     free(tokenizer);
 }
@@ -219,24 +227,48 @@ CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
-    if (!tokenizer) {
-        return NULL;
+
+    CosToken * const token = &(tokenizer->tokens[tokenizer->next_token_index]);
+
+    // If we have a peeked token, consume it.
+    if (tokenizer->has_peeked_token) {
+        tokenizer->has_peeked_token = false;
+    }
+    else {
+        // Otherwise, read the next token.
+        cos_tokenizer_read_next_token_(tokenizer, token);
     }
 
-    // If we have a peeked token, return it.
-    if (tokenizer->peeked_token) {
-        CosToken * const token = tokenizer->peeked_token;
-        tokenizer->peeked_token = NULL;
-        return token;
+    // Advance the next token index.
+    tokenizer->next_token_index = (tokenizer->next_token_index + 1) % 2;
+
+    return token;
+}
+
+CosToken *
+cos_tokenizer_peek_token(CosTokenizer *tokenizer)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+
+    CosToken * const token = &(tokenizer->tokens[tokenizer->next_token_index]);
+
+    if (!tokenizer->has_peeked_token) {
+        // Read the next token.
+        cos_tokenizer_read_next_token_(tokenizer, token);
     }
 
-    CosToken *token = malloc(sizeof(CosToken));
-    if (!token) {
-        return NULL;
-    }
+    return token;
+}
+
+static void
+cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
+                               CosToken *token)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(token != NULL);
 
     token->type = CosToken_Type_Unknown;
-    token->value = cos_token_value_none();
+    cos_token_value_reset(&(token->value));
 
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
@@ -286,13 +318,14 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
 
         case CosCharacterSet_LessThanSign: {
             // This is either a dictionary ("<<") or a hex string ("<").
-            if (cos_tokenizer_match(tokenizer, CosCharacterSet_LessThanSign)) {
+            if (cos_tokenizer_match_(tokenizer, CosCharacterSet_LessThanSign)) {
                 token->type = CosToken_Type_DictionaryStart;
             }
             else {
                 // This is a hex string.
                 CosDataBuffer * const buffer = cos_data_buffer_alloc();
-                if (cos_tokenizer_read_hex_string_(tokenizer, buffer, NULL)) {
+                CosError error;
+                if (cos_tokenizer_read_hex_string_(tokenizer, buffer, &error)) {
                     token->type = CosToken_Type_Hex_String;
                     token->value = cos_token_value_data(NULL);
                 }
@@ -306,7 +339,7 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
         } break;
 
         case CosCharacterSet_GreaterThanSign: {
-            if (cos_tokenizer_match(tokenizer, CosCharacterSet_GreaterThanSign)) {
+            if (cos_tokenizer_match_(tokenizer, CosCharacterSet_GreaterThanSign)) {
                 token->type = CosToken_Type_DictionaryEnd;
             }
             else {
@@ -382,30 +415,10 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
             }
         } break;
     }
-
-    return token;
-}
-
-CosToken *
-cos_tokenizer_peek_token(CosTokenizer *tokenizer)
-{
-    if (!tokenizer->peeked_token) {
-        tokenizer->peeked_token = cos_tokenizer_next_token(tokenizer);
-    }
-
-    return tokenizer->peeked_token;
-}
-
-static inline bool
-cos_tokenizer_is_at_end_(CosTokenizer *tokenizer)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    return cos_input_stream_reader_is_at_end(tokenizer->input_stream_reader);
 }
 
 static inline int
-cos_tokenizer_get_next_char(CosTokenizer *tokenizer)
+cos_tokenizer_get_next_char_(CosTokenizer *tokenizer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
@@ -413,32 +426,21 @@ cos_tokenizer_get_next_char(CosTokenizer *tokenizer)
 }
 
 static inline int
-cos_tokenizer_peek_next_char(CosTokenizer *tokenizer)
+cos_tokenizer_peek_next_char_(CosTokenizer *tokenizer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
     return cos_input_stream_reader_peek(tokenizer->input_stream_reader);
 }
 
-static CosToken
-cos_tokenizer_make_token(CosTokenizer *tokenizer, CosToken_Type type, CosTokenValue *value)
-{
-    const CosToken token = {
-        .type = type,
-        .text = {0},
-        //        .value = value,
-    };
-    return token;
-}
-
 static bool
-cos_tokenizer_match(CosTokenizer *tokenizer, char character)
+cos_tokenizer_match_(CosTokenizer *tokenizer, char character)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
-    int c = cos_tokenizer_peek_next_char(tokenizer);
+    int c = cos_tokenizer_peek_next_char_(tokenizer);
     if (c == character) {
-        cos_tokenizer_get_next_char(tokenizer);
+        cos_tokenizer_get_next_char_(tokenizer);
 
         return true;
     }
@@ -527,7 +529,7 @@ cos_tokenizer_read_name_(CosTokenizer *tokenizer, CosDataBuffer *buffer)
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
     int character;
-    while ((character = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((character = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         switch (character) {
             default: {
                 // This is a regular character.
@@ -567,9 +569,9 @@ cos_tokenizer_handle_name_hex_escape_sequence_(CosTokenizer *tokenizer)
     int hex_value = 0;
 
     for (int i = 0; i < 2; i++) {
-        const int character = cos_tokenizer_peek_next_char(tokenizer);
+        const int character = cos_tokenizer_peek_next_char_(tokenizer);
         if (COS_LIKELY(cos_is_hex_digit(character))) {
-            cos_tokenizer_get_next_char(tokenizer);
+            cos_tokenizer_get_next_char_(tokenizer);
 
             const char hex_digit = cos_hex_digit_to_int_(character);
 
@@ -593,7 +595,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer, CosDataBuffer *buffe
     unsigned int nested_parentheses_level = 0;
 
     int c = EOF;
-    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         switch (c) {
             case CosCharacterSet_LeftParenthesis: {
                 COS_ASSERT(nested_parentheses_level < UINT_MAX,
@@ -630,7 +632,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer, CosDataBuffer *buffe
                  * shall be treated as a byte value of (0Ah), irrespective of whether the end-of-line marker was
                  * a CARRIAGE RETURN (0Dh), a LINE FEED (0Ah), or both.
                  */
-                if (cos_tokenizer_match(tokenizer, CosCharacterSet_LineFeed)) {
+                if (cos_tokenizer_match_(tokenizer, CosCharacterSet_LineFeed)) {
                     // Treating the CRLF as LF.
                 }
                 c = CosCharacterSet_LineFeed;
@@ -654,7 +656,7 @@ cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, un
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
-    const int c = cos_tokenizer_get_next_char(tokenizer);
+    const int c = cos_tokenizer_get_next_char_(tokenizer);
     switch (c) {
         case EOF: {
             // This is an error.
@@ -716,7 +718,7 @@ cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, un
         } break;
 
         case CosCharacterSet_CarriageReturn:
-            if (cos_tokenizer_match(tokenizer, CosCharacterSet_LineFeed)) {
+            if (cos_tokenizer_match_(tokenizer, CosCharacterSet_LineFeed)) {
                 // Treating the CRLF as LF.
             }
             COS_ATTR_FALLTHROUGH;
@@ -745,7 +747,7 @@ cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer)
     int value = 0;
 
     for (int i = 0; i < 3; i++) {
-        const int c = cos_tokenizer_get_next_char(tokenizer);
+        const int c = cos_tokenizer_get_next_char_(tokenizer);
         if (cos_is_octal_digit(c)) {
             const int octal_digit_value = cos_octal_digit_to_int_(c);
 
@@ -765,7 +767,7 @@ cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer)
 }
 
 static bool
-cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, CosError **error)
+cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, CosError *error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(buffer != NULL);
@@ -774,7 +776,7 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, C
     bool odd_number_of_hex_digits = false;
 
     int character = EOF;
-    while ((character = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((character = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (COS_LIKELY(cos_is_hex_digit(character))) {
             // This is a hex digit.
             const char hex_digit_value = cos_hex_digit_to_int_(character);
@@ -812,7 +814,8 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer, CosDataBuffer *buffer, C
 
     // Error: unterminated hex string.
     if (error) {
-        *error = cos_error_alloc(COS_ERROR_SYNTAX, "Unterminated hex string");
+        *error = cos_error_make(COS_ERROR_SYNTAX,
+                                "Unterminated hex string");
     }
     return false;
 }
@@ -869,7 +872,9 @@ failure:
     result = false;
 
 cleanup:
-    cos_string_free(string);
+    if (string) {
+        cos_string_free(string);
+    }
 
     return result;
 }
@@ -897,7 +902,7 @@ cos_scan_number_(CosTokenizer *tokenizer,
      */
 
     int c = EOF;
-    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_decimal_digit(c)) {
             digit_count++;
         }
@@ -934,7 +939,7 @@ cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
     int c = EOF;
-    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_whitespace(c)) {
             continue;
         }
@@ -954,7 +959,7 @@ static void
 cos_tokenizer_skip_character_(CosTokenizer *tokenizer)
 {
     int c = EOF;
-    if ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF && c != 10) {
+    if ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF && c != 10) {
         cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
     }
 }
@@ -965,7 +970,7 @@ cos_tokenizer_skip_comment_(CosTokenizer *tokenizer)
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
     int c = EOF;
-    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_end_of_line(c)) {
             // This is the end of the comment.
             if (c == CosCharacterSet_CarriageReturn) {
@@ -984,7 +989,7 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
     COS_PARAMETER_ASSERT(string != NULL);
 
     int c = EOF;
-    while ((c = cos_tokenizer_get_next_char(tokenizer)) != EOF) {
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_whitespace(c) || cos_is_delimiter(c)) {
             // This is the end of the token.
             cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);

@@ -60,6 +60,7 @@ add_library(libcos SHARED
         src/common/CosHashTable.h
         src/io/CosInputStreamReader.c
         src/io/CosInputStreamReader.h
+        src/common/CosMacros.h
 )
 
 target_include_directories(libcos
@@ -79,6 +80,13 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             -fsanitize=null
             -fsanitize=alignment
     )
+
+    if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
+        target_compile_options(libcos PRIVATE
+                -Werror=enum-conversion
+        )
+    endif ()
+
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     target_compile_options(libcos PRIVATE
             -Wall
@@ -97,6 +105,22 @@ endif ()
 set_target_properties(libcos PROPERTIES
     PREFIX "" # Remove the "lib" prefix from the library name.
 )
+
+# Tests
+
+enable_testing()
+
+add_executable(libcos-tests
+        tests/parse/CosTokenizer-Test.c
+)
+
+target_include_directories(libcos-tests
+        PUBLIC include/
+        PRIVATE src/
+        PRIVATE tests/
+)
+
+target_link_libraries(libcos-tests libcos)
 
 # Doxygen
 

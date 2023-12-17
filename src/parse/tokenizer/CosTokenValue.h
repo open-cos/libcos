@@ -6,6 +6,7 @@
 #define LIBCOS_COS_TOKEN_VALUE_H
 
 #include "common/CosData.h"
+#include "common/CosString.h"
 
 #include <stdbool.h>
 
@@ -102,6 +103,33 @@ cos_token_value_keyword(CosKeywordType value)
             .keyword = value,
         },
     };
+}
+
+static inline void
+cos_token_value_reset(CosTokenValue *token_value)
+{
+    if (!token_value) {
+        return;
+    }
+
+    switch (token_value->type) {
+        case CosTokenValue_Type_None:
+        case CosTokenValue_Type_Boolean:
+        case CosTokenValue_Type_IntegerNumber:
+        case CosTokenValue_Type_RealNumber:
+        case CosTokenValue_Type_Keyword:
+            break;
+
+        case CosTokenValue_Type_String: {
+            cos_string_free(token_value->value.string);
+        } break;
+
+        case CosTokenValue_Type_Data: {
+            cos_data_free(token_value->value.data);
+        } break;
+    }
+
+    token_value->type = CosTokenValue_Type_None;
 }
 
 static inline bool

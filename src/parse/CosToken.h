@@ -52,37 +52,32 @@ struct CosToken {
     CosToken_Type type;
 
     /**
-     * @brief The text of the token.
-     */
-    CosStringRef text;
-
-    /**
      * @brief The value of the token.
      *
      * This is only valid for certain token types.
      */
     CosTokenValue value;
 };
-
-bool
-cos_token_has_value(const CosToken *token);
-
-unsigned char *
-cos_token_copy_string_value(const CosToken *token, size_t *out_size);
-
-bool
-cos_token_get_string_value(const CosToken *token, CosString **out_string);
-
-bool
-cos_token_get_data_value(const CosToken *token, CosData **out_data);
-
-bool
-cos_token_get_boolean_value(const CosToken *token, bool *value);
-
-bool
-cos_token_get_integer_value(const CosToken *token, int *value);
-
-bool
-cos_token_get_real_value(const CosToken *token, double *value);
+//
+//bool
+//cos_token_has_value(const CosToken *token);
+//
+//unsigned char *
+//cos_token_copy_string_value(const CosToken *token, size_t *out_size);
+//
+//bool
+//cos_token_get_string_value(const CosToken *token, CosString **out_string);
+//
+//bool
+//cos_token_get_data_value(const CosToken *token, CosData **out_data);
+//
+//bool
+//cos_token_get_boolean_value(const CosToken *token, bool *value);
+//
+//bool
+//cos_token_get_integer_value(const CosToken *token, int *value);
+//
+//bool
+//cos_token_get_real_value(const CosToken *token, double *value);
 
 #endif /* LIBCOS_COS_TOKEN_H */
