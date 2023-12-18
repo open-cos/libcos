@@ -59,7 +59,10 @@ static void
 cos_tokenizer_skip_comment_(CosTokenizer *tokenizer);
 
 static bool
-cos_tokenizer_read_name_(CosTokenizer *tokenizer, CosDataBuffer *buffer);
+cos_tokenizer_read_name_(CosTokenizer *tokenizer,
+                         CosString *string,
+                         CosError *error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 static int
 cos_tokenizer_handle_name_hex_escape_sequence_(CosTokenizer *tokenizer);
@@ -138,7 +141,7 @@ cos_tokenizer_read_number_(CosTokenizer *tokenizer,
                            CosNumberValue *number_value,
                            CosError *error)
     COS_ATTR_ACCESS_WRITE_ONLY(2)
-    COS_ATTR_ACCESS_WRITE_ONLY(3);
+        COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 /**
  * @brief Scans a number.
@@ -156,7 +159,7 @@ cos_scan_number_(CosTokenizer *tokenizer,
                  CosNumberType *number_type,
                  CosError *error)
     COS_ATTR_ACCESS_WRITE_ONLY(3)
-    COS_ATTR_ACCESS_WRITE_ONLY(4);
+        COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 static bool
 cos_tokenizer_read_token_(CosTokenizer *tokenizer,
@@ -195,6 +198,7 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
 
     memset(tokenizer->tokens, 0, sizeof(tokenizer->tokens));
     tokenizer->next_token_index = 0;
+    tokenizer->has_peeked_token = false;
 
     return tokenizer;
 
@@ -288,16 +292,22 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
         case CosCharacterSet_Solidus: {
             // This is a name.
-            CosDataBuffer * const buffer = cos_data_buffer_alloc();
-            if (cos_tokenizer_read_name_(tokenizer, buffer)) {
+            CosString * const string = cos_string_alloc(0);
+            if (!string) {
+                // Error: out of memory.
+                break;
+            }
+
+            CosError error;
+            if (cos_tokenizer_read_name_(tokenizer, string, &error)) {
                 token->type = CosToken_Type_Name;
-                token->value = cos_token_value_data(NULL);
+                token->value = cos_token_value_string(string);
             }
             else {
                 // Error: invalid name.
                 token->type = CosToken_Type_Unknown;
 
-                cos_data_buffer_free(buffer);
+                cos_string_free(string);
             }
         } break;
 
@@ -383,6 +393,8 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         } break;
 
         default: {
+            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+
             // This could be a keyword or an unknown token.
             CosString *string = cos_string_alloc(0);
             if (!string) {
@@ -393,7 +405,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             CosError error;
             if (cos_tokenizer_read_token_(tokenizer, string, &error)) {
                 // This might be a keyword.
-                const CosKeywordType keyword_type = cos_check_keyword_(cos_string_make_ref(string));
+                const CosKeywordType keyword_type = cos_check_keyword_(cos_string_get_ref(string));
                 if (keyword_type != CosKeywordType_Unknown) {
                     // This is a keyword.
                     token->type = CosToken_Type_Keyword;
@@ -524,40 +536,35 @@ cos_octal_digit_to_int_(int character)
 }
 
 static bool
-cos_tokenizer_read_name_(CosTokenizer *tokenizer, CosDataBuffer *buffer)
+cos_tokenizer_read_name_(CosTokenizer *tokenizer,
+                         CosString *string,
+                         CosError *error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(string != NULL);
 
-    int character;
-    while ((character = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
-        switch (character) {
-            default: {
-                // This is a regular character.
-            } break;
-
-            case CosCharacterSet_NumberSign: {
-                // Beginning of a hexadecimal escape sequence.
-                int hex_value = cos_tokenizer_handle_name_hex_escape_sequence_(tokenizer);
-                if (hex_value < 0) {
-                    // Error: invalid hexadecimal escape sequence.
-                    return false;
-                }
-            } break;
-
-            case CosCharacterSet_Nul:
-            case CosCharacterSet_HorizontalTab:
-            case CosCharacterSet_LineFeed:
-            case CosCharacterSet_FormFeed:
-            case CosCharacterSet_CarriageReturn:
-            case CosCharacterSet_Space:
-            case CosCharacterSet_ReverseSolidus: {
-                // This is the end of the name.
-                cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
-                return true;
-            }
+    int c;
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
+        if (cos_is_whitespace(c) || cos_is_delimiter(c)) {
+            // This is the end of the name.
+            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            return true;
         }
-
-        cos_data_buffer_push_back(buffer, (unsigned char)character, NULL);
+        else if (c == CosCharacterSet_NumberSign) {
+            // Beginning of a hexadecimal escape sequence.
+            int hex_value = cos_tokenizer_handle_name_hex_escape_sequence_(tokenizer);
+            if (hex_value < 0) {
+                // Error: invalid hexadecimal escape sequence.
+                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                                   "Invalid hexadecimal escape sequence"),
+                                    error);
+                return false;
+            }
+            cos_string_push_back(string, (char)hex_value);
+        }
+        else {
+            cos_string_push_back(string, (char)c);
+        }
     }
 
     return true;
