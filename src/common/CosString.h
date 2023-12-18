@@ -51,7 +51,9 @@ struct CosString {
  * @see cos_string_free()
  */
 CosString * COS_Nullable
-cos_string_alloc(size_t capacity_hint) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT;
+cos_string_alloc(size_t capacity_hint)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
 
 /**
  * Allocates a new string with the given C-string.
@@ -63,7 +65,9 @@ cos_string_alloc(size_t capacity_hint) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT;
  * @see cos_string_free()
  */
 CosString * COS_Nullable
-cos_string_alloc_with_str(const char *str) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT
+cos_string_alloc_with_str(const char *str)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READONLY(1);
 
 /**
@@ -77,7 +81,9 @@ cos_string_alloc_with_str(const char *str) COS_ATTR_MALLOC COS_WARN_UNUSED_RESUL
  * @see cos_string_free()
  */
 CosString * COS_Nullable
-cos_string_alloc_with_strn(const char *str, size_t n) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT
+cos_string_alloc_with_strn(const char *str, size_t n)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READONLY_SIZE(1, 2);
 
 /**
@@ -131,11 +137,14 @@ cos_string_release(CosString *string);
  * @note The returned string must be freed with @c cos_string_free().
  */
 CosString * COS_Nullable
-cos_string_copy(const CosString *string) COS_ATTR_MALLOC COS_WARN_UNUSED_RESULT
+cos_string_copy(const CosString *string)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READONLY(1);
 
 bool
-cos_string_append_str(CosString *string, const char *str) COS_ATTR_ACCESS_READONLY(2);
+cos_string_append_str(CosString *string, const char *str)
+    COS_ATTR_ACCESS_READONLY(2);
 
 bool
 cos_string_append_strn(CosString *string, const char *str, size_t n)
@@ -155,7 +164,7 @@ cos_string_push_back(CosString *string, char c);
 #pragma mark String Reference
 
 /**
- * A reference to a nul-terminated character array.
+ * A reference to a read-only nul-terminated character array.
  */
 struct CosStringRef {
     /**
@@ -169,9 +178,16 @@ struct CosStringRef {
     size_t length;
 };
 
-#define cos_string_ref_const(str)                                                                  \
-    (CosStringRef){                                                                                              \
-        .data = (str), .length = ((str) ? (sizeof(str) - 1) : 0),                                  \
+/**
+ * @def cos_string_ref_const(str)
+ *
+ * Creates a read-only string reference from the given C-string literal.
+ */
+#define cos_string_ref_const(str)                          \
+    (CosStringRef)                                         \
+    {                                                      \
+        .data = (str),                                     \
+        .length = ((str != NULL) ? (sizeof(str) - 1) : 0), \
     }
 
 /**
@@ -184,7 +200,36 @@ struct CosStringRef {
  * @note The string reference is valid only as long as the string is valid.
  */
 CosStringRef
-cos_string_make_ref(const CosString *string) COS_ATTR_ACCESS_READONLY(1);
+cos_string_get_ref(const CosString *string)
+    COS_ATTR_ACCESS_READONLY(1);
+
+/**
+ * Creates a read-only string reference from the given C-string.
+ *
+ * @param str The C-string.
+ *
+ * @return The string reference.
+ *
+ * @note The string reference is valid only as long as the C-string is valid.
+ * @see @c cos_string_ref_make()
+ */
+CosStringRef
+cos_string_ref_from_str(const char *str)
+    COS_ATTR_ACCESS_READONLY(1);
+
+/**
+ * Creates a read-only string reference from the given C-string.
+ *
+ * @param str The C-string.
+ * @param n The number of characters in the C-string.
+ *
+ * @return The string reference.
+ *
+ * @note The string reference is valid only as long as the C-string is valid.
+ */
+CosStringRef
+cos_string_ref_make(const char *str, size_t n)
+    COS_ATTR_ACCESS_READONLY_SIZE(1, 2);
 
 /**
  * Compares two string references for equality.

@@ -2,16 +2,12 @@
 // Created by david on 17/12/23.
 //
 
-#include "libcos/io/string-support.h"
 #include "parse/CosTokenizer.h"
+#include "syntax/CosSyntax.h"
 
 #include <libcos/io/CosInputStream.h>
 
 #include <stdlib.h>
-#include <string.h>
-
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 
 int
 main(int argc, char *argv[])
@@ -33,12 +29,21 @@ main(int argc, char *argv[])
     while ((token = cos_tokenizer_next_token(tokenizer)) != NULL) {
         if (token->type == CosToken_Type_EOF) {
             break;
-        }posix
+        }
 
         switch (token->type) {
             case CosToken_Type_Unknown: {
-                printf("Unknown\n");
+                CosString *string = NULL;
+                if (cos_token_value_get_string(&(token->value),
+                                               &string)) {
+                    printf("Unknown: %s\n",
+                           string->data);
+                }
+                else {
+                    printf("Unknown\n");
+                }
             } break;
+
             case CosToken_Type_Boolean: {
                 bool value = false;
                 if (cos_token_value_get_boolean(&(token->value),
@@ -109,12 +114,12 @@ main(int argc, char *argv[])
                 printf("Dictionary End\n");
             } break;
             case CosToken_Type_Keyword: {
-                //                CosKeywordType value = CosKeywordType_Unknown;
-                //                if (cos_token_get_keyword_value(token,
-                //                                                &value)) {
-                //                    printf("Keyword: %s\n",
-                //                           cos_keyword_type_to_string(value));
-                //                }
+                CosKeywordType value = CosKeywordType_Unknown;
+                if (cos_token_value_get_keyword(&(token->value),
+                                                &value)) {
+                    printf("Keyword: %s\n",
+                           cos_keyword_type_to_string(value));
+                }
             } break;
             case CosToken_Type_EOF: {
                 printf("EOF\n");

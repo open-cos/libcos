@@ -61,6 +61,8 @@ add_library(libcos SHARED
         src/io/CosInputStreamReader.c
         src/io/CosInputStreamReader.h
         src/common/CosMacros.h
+        src/syntax/CosSyntax.c
+        src/syntax/CosSyntax.h
 )
 
 target_include_directories(libcos

@@ -5,6 +5,8 @@
 #ifndef LIBCOS_COS_ERROR_H
 #define LIBCOS_COS_ERROR_H
 
+#include <libcos/common/CosDefines.h>
+
 struct CosError;
 typedef struct CosError CosError;
 
@@ -25,6 +27,9 @@ struct CosError {
     const char *message;
 };
 
+#define COS_ERROR_PROPAGATE(source_error, destination_error) \
+    cos_error_propagate_(source_error, destination_error)
+
 CosError
 cos_error_make(CosErrorCode code, const char *message);
 
@@ -33,5 +38,10 @@ cos_error_alloc(CosErrorCode code, const char *message);
 
 void
 cos_error_propagate(CosError *source_error, CosError **destination_error);
+
+void
+cos_error_propagate_(CosError source_error,
+                     CosError *destination_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 #endif /* LIBCOS_COS_ERROR_H */

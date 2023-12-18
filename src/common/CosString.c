@@ -151,7 +151,7 @@ cos_string_copy(const CosString *string)
 }
 
 CosStringRef
-cos_string_make_ref(const CosString *string)
+cos_string_get_ref(const CosString *string)
 {
     COS_PARAMETER_ASSERT(string != NULL);
 
@@ -159,6 +159,31 @@ cos_string_make_ref(const CosString *string)
     if (string) {
         result.data = string->data;
         result.length = string->length;
+    }
+    return result;
+}
+
+CosStringRef
+cos_string_ref_from_str(const char *str)
+{
+    COS_PARAMETER_ASSERT(str != NULL);
+    if (!str) {
+        return cos_string_ref_make("", 0);
+    }
+    else {
+        return cos_string_ref_make(str, strlen(str));
+    }
+}
+
+CosStringRef
+cos_string_ref_make(const char *str, size_t length)
+{
+    COS_PARAMETER_ASSERT(str != NULL);
+
+    CosStringRef result = {0};
+    if (str) {
+        result.data = str;
+        result.length = length;
     }
     return result;
 }

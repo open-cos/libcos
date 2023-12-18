@@ -4,6 +4,8 @@
 
 #include "libcos/common/CosError.h"
 
+#include "common/Assert.h"
+
 #include <stdlib.h>
 
 CosError *
@@ -38,4 +40,14 @@ cos_error_make(CosErrorCode code, const char *message)
         .message = message,
     };
     return result;
+}
+
+void
+cos_error_propagate_(CosError source_error,
+                     CosError *destination_error)
+{
+    COS_PARAMETER_ASSERT(destination_error != NULL);
+    if (destination_error) {
+        *destination_error = source_error;
+    }
 }

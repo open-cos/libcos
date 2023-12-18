@@ -7,6 +7,7 @@
 
 #include "common/CosData.h"
 #include "common/CosString.h"
+#include "syntax/CosSyntax.h"
 
 #include <stdbool.h>
 
@@ -197,6 +198,20 @@ cos_token_value_get_real_number(const CosTokenValue *token_value,
 
     if (result) {
         *result = token_value->value.real_number;
+    }
+    return true;
+}
+
+static inline bool
+cos_token_value_get_keyword(const CosTokenValue *token_value,
+                            CosKeywordType *result)
+{
+    if (!token_value || token_value->type != CosTokenValue_Type_Keyword) {
+        return false;
+    }
+
+    if (result) {
+        *result = token_value->value.keyword;
     }
     return true;
 }
