@@ -25,4 +25,10 @@ typedef struct CosArrayObj CosArrayObj;
 typedef struct CosDictObj CosDictObj;
 typedef struct CosStringObj CosStringObj;
 
+typedef struct CosInputStream CosInputStream;
+typedef struct CosInputStreamFunctions CosInputStreamFunctions;
+typedef struct CosFileInputStream CosFileInputStream;
+
+typedef struct CosBufferedInputStream CosBufferedInputStream;
+
 #endif /* LIBCOS_COMMON_COS_TYPES_H */

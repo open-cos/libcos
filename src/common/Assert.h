@@ -7,16 +7,15 @@
 
 #include <libcos/common/CosDefines.h>
 
-#define COS_ASSERT(condition, message, ...)  \
-    do {                                     \
-        if (!(condition)) {                  \
-            cos_assert_impl_(#condition,     \
-                             __func__,       \
-                             __FILE__,       \
-                             __LINE__,       \
-                             message,        \
-                             ##__VA_ARGS__); \
-        }                                    \
+#define COS_ASSERT(condition, ...)         \
+    do {                                   \
+        if (!(condition)) {                \
+            cos_assert_impl_(#condition,   \
+                             __func__,     \
+                             __FILE__,     \
+                             __LINE__,     \
+                             __VA_ARGS__); \
+        }                                  \
     } while (0)
 
 #define COS_PARAMETER_ASSERT(condition)            \
@@ -37,7 +36,6 @@ cos_assert_impl_(const char *condition,
                  int line,
                  const char *message,
                  ...)
-    COS_FORMAT_PRINTF(5, 6)
-        COS_NORETURN;
+    COS_FORMAT_PRINTF(5, 6);
 
 #endif //LIBCOS_ASSERT_H

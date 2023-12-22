@@ -2,6 +2,7 @@
 // Created by david on 17/12/23.
 //
 
+#include "libcos/io/CosFileInputStream.h"
 #include "parse/CosTokenizer.h"
 #include "syntax/CosSyntax.h"
 
@@ -14,13 +15,14 @@ main(int argc, char *argv[])
 {
     // Get the current working directory.
 
-    CosInputStream * const input_stream = cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                                     "r");
+    CosFileInputStream * const input_stream = cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                                                     "r",
+                                                                     NULL);
     if (!input_stream) {
         goto failure;
     }
 
-    CosTokenizer * const tokenizer = cos_tokenizer_alloc(input_stream);
+    CosTokenizer * const tokenizer = cos_tokenizer_alloc((CosInputStream *)input_stream);
     if (!tokenizer) {
         goto failure;
     }
@@ -65,7 +67,7 @@ main(int argc, char *argv[])
                 if (cos_token_value_get_data(&(token->value),
                                              &data)) {
                     printf("Hex String: %s\n",
-                           cos_data_get_bytes(data));
+                           data->bytes);
                 }
             } break;
             case CosToken_Type_Name: {
@@ -128,7 +130,7 @@ main(int argc, char *argv[])
     }
 
     cos_tokenizer_free(tokenizer);
-    cos_input_stream_close(input_stream);
+    cos_input_stream_close((CosInputStream *)input_stream);
 
     return EXIT_SUCCESS;
 

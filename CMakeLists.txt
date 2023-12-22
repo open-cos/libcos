@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
-project(libcos C)
+project(libcos
+    VERSION 0.0.0
+    DESCRIPTION "The Carousel Object System (COS) library."
+    HOMEPAGE_URL "https://github.com/open-cos/libcos"
+    LANGUAGES C)
+
+# CMake modules.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -63,6 +70,9 @@ add_library(libcos SHARED
         src/common/CosMacros.h
         src/syntax/CosSyntax.c
         src/syntax/CosSyntax.h
+        include/libcos/io/CosFileInputStream.h
+        src/io/CosBufferedInputStream.c
+        src/io/CosBufferedInputStream.h
 )
 
 target_include_directories(libcos
@@ -74,13 +84,7 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             -Wall -Wextra
             -Wno-unknown-pragmas
             -Werror=return-type -Werror=incompatible-pointer-types
-            -fsanitize=address
-            -fsanitize=undefined
-            -fno-sanitize-recover=all
-            -fsanitize=float-divide-by-zero
-            -fsanitize=float-cast-overflow
-            -fsanitize=null
-            -fsanitize=alignment
+            -fanalyzer
     )
 
     if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
@@ -96,7 +100,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Weverything
             -Wint-conversion
             -Wstrict-prototypes
-            -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension -Wno-unsafe-buffer-usage
+            -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
+            -Werror=implicit-int -Werror=implicit-function-declaration
             -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")

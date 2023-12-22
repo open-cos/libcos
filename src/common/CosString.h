@@ -58,7 +58,7 @@ cos_string_alloc(size_t capacity_hint)
 /**
  * Allocates a new string with the given C-string.
  *
- * @param data The null-terminated C-string to copy.
+ * @param str The null-terminated C-string to copy.
  * @return The new string, or @c NULL if memory allocation failed.
  *
  * @note The returned string must be freed with @c cos_string_free().
@@ -68,12 +68,12 @@ CosString * COS_Nullable
 cos_string_alloc_with_str(const char *str)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT
-    COS_ATTR_ACCESS_READONLY(1);
+    COS_ATTR_ACCESS_READ_ONLY(1);
 
 /**
  * Allocates a new string with the given C-string.
  *
- * @param data The C-string to copy.
+ * @param str The C-string to copy.
  * @param n The number of characters to copy.
  * @return The new string, or @c NULL if memory allocation failed.
  *
@@ -140,11 +140,11 @@ CosString * COS_Nullable
 cos_string_copy(const CosString *string)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT
-    COS_ATTR_ACCESS_READONLY(1);
+    COS_ATTR_ACCESS_READ_ONLY(1);
 
 bool
 cos_string_append_str(CosString *string, const char *str)
-    COS_ATTR_ACCESS_READONLY(2);
+    COS_ATTR_ACCESS_READ_ONLY(2);
 
 bool
 cos_string_append_strn(CosString *string, const char *str, size_t n)
@@ -201,7 +201,7 @@ struct CosStringRef {
  */
 CosStringRef
 cos_string_get_ref(const CosString *string)
-    COS_ATTR_ACCESS_READONLY(1);
+    COS_ATTR_ACCESS_READ_ONLY(1);
 
 /**
  * Creates a read-only string reference from the given C-string.
@@ -215,7 +215,7 @@ cos_string_get_ref(const CosString *string)
  */
 CosStringRef
 cos_string_ref_from_str(const char *str)
-    COS_ATTR_ACCESS_READONLY(1);
+    COS_ATTR_ACCESS_READ_ONLY(1);
 
 /**
  * Creates a read-only string reference from the given C-string.

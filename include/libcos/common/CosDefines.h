@@ -83,6 +83,17 @@
 #endif
 
 /**
+ * @def COS_ATTR_UNUSED
+ *
+ * @brief Marks a variable as unused.
+ */
+#if COS_HAS_ATTRIBUTE(unused)
+#define COS_ATTR_UNUSED __attribute__((unused))
+#else
+#define COS_ATTR_UNUSED
+#endif
+
+/**
  * @def COS_ATTR_MALLOC
  *
  * @brief Marks a function as returning a pointer to memory that should be freed.
@@ -101,12 +112,14 @@
 #define COS_ATTR_ACCESS_SIZE(access_mode, ref_index, size_index)
 #endif
 
-#define COS_ATTR_ACCESS_READONLY(ref_index) COS_ATTR_ACCESS(read_only, ref_index)
-#define COS_ATTR_ACCESS_READ_WRITE(ref_index) COS_ATTR_ACCESS(read_write, ref_index)
+#define COS_ATTR_ACCESS_READ_ONLY(ref_index) COS_ATTR_ACCESS(read_only, ref_index)
+#define COS_ATTR_ACCESS_READWRITE(ref_index) COS_ATTR_ACCESS(read_write, ref_index)
 #define COS_ATTR_ACCESS_WRITE_ONLY(ref_index) COS_ATTR_ACCESS(write_only, ref_index)
 #define COS_ATTR_ACCESS_NONE(ref_index) COS_ATTR_ACCESS(none, ref_index)
 
 #define COS_ATTR_ACCESS_READONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_only, ref_index, size_index)
+#define COS_ATTR_ACCESS_READ_WRITE_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_write, ref_index, size_index)
+#define COS_ATTR_ACCESS_WRITE_ONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(write_only, ref_index, size_index)
 
 #if COS_HAS_ATTRIBUTE(fallthrough)
 #define COS_ATTR_FALLTHROUGH __attribute__((fallthrough))
