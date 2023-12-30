@@ -75,8 +75,8 @@ target_sources(libcos PRIVATE
         src/objects/CosRealObj.c
         src/objects/CosStringObj-Impl.h
         src/objects/CosStringObj.c
-        src/parse/CosParser.c
-        src/parse/CosParser.h
+        src/parse/CosObjParser.c
+        src/parse/CosObjParser.h
         src/parse/CosTokenizer.c
         src/parse/CosTokenizer.h
         src/parse/tokenizer/CosTokenValue.c
