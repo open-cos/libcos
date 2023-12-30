@@ -9,7 +9,13 @@
 #include "common/CosString.h"
 #include "syntax/CosSyntax.h"
 
+#include <libcos/common/CosDefines.h>
+#include <libcos/common/CosTypes.h>
+
 #include <stdbool.h>
+
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
 
 typedef struct CosTokenValue CosTokenValue;
 
@@ -106,33 +112,6 @@ cos_token_value_keyword(CosKeywordType value)
     };
 }
 
-static inline void
-cos_token_value_reset(CosTokenValue *token_value)
-{
-    if (!token_value) {
-        return;
-    }
-
-    switch (token_value->type) {
-        case CosTokenValue_Type_None:
-        case CosTokenValue_Type_Boolean:
-        case CosTokenValue_Type_IntegerNumber:
-        case CosTokenValue_Type_RealNumber:
-        case CosTokenValue_Type_Keyword:
-            break;
-
-        case CosTokenValue_Type_String: {
-            cos_string_free(token_value->value.string);
-        } break;
-
-        case CosTokenValue_Type_Data: {
-            cos_data_free(token_value->value.data);
-        } break;
-    }
-
-    token_value->type = CosTokenValue_Type_None;
-}
-
 static inline bool
 cos_token_value_get_boolean(const CosTokenValue *token_value,
                             bool *result)
@@ -215,5 +194,40 @@ cos_token_value_get_keyword(const CosTokenValue *token_value,
     }
     return true;
 }
+
+/**
+ * @brief Frees the resources used by a token value.
+ *
+ * @param token_value The token value.
+ */
+void
+cos_token_value_reset(CosTokenValue *token_value);
+
+/**
+ * @brief Transfers ownership of the value's string to the caller.
+ *
+ * @param token_value The token value.
+ * @param result A pointer to the variable to store the string pointer in.
+ *
+ * @return @c true if ownership of the string was transferred, @c false otherwise.
+ */
+bool
+cos_token_value_take_string(CosTokenValue *token_value,
+                            CosString * COS_Nullable *result);
+
+/**
+ * @brief Transfers ownership of the value's data to the caller.
+ *
+ * @param token_value The token value.
+ * @param result A pointer to the variable to store the data pointer in.
+ *
+ * @return @c true if ownership of the data was transferred, @c false otherwise.
+ */
+bool
+cos_token_value_take_data(CosTokenValue *token_value,
+                          CosData * COS_Nullable *result);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_TOKEN_VALUE_H */

@@ -14,7 +14,6 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 struct CosTokenizer;
-typedef struct CosTokenizer CosTokenizer;
 
 CosTokenizer * COS_Nullable
 cos_tokenizer_alloc(CosInputStream *input_stream);
@@ -41,6 +40,30 @@ cos_tokenizer_peek_token(CosTokenizer *tokenizer);
  */
 CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer);
+
+/**
+ * Consume the next token if it matches the given token type.
+ *
+ * @param tokenizer The tokenizer.
+ * @param token_type The token type to match.
+ *
+ * @return The next token if it matches the given token type, otherwise @c NULL.
+ */
+CosToken * COS_Nullable
+cos_tokenizer_get_next_token_if(CosTokenizer *tokenizer,
+                                CosToken_Type token_type);
+
+/**
+ * Consume the next token if it matches the given keyword type.
+ *
+ * @param tokenizer The tokenizer.
+ * @param keyword_type The keyword type to match.
+ *
+ * @return @c true if the next token matches the given keyword type, otherwise @c false.
+ */
+bool
+cos_tokenizer_get_next_keyword_if(CosTokenizer *tokenizer,
+                                  CosKeywordType keyword_type);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -166,18 +166,6 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer,
                           CosString *string,
                           CosError *error);
 
-/**
- * Checks whether the given string is a keyword.
- *
- * @param text The string to check.
- * @param type The output parameter for the keyword type, if the string is a keyword.
- *
- * @return @c true if the string is a keyword, @c false otherwise.
- */
-static inline CosKeywordType
-cos_check_keyword_(CosStringRef text)
-    COS_ATTR_ACCESS_WRITE_ONLY(2);
-
 CosTokenizer *
 cos_tokenizer_alloc(CosInputStream *input_stream)
 {
@@ -264,6 +252,53 @@ cos_tokenizer_peek_token(CosTokenizer *tokenizer)
     return token;
 }
 
+CosToken *
+cos_tokenizer_get_next_token_if(CosTokenizer *tokenizer,
+                                CosToken_Type type)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+
+    CosToken * const token = cos_tokenizer_peek_token(tokenizer);
+    if (!token) {
+        return NULL;
+    }
+
+    if (token->type == type) {
+        // Consume the token.
+        cos_tokenizer_next_token(tokenizer);
+
+        return token;
+    }
+    else {
+        return NULL;
+    }
+}
+
+bool
+cos_tokenizer_get_next_keyword_if(CosTokenizer *tokenizer,
+                                  CosKeywordType keyword_type)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+
+    const CosToken *token = cos_tokenizer_peek_token(tokenizer);
+    if (!token) {
+        return false;
+    }
+
+    CosKeywordType token_keyword_type = CosKeywordType_Unknown;
+    if (token->type == CosToken_Type_Keyword &&
+        cos_token_value_get_keyword(&(token->value),
+                                    &token_keyword_type) &&
+        token_keyword_type == keyword_type) {
+        // Consume the token.
+        cos_tokenizer_next_token(tokenizer);
+
+        return true;
+    }
+
+    return false;
+}
+
 static void
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                                CosToken *token)
@@ -321,9 +356,9 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             else {
                 // Error: unterminated literal string.
                 token->type = CosToken_Type_Unknown;
-
-                cos_data_buffer_free(buffer);
             }
+            cos_data_buffer_free(buffer);
+
         } break;
 
         case CosCharacterSet_LessThanSign: {
@@ -342,9 +377,9 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 else {
                     // Error: unterminated hex string.
                     token->type = CosToken_Type_Unknown;
-
-                    cos_data_buffer_free(buffer);
                 }
+
+                cos_data_buffer_free(buffer);
             }
         } break;
 
@@ -405,7 +440,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             CosError error;
             if (cos_tokenizer_read_token_(tokenizer, string, &error)) {
                 // This might be a keyword.
-                const CosKeywordType keyword_type = cos_check_keyword_(cos_string_get_ref(string));
+                const CosKeywordType keyword_type = cos_keyword_type_from_string(cos_string_get_ref(string));
                 if (keyword_type != CosKeywordType_Unknown) {
                     // This is a keyword.
                     token->type = CosToken_Type_Keyword;
@@ -1013,72 +1048,6 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
     }
 
     return true;
-}
-
-static inline CosKeywordType
-cos_check_keyword_(CosStringRef text)
-{
-    // The longest keywords are 9 characters long.
-    if (text.length == 0 || text.length > 9) {
-        return CosKeywordType_Unknown;
-    }
-
-    switch (text.data[0]) {
-        case 't': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("true")) == 0) {
-                return CosKeywordType_True;
-            }
-            else if (cos_string_ref_cmp(text, cos_string_ref_const("trailer")) == 0) {
-                return CosKeywordType_Trailer;
-            }
-        } break;
-        case 'f': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("false")) == 0) {
-                return CosKeywordType_False;
-            }
-        } break;
-        case 'n': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("null")) == 0) {
-                return CosKeywordType_Null;
-            }
-        } break;
-        case 'R': {
-            if (text.length == 1) {
-                return CosKeywordType_R;
-            }
-        } break;
-        case 'o': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("obj")) == 0) {
-                return CosKeywordType_Obj;
-            }
-        } break;
-        case 'e': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("endobj")) == 0) {
-                return CosKeywordType_EndObj;
-            }
-            else if (cos_string_ref_cmp(text, cos_string_ref_const("endstream")) == 0) {
-                return CosKeywordType_EndStream;
-            }
-        } break;
-        case 's': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("stream")) == 0) {
-                return CosKeywordType_Stream;
-            }
-            else if (cos_string_ref_cmp(text, cos_string_ref_const("startxref")) == 0) {
-                return CosKeywordType_StartXRef;
-            }
-        } break;
-        case 'x': {
-            if (cos_string_ref_cmp(text, cos_string_ref_const("xref")) == 0) {
-                return CosKeywordType_XRef;
-            }
-        } break;
-
-        default:
-            break;
-    }
-
-    return CosKeywordType_Unknown;
 }
 
 COS_ASSUME_NONNULL_END

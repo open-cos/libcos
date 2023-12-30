@@ -8,8 +8,11 @@
 
 #include <stdlib.h>
 
+COS_ASSUME_NONNULL_BEGIN
+
 CosError *
-cos_error_alloc(CosErrorCode code, const char *message)
+cos_error_alloc(CosErrorCode code,
+                const char *message)
 {
     CosError * const error = malloc(sizeof(CosError));
     if (!error) {
@@ -33,7 +36,8 @@ cos_error_propagate(CosError *source_error, CosError **destination_error)
 }
 
 CosError
-cos_error_make(CosErrorCode code, const char *message)
+cos_error_make(CosErrorCode code,
+               const char *message)
 {
     CosError result = {
         .code = code,
@@ -51,3 +55,5 @@ cos_error_propagate_(CosError source_error,
         *destination_error = source_error;
     }
 }
+
+COS_ASSUME_NONNULL_END

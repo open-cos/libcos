@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+COS_ASSUME_NONNULL_BEGIN
+
 char *
 cos_asprintf(const char *fmt, ...)
 {
@@ -30,7 +32,7 @@ cos_vasprintf(const char *format,
     // Make a copy of the variadic args because we need to consume them twice.
     va_list args_copy;
     va_copy(args_copy, args);
-    // Note that the formatted length does not include the null terminator.
+    // Determine the length of the formatted string, excluding the nul-terminator.
     const int formatted_length = vsnprintf(NULL,
                                            0,
                                            format,
@@ -43,10 +45,10 @@ cos_vasprintf(const char *format,
     }
 
     // Check if there is room for the null terminator.
-    COS_ASSERT(formatted_length < SIZE_MAX,
+    COS_ASSERT(((size_t)formatted_length) < SIZE_MAX,
                "The formatted length should be less than SIZE_MAX");
 
-    const size_t buffer_size = formatted_length + 1;
+    const size_t buffer_size = ((size_t)formatted_length) + 1;
     char * const buffer = malloc(buffer_size * sizeof(char));
     if (!buffer) {
         return NULL;
@@ -63,7 +65,7 @@ cos_vasprintf(const char *format,
         return NULL;
     }
 
-    COS_ASSERT(num_written == buffer_size,
+    COS_ASSERT(((size_t)num_written) == buffer_size,
                "The number of characters written (%d) should be equal to the buffer size (%zu)",
                num_written,
                buffer_size);
@@ -107,3 +109,5 @@ cos_strndup(const char *str,
 
     return str_copy;
 }
+
+COS_ASSUME_NONNULL_END

@@ -5,21 +5,24 @@
 #ifndef LIBCOS_COS_DOCUMENT_H
 #define LIBCOS_COS_DOCUMENT_H
 
-#include <libcos/CosObj.h>
-
-struct CosObject;
-
-struct CosDocument;
-typedef struct CosDocument CosDocument;
+#include <libcos/CosObjID.h>
+#include <libcos/common/CosTypes.h>
 
 CosDocument *
 cos_document_alloc(void);
 
-void cos_document_free(CosDocument *doc);
+void
+cos_document_free(CosDocument *doc);
 
-int cos_document_get_version(CosDocument *doc);
+int
+cos_document_get_version(CosDocument *doc);
 
-struct CosObj *
+CosBaseObj *
 cos_document_get_root(CosDocument *doc);
+
+CosBaseObj *
+cos_document_get_object(CosDocument *doc,
+                        CosObjID id,
+                        CosError * COS_Nullable error);
 
 #endif //LIBCOS_COS_DOCUMENT_H

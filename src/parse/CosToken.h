@@ -5,33 +5,27 @@
 #ifndef LIBCOS_COS_TOKEN_H
 #define LIBCOS_COS_TOKEN_H
 
-#include "common/Assert.h"
-#include "common/CharacterSet.h"
 #include "common/CosData.h"
 #include "common/CosString.h"
 #include "parse/tokenizer/CosTokenValue.h"
 
 #include <libcos/common/CosDefines.h>
-#include <libcos/io/CosInputStream.h>
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
+
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
 
 typedef struct CosToken CosToken;
 
 typedef enum CosToken_Type {
     CosToken_Type_Unknown,
 
-    CosToken_Type_Boolean,
     CosToken_Type_Literal_String,
     CosToken_Type_Hex_String,
     CosToken_Type_Name,
     CosToken_Type_Integer,
     CosToken_Type_Real,
-    CosToken_Type_Stream,
-    CosToken_Type_Null,
-    CosToken_Type_EndOfLine,
 
     CosToken_Type_ArrayStart,
     CosToken_Type_ArrayEnd,
@@ -58,26 +52,8 @@ struct CosToken {
      */
     CosTokenValue value;
 };
-//
-//bool
-//cos_token_has_value(const CosToken *token);
-//
-//unsigned char *
-//cos_token_copy_string_value(const CosToken *token, size_t *out_size);
-//
-//bool
-//cos_token_get_string_value(const CosToken *token, CosString **out_string);
-//
-//bool
-//cos_token_get_data_value(const CosToken *token, CosData **out_data);
-//
-//bool
-//cos_token_get_boolean_value(const CosToken *token, bool *value);
-//
-//bool
-//cos_token_get_integer_value(const CosToken *token, int *value);
-//
-//bool
-//cos_token_get_real_value(const CosToken *token, double *value);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_TOKEN_H */

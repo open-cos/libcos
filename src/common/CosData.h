@@ -11,10 +11,15 @@
 
 #include <stddef.h>
 
+struct CosData {
+    unsigned char *bytes;
+    size_t size;
+};
+
 /**
  * @brief Allocates a new data object.
  *
- * @return A pointer to the allocated data object, or NULL if an error occurred.
+ * @return A pointer to the allocated data object, or @c NULL if an error occurred.
  */
 CosData *
 cos_data_alloc(void)
@@ -28,24 +33,6 @@ cos_data_alloc(void)
  */
 void
 cos_data_free(CosData *data);
-
-/**
- * @brief Returns the size of the data object.
- *
- * @param data The data object.
- * @return The size of the data object.
- */
-size_t
-cos_data_get_size(const CosData *data);
-
-/**
- * @brief Returns a pointer to the bytes of the data object.
- *
- * @param data The data object.
- * @return A pointer to the bytes of the data object.
- */
-const CosByte *
-cos_data_get_bytes(const CosData *data);
 
 /**
  * @brief Copies a range of bytes from the data object to a buffer.

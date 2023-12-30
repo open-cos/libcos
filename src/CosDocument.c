@@ -4,7 +4,7 @@
 
 #include "libcos/CosDocument.h"
 
-#include "libcos/CosObj.h"
+#include "libcos/CosBaseObj.h"
 
 #include <stdlib.h>
 
@@ -12,28 +12,38 @@ struct CosDocument {
     int version;
     int x;
 
-    CosObj *root;
+    CosBaseObj *root;
 };
 
 CosDocument *
 cos_document_alloc(void)
 {
-    CosDocument *const doc = malloc(sizeof(CosDocument));
+    CosDocument * const doc = malloc(sizeof(CosDocument));
     return doc;
 }
 
-void cos_document_free(CosDocument *doc)
+void
+cos_document_free(CosDocument *doc)
 {
     free(doc);
 }
 
-int cos_document_get_version(CosDocument *doc)
+int
+cos_document_get_version(CosDocument *doc)
 {
     return doc->version;
 }
 
-CosObj *
+CosBaseObj *
 cos_document_get_root(CosDocument *doc)
 {
     return doc->root;
+}
+
+CosBaseObj *
+cos_document_get_object(CosDocument *doc,
+                        CosObjID id,
+                        CosError * COS_Nullable error)
+{
+    return NULL;
 }

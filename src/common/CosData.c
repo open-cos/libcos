@@ -7,11 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct CosData {
-    CosByte *bytes;
-    size_t size;
-};
-
 CosData *
 cos_data_alloc(void)
 {
@@ -35,26 +30,6 @@ cos_data_free(CosData *data)
 
     free(data->bytes);
     free(data);
-}
-
-size_t
-cos_data_get_size(const CosData *data)
-{
-    if (!data) {
-        return 0;
-    }
-
-    return data->size;
-}
-
-const CosByte *
-cos_data_get_bytes(const CosData *data)
-{
-    if (!data) {
-        return NULL;
-    }
-
-    return data->bytes;
 }
 
 size_t

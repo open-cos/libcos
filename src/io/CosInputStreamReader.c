@@ -19,6 +19,9 @@ struct CosInputStreamReader {
     unsigned char *buffer;
     size_t buffer_size;
     size_t buffer_position;
+
+    bool is_eof;
+    size_t eof_position;
 };
 
 static int
@@ -56,6 +59,9 @@ cos_input_stream_reader_alloc(CosInputStream *input_stream)
     reader->buffer = buffer;
     reader->buffer_size = COS_INPUT_STREAM_READER_BUFFER_SIZE;
     reader->buffer_position = reader->buffer_size;
+
+    reader->is_eof = false;
+    reader->eof_position = 0;
 
     return reader;
 
@@ -138,6 +144,9 @@ static void
 cos_input_stream_reader_advance_(CosInputStreamReader *input_stream_reader)
 {
     COS_PARAMETER_ASSERT(input_stream_reader != NULL);
+    if (!input_stream_reader) {
+        return;
+    }
 
     input_stream_reader->buffer_position++;
 }

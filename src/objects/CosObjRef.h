@@ -14,7 +14,7 @@ struct CosObjRef {
         unsigned int gen_num;
     } id;
 
-    CosObj * COS_Nullable obj;
+    CosBaseObj * COS_Nullable obj;
 
     unsigned long ref_count;
 };

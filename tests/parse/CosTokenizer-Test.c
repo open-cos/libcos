@@ -46,14 +46,6 @@ main(int argc, char *argv[])
                 }
             } break;
 
-            case CosToken_Type_Boolean: {
-                bool value = false;
-                if (cos_token_value_get_boolean(&(token->value),
-                                                &value)) {
-                    printf("Boolean: %s\n",
-                           value ? "true" : "false");
-                }
-            } break;
             case CosToken_Type_Literal_String: {
                 CosString *string = NULL;
                 if (cos_token_value_get_string(&(token->value),
@@ -93,15 +85,6 @@ main(int argc, char *argv[])
                     printf("Real: %f\n",
                            value);
                 }
-            } break;
-            case CosToken_Type_Stream: {
-                printf("Stream\n");
-            } break;
-            case CosToken_Type_Null: {
-                printf("Null\n");
-            } break;
-            case CosToken_Type_EndOfLine: {
-                printf("End of Line\n");
             } break;
             case CosToken_Type_ArrayStart: {
                 printf("Array Start\n");

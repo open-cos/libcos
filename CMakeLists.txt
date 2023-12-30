@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.25)
 project(libcos
-    VERSION 0.0.0
-    DESCRIPTION "The Carousel Object System (COS) library."
-    HOMEPAGE_URL "https://github.com/open-cos/libcos"
-    LANGUAGES C)
+        VERSION 0.0.0
+        DESCRIPTION "The Carousel Object System (COS) library."
+        HOMEPAGE_URL "https://github.com/open-cos/libcos"
+        LANGUAGES C)
 
 # CMake modules.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -12,67 +12,102 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_library(libcos SHARED
-        include/libcos/CosDocument.h
-        include/libcos/CosObj.h
-        include/libcos/io/CosInputStream.h
+        src/common/memory/CosRefCounter.c
+        src/common/memory/CosRefCounter.h
+        include/libcos/private/objects/CosNameObj-Impl.h
+        src/common/CosClass.c
+        include/libcos/common/CosClass.h
+        src/common/CosArray.c
+        include/libcos/common/CosArray.h
+        include/libcos/common/CosObj.h
+        src/common/CosObj.c
+        include/libcos/private/common/CosObj-Impl.h
+        include/libcos/private/common/CosClass-Impl.h)
+
+target_sources(libcos PRIVATE
         src/CosDocument.c
-        src/objects/CosObj.c
         src/common/Assert.c
         src/common/Assert.h
-        src/common/CosString.c
-        src/common/CosString.h
-        src/common/CosVector.c
-        src/common/CosVector.h
-        src/io/CosFileInputStream.c
-        src/io/CosInputStream.c
-        src/io/CosMemoryInputStream.c
-        src/io/string-support.c
-        src/parse/CosTokenizer.c
-        src/parse/CosTokenizer.h
-        include/libcos/CosBasicTypes.h
-        src/common/CosError.c
-        include/libcos/common/CosError.h
-        include/libcos/io/string-support.h
-        include/libcos/common/CosDefines.h
-        src/common/CharacterSet.h
         src/common/CharacterSet.c
-        src/parse/CosParser.c
-        src/parse/CosParser.h
-        include/libcos/common/CosTypes.h
-        src/objects/CosObjectStorage.c
-        src/objects/CosObjectStorage.h
-        src/parse/tokenizer/CosTokenValue.h
+        src/common/CharacterSet.h
         src/common/CosData.c
         src/common/CosData.h
         src/common/CosDataBuffer.c
         src/common/CosDataBuffer.h
-        src/common/memory-support.c
-        src/common/memory-support.h
-        src/objects/CosObjRef.c
-        src/objects/CosObjRef.h
-        include/libcos/CosBoolObj.h
-        src/objects/CosBoolObj.c
-        src/objects/CosArrayObj.c
-        include/libcos/CosArrayObj.h
-        src/objects/CosObj-Impl.h
-        src/objects/CosArrayObj-Impl.h
-        src/objects/CosBoolObj-Impl.h
-        include/libcos/CosNameObj.h
-        src/objects/CosNameObj.c
-        src/objects/CosNameObj-Impl.h
-        src/objects/CosStringObj-Impl.h
-        include/libcos/CosStringObj.h
-        src/objects/CosStringObj.c
+        src/common/CosDiagnostic.c
+        src/common/CosDiagnosticHandler.c
+        src/common/CosError.c
         src/common/CosHashTable.c
         src/common/CosHashTable.h
-        src/io/CosInputStreamReader.c
-        src/io/CosInputStreamReader.h
+        src/common/CosLog.c
         src/common/CosMacros.h
-        src/syntax/CosSyntax.c
-        src/syntax/CosSyntax.h
-        include/libcos/io/CosFileInputStream.h
+        src/common/CosString.c
+        src/common/CosString.h
+        src/common/CosVector.c
+        src/common/CosVector.h
+        src/common/memory-support.c
+        src/common/memory-support.h
         src/io/CosBufferedInputStream.c
         src/io/CosBufferedInputStream.h
+        src/io/CosFileInputStream.c
+        src/io/CosInputStream.c
+        src/io/CosInputStreamReader.c
+        src/io/CosInputStreamReader.h
+        src/io/CosMemoryInputStream.c
+        src/io/string-support.c
+        src/objects/CosArrayObj-Impl.h
+        src/objects/CosArrayObj.c
+        src/objects/CosBoolObj.c
+        src/objects/CosDictObj.c
+        src/objects/CosIndirectObj.c
+        src/objects/CosIntegerObj.c
+        src/objects/CosNameObj.c
+        src/objects/CosNullObj.c
+        src/objects/CosObj-Impl.h
+        src/objects/CosBaseObj.c
+        src/objects/CosObjID.c
+        src/objects/CosObjRef.c
+        src/objects/CosObjRef.h
+        src/objects/CosObjectStorage.c
+        src/objects/CosObjectStorage.h
+        src/objects/CosRealObj.c
+        src/objects/CosStringObj-Impl.h
+        src/objects/CosStringObj.c
+        src/parse/CosParser.c
+        src/parse/CosParser.h
+        src/parse/CosTokenizer.c
+        src/parse/CosTokenizer.h
+        src/parse/tokenizer/CosTokenValue.c
+        src/parse/tokenizer/CosTokenValue.h
+        src/syntax/CosSyntax.c
+        src/syntax/CosSyntax.h
+)
+
+target_sources(libcos PUBLIC
+        include/libcos/CosArrayObj.h
+        include/libcos/CosBasicTypes.h
+        include/libcos/CosBoolObj.h
+        include/libcos/CosDocument.h
+        include/libcos/CosIndirectObj.h
+        include/libcos/CosIntegerObj.h
+        include/libcos/CosNameObj.h
+        include/libcos/CosNullObj.h
+        include/libcos/CosBaseObj.h
+        include/libcos/CosObjID.h
+        include/libcos/CosRealObj.h
+        include/libcos/CosStringObj.h
+        include/libcos/common/CosDefines.h
+        include/libcos/common/CosDiagnostic.h
+        include/libcos/common/CosDiagnosticHandler.h
+        include/libcos/common/CosError.h
+        include/libcos/common/CosLog.h
+        include/libcos/common/CosTypes.h
+        include/libcos/io/CosFileInputStream.h
+        include/libcos/io/CosInputStream.h
+        include/libcos/io/string-support.h
+        include/libcos/objects/CosDictObj.h
+        include/libcos/private/objects/CosDictObj-Impl.h
+        include/libcos/private/objects/CosBaseObj-Impl.h
 )
 
 target_include_directories(libcos
@@ -100,9 +135,12 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Weverything
             -Wint-conversion
             -Wstrict-prototypes
+#            -Werror=incompatible-function-pointer-types-strict
             -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
             -Werror=implicit-int -Werror=implicit-function-declaration
             -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
+#            -Werror=incompatible-function-pointer-types
+            -Werror=nullability
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(libcos PRIVATE
@@ -110,7 +148,7 @@ elseif (C_COMPILER_ID STREQUAL "MSVC")
 endif ()
 
 set_target_properties(libcos PROPERTIES
-    PREFIX "" # Remove the "lib" prefix from the library name.
+        PREFIX "" # Remove the "lib" prefix from the library name.
 )
 
 # Tests

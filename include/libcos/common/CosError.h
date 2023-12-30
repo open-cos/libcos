@@ -6,9 +6,10 @@
 #define LIBCOS_COS_ERROR_H
 
 #include <libcos/common/CosDefines.h>
+#include <libcos/common/CosTypes.h>
 
-struct CosError;
-typedef struct CosError CosError;
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
 
 typedef enum CosErrorCode {
     COS_ERROR_NONE,
@@ -33,7 +34,7 @@ struct CosError {
 CosError
 cos_error_make(CosErrorCode code, const char *message);
 
-CosError *
+CosError * COS_Nullable
 cos_error_alloc(CosErrorCode code, const char *message);
 
 void
@@ -43,5 +44,8 @@ void
 cos_error_propagate_(CosError source_error,
                      CosError *destination_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_ERROR_H */

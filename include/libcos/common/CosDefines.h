@@ -94,6 +94,17 @@
 #endif
 
 /**
+ * @def COS_ATTR_PURE
+ *
+ * @brief Marks a function as returning a value that depends only on its arguments.
+ */
+#if COS_HAS_ATTRIBUTE(pure)
+#define COS_ATTR_PURE __attribute__((pure))
+#else
+#define COS_ATTR_PURE
+#endif
+
+/**
  * @def COS_ATTR_MALLOC
  *
  * @brief Marks a function as returning a pointer to memory that should be freed.
@@ -102,6 +113,21 @@
 #define COS_ATTR_MALLOC __attribute__((malloc))
 #else
 #define COS_ATTR_MALLOC
+#endif
+
+/**
+ * @def COS_ATTR_ALLOC_SIZE(size_index)
+ * @def COS_ATTR_ALLOC_SIZES(size_index1, size_index2)
+ *
+ * @brief Marks a function as returning a pointer to memory that should be freed,
+ * and specifies the size of the allocated memory.
+ */
+#if COS_HAS_ATTRIBUTE(alloc_size)
+#define COS_ATTR_ALLOC_SIZE(size_index) __attribute__((alloc_size(size_index)))
+#define COS_ATTR_ALLOC_SIZES(size_index1, size_index2) __attribute__((alloc_size(size_index1, size_index2)))
+#else
+#define COS_ATTR_ALLOC_SIZE(size_index)
+#define COS_ATTR_ALLOC_SIZES(size_index1, size_index2)
 #endif
 
 #if COS_HAS_ATTRIBUTE(access)

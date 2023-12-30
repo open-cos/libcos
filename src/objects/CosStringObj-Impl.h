@@ -5,14 +5,14 @@
 #ifndef LIBCOS_COS_STRING_OBJ_IMPL_H
 #define LIBCOS_COS_STRING_OBJ_IMPL_H
 
-#include "CosObj-Impl.h"
+#include "common/CosData.h"
+#include "libcos/CosBaseObj.h"
 #include "libcos/CosStringObj.h"
 
 struct CosStringObj {
-    CosObj base;
+    CosBaseObj base;
 
-    unsigned char *value;
-    size_t length;
+    CosData data;
 };
 
 #endif /* LIBCOS_COS_STRING_OBJ_IMPL_H */

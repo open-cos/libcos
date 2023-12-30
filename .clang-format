@@ -19,9 +19,10 @@ AlwaysBreakTemplateDeclarations: Yes
 AttributeMacros:
   - COS_Nullable
   - COS_Nonnull
-BreakBeforeBraces: Custom
+  - COS_ATTR_ALLOC_SIZE
 BinPackArguments: false
 BinPackParameters: false
+BreakBeforeBraces: Custom # See BraceWrapping
 BraceWrapping:
   AfterCaseLabel: false
   AfterClass: false

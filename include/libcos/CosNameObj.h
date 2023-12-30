@@ -5,9 +5,11 @@
 #ifndef LIBCOS_COS_NAME_OBJ_H
 #define LIBCOS_COS_NAME_OBJ_H
 
+#include <libcos/CosBaseObj.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/private/objects/CosBaseObj-Impl.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,21 +18,14 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 CosNameObj * COS_Nullable
-cos_name_obj_alloc(void)
+cos_name_obj_create(CosString *value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
 bool
-cos_name_obj_get_value(const CosNameObj *name_obj,
-                       const unsigned char ** COS_Nullable value,
-                       size_t * COS_Nullable length,
-                       CosError ** COS_Nullable error);
-
-bool
 cos_name_obj_set_value(CosNameObj *name_obj,
-                       const unsigned char *value,
-                       size_t length,
-                       CosError ** COS_Nullable error);
+                       CosString *value,
+                       CosError * COS_Nullable error);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
