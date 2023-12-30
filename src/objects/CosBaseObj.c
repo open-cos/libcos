@@ -43,7 +43,7 @@ cos_base_obj_class(void)
 void *
 cos_obj_alloc(size_t size,
               CosObjectType type,
-              CosDocument * COS_Nullable document)
+              CosDoc * COS_Nullable document)
 {
     CosBaseObj * const obj = malloc(size);
     if (!obj) {
@@ -55,7 +55,7 @@ cos_obj_alloc(size_t size,
     return obj;
 }
 
-CosDocument *
+CosDoc *
 cos_obj_get_document(const CosBaseObj *obj)
 {
     return obj->document;

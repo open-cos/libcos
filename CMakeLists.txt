@@ -22,10 +22,12 @@ add_library(libcos SHARED
         include/libcos/common/CosObj.h
         src/common/CosObj.c
         include/libcos/private/common/CosObj-Impl.h
-        include/libcos/private/common/CosClass-Impl.h)
+        include/libcos/private/common/CosClass-Impl.h
+        include/libcos/common/CosDict.h
+        src/common/CosDict.c)
 
 target_sources(libcos PRIVATE
-        src/CosDocument.c
+        src/CosDoc.c
         src/common/Assert.c
         src/common/Assert.h
         src/common/CharacterSet.c
@@ -87,7 +89,7 @@ target_sources(libcos PUBLIC
         include/libcos/CosArrayObj.h
         include/libcos/CosBasicTypes.h
         include/libcos/CosBoolObj.h
-        include/libcos/CosDocument.h
+        include/libcos/CosDoc.h
         include/libcos/CosIndirectObj.h
         include/libcos/CosIntegerObj.h
         include/libcos/CosNameObj.h
@@ -138,6 +140,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
 #            -Werror=incompatible-function-pointer-types-strict
             -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
             -Werror=implicit-int -Werror=implicit-function-declaration
+            -Werror=strict-prototypes
             -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
 #            -Werror=incompatible-function-pointer-types
             -Werror=nullability

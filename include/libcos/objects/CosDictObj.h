@@ -26,7 +26,7 @@ struct CosDict {
 };
 
 CosDictObj * COS_Nullable
-cos_dict_obj_create(CosDict *dict)
+cos_dict_obj_create(void)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 

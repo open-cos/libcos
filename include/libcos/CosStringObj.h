@@ -18,7 +18,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 CosStringObj * COS_Nullable
 cos_string_obj_alloc(CosData *string_data,
-                     CosDocument * COS_Nullable document)
+                     CosDoc * COS_Nullable document)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 

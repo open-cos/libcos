@@ -8,7 +8,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 CosRealObj * COS_Nullable
 cos_real_obj_alloc(double value,
-                   CosDocument * COS_Nullable document)
+                   CosDoc * COS_Nullable document)
 {
     CosRealObj *result = cos_obj_alloc(sizeof(CosRealObj),
                                        CosObjectType_Real,

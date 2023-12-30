@@ -20,11 +20,12 @@ typedef struct CosDataBuffer CosDataBuffer;
 typedef struct CosString CosString;
 typedef struct CosStringRef CosStringRef;
 typedef struct CosArray CosArray;
+typedef struct CosDict CosDict;
 
 typedef struct CosTokenizer CosTokenizer;
 typedef struct CosParser CosParser;
 
-typedef struct CosDocument CosDocument;
+typedef struct CosDoc CosDoc;
 typedef struct CosBaseObj CosBaseObj;
 
 typedef struct CosObjRef CosObjRef;

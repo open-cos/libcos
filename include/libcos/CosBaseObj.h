@@ -32,11 +32,11 @@ typedef enum CosObjectType {
 void * COS_Nullable
 cos_obj_alloc(size_t size,
               CosObjectType type,
-              CosDocument * COS_Nullable document)
+              CosDoc * COS_Nullable document)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-CosDocument * COS_Nullable
+CosDoc * COS_Nullable
 cos_obj_get_document(const CosBaseObj *obj);
 
 COS_ASSUME_NONNULL_END

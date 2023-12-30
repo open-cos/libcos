@@ -215,6 +215,19 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     free(tokenizer);
 }
 
+bool
+cos_tokenizer_has_next_token(CosTokenizer *tokenizer)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+
+    const CosToken * const peeked_token = cos_tokenizer_peek_token(tokenizer);
+    if (!peeked_token) {
+        return false;
+    }
+
+    return (peeked_token->type != CosToken_Type_EOF);
+}
+
 CosToken *
 cos_tokenizer_next_token(CosTokenizer *tokenizer)
 {

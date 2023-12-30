@@ -8,7 +8,7 @@
 #include "parse/CosToken.h"
 
 #include <libcos/common/CosDefines.h>
-#include <libcos/io/CosInputStream.h>
+#include <libcos/common/CosTypes.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -16,10 +16,22 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosTokenizer;
 
 CosTokenizer * COS_Nullable
-cos_tokenizer_alloc(CosInputStream *input_stream);
+cos_tokenizer_alloc(CosInputStream *input_stream)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
 
 void
 cos_tokenizer_free(CosTokenizer *tokenizer);
+
+/**
+ * Checks if there is a next token or if the end of the input stream has been reached.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return @c true if there is a next token, otherwise @c false.
+ */
+bool
+cos_tokenizer_has_next_token(CosTokenizer *tokenizer);
 
 /**
  * Peek the next token without consuming it.

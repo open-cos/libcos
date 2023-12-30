@@ -17,7 +17,7 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosBaseObj {
     CosObj base;
 
-    CosDocument * COS_Nullable document;
+    CosDoc * COS_Nullable document;
 };
 
 CosClass *

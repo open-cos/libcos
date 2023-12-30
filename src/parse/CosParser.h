@@ -18,7 +18,7 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosParser;
 
 CosParser * COS_Nullable
-cos_parser_alloc(CosDocument *document,
+cos_parser_alloc(CosDoc *document,
                  CosInputStream *input_stream)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;

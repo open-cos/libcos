@@ -10,7 +10,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 CosIndirectObj *
 cos_indirect_obj_alloc(CosObjID id,
-                       CosDocument * COS_Nullable document)
+                       CosDoc * COS_Nullable document)
 {
     CosIndirectObj *indirect_obj = cos_obj_alloc(sizeof(CosIndirectObj),
                                                  CosObjectType_Unknown,
@@ -27,7 +27,7 @@ cos_indirect_obj_alloc(CosObjID id,
 void
 cos_indirect_obj_init(CosIndirectObj *indirect_obj,
                       CosObjID id,
-                      CosDocument * COS_Nullable document)
+                      CosDoc * COS_Nullable document)
 {
     COS_PARAMETER_ASSERT(indirect_obj != NULL);
     if (!indirect_obj) {

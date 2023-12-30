@@ -25,14 +25,14 @@ struct CosIndirectObj {
 
 CosIndirectObj * COS_Nullable
 cos_indirect_obj_alloc(CosObjID id,
-                       CosDocument * COS_Nullable document)
+                       CosDoc * COS_Nullable document)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
 void
 cos_indirect_obj_init(CosIndirectObj *indirect_obj,
                       CosObjID id,
-                      CosDocument * COS_Nullable document);
+                      CosDoc * COS_Nullable document);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

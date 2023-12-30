@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 #include "libcos/common/CosClass.h"
+#include "libcos/common/CosDict.h"
 #include "libcos/private/objects/CosDictObj-Impl.h"
 
 #include <stdlib.h>
@@ -67,17 +68,32 @@ cos_dict_obj_dealloc_(CosObj *obj)
 }
 
 CosDictObj *
-cos_dict_obj_create(CosDict *dict)
+cos_dict_obj_create(void)
 {
     CosDictObj * const dict_obj = cos_class_alloc_obj(cos_dict_obj_class(),
                                                       sizeof(CosDictObj));
     if (!dict_obj) {
-        return NULL;
+        goto failure;
+    }
+
+    CosDict * const dict = cos_dict_alloc(0,
+                                          NULL,
+                                          NULL);
+    if (!dict) {
+        goto failure;
     }
 
     ((CosDictObjClass *)dict_obj->base.base.class)->init(dict_obj, dict);
 
     return dict_obj;
+
+failure:
+    if (dict_obj) {
+        // TODO: Deallocate the obj directly?
+        cos_obj_release((CosObj *)dict_obj);
+    }
+
+    return NULL;
 }
 
 CosClass *

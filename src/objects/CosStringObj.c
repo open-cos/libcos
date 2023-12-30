@@ -14,7 +14,7 @@
 
 CosStringObj * COS_Nullable
 cos_string_obj_alloc(CosData *string_data,
-                     CosDocument * COS_Nullable document)
+                     CosDoc * COS_Nullable document)
 {
     CosStringObj * const obj = cos_obj_alloc(sizeof(CosStringObj),
                                              CosObjectType_String,

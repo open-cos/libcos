@@ -42,7 +42,7 @@ cos_error_propagate(CosError *source_error, CosError **destination_error);
 
 void
 cos_error_propagate_(CosError source_error,
-                     CosError *destination_error)
+                     CosError * COS_Nullable destination_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 COS_ASSUME_NONNULL_END

@@ -21,7 +21,7 @@ struct CosRealObj {
 
 CosRealObj * COS_Nullable
 cos_real_obj_alloc(double value,
-                   CosDocument * COS_Nullable document)
+                   CosDoc * COS_Nullable document)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
