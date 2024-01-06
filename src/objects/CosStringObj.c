@@ -24,10 +24,7 @@ cos_string_obj_alloc(CosData *string_data,
         return NULL;
     }
 
-    obj->data = *string_data;
-
-    // Free just the container, not the data itself.
-    free(string_data);
+    obj->data = string_data;
 
     return obj;
 }

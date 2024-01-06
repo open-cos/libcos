@@ -40,8 +40,18 @@ cos_tokenizer_has_next_token(CosTokenizer *tokenizer);
  *
  * @return The next token.
  */
-CosToken *
+CosToken
 cos_tokenizer_peek_token(CosTokenizer *tokenizer);
+
+/**
+ * Peek the token after the next token without consuming it.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return The token after the next token.
+ */
+CosToken
+cos_tokenizer_peek_next_token(CosTokenizer *tokenizer);
 
 /**
  * Consume the next token.
@@ -50,20 +60,21 @@ cos_tokenizer_peek_token(CosTokenizer *tokenizer);
  *
  * @return The next token.
  */
-CosToken *
+CosToken
 cos_tokenizer_next_token(CosTokenizer *tokenizer);
 
 /**
  * Consume the next token if it matches the given token type.
  *
  * @param tokenizer The tokenizer.
- * @param token_type The token type to match.
+ * @param type The token type to match.
  *
- * @return The next token if it matches the given token type, otherwise @c NULL.
+ * @return @c true if the next token matches the given token type, otherwise @c false.
  */
-CosToken * COS_Nullable
-cos_tokenizer_get_next_token_if(CosTokenizer *tokenizer,
-                                CosToken_Type token_type);
+bool
+cos_tokenizer_match_token(CosTokenizer *tokenizer,
+                          CosToken_Type type)
+    COS_PRECONDITION(type != CosToken_Type_Unknown);
 
 /**
  * Consume the next token if it matches the given keyword type.
@@ -71,11 +82,14 @@ cos_tokenizer_get_next_token_if(CosTokenizer *tokenizer,
  * @param tokenizer The tokenizer.
  * @param keyword_type The keyword type to match.
  *
+ * @pre @p keyword_type is not @c CosKeywordType_Unknown.
+ *
  * @return @c true if the next token matches the given keyword type, otherwise @c false.
  */
 bool
-cos_tokenizer_get_next_keyword_if(CosTokenizer *tokenizer,
-                                  CosKeywordType keyword_type);
+cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
+                            CosKeywordType keyword_type)
+    COS_PRECONDITION(keyword_type != CosKeywordType_Unknown);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -10,21 +10,6 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-CosError *
-cos_error_alloc(CosErrorCode code,
-                const char *message)
-{
-    CosError * const error = malloc(sizeof(CosError));
-    if (!error) {
-        return NULL;
-    }
-
-    error->code = code;
-    error->message = message;
-
-    return error;
-}
-
 void
 cos_error_propagate(CosError *source_error, CosError **destination_error)
 {

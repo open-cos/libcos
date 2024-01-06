@@ -8,13 +8,15 @@
 #include "common/CosString.h"
 #include "common/memory-support.h"
 
+#include <libcos/common/CosError.h>
+
 #include <malloc.h>
 #include <string.h>
 
 static bool
 cos_data_buffer_resize_(CosDataBuffer *data_buffer,
                         size_t required_capacity,
-                        CosError **error);
+                        CosError * COS_Nullable error);
 
 CosDataBuffer *
 cos_data_buffer_alloc(void)
@@ -59,7 +61,7 @@ cos_data_buffer_destroy(CosDataBuffer *data_buffer)
 bool
 cos_data_buffer_reserve(CosDataBuffer *data_buffer,
                         size_t capacity,
-                        CosError **error)
+                        CosError *error)
 {
     if (!data_buffer) {
         return false;
@@ -73,8 +75,8 @@ cos_data_buffer_reserve(CosDataBuffer *data_buffer,
                                         capacity * sizeof(CosByte));
     if (!new_bytes) {
         if (error) {
-            *error = cos_error_alloc(COS_ERROR_MEMORY,
-                                     "Failed to allocate memory for data buffer");
+            *error = cos_error_make(COS_ERROR_MEMORY,
+                                    "Failed to allocate memory for data buffer");
         }
         return false;
     }
@@ -111,7 +113,7 @@ cos_data_buffer_reset(CosDataBuffer *data_buffer)
 bool
 cos_data_buffer_push_back(CosDataBuffer *data_buffer,
                           CosByte byte,
-                          CosError **error)
+                          CosError *error)
 {
     return cos_data_buffer_append(data_buffer,
                                   &byte,
@@ -123,7 +125,7 @@ bool
 cos_data_buffer_append(CosDataBuffer *data_buffer,
                        const CosByte *bytes,
                        size_t count,
-                       CosError **error)
+                       CosError * COS_Nullable error)
 {
     if (!data_buffer || !bytes || count == 0) {
         return false;
@@ -162,7 +164,7 @@ cos_data_buffer_to_string(const CosDataBuffer *data_buffer)
 static bool
 cos_data_buffer_resize_(CosDataBuffer *data_buffer,
                         size_t required_capacity,
-                        CosError **error)
+                        CosError * COS_Nullable error)
 {
     if (!data_buffer) {
         return false;
@@ -178,8 +180,8 @@ cos_data_buffer_resize_(CosDataBuffer *data_buffer,
                                         new_capacity);
     if (!new_bytes) {
         if (error) {
-            *error = cos_error_alloc(COS_ERROR_MEMORY,
-                                     "Failed to allocate memory for data buffer");
+            *error = cos_error_make(COS_ERROR_MEMORY,
+                                    "Failed to allocate memory for data buffer");
         }
         return false;
     }

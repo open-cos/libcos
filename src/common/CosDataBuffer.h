@@ -7,7 +7,6 @@
 
 #include <libcos/CosBasicTypes.h>
 #include <libcos/common/CosDefines.h>
-#include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
@@ -38,7 +37,7 @@ cos_data_buffer_destroy(CosDataBuffer *data_buffer);
 bool
 cos_data_buffer_reserve(CosDataBuffer *data_buffer,
                         size_t capacity,
-                        CosError **error);
+                        CosError * COS_Nullable error);
 
 /**
  * @brief Frees a data buffer.
@@ -73,7 +72,7 @@ cos_data_buffer_reset(CosDataBuffer *data_buffer);
 bool
 cos_data_buffer_push_back(CosDataBuffer *data_buffer,
                           CosByte byte,
-                          CosError **error);
+                          CosError * COS_Nullable error);
 
 /**
  * @brief Appends bytes to the data buffer.
@@ -93,7 +92,7 @@ bool
 cos_data_buffer_append(CosDataBuffer *data_buffer,
                        const CosByte *bytes,
                        size_t count,
-                       CosError **error);
+                       CosError * COS_Nullable error);
 
 CosString * COS_Nullable
 cos_data_buffer_to_string(const CosDataBuffer *data_buffer)

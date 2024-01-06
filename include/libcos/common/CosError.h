@@ -15,6 +15,7 @@ typedef enum CosErrorCode {
     COS_ERROR_NONE,
     COS_ERROR_INVALID_ARGUMENT,
     COS_ERROR_INVALID_STATE,
+    COS_ERROR_OUT_OF_RANGE,
     COS_ERROR_IO,
     COS_ERROR_SYNTAX,
     COS_ERROR_PARSE,
@@ -33,9 +34,6 @@ struct CosError {
 
 CosError
 cos_error_make(CosErrorCode code, const char *message);
-
-CosError * COS_Nullable
-cos_error_alloc(CosErrorCode code, const char *message);
 
 void
 cos_error_propagate(CosError *source_error, CosError **destination_error);

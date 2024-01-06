@@ -31,6 +31,33 @@
 #define COS_HAS_EXTENSION(x) 0
 #endif
 
+#if defined(__GNUC__) && !defined(__clang__)
+
+#define COS_GCC_VERSION_AT_LEAST(major, minor, patchlevel) \
+    ((__GNUC__ > (major)) ||                               \
+     ((__GNUC__ == (major)) && COS_GCC_VERSION_AT_LEAST_MINOR_(minor, patchlevel)))
+
+#if (___GNUC__ >= 2) && defined(__GNUC_MINOR__)
+#define COS_GCC_VERSION_AT_LEAST_MINOR_(minor, patchlevel) \
+    ((__GNUC_MINOR__ > (minor)) ||                         \
+     ((__GNUC_MINOR__ == (minor)) && COS_GCC_VERSION_AT_LEAST_PATCHLEVEL_(patchlevel)))
+#else
+#define COS_GCC_VERSION_AT_LEAST_MINOR_(minor, patchlevel) (1)
+#endif
+
+#if (___GNUC__ >= 3) && defined(__GNUC_PATCHLEVEL__)
+#define COS_GCC_VERSION_AT_LEAST_PATCHLEVEL_(patchlevel) \
+    (__GNUC_PATCHLEVEL__ >= (patchlevel))
+#else
+#define COS_GCC_VERSION_AT_LEAST_PATCHLEVEL_(patchlevel) (1)
+#endif
+
+#else
+
+#define COS_GCC_VERSION_AT_LEAST(major, minor, patchlevel) (0)
+
+#endif
+
 /**
  * @def COS_FORMAT_PRINTF(format_index, args_index)
  *
@@ -111,9 +138,28 @@
  */
 #if COS_HAS_ATTRIBUTE(malloc)
 #define COS_ATTR_MALLOC __attribute__((malloc))
+
+#if COS_GCC_VERSION_AT_LEAST(11, 1, 0)
+#define COS_ATTR_MALLOC_DEALLOC(deallocator) __attribute__((malloc(deallocator)))
+#define COS_ATTR_MALLOC_DEALLOC_INDEX(deallocator, ptr_index) __attribute__((malloc(deallocator, ptr_index)))
+#else
+#define COS_ATTR_MALLOC_DEALLOC(deallocator)
+#define COS_ATTR_MALLOC_DEALLOC_INDEX(deallocator, ptr_index)
+#endif
+
 #else
 #define COS_ATTR_MALLOC
+#define COS_ATTR_MALLOC_DEALLOC(deallocator)
+#define COS_ATTR_MALLOC_DEALLOC_INDEX(deallocator, ptr_index)
 #endif
+
+#define COS_MALLOC_LIKE COS_ATTR_MALLOC
+
+#define COS_DEALLOC_FUNC(...) COS_GET_DEALLOC_FUNC_MACRO_(__VA_ARGS__,                   \
+                                                          COS_ATTR_MALLOC_DEALLOC_INDEX, \
+                                                          COS_ATTR_MALLOC_DEALLOC)(__VA_ARGS__)
+
+#define COS_GET_DEALLOC_FUNC_MACRO_(_1, _2, NAME, ...) NAME
 
 /**
  * @def COS_ATTR_ALLOC_SIZE(size_index)
@@ -152,6 +198,17 @@
 #else
 #define COS_ATTR_FALLTHROUGH
 #endif
+
+#if COS_HAS_ATTRIBUTE(diagnose_if)
+#define COS_ATTR_DIAGNOSE_IF(condition, message, type) __attribute__((diagnose_if(condition, message, type)))
+#else
+#define COS_ATTR_DIAGNOSE_IF(condition, message, type)
+#endif
+
+#define COS_ATTR_DIAGNOSE_WARNING(condition, message) COS_ATTR_DIAGNOSE_IF(condition, message, "warning")
+#define COS_ATTR_DIAGNOSE_ERROR(condition, message) COS_ATTR_DIAGNOSE_IF(condition, message, "error")
+
+#define COS_PRECONDITION(condition) COS_ATTR_DIAGNOSE_WARNING(!(condition), "Precondition not satisfied: " #condition)
 
 #if COS_HAS_BUILTIN(__builtin_expect)
 #define COS_LIKELY(x) __builtin_expect(!!(x), 1)

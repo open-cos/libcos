@@ -16,6 +16,7 @@ typedef struct CosClass CosClass;
 typedef struct CosError CosError;
 
 typedef struct CosData CosData;
+typedef struct CosDataRef CosDataRef;
 typedef struct CosDataBuffer CosDataBuffer;
 typedef struct CosString CosString;
 typedef struct CosStringRef CosStringRef;

@@ -24,7 +24,9 @@ add_library(libcos SHARED
         include/libcos/private/common/CosObj-Impl.h
         include/libcos/private/common/CosClass-Impl.h
         include/libcos/common/CosDict.h
-        src/common/CosDict.c)
+        src/common/CosDict.c
+        src/common/CosDataRef.c
+        include/libcos/common/CosDataRef.h)
 
 target_sources(libcos PRIVATE
         src/CosDoc.c
@@ -33,7 +35,7 @@ target_sources(libcos PRIVATE
         src/common/CharacterSet.c
         src/common/CharacterSet.h
         src/common/CosData.c
-        src/common/CosData.h
+        include/libcos/common/CosData.h
         src/common/CosDataBuffer.c
         src/common/CosDataBuffer.h
         src/common/CosDiagnostic.c
@@ -120,6 +122,7 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(libcos PRIVATE
             -Wall -Wextra
             -Wno-unknown-pragmas
+            -Werror=missing-declarations
             -Werror=return-type -Werror=incompatible-pointer-types
             -fanalyzer
     )
@@ -141,6 +144,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
             -Werror=implicit-int -Werror=implicit-function-declaration
             -Werror=strict-prototypes
+            -Werror=missing-declarations -Werror=missing-variable-declarations
             -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
 #            -Werror=incompatible-function-pointer-types
             -Werror=nullability
