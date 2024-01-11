@@ -2,6 +2,7 @@ TODO
 
 - Need to handle the string data
     - It's essentially a std::vector<unsigned char>
+- Rename the "CosIndirectObj" class to "CosRefObj"
 - Need to handle the xref table
     - It's a different syntax that the rest of the COS file, so it's not handled
       by the normal COS parser
