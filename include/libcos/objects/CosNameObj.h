@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
+
 //
 // Created by david on 15/10/23.
 //
@@ -5,11 +9,11 @@
 #ifndef LIBCOS_COS_NAME_OBJ_H
 #define LIBCOS_COS_NAME_OBJ_H
 
-#include <libcos/CosBaseObj.h>
-#include <libcos/common/CosDefines.h>
-#include <libcos/common/CosError.h>
-#include <libcos/common/CosTypes.h>
-#include <libcos/private/objects/CosBaseObj-Impl.h>
+#include "libcos/CosBaseObj.h"
+#include "libcos/common/CosDefines.h"
+#include "libcos/common/CosError.h"
+#include "libcos/common/CosTypes.h"
+#include "libcos/private/objects/CosBaseObj-Impl.h"
 
 #include <stdbool.h>
 #include <stddef.h>

@@ -36,14 +36,6 @@ struct CosData {
 };
 
 /**
- * @brief Frees a data object.
- *
- * @param data The data object to free.
- */
-void
-cos_data_free(CosData *data);
-
-/**
  * @brief Allocates a new data object.
  *
  * @return A pointer to the allocated data object, or @c NULL if an error occurred.
@@ -51,8 +43,15 @@ cos_data_free(CosData *data);
 CosData * COS_Nullable
 cos_data_alloc(size_t capacity_hint)
     COS_MALLOC_LIKE
-    COS_DEALLOC_FUNC(cos_data_free)
     COS_WARN_UNUSED_RESULT;
+
+/**
+ * @brief Frees a data object.
+ *
+ * @param data The data object to free.
+ */
+void
+cos_data_free(CosData *data);
 
 /**
  * @brief Creates a copy of a data object.
@@ -67,7 +66,6 @@ CosData * COS_Nullable
 cos_data_copy(const CosData *data,
               CosError * COS_Nullable error)
     COS_MALLOC_LIKE
-    COS_DEALLOC_FUNC(cos_data_free)
     COS_WARN_UNUSED_RESULT;
 
 /**

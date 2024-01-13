@@ -50,8 +50,16 @@ struct CosToken {
      *
      * This is only valid for certain token types.
      */
-    CosTokenValue value;
+    CosTokenValue * COS_Nullable value;
 };
+
+/**
+ * @brief Resets a token to its default state.
+ *
+ * @param token The token to be reset.
+ */
+void
+cos_token_reset(CosToken *token);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -5,9 +5,9 @@
 #ifndef LIBCOS_COS_NAME_OBJ_IMPL_H
 #define LIBCOS_COS_NAME_OBJ_IMPL_H
 
+#include "libcos/objects/CosNameObj.h"
 #include "libcos/private/common/CosClass-Impl.h"
 
-#include <libcos/CosNameObj.h>
 #include <libcos/common/CosDefines.h>
 
 COS_DECLS_BEGIN

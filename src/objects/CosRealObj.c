@@ -2,11 +2,14 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
-#include "libcos/CosRealObj.h"
+#include "libcos/objects/CosRealObj.h"
+
+#include "libcos/CosBaseObj.h"
+#include "libcos/private/objects/CosRealObj-Impl.h"
 
 COS_ASSUME_NONNULL_BEGIN
 
-CosRealObj * COS_Nullable
+CosRealObj *
 cos_real_obj_alloc(double value,
                    CosDoc * COS_Nullable document)
 {

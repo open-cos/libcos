@@ -26,7 +26,22 @@ add_library(libcos SHARED
         include/libcos/common/CosDict.h
         src/common/CosDict.c
         src/common/CosDataRef.c
-        include/libcos/common/CosDataRef.h)
+        include/libcos/common/CosDataRef.h
+        src/parse/CosToken.c
+        include/libcos/CosObject.h
+        src/objects/CosObject.c
+        include/libcos/objects/CosDirectObj.h
+        include/libcos/private/objects/CosIndirectObj-Impl.h
+        include/libcos/private/objects/CosDirectObj-Impl.h
+        src/objects/CosDirectObj.c
+        include/libcos/private/objects/CosNullObj-Impl.h
+        include/libcos/private/objects/CosBoolObj-Impl.h
+        include/libcos/private/objects/CosIntegerObj-Impl.h
+        include/libcos/private/objects/CosRealObj-Impl.h
+        include/libcos/objects/CosStreamObj.h
+        include/libcos/private/objects/CosStreamObj-Impl.h
+        src/objects/CosStreamObj.c
+)
 
 target_sources(libcos PRIVATE
         src/CosDoc.c
@@ -72,10 +87,8 @@ target_sources(libcos PRIVATE
         src/objects/CosObjID.c
         src/objects/CosObjRef.c
         src/objects/CosObjRef.h
-        src/objects/CosObjectStorage.c
-        src/objects/CosObjectStorage.h
         src/objects/CosRealObj.c
-        src/objects/CosStringObj-Impl.h
+        include/libcos/private/objects/CosStringObj-Impl.h
         src/objects/CosStringObj.c
         src/parse/CosObjParser.c
         src/parse/CosObjParser.h
@@ -88,18 +101,18 @@ target_sources(libcos PRIVATE
 )
 
 target_sources(libcos PUBLIC
-        include/libcos/CosArrayObj.h
+        include/libcos/objects/CosArrayObj.h
         include/libcos/CosBasicTypes.h
-        include/libcos/CosBoolObj.h
+        include/libcos/objects/CosBoolObj.h
         include/libcos/CosDoc.h
-        include/libcos/CosIndirectObj.h
-        include/libcos/CosIntegerObj.h
-        include/libcos/CosNameObj.h
-        include/libcos/CosNullObj.h
+        include/libcos/objects/CosIndirectObj.h
+        include/libcos/objects/CosIntegerObj.h
+        include/libcos/objects/CosNameObj.h
+        include/libcos/objects/CosNullObj.h
         include/libcos/CosBaseObj.h
         include/libcos/CosObjID.h
-        include/libcos/CosRealObj.h
-        include/libcos/CosStringObj.h
+        include/libcos/objects/CosRealObj.h
+        include/libcos/objects/CosStringObj.h
         include/libcos/common/CosDefines.h
         include/libcos/common/CosDiagnostic.h
         include/libcos/common/CosDiagnosticHandler.h
@@ -118,23 +131,26 @@ target_include_directories(libcos
         PUBLIC include/
         PRIVATE src/)
 
+set(COS_C_FLAGS_WARNINGS "")
+
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(libcos PRIVATE
+    list(APPEND COS_C_FLAGS_WARNINGS
             -Wall -Wextra
             -Wno-unknown-pragmas
             -Werror=missing-declarations
+            -Werror=implicit-function-declaration
             -Werror=return-type -Werror=incompatible-pointer-types
             -fanalyzer
     )
 
     if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
-        target_compile_options(libcos PRIVATE
+        list(APPEND COS_C_FLAGS_WARNINGS
                 -Werror=enum-conversion
         )
     endif ()
 
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(libcos PRIVATE
+    list(APPEND COS_C_FLAGS_WARNINGS
             -Wall
             -Wextra
             -Weverything
@@ -150,9 +166,11 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Werror=nullability
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(libcos PRIVATE
+    list(APPEND COS_C_FLAGS_WARNINGS
             /W4 /WX)
 endif ()
+
+target_compile_options(libcos PRIVATE ${COS_C_FLAGS_WARNINGS})
 
 set_target_properties(libcos PROPERTIES
         PREFIX "" # Remove the "lib" prefix from the library name.
@@ -164,6 +182,7 @@ enable_testing()
 
 add_executable(libcos-tests
         tests/parse/CosTokenizer-Test.c
+        tests/parse/CosObjParser-Test.c
 )
 
 target_include_directories(libcos-tests
@@ -171,6 +190,8 @@ target_include_directories(libcos-tests
         PRIVATE src/
         PRIVATE tests/
 )
+
+target_compile_options(libcos-tests PRIVATE ${COS_C_FLAGS_WARNINGS})
 
 target_link_libraries(libcos-tests libcos)
 

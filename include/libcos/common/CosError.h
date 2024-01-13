@@ -26,11 +26,15 @@ typedef enum CosErrorCode {
 
 struct CosError {
     CosErrorCode code;
-    const char *message;
+    const char * COS_Nullable message;
 };
 
 #define COS_ERROR_PROPAGATE(source_error, destination_error) \
     cos_error_propagate_(source_error, destination_error)
+
+CosError
+cos_error_none(void)
+    COS_ATTR_PURE;
 
 CosError
 cos_error_make(CosErrorCode code, const char *message);

@@ -2,7 +2,7 @@
 // Created by david on 15/10/23.
 //
 
-#include "libcos/CosArrayObj.h"
+#include "libcos/objects/CosArrayObj.h"
 
 #include "CosArrayObj-Impl.h"
 #include "CosObj-Impl.h"

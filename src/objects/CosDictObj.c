@@ -40,10 +40,12 @@ static struct CosClassInitializer cos_dict_obj_class_initializer_ = {
 static void
 cos_dict_obj_class_init_(CosDictObjClass *class)
 {
-    cos_class_init(&(class->base),
+    cos_class_init((CosClass *)class,
                    cos_base_obj_class(),
                    NULL,
                    &cos_dict_obj_dealloc_);
+
+    class->base.get_type = NULL;
 
     class->init = &cos_dict_obj_init_;
 }

@@ -6,18 +6,18 @@
 
 #include "common/Assert.h"
 #include "common/CosMacros.h"
+#include "libcos/objects/CosArrayObj.h"
+#include "libcos/objects/CosBoolObj.h"
+#include "libcos/objects/CosIntegerObj.h"
+#include "libcos/objects/CosNameObj.h"
+#include "libcos/objects/CosNullObj.h"
+#include "libcos/objects/CosRealObj.h"
+#include "libcos/objects/CosStringObj.h"
 #include "parse/CosToken.h"
 #include "parse/CosTokenizer.h"
 
-#include <libcos/CosArrayObj.h>
-#include <libcos/CosBoolObj.h>
 #include <libcos/CosDoc.h>
-#include <libcos/CosIntegerObj.h>
-#include <libcos/CosNameObj.h>
-#include <libcos/CosNullObj.h>
 #include <libcos/CosObjID.h>
-#include <libcos/CosRealObj.h>
-#include <libcos/CosStringObj.h>
 #include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/common/CosError.h>
 #include <libcos/io/CosInputStream.h>
@@ -192,6 +192,42 @@ cos_obj_parser_free(CosObjParser *parser)
     free(parser);
 }
 
+bool
+cos_obj_parser_has_next_object(CosObjParser *parser)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    if (!parser) {
+        return false;
+    }
+
+    const CosBaseObj * const object = cos_obj_parser_peek_object(parser, NULL);
+    return (object != NULL);
+}
+
+CosBaseObj *
+cos_obj_parser_peek_object(CosObjParser *parser,
+                           CosError * COS_Nullable error)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    if (!parser) {
+        return NULL;
+    }
+
+    // If there are objects in the queue, return the first one.
+    if (parser->object_count > 0) {
+        return parser->objects[0];
+    }
+
+    // Otherwise, parse the next object and push it to the queue.
+    CosBaseObj * const object = cos_obj_parser_next_object_(parser, error);
+    if (!object) {
+        return NULL;
+    }
+
+    cos_obj_parser_push_object_(parser, object);
+    return object;
+}
+
 CosBaseObj *
 cos_obj_parser_next_object(CosObjParser *parser,
                            CosError * COS_Nullable error)
@@ -199,6 +235,10 @@ cos_obj_parser_next_object(CosObjParser *parser,
     COS_PARAMETER_ASSERT(parser != NULL);
     if (!parser) {
         return NULL;
+    }
+
+    if (parser->object_count > 0) {
+        return cos_obj_parser_pop_object_(parser);
     }
 
     return cos_obj_parser_next_object_(parser, error);
@@ -270,12 +310,15 @@ cos_obj_parser_handle_literal_string_(CosObjParser *parser,
                                       CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
+    COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Literal_String);
+    if (!parser || !token) {
+        return NULL;
+    }
 
     CosData *string_data = NULL;
-    if (cos_token_value_take_data(&(token->value),
+    if (cos_token_value_take_data(token->value,
                                   &string_data)) {
-        CosBaseObj * const string_object = (CosBaseObj *)cos_string_obj_alloc(string_data,
-                                                                              parser->doc);
+        CosBaseObj * const string_object = (CosBaseObj *)cos_string_obj_alloc(string_data);
         return string_object;
     }
     else {
@@ -293,12 +336,15 @@ cos_obj_parser_handle_hex_string_(CosObjParser *parser,
                                   CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
+    COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Hex_String);
+    if (!parser || !token) {
+        return NULL;
+    }
 
     CosData *string_data = NULL;
-    if (cos_token_value_take_data(&(token->value),
+    if (cos_token_value_take_data(token->value,
                                   &string_data)) {
-        CosBaseObj * const string_object = (CosBaseObj *)cos_string_obj_alloc(string_data,
-                                                                              parser->doc);
+        CosBaseObj * const string_object = (CosBaseObj *)cos_string_obj_alloc(string_data);
         return string_object;
     }
     else {
@@ -316,9 +362,13 @@ cos_obj_parser_handle_name_(CosObjParser *parser,
                             CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
+    COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Name);
+    if (!parser || !token) {
+        return NULL;
+    }
 
     CosString *name = NULL;
-    if (cos_token_value_take_string(&(token->value), &name)) {
+    if (cos_token_value_take_string(token->value, &name)) {
         return (CosBaseObj *)cos_name_obj_create(name);
     }
     else {
@@ -343,7 +393,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
 
     // Get the integer value of the token.
     int int_value = 0;
-    if (!cos_token_value_get_integer_number(&(token->value),
+    if (!cos_token_value_get_integer_number(token->value,
                                             &int_value)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid integer token"),
@@ -421,13 +471,13 @@ cos_obj_parser_handle_real_(CosObjParser *parser,
                             CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
-    COS_PARAMETER_ASSERT(token != NULL);
-    if (!parser) {
+    COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Real);
+    if (!parser || !token) {
         return NULL;
     }
 
     double real_value = 0.0;
-    if (cos_token_value_get_real_number(&(token->value),
+    if (cos_token_value_get_real_number(token->value,
                                         &real_value)) {
         return (CosBaseObj *)cos_real_obj_alloc(real_value,
                                                 parser->doc);
@@ -545,7 +595,7 @@ cos_obj_parser_handle_keyword_(CosObjParser *parser,
     }
 
     CosKeywordType keyword_type;
-    if (!cos_token_value_get_keyword(&(token->value),
+    if (!cos_token_value_get_keyword(token->value,
                                      &keyword_type)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid keyword token"),
@@ -558,10 +608,10 @@ cos_obj_parser_handle_keyword_(CosObjParser *parser,
             break;
 
         case CosKeywordType_True: {
-            return (CosBaseObj *)cos_bool_obj_alloc(true);
+            return (CosBaseObj *)cos_bool_obj_create(true);
         }
         case CosKeywordType_False: {
-            return (CosBaseObj *)cos_bool_obj_alloc(false);
+            return (CosBaseObj *)cos_bool_obj_create(false);
         }
 
         case CosKeywordType_Null: {

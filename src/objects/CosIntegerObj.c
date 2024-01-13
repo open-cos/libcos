@@ -2,9 +2,13 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
-#include "libcos/CosIntegerObj.h"
+#include "libcos/objects/CosIntegerObj.h"
 
 #include "common/Assert.h"
+#include "libcos/CosBaseObj.h"
+#include "libcos/private/objects/CosIntegerObj-Impl.h"
+
+#include <stddef.h>
 
 COS_ASSUME_NONNULL_BEGIN
 

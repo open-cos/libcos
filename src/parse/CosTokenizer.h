@@ -44,16 +44,6 @@ CosToken
 cos_tokenizer_peek_token(CosTokenizer *tokenizer);
 
 /**
- * Peek the token after the next token without consuming it.
- *
- * @param tokenizer The tokenizer.
- *
- * @return The token after the next token.
- */
-CosToken
-cos_tokenizer_peek_next_token(CosTokenizer *tokenizer);
-
-/**
  * Consume the next token.
  *
  * @param tokenizer The tokenizer.

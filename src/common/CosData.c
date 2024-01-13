@@ -64,29 +64,29 @@ cos_data_free(CosData *data)
 }
 
 CosData *
-cos_data_copy(const CosData *data,
+cos_data_copy(const CosData *source,
               CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
-    if (!data) {
+    COS_PARAMETER_ASSERT(source != NULL);
+    if (!source) {
         return NULL;
     }
 
-    CosData * const copy = cos_data_alloc(data->size);
+    CosData * const copy = cos_data_alloc(source->size);
     if (!copy) {
         goto failure;
     }
 
     // Ensure that the copy has enough capacity to hold the data.
-    if (!cos_data_reserve(copy, data->size, error)) {
+    if (!cos_data_reserve(copy, source->size, error)) {
         goto failure;
     }
 
     // Use memcpy here because we know the source and destination do not overlap.
     memcpy(copy->bytes,
-           data->bytes,
-           data->size);
-    copy->size = data->size;
+           source->bytes,
+           source->size);
+    copy->size = source->size;
 
     return copy;
 

@@ -1,28 +1,21 @@
-//
-// Created by david on 15/10/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
-#ifndef LIBCOS_COS_BOOL_OBJ_H
-#define LIBCOS_COS_BOOL_OBJ_H
+#ifndef LIBCOS_OBJECTS_COS_BOOL_OBJ_H
+#define LIBCOS_OBJECTS_COS_BOOL_OBJ_H
 
-#include <libcos/CosBaseObj.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
-#include <libcos/private/objects/CosBaseObj-Impl.h>
 
 #include <stdbool.h>
 
+COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-struct CosBoolObj {
-    CosBaseObj base;
-
-    bool value;
-};
-
 CosBoolObj * COS_Nullable
-cos_bool_obj_alloc(bool value)
+cos_bool_obj_create(bool value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
@@ -37,5 +30,6 @@ cos_bool_obj_set_value(CosBoolObj *bool_obj,
                        CosError * COS_Nullable error);
 
 COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
-#endif /* LIBCOS_COS_BOOL_OBJ_H */
+#endif /* LIBCOS_OBJECTS_COS_BOOL_OBJ_H */

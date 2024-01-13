@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
+
 //
 // Created by david on 15/10/23.
 //
@@ -5,10 +9,10 @@
 #ifndef LIBCOS_COS_ARRAY_OBJ_H
 #define LIBCOS_COS_ARRAY_OBJ_H
 
-#include <libcos/CosBaseObj.h>
-#include <libcos/common/CosDefines.h>
-#include <libcos/common/CosError.h>
-#include <libcos/common/CosTypes.h>
+#include "libcos/CosBaseObj.h"
+#include "libcos/common/CosDefines.h"
+#include "libcos/common/CosError.h"
+#include "libcos/common/CosTypes.h"
 
 #include <stdbool.h>
 #include <stddef.h>

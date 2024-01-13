@@ -10,6 +10,16 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+CosError
+cos_error_none(void)
+{
+    const CosError result = {
+        .code = COS_ERROR_NONE,
+        .message = NULL,
+    };
+    return result;
+}
+
 void
 cos_error_propagate(CosError *source_error, CosError **destination_error)
 {

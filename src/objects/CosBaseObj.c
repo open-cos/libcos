@@ -50,15 +50,7 @@ cos_obj_alloc(size_t size,
         return NULL;
     }
 
-    obj->document = document;
-
     return obj;
-}
-
-CosDoc *
-cos_obj_get_document(const CosBaseObj *obj)
-{
-    return obj->document;
 }
 
 COS_ASSUME_NONNULL_END

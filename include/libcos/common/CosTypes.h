@@ -32,6 +32,9 @@ typedef struct CosBaseObj CosBaseObj;
 typedef struct CosObjRef CosObjRef;
 typedef struct CosObjID CosObjID;
 
+typedef struct CosObjValue CosObjValue;
+
+typedef struct CosDirectObj CosDirectObj;
 typedef struct CosBoolObj CosBoolObj;
 typedef struct CosNameObj CosNameObj;
 typedef struct CosArrayObj CosArrayObj;
@@ -40,8 +43,10 @@ typedef struct CosStringObj CosStringObj;
 typedef struct CosNullObj CosNullObj;
 typedef struct CosIntegerObj CosIntegerObj;
 typedef struct CosRealObj CosRealObj;
-
 typedef struct CosIndirectObj CosIndirectObj;
+typedef struct CosStreamObj CosStreamObj;
+
+typedef struct CosObject CosObject;
 
 typedef struct CosInputStream CosInputStream;
 typedef struct CosInputStreamFunctions CosInputStreamFunctions;

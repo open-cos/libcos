@@ -2,13 +2,15 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
-#include "libcos/CosNullObj.h"
+#include "libcos/objects/CosNullObj.h"
+
+#include "libcos/private/objects/CosNullObj-Impl.h"
 
 COS_ASSUME_NONNULL_BEGIN
 
 static CosNullObj cos_null_obj_ = {
     .base = {
-        .document = NULL,
+        .type = CosObjectType_Null,
     },
 };
 

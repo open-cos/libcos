@@ -2,7 +2,7 @@
 // Created by david on 15/10/23.
 //
 
-#include "libcos/CosNameObj.h"
+#include "libcos/objects/CosNameObj.h"
 
 #include "common/Assert.h"
 #include "common/CosString.h"

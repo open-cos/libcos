@@ -22,7 +22,7 @@ struct CosDictObj {
 };
 
 typedef struct CosDictObjClass {
-    CosClass base;
+    CosBaseObjClass base;
 
     void (*init)(CosDictObj *dict_obj,
                  CosDict *dict);

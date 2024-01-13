@@ -20,7 +20,7 @@ cos_doc_get_version(CosDoc *doc);
 CosBaseObj *
 cos_doc_get_root(CosDoc *doc);
 
-CosBaseObj *
+void * COS_Nullable
 cos_doc_get_object(CosDoc *doc,
                    CosObjID id,
                    CosError * COS_Nullable error);

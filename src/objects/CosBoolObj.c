@@ -1,15 +1,17 @@
-//
-// Created by david on 15/10/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
-#include "libcos/CosBoolObj.h"
+#include "libcos/objects/CosBoolObj.h"
 
 #include "common/Assert.h"
+#include "libcos/CosBaseObj.h"
+#include "libcos/private/objects/CosBoolObj-Impl.h"
 
 COS_ASSUME_NONNULL_BEGIN
 
 CosBoolObj *
-cos_bool_obj_alloc(bool value)
+cos_bool_obj_create(bool value)
 {
     CosBoolObj * const obj = cos_obj_alloc(sizeof(CosBoolObj),
                                            CosObjectType_Boolean,

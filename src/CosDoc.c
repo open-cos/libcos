@@ -40,7 +40,7 @@ cos_doc_get_root(CosDoc *doc)
     return doc->root;
 }
 
-CosBaseObj *
+void *
 cos_doc_get_object(CosDoc *doc,
                    CosObjID id,
                    CosError * COS_Nullable error)
