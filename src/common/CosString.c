@@ -2,7 +2,7 @@
 // Created by david on 24/05/23.
 //
 
-#include "CosString.h"
+#include "libcos/common/CosString.h"
 
 #include "common/Assert.h"
 
@@ -12,6 +12,29 @@
 #include <string.h>
 
 COS_ASSUME_NONNULL_BEGIN
+
+struct CosString {
+    /**
+     * The nul-terminated character array.
+     */
+    char *data;
+
+    /**
+     * The number of characters in the string, not including the nul-terminator.
+     */
+    size_t length;
+
+    /**
+     * The number of characters that can be stored in the string.
+     *
+     * @invariant The capacity is always large enough to store @c length characters,
+     * plus the nul-terminator.
+     * @code
+     * capacity >= length + 1
+     * @endcode
+     */
+    size_t capacity;
+};
 
 static bool
 cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
@@ -91,7 +114,7 @@ cos_string_free(CosString *string)
         return;
     }
 
-    cos_string_release(string);
+    free(string->data);
 
     free(string);
 }
@@ -108,6 +131,9 @@ bool
 cos_string_init_capacity(CosString *string, size_t capacity_hint)
 {
     COS_PARAMETER_ASSERT(string != NULL);
+    if (!string) {
+        return false;
+    }
 
     size_t capacity = capacity_hint;
     if (capacity == 0) {
@@ -129,23 +155,46 @@ cos_string_init_capacity(CosString *string, size_t capacity_hint)
     return true;
 }
 
-void
-cos_string_release(CosString *string)
+const char *
+cos_string_get_data(const CosString *string)
 {
+    COS_PARAMETER_ASSERT(string != NULL);
     if (!string) {
-        return;
+        return NULL;
     }
 
-    free(string->data);
-    string->data = NULL;
-    string->length = 0;
-    string->capacity = 0;
+    return string->data;
+}
+
+size_t
+cos_string_get_length(const CosString *string)
+{
+    COS_PARAMETER_ASSERT(string != NULL);
+    if (!string) {
+        return 0;
+    }
+
+    return string->length;
+}
+
+size_t
+cos_string_get_capacity(const CosString *string)
+{
+    COS_PARAMETER_ASSERT(string != NULL);
+    if (!string) {
+        return 0;
+    }
+
+    return string->capacity;
 }
 
 CosString *
 cos_string_copy(const CosString *string)
 {
     COS_PARAMETER_ASSERT(string != NULL);
+    if (!string) {
+        return NULL;
+    }
 
     return cos_string_alloc_with_strn(string->data, string->length);
 }
@@ -247,6 +296,9 @@ cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
     COS_PARAMETER_ASSERT(string != NULL);
     COS_PARAMETER_ASSERT(str != NULL);
     COS_PARAMETER_ASSERT(n > 0);
+    if (!string || !str || n == 0) {
+        return false;
+    }
 
     const size_t required_capacity = string->length + n + 1;
     if (!cos_string_ensure_capacity_(string, required_capacity)) {
@@ -294,6 +346,9 @@ cos_string_resize_(CosString *string, size_t new_capacity)
 {
     COS_PARAMETER_ASSERT(string != NULL);
     COS_PARAMETER_ASSERT(new_capacity > 0);
+    if (!string || new_capacity == 0) {
+        return false;
+    }
 
     size_t new_length = string->length;
     if (new_length > (new_capacity - 1)) {
@@ -301,8 +356,9 @@ cos_string_resize_(CosString *string, size_t new_capacity)
         new_length = new_capacity - 1;
     }
 
-    char * const new_data = realloc(string->data, new_capacity * sizeof(char));
-    if (!(new_data)) {
+    char * const new_data = realloc(string->data,
+                                    new_capacity * sizeof(char));
+    if (!new_data) {
         return false;
     }
     new_data[new_length] = '\0';

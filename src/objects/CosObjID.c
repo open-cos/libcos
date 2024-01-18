@@ -6,30 +6,38 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+const CosObjID CosObjID_Invalid = {0};
+
 CosObjID
-cos_obj_id_make(unsigned int object_number,
-                unsigned int generation_number)
+cos_obj_id_make(unsigned int obj_number,
+                unsigned int gen_number)
 {
     CosObjID obj_id;
-    obj_id.object_number = object_number;
-    obj_id.generation_number = generation_number;
+    obj_id.obj_number = obj_number;
+    obj_id.gen_number = gen_number;
     return obj_id;
+}
+
+bool
+cos_obj_id_is_valid(CosObjID obj_id)
+{
+    return obj_id.obj_number > 0;
 }
 
 int
 cos_obj_id_compare(CosObjID lhs, CosObjID rhs)
 {
-    if (lhs.generation_number < rhs.generation_number) {
+    if (lhs.gen_number < rhs.gen_number) {
         return -1;
     }
-    else if (lhs.generation_number > rhs.generation_number) {
+    else if (lhs.gen_number > rhs.gen_number) {
         return 1;
     }
     // The generation numbers are equal; compare the object numbers.
-    if (lhs.object_number < rhs.object_number) {
+    if (lhs.obj_number < rhs.obj_number) {
         return -1;
     }
-    else if (lhs.object_number > rhs.object_number) {
+    else if (lhs.obj_number > rhs.obj_number) {
         return 1;
     }
 

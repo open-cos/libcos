@@ -5,111 +5,100 @@
 #include "libcos/objects/CosIndirectObj.h"
 
 #include "common/Assert.h"
-#include "libcos/CosBaseObj.h"
-#include "libcos/private/objects/CosIndirectObj-Impl.h"
+#include "libcos/objects/CosObj.h"
 
 #include <libcos/CosDoc.h>
-#include <libcos/objects/CosNullObj.h>
 
 #include <stddef.h>
+#include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
-static void
-cos_indirect_obj_resolve_value_(CosIndirectObj *indirect_obj);
+struct CosIndirectObj {
+    /**
+     * @c CosObjType_Indirect.
+     */
+    CosObjType type;
+
+    /**
+     * The ID of the indirect object.
+     */
+    CosObjID id;
+
+    /**
+     * The (direct) object value.
+     */
+    CosObj *value;
+};
 
 CosIndirectObj *
 cos_indirect_obj_alloc(CosObjID id,
-                       CosDoc *document)
+                       CosObj *value)
 {
-    COS_PARAMETER_ASSERT(document != NULL);
+    COS_PARAMETER_ASSERT(value != NULL);
+    if (!value) {
+        return NULL;
+    }
 
-    CosIndirectObj *indirect_obj = cos_obj_alloc(sizeof(CosIndirectObj),
-                                                 CosObjectType_Unknown,
-                                                 document);
+    CosIndirectObj * const indirect_obj = calloc(1, sizeof(CosIndirectObj));
     if (!indirect_obj) {
         return NULL;
     }
 
-    cos_indirect_obj_init(indirect_obj, id, document);
+    indirect_obj->type = CosObjType_Indirect;
+    indirect_obj->id = id;
+    indirect_obj->value = value;
 
     return indirect_obj;
 }
 
 void
-cos_indirect_obj_init(CosIndirectObj *indirect_obj,
-                      CosObjID id,
-                      CosDoc *document)
+cos_indirect_obj_free(CosIndirectObj *indirect_obj)
 {
-    COS_PARAMETER_ASSERT(indirect_obj != NULL);
     if (!indirect_obj) {
         return;
     }
 
-    indirect_obj->id = id;
-    indirect_obj->doc = document;
+    cos_obj_free(indirect_obj->value);
+
+    free(indirect_obj);
 }
 
-CosDirectObj *
-cos_indirect_obj_get_value(CosIndirectObj *indirect_obj)
+CosObjID
+cos_indirect_obj_get_id(const CosIndirectObj *indirect_obj)
+{
+    COS_PARAMETER_ASSERT(indirect_obj != NULL);
+    if (!indirect_obj) {
+        return CosObjID_Invalid;
+    }
+
+    return indirect_obj->id;
+}
+
+CosObj *
+cos_indirect_obj_get_value(const CosIndirectObj *indirect_obj)
 {
     COS_PARAMETER_ASSERT(indirect_obj != NULL);
     if (!indirect_obj) {
         return NULL;
     }
 
-    if (!indirect_obj->value) {
-        cos_indirect_obj_resolve_value_(indirect_obj);
-    }
-
     return indirect_obj->value;
 }
 
-CosObjectType
-cos_indirect_obj_get_type(CosIndirectObj *indirect_obj)
+CosObjValueType
+cos_indirect_obj_get_type(const CosIndirectObj *indirect_obj)
 {
     COS_PARAMETER_ASSERT(indirect_obj != NULL);
     if (!indirect_obj) {
-        return CosObjectType_Unknown;
+        return CosObjValueType_Unknown;
     }
 
-    if (!indirect_obj->value) {
-        cos_indirect_obj_resolve_value_(indirect_obj);
-    }
-
-    const CosDirectObj * const direct_obj = indirect_obj->value;
+    const CosObj * const direct_obj = indirect_obj->value;
     if (!direct_obj) {
-        return CosObjectType_Unknown;
+        return CosObjValueType_Unknown;
     }
-    return cos_direct_obj_get_type(direct_obj);
-}
-
-#pragma mark - Private
-
-static void
-cos_indirect_obj_resolve_value_(CosIndirectObj *indirect_obj)
-{
-    COS_PARAMETER_ASSERT(indirect_obj != NULL);
-    if (!indirect_obj) {
-        return;
-    }
-
-    if (indirect_obj->value) {
-        return;
-    }
-
-    CosError error = cos_error_none();
-    void * const obj_value = cos_doc_get_object(indirect_obj->doc,
-                                                indirect_obj->id,
-                                                &error);
-    if (obj_value) {
-        indirect_obj->value = obj_value;
-    }
-    else {
-        // TODO: Log undefined object if strict.
-
-        indirect_obj->value = (CosDirectObj *)cos_null_obj_get();
-    }
+    return (CosObjValueType)cos_obj_get_type(direct_obj);
 }
 
 COS_ASSUME_NONNULL_END

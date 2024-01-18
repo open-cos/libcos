@@ -6,8 +6,8 @@
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
-#include "common/CosString.h"
 #include "io/CosInputStreamReader.h"
+#include "libcos/common/CosString.h"
 
 #include <libcos/common/CosError.h>
 
@@ -956,11 +956,17 @@ cos_tokenizer_read_number_(CosTokenizer *tokenizer,
         goto failure;
     }
 
+    const char * const string_data = cos_string_get_data(string);
+    if (!string_data) {
+        // Error: invalid string.
+        goto failure;
+    }
+
     if (number_type == CosNumberType_Integer) {
         char *end_ptr = NULL;
         errno = 0;
-        const long long_value = strtol(string->data, &end_ptr, 10);
-        if (end_ptr == string->data || errno == ERANGE) {
+        const long long_value = strtol(string_data, &end_ptr, 10);
+        if (end_ptr == string_data || errno == ERANGE) {
             // Error: invalid integer.
             goto failure;
         }
@@ -972,8 +978,8 @@ cos_tokenizer_read_number_(CosTokenizer *tokenizer,
     else {
         char *end_ptr = NULL;
         errno = 0;
-        const double double_value = strtod(string->data, &end_ptr);
-        if (end_ptr == string->data || errno == ERANGE) {
+        const double double_value = strtod(string_data, &end_ptr);
+        if (end_ptr == string_data || errno == ERANGE) {
             // Error: invalid real.
             goto failure;
         }

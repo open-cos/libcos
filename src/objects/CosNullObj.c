@@ -4,14 +4,19 @@
 
 #include "libcos/objects/CosNullObj.h"
 
-#include "libcos/private/objects/CosNullObj-Impl.h"
+#include "libcos/objects/CosObj.h"
 
 COS_ASSUME_NONNULL_BEGIN
 
+struct CosNullObj {
+    CosObjType type;
+
+    void * COS_Nullable data;
+};
+
 static CosNullObj cos_null_obj_ = {
-    .base = {
-        .type = CosObjectType_Null,
-    },
+    .type = CosObjType_Null,
+    .data = NULL,
 };
 
 CosNullObj *

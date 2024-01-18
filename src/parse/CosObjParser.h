@@ -56,7 +56,7 @@ cos_obj_parser_has_next_object(CosObjParser *parser);
  *
  * @return The next object, or @c NULL if an error occurred.
  */
-CosBaseObj * COS_Nullable
+CosObj * COS_Nullable
 cos_obj_parser_peek_object(CosObjParser *parser,
                            CosError * COS_Nullable error);
 
@@ -69,7 +69,7 @@ cos_obj_parser_peek_object(CosObjParser *parser,
  *
  * @return The next object, or @c NULL if an error occurred.
  */
-CosBaseObj * COS_Nullable
+CosObj * COS_Nullable
 cos_obj_parser_next_object(CosObjParser *parser,
                            CosError * COS_Nullable error)
     COS_WARN_UNUSED_RESULT;

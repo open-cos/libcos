@@ -4,12 +4,25 @@
 
 #include "libcos/common/CosDict.h"
 
+#include "common/Assert.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "Assert.h"
-
 COS_ASSUME_NONNULL_BEGIN
+
+const CosDictKeyCallbacks cos_dict_obj_key_callbacks = {
+    .hash = NULL,
+    .retain = NULL,
+    .release = NULL,
+    .equal = NULL,
+};
+
+const CosDictValueCallbacks cos_dict_obj_value_callbacks = {
+    .retain = NULL,
+    .release = NULL,
+    .equal = NULL,
+};
 
 struct CosDict {
     size_t count;
@@ -20,9 +33,9 @@ struct CosDict {
 };
 
 CosDict *
-cos_dict_alloc(size_t capacity,
-               const CosDictKeyCallbacks * COS_Nullable key_callbacks,
-               const CosDictValueCallbacks * COS_Nullable value_callbacks)
+cos_dict_alloc(const CosDictKeyCallbacks * COS_Nullable key_callbacks,
+               const CosDictValueCallbacks * COS_Nullable value_callbacks,
+               size_t capacity_hint)
 {
     CosDict *dict;
 
@@ -59,7 +72,6 @@ failure:
     if (dict) {
         cos_dict_free(dict);
     }
-
     return NULL;
 }
 
@@ -96,6 +108,22 @@ cos_dict_get_value_callbacks(const CosDict *dict)
     }
 
     return dict->value_callbacks;
+}
+
+bool
+cos_dict_set(CosDict *dict,
+             void *key,
+             void *value,
+             CosError * COS_Nullable error)
+{
+    COS_PARAMETER_ASSERT(dict != NULL);
+    COS_PARAMETER_ASSERT(key != NULL);
+    COS_PARAMETER_ASSERT(value != NULL);
+    if (!dict || !key || !value) {
+        return false;
+    }
+
+    return true;
 }
 
 COS_ASSUME_NONNULL_END

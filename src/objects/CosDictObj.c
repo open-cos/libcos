@@ -5,122 +5,77 @@
 #include "libcos/objects/CosDictObj.h"
 
 #include "common/Assert.h"
-#include "libcos/common/CosClass.h"
 #include "libcos/common/CosDict.h"
-#include "libcos/private/objects/CosDictObj-Impl.h"
+#include "libcos/objects/CosObj.h"
 
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
-static CosDictObjClass cos_dict_obj_class_;
+struct CosDictObj {
+    CosObjType type;
 
-struct CosClassInitializer {
-    CosDictObjClass *class;
-    bool initialized;
+    CosDict *value;
 };
-
-static void
-cos_dict_obj_class_init_(CosDictObjClass *class);
-
-static void
-cos_dict_obj_init_(CosDictObj *dict_obj,
-                   CosDict *dict);
-
-static void
-cos_dict_obj_dealloc_(CosObj *obj);
-
-static struct CosClassInitializer cos_dict_obj_class_initializer_ = {
-    .class = &cos_dict_obj_class_,
-    .initialized = false,
-};
-
-#pragma mark - Private Implementations
-
-static void
-cos_dict_obj_class_init_(CosDictObjClass *class)
-{
-    cos_class_init((CosClass *)class,
-                   cos_base_obj_class(),
-                   NULL,
-                   &cos_dict_obj_dealloc_);
-
-    class->base.get_type = NULL;
-
-    class->init = &cos_dict_obj_init_;
-}
-
-static void
-cos_dict_obj_init_(CosDictObj *dict_obj,
-                   CosDict *dict)
-{
-    ((CosObj *)dict_obj)->class->init((CosObj *)dict_obj);
-
-    dict_obj->dict = dict;
-}
-
-static void
-cos_dict_obj_dealloc_(CosObj *obj)
-{
-    CosDictObj * const dict_obj = (CosDictObj *)obj;
-
-    free(dict_obj->dict);
-
-    ((CosObj *)dict_obj)->class->super->dealloc(obj);
-}
 
 CosDictObj *
-cos_dict_obj_create(void)
+cos_dict_obj_alloc(CosDict * COS_Nullable dict)
 {
-    CosDictObj * const dict_obj = cos_class_alloc_obj(cos_dict_obj_class(),
-                                                      sizeof(CosDictObj));
+    CosDictObj * const dict_obj = calloc(1, sizeof(CosDictObj));
     if (!dict_obj) {
         goto failure;
     }
 
-    CosDict * const dict = cos_dict_alloc(0,
-                                          NULL,
-                                          NULL);
-    if (!dict) {
-        goto failure;
-    }
+    dict_obj->type = CosObjType_Dict;
 
-    ((CosDictObjClass *)dict_obj->base.base.class)->init(dict_obj, dict);
+    if (dict) {
+        dict_obj->value = (CosDict *)dict;
+    }
+    else {
+        CosDict * const new_dict = cos_dict_alloc(&cos_dict_obj_key_callbacks,
+                                                  &cos_dict_obj_value_callbacks,
+                                                  0);
+        if (!new_dict) {
+            goto failure;
+        }
+        dict_obj->value = new_dict;
+    }
+    COS_ASSERT(dict_obj->value != NULL, "Expected a dictionary value");
 
     return dict_obj;
 
 failure:
     if (dict_obj) {
-        // TODO: Deallocate the obj directly?
-        cos_obj_release((CosObj *)dict_obj);
+        free(dict_obj);
     }
-
     return NULL;
 }
 
-CosClass *
-cos_dict_obj_class(void)
+void
+cos_dict_obj_free(CosDictObj *dict_obj)
 {
-    if (!cos_dict_obj_class_initializer_.initialized) {
-        cos_dict_obj_class_initializer_.initialized = true;
-
-        cos_dict_obj_class_init_(cos_dict_obj_class_initializer_.class);
+    if (!dict_obj) {
+        return;
     }
 
-    return (CosClass *)&cos_dict_obj_class_initializer_.class;
+    cos_dict_free(dict_obj->value);
+    free(dict_obj);
 }
 
 bool
 cos_dict_obj_set(CosDictObj *dict_obj,
-                 CosBaseObj *key,
-                 CosBaseObj *value,
+                 CosNameObj *key,
+                 CosObj *value,
                  CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(dict_obj != NULL);
     COS_PARAMETER_ASSERT(key != NULL);
     COS_PARAMETER_ASSERT(value != NULL);
+    if (!dict_obj || !key || !value) {
+        return false;
+    }
 
-    return false;
+    return cos_dict_set(dict_obj->value, key, value, error);
 }
 
 COS_ASSUME_NONNULL_END

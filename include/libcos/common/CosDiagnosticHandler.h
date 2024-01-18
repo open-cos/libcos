@@ -12,21 +12,32 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-struct CosDiagnosticHandler {
-    void (*handle_func)(CosDiagnosticHandler *handler,
-                        CosDiagnostic *diagnostic);
+typedef void (*CosDiagnosticHandlerFunc)(CosDiagnosticHandler *handler,
+                                         const CosDiagnostic *diagnostic);
 
-    void * COS_Nullable user_data;
-};
+CosDiagnosticHandler * COS_Nullable
+cos_diagnostic_handler_alloc(CosDiagnosticHandlerFunc handle_func,
+                             void * COS_Nullable user_data)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
 
-CosDiagnosticHandler
-cos_diagnostic_handler_make(void (*handle_func)(CosDiagnosticHandler *handler,
-                                                CosDiagnostic *diagnostic),
-                            void * COS_Nullable user_data);
+void
+cos_diagnostic_handler_free(CosDiagnosticHandler *handler);
+
+/**
+ * @brief Returns the default diagnostic handler.
+ *
+ * @return The default diagnostic handler.
+ */
+CosDiagnosticHandler *
+cos_diagnostic_handler_get_default(void);
+
+void * COS_Nullable
+cos_diagnostic_handler_get_user_data(const CosDiagnosticHandler *handler);
 
 void
 cos_emit_diagnostic(CosDiagnosticHandler *handler,
-                    CosDiagnostic *diagnostic);
+                    const CosDiagnostic *diagnostic);
 
 void
 cos_diagnose(CosDiagnosticHandler *handler,
@@ -35,8 +46,10 @@ cos_diagnose(CosDiagnosticHandler *handler,
 
 #pragma mark - Diagnostic logger
 
-CosDiagnosticHandler
-cos_diagnostic_handler_make_logger(CosLogContext *log_context);
+CosDiagnosticHandler * COS_Nullable
+cos_diagnostic_handler_alloc_logger(CosLogContext *log_context)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

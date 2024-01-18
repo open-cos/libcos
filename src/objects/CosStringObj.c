@@ -5,62 +5,80 @@
 #include "libcos/objects/CosStringObj.h"
 
 #include "common/Assert.h"
-#include "libcos/private/objects/CosStringObj-Impl.h"
+#include "libcos/objects/CosObj.h"
 
-#include <libcos/CosBaseObj.h>
 #include <libcos/common/CosData.h>
 
+#include <stdlib.h>
+
 COS_ASSUME_NONNULL_BEGIN
+
+struct CosStringObj {
+    CosObjType type;
+
+    CosData *data;
+};
 
 CosStringObj * COS_Nullable
 cos_string_obj_alloc(CosData *data)
 {
-    CosStringObj * const obj = cos_obj_alloc(sizeof(CosStringObj),
-                                             CosObjectType_String,
-                                             NULL);
-    if (!obj) {
+    COS_PARAMETER_ASSERT(data != NULL);
+    if (!data) {
         return NULL;
     }
 
-    obj->data = data;
-
-    return obj;
-}
-
-bool
-cos_string_obj_set_data(CosStringObj *string_obj,
-                        CosData *data,
-                        CosError * COS_Nullable error)
-{
-    COS_PARAMETER_ASSERT(string_obj != NULL);
-    COS_PARAMETER_ASSERT(data != NULL);
-    if (!string_obj || !data) {
-        return false;
+    CosStringObj * const string_obj = calloc(1, sizeof(CosStringObj));
+    if (!string_obj) {
+        return NULL;
     }
 
-    if (string_obj->data) {
-        cos_data_free(string_obj->data);
-    }
-
+    string_obj->type = CosObjType_String;
     string_obj->data = data;
 
-    return true;
+    return string_obj;
 }
 
-bool
-cos_string_get_data(const CosStringObj *string_obj,
-                    const CosData * COS_Nullable *data,
-                    CosError * COS_Nullable error)
+void
+cos_string_obj_free(CosStringObj *string_obj)
+{
+    if (!string_obj) {
+        return;
+    }
+
+    cos_data_free(string_obj->data);
+    free(string_obj);
+}
+
+void
+cos_string_obj_set_value(CosStringObj *string_obj,
+                         CosData *data)
 {
     COS_PARAMETER_ASSERT(string_obj != NULL);
     COS_PARAMETER_ASSERT(data != NULL);
     if (!string_obj || !data) {
-        return false;
+        return;
     }
 
-    *data = string_obj->data;
+    if (string_obj->data == data) {
+        // No change.
+        return;
+    }
 
-    return true;
+    // Free the old data.
+    cos_data_free(string_obj->data);
+
+    string_obj->data = data;
+}
+
+CosData *
+cos_string_obj_get_value(const CosStringObj *string_obj)
+{
+    COS_PARAMETER_ASSERT(string_obj != NULL);
+    if (!string_obj) {
+        return NULL;
+    }
+
+    return string_obj->data;
 }
 
 COS_ASSUME_NONNULL_END

@@ -6,17 +6,20 @@
 
 #include "common/Assert.h"
 #include "common/CosMacros.h"
+#include "libcos/CosDoc.h"
 #include "libcos/objects/CosArrayObj.h"
 #include "libcos/objects/CosBoolObj.h"
-#include "libcos/objects/CosIntegerObj.h"
+#include "libcos/objects/CosIndirectObj.h"
+#include "libcos/objects/CosIntObj.h"
 #include "libcos/objects/CosNameObj.h"
 #include "libcos/objects/CosNullObj.h"
+#include "libcos/objects/CosObj.h"
 #include "libcos/objects/CosRealObj.h"
+#include "libcos/objects/CosReferenceObj.h"
 #include "libcos/objects/CosStringObj.h"
 #include "parse/CosToken.h"
 #include "parse/CosTokenizer.h"
 
-#include <libcos/CosDoc.h>
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/common/CosError.h>
@@ -35,7 +38,7 @@ struct CosObjParser {
     unsigned int integers[3];
     size_t integer_count;
 
-    CosBaseObj * COS_Nullable objects[3];
+    CosObj * COS_Nullable objects[3];
     size_t object_count;
 
     CosDiagnosticHandler *diagnostic_handler;
@@ -46,53 +49,53 @@ cos_obj_parser_init_(CosObjParser *self,
                      CosDoc *document,
                      CosInputStream *input_stream);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_next_object_(CosObjParser *parser,
                             CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_literal_string_(CosObjParser *parser,
                                       CosToken *token,
                                       CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_hex_string_(CosObjParser *parser,
                                   CosToken *token,
                                   CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_name_(CosObjParser *parser,
                             CosToken *token,
                             CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_integer_(CosObjParser *parser,
                                const CosToken *token,
                                CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_real_(CosObjParser *parser,
                             const CosToken *token,
                             CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_array_(CosObjParser *parser,
                              CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_dictionary_(CosObjParser *parser,
                                   CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_keyword_(CosObjParser *parser,
                                const CosToken *token,
                                CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
                                         CosError * COS_Nullable error);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_indirect_obj_ref_(CosObjParser *parser,
                                         CosError * COS_Nullable error);
 
@@ -108,9 +111,9 @@ cos_obj_parser_pop_int_(CosObjParser *parser);
 
 static void
 cos_obj_parser_push_object_(CosObjParser *parser,
-                            CosBaseObj *object);
+                            CosObj *object);
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_pop_object_(CosObjParser *parser);
 
 CosObjParser *
@@ -151,7 +154,7 @@ cos_obj_parser_init_(CosObjParser *self,
     COS_PARAMETER_ASSERT(self != NULL);
     COS_PARAMETER_ASSERT(document != NULL);
     COS_PARAMETER_ASSERT(input_stream != NULL);
-    if (!self || !input_stream) {
+    if (!self || !document || !input_stream) {
         return false;
     }
 
@@ -165,6 +168,14 @@ cos_obj_parser_init_(CosObjParser *self,
 
     self->integer_count = 0;
     self->object_count = 0;
+
+    CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
+    if (diagnostic_handler) {
+        self->diagnostic_handler = diagnostic_handler;
+    }
+    else {
+        self->diagnostic_handler = cos_diagnostic_handler_get_default();
+    }
 
     return true;
 
@@ -185,8 +196,8 @@ cos_obj_parser_free(CosObjParser *parser)
     cos_tokenizer_free(parser->tokenizer);
 
     for (size_t i = 0; i < parser->object_count; i++) {
-        CosBaseObj * const object = parser->objects[i];
-        cos_obj_release((CosObj *)object);
+        CosObj * const obj = parser->objects[i];
+        cos_obj_free(obj);
     }
 
     free(parser);
@@ -200,11 +211,11 @@ cos_obj_parser_has_next_object(CosObjParser *parser)
         return false;
     }
 
-    const CosBaseObj * const object = cos_obj_parser_peek_object(parser, NULL);
-    return (object != NULL);
+    const CosObj * const obj = cos_obj_parser_peek_object(parser, NULL);
+    return (obj != NULL);
 }
 
-CosBaseObj *
+CosObj *
 cos_obj_parser_peek_object(CosObjParser *parser,
                            CosError * COS_Nullable error)
 {
@@ -218,17 +229,19 @@ cos_obj_parser_peek_object(CosObjParser *parser,
         return parser->objects[0];
     }
 
-    // Otherwise, parse the next object and push it to the queue.
-    CosBaseObj * const object = cos_obj_parser_next_object_(parser, error);
-    if (!object) {
+    // Otherwise, parse the next obj and push it to the queue.
+    CosError error_ = cos_error_none();
+    CosObj * const obj = cos_obj_parser_next_object_(parser, &error_);
+    if (!obj) {
+        COS_ERROR_PROPAGATE(error_, error);
         return NULL;
     }
 
-    cos_obj_parser_push_object_(parser, object);
-    return object;
+    cos_obj_parser_push_object_(parser, obj);
+    return obj;
 }
 
-CosBaseObj *
+CosObj *
 cos_obj_parser_next_object(CosObjParser *parser,
                            CosError * COS_Nullable error)
 {
@@ -246,7 +259,7 @@ cos_obj_parser_next_object(CosObjParser *parser,
 
 #pragma mark - Implementation
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_next_object_(CosObjParser *parser,
                             CosError * COS_Nullable error)
 {
@@ -257,7 +270,7 @@ cos_obj_parser_next_object_(CosObjParser *parser,
 
     CosToken token = cos_tokenizer_next_token(parser->tokenizer);
 
-    CosBaseObj *object = NULL;
+    CosObj *object = NULL;
 
     switch (token.type) {
         case CosToken_Type_Unknown:
@@ -304,7 +317,7 @@ cos_obj_parser_next_object_(CosObjParser *parser,
     return object;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_literal_string_(CosObjParser *parser,
                                       CosToken *token,
                                       CosError * COS_Nullable error)
@@ -318,7 +331,7 @@ cos_obj_parser_handle_literal_string_(CosObjParser *parser,
     CosData *string_data = NULL;
     if (cos_token_value_take_data(token->value,
                                   &string_data)) {
-        CosBaseObj * const string_object = (CosBaseObj *)cos_string_obj_alloc(string_data);
+        CosObj * const string_object = (CosObj *)cos_string_obj_alloc(string_data);
         return string_object;
     }
     else {
@@ -330,7 +343,7 @@ cos_obj_parser_handle_literal_string_(CosObjParser *parser,
     return NULL;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_hex_string_(CosObjParser *parser,
                                   CosToken *token,
                                   CosError * COS_Nullable error)
@@ -344,8 +357,7 @@ cos_obj_parser_handle_hex_string_(CosObjParser *parser,
     CosData *string_data = NULL;
     if (cos_token_value_take_data(token->value,
                                   &string_data)) {
-        CosBaseObj * const string_object = (CosBaseObj *)cos_string_obj_alloc(string_data);
-        return string_object;
+        return (CosObj *)cos_string_obj_alloc(string_data);
     }
     else {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -356,7 +368,7 @@ cos_obj_parser_handle_hex_string_(CosObjParser *parser,
     return NULL;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_name_(CosObjParser *parser,
                             CosToken *token,
                             CosError * COS_Nullable error)
@@ -369,7 +381,7 @@ cos_obj_parser_handle_name_(CosObjParser *parser,
 
     CosString *name = NULL;
     if (cos_token_value_take_string(token->value, &name)) {
-        return (CosBaseObj *)cos_name_obj_create(name);
+        return (CosObj *)cos_name_obj_alloc(name);
     }
     else {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -379,7 +391,7 @@ cos_obj_parser_handle_name_(CosObjParser *parser,
     }
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_integer_(CosObjParser *parser,
                                const CosToken *token,
                                CosError * COS_Nullable error)
@@ -389,7 +401,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
         return NULL;
     }
 
-    CosIntegerObj *int_obj = NULL;
+    CosIntObj *int_obj = NULL;
 
     // Get the integer value of the token.
     int int_value = 0;
@@ -404,7 +416,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
     if (int_value < 0) {
         // We know that this integer is negative, so all the integers in the queue
         // and this integer should be treated as number objects.
-        int_obj = cos_integer_obj_alloc(int_value);
+        int_obj = cos_int_obj_alloc(int_value);
         if (!int_obj) {
             return NULL;
         }
@@ -413,7 +425,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
         for (size_t i = 0; i < integer_count; i++) {
             const unsigned int queued_int = cos_obj_parser_peek_int_(parser);
 
-            CosIntegerObj * const queued_int_object = cos_integer_obj_alloc((int)queued_int);
+            CosIntObj * const queued_int_object = cos_int_obj_alloc((int)queued_int);
             if (!queued_int_object) {
                 COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                                    "Failed to allocate integer object"),
@@ -422,11 +434,11 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
                 goto failure;
             }
             cos_obj_parser_pop_int_(parser);
-            cos_obj_parser_push_object_(parser, (CosBaseObj *)queued_int_object);
+            cos_obj_parser_push_object_(parser, (CosObj *)queued_int_object);
         }
 
         // Add this integer's object to the end of the queue.
-        cos_obj_parser_push_object_(parser, (CosBaseObj *)int_obj);
+        cos_obj_parser_push_object_(parser, (CosObj *)int_obj);
 
         // Return the integer object from the front of the queue.
         return cos_obj_parser_pop_object_(parser);
@@ -434,8 +446,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
     else {
         if (parser->integer_count > 1) {
             const int peeked_int = (int)cos_obj_parser_peek_int_(parser);
-            // TODO: Only pop the integer after the object has been successfully allocated.
-            int_obj = cos_integer_obj_alloc(peeked_int);
+            int_obj = cos_int_obj_alloc(peeked_int);
             if (!int_obj) {
                 COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                                    "Failed to allocate integer object"),
@@ -443,6 +454,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
                 goto failure;
             }
 
+            // Only pop the integer after the object has been successfully allocated.
             cos_obj_parser_pop_int_(parser);
         }
 
@@ -451,7 +463,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
         if (parser->integer_count >= 3) {
             const int popped_integer = (int)cos_obj_parser_pop_int_(parser);
 
-            return (CosBaseObj *)cos_integer_obj_alloc(popped_integer);
+            return (CosObj *)cos_int_obj_alloc(popped_integer);
         }
 
         return cos_obj_parser_next_object_(parser, error);
@@ -459,13 +471,13 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
 
 failure:
     if (int_obj) {
-        cos_obj_release((CosObj *)int_obj);
+        free(int_obj);
     }
 
     return NULL;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_real_(CosObjParser *parser,
                             const CosToken *token,
                             CosError * COS_Nullable error)
@@ -479,8 +491,7 @@ cos_obj_parser_handle_real_(CosObjParser *parser,
     double real_value = 0.0;
     if (cos_token_value_get_real_number(token->value,
                                         &real_value)) {
-        return (CosBaseObj *)cos_real_obj_alloc(real_value,
-                                                parser->doc);
+        return (CosObj *)cos_real_obj_alloc(real_value);
     }
     else {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -490,7 +501,7 @@ cos_obj_parser_handle_real_(CosObjParser *parser,
     }
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_array_(CosObjParser *parser,
                              CosError * COS_Nullable error)
 {
@@ -499,7 +510,7 @@ cos_obj_parser_handle_array_(CosObjParser *parser,
         return NULL;
     }
 
-    CosArrayObj * const array_object = cos_array_obj_create();
+    CosArrayObj * const array_object = cos_array_obj_alloc(NULL);
     if (!array_object) {
         return NULL;
     }
@@ -512,26 +523,26 @@ cos_obj_parser_handle_array_(CosObjParser *parser,
         }
 
         // Parse the next object.
-        CosBaseObj * const object = cos_obj_parser_next_object_(parser, error);
+        CosObj * const object = cos_obj_parser_next_object_(parser, error);
         if (!object) {
             goto failure;
         }
 
         // Add the object to the array.
         if (!cos_array_object_append(array_object,
-                                     object,
+                                     (void *)object,
                                      error)) {
             goto failure;
         }
     }
 
-    return (CosBaseObj *)array_object;
+    return (CosObj *)array_object;
 
 failure:
     return NULL;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_dictionary_(CosObjParser *parser,
                                   CosError * COS_Nullable error)
 {
@@ -540,7 +551,7 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         return NULL;
     }
 
-    CosDictObj * const dict_obj = cos_dict_obj_create();
+    CosDictObj * const dict_obj = cos_dict_obj_alloc(NULL);
     if (!dict_obj) {
         goto failure;
     }
@@ -553,8 +564,8 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         }
 
         // Parse the next object.
-        CosBaseObj * const key = cos_obj_parser_next_object_(parser,
-                                                             error);
+        CosObj * const key = cos_obj_parser_next_object_(parser,
+                                                         error);
         if (!key) {
             goto failure;
         }
@@ -562,28 +573,28 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         // TODO: Check that the key is a name.
 
         // Parse the next object.
-        CosBaseObj * const value = cos_obj_parser_next_object_(parser,
-                                                               error);
+        CosObj * const value = cos_obj_parser_next_object_(parser,
+                                                           error);
         if (!value) {
             goto failure;
         }
 
         // Add the object to the dictionary.
         if (!cos_dict_obj_set(dict_obj,
-                              key,
-                              value,
+                              (CosNameObj *)key,
+                              (CosObj *)value,
                               error)) {
             goto failure;
         }
     }
 
-    return (CosBaseObj *)dict_obj;
+    return (CosObj *)dict_obj;
 
 failure:
     return NULL;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_handle_keyword_(CosObjParser *parser,
                                const CosToken *token,
                                CosError * COS_Nullable error)
@@ -608,14 +619,14 @@ cos_obj_parser_handle_keyword_(CosObjParser *parser,
             break;
 
         case CosKeywordType_True: {
-            return (CosBaseObj *)cos_bool_obj_create(true);
+            return (CosObj *)cos_bool_obj_alloc(true);
         }
         case CosKeywordType_False: {
-            return (CosBaseObj *)cos_bool_obj_create(false);
+            return (CosObj *)cos_bool_obj_alloc(false);
         }
 
         case CosKeywordType_Null: {
-            return (CosBaseObj *)cos_null_obj_get();
+            return (CosObj *)cos_null_obj_get();
         }
 
         case CosKeywordType_R: {
@@ -640,7 +651,33 @@ cos_obj_parser_handle_keyword_(CosObjParser *parser,
     return NULL;
 }
 
-static CosBaseObj * COS_Nullable
+static CosObjID
+cos_parser_get_obj_id_(CosObjParser *parser,
+                       CosError * COS_Nullable error)
+{
+    if (parser->integer_count >= 2) {
+        const unsigned int obj_number = cos_obj_parser_pop_int_(parser);
+        const unsigned int gen_number = cos_obj_parser_pop_int_(parser);
+        return cos_obj_id_make(obj_number, gen_number);
+    }
+    else if (parser->integer_count == 1) {
+        cos_diagnose(parser->diagnostic_handler,
+                     CosDiagnosticLevel_Warning,
+                     "Indirect object reference missing generation number");
+
+        const unsigned int obj_number = cos_obj_parser_pop_int_(parser);
+        return cos_obj_id_make(obj_number, 0);
+    }
+    else {
+        cos_diagnose(parser->diagnostic_handler,
+                     CosDiagnosticLevel_Error,
+                     "Invalid indirect object reference");
+
+        return CosObjID_Invalid;
+    }
+}
+
+static CosObj * COS_Nullable
 cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
                                         CosError * COS_Nullable error)
 {
@@ -649,19 +686,22 @@ cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
         return NULL;
     }
 
-    // TODO: We should have two integers on the stack.
-
-    // The value of the indirect object follows the "obj" keyword.
-    CosBaseObj * const obj = cos_obj_parser_next_object_(parser, error);
-    if (!obj) {
+    const CosObjID obj_id = cos_parser_get_obj_id_(parser, error);
+    if (!cos_obj_id_is_valid(obj_id)) {
         cos_diagnose(parser->diagnostic_handler,
                      CosDiagnosticLevel_Error,
                      "Invalid indirect object definition");
         return NULL;
     }
 
-    cos_tokenizer_match_keyword(parser->tokenizer,
-                                CosKeywordType_Unknown);
+    // The value of the indirect object follows the "obj" keyword.
+    CosObj * const obj = cos_obj_parser_next_object_(parser, error);
+    if (!obj) {
+        cos_diagnose(parser->diagnostic_handler,
+                     CosDiagnosticLevel_Error,
+                     "Invalid indirect object definition");
+        return NULL;
+    }
 
     if (!cos_tokenizer_match_keyword(parser->tokenizer,
                                      CosKeywordType_EndObj)) {
@@ -670,10 +710,16 @@ cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
                      "Unterminated indirect object definition");
     }
 
-    return obj;
+    CosIndirectObj * const indirect_obj = cos_indirect_obj_alloc(obj_id,
+                                                                 obj);
+    if (!indirect_obj) {
+        return obj;
+    }
+
+    return (CosObj *)indirect_obj;
 }
 
-static CosBaseObj * COS_Nullable
+static CosObj * COS_Nullable
 cos_obj_parser_handle_indirect_obj_ref_(CosObjParser *parser,
                                         CosError * COS_Nullable error)
 {
@@ -682,21 +728,16 @@ cos_obj_parser_handle_indirect_obj_ref_(CosObjParser *parser,
         return NULL;
     }
 
-    // TODO: We should have two integers on the stack.
-    if (parser->integer_count != 2) {
+    const CosObjID obj_id = cos_parser_get_obj_id_(parser, error);
+    if (!cos_obj_id_is_valid(obj_id)) {
         cos_diagnose(parser->diagnostic_handler,
                      CosDiagnosticLevel_Error,
-                     "Invalid indirect object reference");
+                     "Invalid indirect object reference"); // TODO: Include error.
         return NULL;
     }
 
-    unsigned int object_number = cos_obj_parser_pop_int_(parser);
-    unsigned int generation_number = cos_obj_parser_pop_int_(parser);
-
-    const CosObjID obj_id = cos_obj_id_make(object_number,
-                                            generation_number);
-
-    return cos_doc_get_object(parser->doc, obj_id, error);
+    return (CosObj *)cos_reference_obj_alloc(obj_id,
+                                             parser->doc);
 }
 
 static void
@@ -756,7 +797,7 @@ cos_obj_parser_pop_int_(CosObjParser *parser)
 
 static void
 cos_obj_parser_push_object_(CosObjParser *parser,
-                            CosBaseObj *object)
+                            CosObj *object)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
     if (!parser || !object) {
@@ -771,7 +812,7 @@ cos_obj_parser_push_object_(CosObjParser *parser,
     parser->object_count++;
 }
 
-static CosBaseObj *
+static CosObj *
 cos_obj_parser_pop_object_(CosObjParser *parser)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
@@ -783,7 +824,7 @@ cos_obj_parser_pop_object_(CosObjParser *parser)
         return NULL;
     }
 
-    CosBaseObj * const object = parser->objects[0];
+    CosObj * const object = parser->objects[0];
 
     memmove(parser->objects,
             parser->objects + 1,

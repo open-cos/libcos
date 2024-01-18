@@ -8,6 +8,8 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
+#include <stdbool.h>
+
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
@@ -18,13 +20,12 @@ COS_ASSUME_NONNULL_BEGIN
  * indirect object within a PDF file.
  */
 struct CosObjID {
-
     /**
      * @brief The object number.
      *
      * @invariant The object number is always greater than zero.
      */
-    unsigned int object_number;
+    unsigned int obj_number;
 
     /**
      * @brief The generation number.
@@ -32,23 +33,28 @@ struct CosObjID {
      * @note The generation number is usually zero, but it can be non-zero for objects
      * that have been modified.
      */
-    unsigned int generation_number;
-
+    unsigned int gen_number;
 };
+
+extern const CosObjID CosObjID_Invalid;
 
 /**
  * @brief Creates an object ID.
  *
- * @param object_number The object number.
- * @param generation_number The generation number.
+ * @param obj_number The object number.
+ * @param gen_number The generation number.
  *
  * @return The object ID.
  *
- * @pre @p object_number must be greater than zero.
+ * @pre @p obj_number must be greater than zero.
  */
 CosObjID
-cos_obj_id_make(unsigned int object_number,
-                unsigned int generation_number);
+cos_obj_id_make(unsigned int obj_number,
+                unsigned int gen_number);
+
+bool
+cos_obj_id_is_valid(CosObjID obj_id)
+    COS_ATTR_PURE;
 
 /**
  * @brief Compares two object IDs.

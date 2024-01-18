@@ -45,7 +45,6 @@ void
 cos_error_propagate_(CosError source_error,
                      CosError * COS_Nullable destination_error)
 {
-    COS_PARAMETER_ASSERT(destination_error != NULL);
     if (destination_error) {
         *destination_error = source_error;
     }

@@ -1,9 +1,9 @@
-//
-// Created by david on 24/05/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
-#ifndef LIBCOS_COS_STRING_H
-#define LIBCOS_COS_STRING_H
+#ifndef LIBCOS_COMMON_COS_STRING_H
+#define LIBCOS_COMMON_COS_STRING_H
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
@@ -13,32 +13,6 @@
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
-
-/**
- * A nul-terminated character array.
- */
-struct CosString {
-    /**
-     * The nul-terminated character array.
-     */
-    char * COS_Nullable data;
-
-    /**
-     * The number of characters in the string, not including the nul-terminator.
-     */
-    size_t length;
-
-    /**
-     * The number of characters that can be stored in the string.
-     *
-     * @invariant The capacity is always large enough to store @c length characters,
-     * plus the nul-terminator.
-     * @code
-     * capacity >= length + 1
-     * @endcode
-     */
-    size_t capacity;
-};
 
 /**
  * Allocates a new empty string.
@@ -120,12 +94,37 @@ bool
 cos_string_init_capacity(CosString *string, size_t capacity_hint);
 
 /**
- * Releases the resources used by the string.
+ * @brief Gets the string's nul-terminated character array.
  *
- * @param string The string to release.
+ * @param string The string.
+ *
+ * @return The nul-terminated character array, or @c NULL if the string is empty.
  */
-void
-cos_string_release(CosString *string);
+const char * COS_Nullable
+cos_string_get_data(const CosString *string)
+    COS_ATTR_ACCESS_READ_ONLY(1);
+
+/**
+ * @brief Gets the number of characters in the string, not including the nul-terminator.
+ *
+ * @param string The string.
+ *
+ * @return The number of characters in the string.
+ */
+size_t
+cos_string_get_length(const CosString *string)
+    COS_ATTR_ACCESS_READ_ONLY(1);
+
+/**
+ * @brief Gets the number of characters that can be stored in the string.
+ *
+ * @param string The string.
+ *
+ * @return The number of characters that can be stored in the string.
+ */
+size_t
+cos_string_get_capacity(const CosString *string)
+    COS_ATTR_ACCESS_READ_ONLY(1);
 
 /**
  * Creates a copy of the string.
@@ -246,4 +245,4 @@ cos_string_ref_cmp(CosStringRef lhs, CosStringRef rhs);
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
-#endif /* LIBCOS_COS_STRING_H */
+#endif /* LIBCOS_COMMON_COS_STRING_H */

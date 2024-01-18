@@ -19,15 +19,15 @@ cos_string_obj_alloc(CosData *data)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-bool
-cos_string_obj_set_data(CosStringObj *string_obj,
-                        CosData *data,
-                        CosError * COS_Nullable error);
+void
+cos_string_obj_free(CosStringObj *string_obj);
 
-bool
-cos_string_get_data(const CosStringObj *string_obj,
-                    const CosData * COS_Nullable *data,
-                    CosError * COS_Nullable error);
+CosData * COS_Nullable
+cos_string_obj_get_value(const CosStringObj *string_obj);
+
+void
+cos_string_obj_set_value(CosStringObj *string_obj,
+                         CosData *data);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -33,10 +33,13 @@ typedef struct CosDictValueCallbacks {
     CosDictEqualValuesCallback COS_Nullable equal;
 } CosDictValueCallbacks;
 
+extern const CosDictKeyCallbacks cos_dict_obj_key_callbacks;
+extern const CosDictValueCallbacks cos_dict_obj_value_callbacks;
+
 CosDict * COS_Nullable
-cos_dict_alloc(size_t capacity,
-               const CosDictKeyCallbacks * COS_Nullable key_callbacks,
-               const CosDictValueCallbacks * COS_Nullable value_callbacks)
+cos_dict_alloc(const CosDictKeyCallbacks * COS_Nullable key_callbacks,
+               const CosDictValueCallbacks * COS_Nullable value_callbacks,
+               size_t capacity_hint)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
@@ -48,6 +51,12 @@ cos_dict_get_key_callbacks(const CosDict *dict);
 
 const CosDictValueCallbacks * COS_Nullable
 cos_dict_get_value_callbacks(const CosDict *dict);
+
+bool
+cos_dict_set(CosDict *dict,
+             void *key,
+             void *value,
+             CosError * COS_Nullable error);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

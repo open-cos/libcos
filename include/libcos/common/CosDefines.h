@@ -221,9 +221,13 @@
 #if COS_HAS_EXTENSION(nullability)
 #define COS_Nullable _Nullable
 #define COS_Nonnull _Nonnull
+
+#define COS_nonnull_cast(x) ((__typeof__(*(x)) *)(x))
 #else
 #define COS_Nullable /* nothing */
 #define COS_Nonnull  /* nothing */
+
+#define COS_nonnull_cast(x) (x)
 #endif
 
 #if COS_HAS_EXTENSION(assume_nonnull)

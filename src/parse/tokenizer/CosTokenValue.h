@@ -5,8 +5,8 @@
 #ifndef LIBCOS_COS_TOKEN_VALUE_H
 #define LIBCOS_COS_TOKEN_VALUE_H
 
-#include "common/CosString.h"
 #include "libcos/common/CosData.h"
+#include "libcos/common/CosString.h"
 #include "syntax/CosSyntax.h"
 
 #include <libcos/common/CosDefines.h>

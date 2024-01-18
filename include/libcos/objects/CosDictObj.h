@@ -5,35 +5,26 @@
 #ifndef LIBCOS_COS_DICT_OBJ_H
 #define LIBCOS_COS_DICT_OBJ_H
 
-#include <libcos/CosBaseObj.h>
 #include <libcos/common/CosDefines.h>
+#include <libcos/common/CosTypes.h>
+
+#include <stdbool.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosDict CosDict;
-typedef struct CosDictEntry CosDictEntry;
-
-struct CosDictEntry {
-    CosBaseObj *key;
-    CosBaseObj *value;
-};
-
-struct CosDict {
-    CosDictEntry * COS_Nullable *entries;
-    size_t count;
-    size_t capacity;
-};
-
 CosDictObj * COS_Nullable
-cos_dict_obj_create(void)
+cos_dict_obj_alloc(CosDict * COS_Nullable dict)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
+void
+cos_dict_obj_free(CosDictObj *dict_obj);
+
 bool
 cos_dict_obj_set(CosDictObj *dict_obj,
-                 CosBaseObj *key,
-                 CosBaseObj *value,
+                 CosNameObj *key,
+                 CosObj *value,
                  CosError * COS_Nullable error);
 
 COS_ASSUME_NONNULL_END

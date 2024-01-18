@@ -4,6 +4,7 @@
 
 #include "libcos/CosDoc.h"
 #include "libcos/io/CosFileInputStream.h"
+#include "libcos/objects/CosObj.h"
 #include "parse/CosObjParser.h"
 #include "syntax/CosSyntax.h"
 
@@ -34,11 +35,13 @@ main(int argc, char * COS_Nonnull argv[])
     }
 
     while (cos_obj_parser_has_next_object(parser)) {
-        CosBaseObj * const obj = cos_obj_parser_next_object(parser,
-                                                            NULL);
+        CosObj * const obj = cos_obj_parser_next_object(parser,
+                                                        NULL);
         if (!obj) {
             goto failure;
         }
+
+        cos_obj_print_description(obj);
     }
 
     cos_obj_parser_free(parser);

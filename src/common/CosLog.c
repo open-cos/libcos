@@ -11,16 +11,44 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-CosLogContext
+struct CosLogContext {
+    /**
+     * @brief The logging level.
+     *
+     * @note Messages with a level above this level will be filtered out.
+     */
+    CosLogLevel level;
+
+    /**
+     * @brief The logging function.
+     */
+    CosLogFunc log_func;
+
+    /**
+     * @brief Optional user data.
+     */
+    void * COS_Nullable user_data;
+};
+
+CosLogContext *
 cos_log_context_make(CosLogLevel level,
                      CosLogFunc log_func,
                      void * COS_Nullable user_data)
 {
-    const CosLogContext log_context = {
-        .level = level,
-        .log_func = log_func,
-        .user_data = user_data,
-    };
+    COS_PARAMETER_ASSERT(log_func != NULL);
+    if (!log_func) {
+        return NULL;
+    }
+
+    CosLogContext *log_context = calloc(1, sizeof(CosLogContext));
+    if (!log_context) {
+        return NULL;
+    }
+
+    log_context->level = level;
+    log_context->log_func = log_func;
+    log_context->user_data = user_data;
+
     return log_context;
 }
 

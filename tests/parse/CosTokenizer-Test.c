@@ -39,7 +39,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
                 if (cos_token_value_get_string(token.value,
                                                &string)) {
                     printf("Unknown: %s\n",
-                           string->data);
+                           cos_string_get_data(string));
                 }
                 else {
                     printf("Unknown\n");
@@ -70,7 +70,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
                 if (cos_token_value_get_string(token.value,
                                                &string)) {
                     printf("Name: %s\n",
-                           string->data);
+                           cos_string_get_data(string));
                 }
             } break;
 

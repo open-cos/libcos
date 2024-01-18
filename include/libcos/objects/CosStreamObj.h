@@ -17,6 +17,9 @@ cos_stream_obj_alloc(CosDictObj *dict,
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
+void
+cos_stream_obj_free(CosStreamObj *stream_obj);
+
 CosDictObj * COS_Nullable
 cos_stream_obj_get_dict(const CosStreamObj *stream_obj);
 

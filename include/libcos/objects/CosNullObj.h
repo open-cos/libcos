@@ -11,6 +11,13 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+/**
+ * @brief Returns the null object.
+ *
+ * There is only one null object.
+ *
+ * @return The null object.
+ */
 CosNullObj *
 cos_null_obj_get(void);
 

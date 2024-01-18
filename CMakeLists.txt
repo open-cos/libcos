@@ -11,36 +11,28 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 add_library(libcos SHARED
         src/common/memory/CosRefCounter.c
         src/common/memory/CosRefCounter.h
-        include/libcos/private/objects/CosNameObj-Impl.h
-        src/common/CosClass.c
-        include/libcos/common/CosClass.h
         src/common/CosArray.c
         include/libcos/common/CosArray.h
-        include/libcos/common/CosObj.h
-        src/common/CosObj.c
-        include/libcos/private/common/CosObj-Impl.h
-        include/libcos/private/common/CosClass-Impl.h
         include/libcos/common/CosDict.h
         src/common/CosDict.c
         src/common/CosDataRef.c
         include/libcos/common/CosDataRef.h
         src/parse/CosToken.c
         include/libcos/CosObject.h
-        src/objects/CosObject.c
-        include/libcos/objects/CosDirectObj.h
-        include/libcos/private/objects/CosIndirectObj-Impl.h
-        include/libcos/private/objects/CosDirectObj-Impl.h
-        src/objects/CosDirectObj.c
-        include/libcos/private/objects/CosNullObj-Impl.h
-        include/libcos/private/objects/CosBoolObj-Impl.h
-        include/libcos/private/objects/CosIntegerObj-Impl.h
-        include/libcos/private/objects/CosRealObj-Impl.h
         include/libcos/objects/CosStreamObj.h
-        include/libcos/private/objects/CosStreamObj-Impl.h
         src/objects/CosStreamObj.c
+        include/libcos/objects/CosObjectTypes.h
+        include/libcos/objects/CosObj.h
+        src/common/CosUtils.c
+        src/common/CosUtils.h
+        src/objects/CosObj.c
+        src/objects/CosReferenceObj.c
+        include/libcos/objects/CosReferenceObj.h
 )
 
 target_sources(libcos PRIVATE
@@ -61,7 +53,7 @@ target_sources(libcos PRIVATE
         src/common/CosLog.c
         src/common/CosMacros.h
         src/common/CosString.c
-        src/common/CosString.h
+        include/libcos/common/CosString.h
         src/common/CosVector.c
         src/common/CosVector.h
         src/common/memory-support.c
@@ -74,21 +66,15 @@ target_sources(libcos PRIVATE
         src/io/CosInputStreamReader.h
         src/io/CosMemoryInputStream.c
         src/io/string-support.c
-        src/objects/CosArrayObj-Impl.h
         src/objects/CosArrayObj.c
         src/objects/CosBoolObj.c
         src/objects/CosDictObj.c
         src/objects/CosIndirectObj.c
-        src/objects/CosIntegerObj.c
+        src/objects/CosIntObj.c
         src/objects/CosNameObj.c
         src/objects/CosNullObj.c
-        src/objects/CosObj-Impl.h
-        src/objects/CosBaseObj.c
         src/objects/CosObjID.c
-        src/objects/CosObjRef.c
-        src/objects/CosObjRef.h
         src/objects/CosRealObj.c
-        include/libcos/private/objects/CosStringObj-Impl.h
         src/objects/CosStringObj.c
         src/parse/CosObjParser.c
         src/parse/CosObjParser.h
@@ -106,10 +92,9 @@ target_sources(libcos PUBLIC
         include/libcos/objects/CosBoolObj.h
         include/libcos/CosDoc.h
         include/libcos/objects/CosIndirectObj.h
-        include/libcos/objects/CosIntegerObj.h
+        include/libcos/objects/CosIntObj.h
         include/libcos/objects/CosNameObj.h
         include/libcos/objects/CosNullObj.h
-        include/libcos/CosBaseObj.h
         include/libcos/CosObjID.h
         include/libcos/objects/CosRealObj.h
         include/libcos/objects/CosStringObj.h
@@ -123,8 +108,6 @@ target_sources(libcos PUBLIC
         include/libcos/io/CosInputStream.h
         include/libcos/io/string-support.h
         include/libcos/objects/CosDictObj.h
-        include/libcos/private/objects/CosDictObj-Impl.h
-        include/libcos/private/objects/CosBaseObj-Impl.h
 )
 
 target_include_directories(libcos
@@ -132,6 +115,7 @@ target_include_directories(libcos
         PRIVATE src/)
 
 set(COS_C_FLAGS_WARNINGS "")
+set(COS_COMPILE_DEFINITIONS "")
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     list(APPEND COS_C_FLAGS_WARNINGS
@@ -149,6 +133,10 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         )
     endif ()
 
+    list(APPEND COS_COMPILE_DEFINITIONS
+            _FORTIFY_SOURCE=2
+    )
+
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     list(APPEND COS_C_FLAGS_WARNINGS
             -Wall
@@ -156,14 +144,22 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Weverything
             -Wint-conversion
             -Wstrict-prototypes
-#            -Werror=incompatible-function-pointer-types-strict
+            #            -Werror=incompatible-function-pointer-types-strict
+            -Wno-declaration-after-statement
             -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
+            -Wno-gcc-compat
             -Werror=implicit-int -Werror=implicit-function-declaration
+            -Werror=enum-conversion
             -Werror=strict-prototypes
             -Werror=missing-declarations -Werror=missing-variable-declarations
             -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
-#            -Werror=incompatible-function-pointer-types
+            -Werror=undefined-internal
+            #            -Werror=incompatible-function-pointer-types
             -Werror=nullability
+    )
+
+    list(APPEND COS_COMPILE_DEFINITIONS
+            _FORTIFY_SOURCE=2
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
@@ -171,6 +167,7 @@ elseif (C_COMPILER_ID STREQUAL "MSVC")
 endif ()
 
 target_compile_options(libcos PRIVATE ${COS_C_FLAGS_WARNINGS})
+target_compile_definitions(libcos PRIVATE ${COS_COMPILE_DEFINITIONS})
 
 set_target_properties(libcos PROPERTIES
         PREFIX "" # Remove the "lib" prefix from the library name.

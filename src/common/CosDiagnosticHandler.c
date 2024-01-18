@@ -9,24 +9,90 @@
 #include "libcos/common/CosLog.h"
 
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
-CosDiagnosticHandler
-cos_diagnostic_handler_make(void (*handle_func)(CosDiagnosticHandler *handler,
-                                                CosDiagnostic *diagnostic),
-                            void * COS_Nullable user_data)
+struct CosDiagnosticHandler {
+    CosDiagnosticHandlerFunc handle_func;
+
+    void * COS_Nullable user_data;
+};
+
+static void
+cos_diagnostic_handler_default_log_(CosDiagnosticHandler *handler,
+                                    const CosDiagnostic *diagnostic)
 {
-    const CosDiagnosticHandler result = {
-        .handle_func = handle_func,
-        .user_data = user_data,
-    };
-    return result;
+    COS_PARAMETER_ASSERT(handler != NULL);
+    COS_PARAMETER_ASSERT(diagnostic != NULL);
+    if (!handler || !diagnostic) {
+        return;
+    }
+
+    const char *diagnostic_type_name = NULL;
+    switch (diagnostic->type) {
+        case CosDiagnosticLevel_Warning:
+            diagnostic_type_name = "warning";
+            break;
+        case CosDiagnosticLevel_Error:
+            diagnostic_type_name = "error";
+            break;
+    }
+
+    printf("%s: %s\n", diagnostic_type_name, diagnostic->message);
+}
+
+static CosDiagnosticHandler cos_diagnostic_handler_default_ = {
+    .handle_func = &cos_diagnostic_handler_default_log_,
+    .user_data = NULL,
+};
+
+CosDiagnosticHandler *
+cos_diagnostic_handler_alloc(CosDiagnosticHandlerFunc handle_func,
+                             void * COS_Nullable user_data)
+{
+    CosDiagnosticHandler *handler = calloc(1, sizeof(CosDiagnosticHandler));
+    if (!handler) {
+        return NULL;
+    }
+
+    handler->handle_func = handle_func;
+    handler->user_data = user_data;
+
+    return handler;
+}
+
+void
+cos_diagnostic_handler_free(CosDiagnosticHandler *handler)
+{
+    if (!handler) {
+        return;
+    }
+
+    free(handler);
+}
+
+CosDiagnosticHandler *
+cos_diagnostic_handler_get_default(void)
+{
+    return &cos_diagnostic_handler_default_;
+}
+
+void *
+cos_diagnostic_handler_get_user_data(const CosDiagnosticHandler *handler)
+{
+    COS_PARAMETER_ASSERT(handler != NULL);
+    if (!handler) {
+        return NULL;
+    }
+
+    return handler->user_data;
 }
 
 void
 cos_emit_diagnostic(CosDiagnosticHandler *handler,
-                    CosDiagnostic *diagnostic)
+                    const CosDiagnostic *diagnostic)
 {
     COS_PARAMETER_ASSERT(handler != NULL);
     COS_PARAMETER_ASSERT(diagnostic != NULL);
@@ -50,7 +116,7 @@ cos_diagnose(CosDiagnosticHandler *handler,
         return;
     }
 
-    CosDiagnostic diagnostic = {
+    const CosDiagnostic diagnostic = {
         .type = type,
         .message = message,
     };
@@ -61,7 +127,7 @@ cos_diagnose(CosDiagnosticHandler *handler,
 
 static void
 cos_diagnostic_handler_log_(CosDiagnosticHandler *handler,
-                            CosDiagnostic *diagnostic)
+                            const CosDiagnostic *diagnostic)
 {
     COS_PARAMETER_ASSERT(handler != NULL);
     COS_PARAMETER_ASSERT(diagnostic != NULL);
@@ -87,11 +153,11 @@ cos_diagnostic_handler_log_(CosDiagnosticHandler *handler,
     cos_log(log_context, message_level, "Error");
 }
 
-CosDiagnosticHandler
-cos_diagnostic_handler_make_logger(CosLogContext *log_context)
+CosDiagnosticHandler *
+cos_diagnostic_handler_alloc_logger(CosLogContext *log_context)
 {
-    return cos_diagnostic_handler_make(cos_diagnostic_handler_log_,
-                                       log_context);
+    return cos_diagnostic_handler_alloc(&cos_diagnostic_handler_log_,
+                                        log_context);
 }
 
 COS_ASSUME_NONNULL_END

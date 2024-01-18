@@ -5,69 +5,65 @@
 #include "libcos/objects/CosBoolObj.h"
 
 #include "common/Assert.h"
-#include "libcos/CosBaseObj.h"
-#include "libcos/private/objects/CosBoolObj-Impl.h"
+#include "libcos/objects/CosObj.h"
+
+#include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
+struct CosBoolObj {
+    CosObjType type;
+
+    bool value;
+
+    COS_ATTR_UNUSED unsigned char padding_[3] /* for alignment */;
+};
+
 CosBoolObj *
-cos_bool_obj_create(bool value)
+cos_bool_obj_alloc(bool value)
 {
-    CosBoolObj * const obj = cos_obj_alloc(sizeof(CosBoolObj),
-                                           CosObjectType_Boolean,
-                                           NULL);
+    CosBoolObj * const obj = calloc(1, sizeof(CosBoolObj));
     if (!obj) {
         return NULL;
     }
 
+    obj->type = CosObjType_Boolean;
     obj->value = value;
 
     return obj;
 }
 
-bool
-cos_bool_obj_get_value(const CosBoolObj *bool_obj,
-                       bool *value,
-                       CosError * COS_Nullable error)
+void
+cos_bool_obj_free(CosBoolObj *bool_obj)
 {
-    COS_PARAMETER_ASSERT(bool_obj != NULL);
-    COS_PARAMETER_ASSERT(value != NULL);
-
     if (!bool_obj) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
-                                           "Boolean object is NULL"),
-                            error);
-        return false;
-    }
-    else if (!value) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
-                                           "Value pointer is NULL"),
-                            error);
-        return false;
+        return;
     }
 
-    *value = bool_obj->value;
-
-    return true;
+    free(bool_obj);
 }
 
 bool
-cos_bool_obj_set_value(CosBoolObj *bool_obj,
-                       bool value,
-                       CosError * COS_Nullable error)
+cos_bool_obj_get_value(const CosBoolObj *bool_obj)
 {
     COS_PARAMETER_ASSERT(bool_obj != NULL);
-
     if (!bool_obj) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
-                                           "Boolean object is NULL"),
-                            error);
         return false;
     }
 
-    bool_obj->value = value;
+    return bool_obj->value;
+}
 
-    return true;
+void
+cos_bool_obj_set_value(CosBoolObj *bool_obj,
+                       bool value)
+{
+    COS_PARAMETER_ASSERT(bool_obj != NULL);
+    if (!bool_obj) {
+        return;
+    }
+
+    bool_obj->value = value;
 }
 
 COS_ASSUME_NONNULL_END

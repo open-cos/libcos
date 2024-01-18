@@ -6,6 +6,7 @@
 #define LIBCOS_COS_ARRAY_H
 
 #include <libcos/common/CosDefines.h>
+#include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -26,21 +27,20 @@ typedef struct CosArrayCallbacks {
     CosArrayEqualItemsCallback COS_Nullable equal;
 } CosArrayCallbacks;
 
-struct CosArray {
-    void **items;
-    size_t count;
-    size_t capacity;
-
-    CosArrayCallbacks callbacks;
-};
-
 CosArray * COS_Nullable
-cos_array_alloc(CosArrayCallbacks callbacks)
+cos_array_alloc(size_t element_size,
+                CosArrayCallbacks callbacks,
+                size_t capacity_hint)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
 void
 cos_array_free(CosArray *array);
+
+bool
+cos_array_append(CosArray *array,
+                 const void *item,
+                 CosError * COS_Nullable error);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

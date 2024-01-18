@@ -12,10 +12,21 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 CosRealObj * COS_Nullable
-cos_real_obj_alloc(double value,
-                   CosDoc * COS_Nullable document)
+cos_real_obj_alloc(double value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
+
+void
+cos_real_obj_free(CosRealObj *real_obj);
+
+#pragma mark - Value accessors
+
+double
+cos_real_obj_get_value(const CosRealObj *real_obj);
+
+void
+cos_real_obj_set_value(CosRealObj *real_obj,
+                       double value);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

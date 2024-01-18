@@ -4,7 +4,7 @@
 
 #include "CosSyntax.h"
 
-#include "common/CosString.h"
+#include <libcos/common/CosString.h>
 
 #include <stddef.h>
 

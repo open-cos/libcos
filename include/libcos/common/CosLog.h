@@ -34,38 +34,24 @@ typedef void (*CosLogFunc)(CosLogContext *log_context,
                            CosLogMessageLevel message_level,
                            const char *message);
 
-struct CosLogContext {
-    /**
-     * @brief The logging level.
-     *
-     * @note Messages with a level above this level will be filtered out.
-     */
-    CosLogLevel level;
-
-    /**
-     * @brief The logging function.
-     */
-    CosLogFunc log_func;
-
-    /**
-     * @brief Optional user data.
-     */
-    void * COS_Nullable user_data;
-};
-
 /**
- * @brief Creates a log context.
+ * @brief Allocates a new log context.
  *
  * @param level The logging level.
  * @param log_func The logging function.
  * @param user_data Optional user data.
  *
- * @return A log context.
+ * @return A new log context, or @c NULL if allocation failed.
  */
-CosLogContext
+CosLogContext * COS_Nullable
 cos_log_context_make(CosLogLevel level,
                      CosLogFunc log_func,
-                     void * COS_Nullable user_data);
+                     void * COS_Nullable user_data)
+    COS_ATTR_MALLOC
+    COS_WARN_UNUSED_RESULT;
+
+void
+cos_log_context_free(CosLogContext *log_context);
 
 void
 cos_log(CosLogContext *log_context,

@@ -10,14 +10,15 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosObj CosObj;
-typedef struct CosClass CosClass;
-
 typedef struct CosError CosError;
 
 typedef struct CosData CosData;
 typedef struct CosDataRef CosDataRef;
 typedef struct CosDataBuffer CosDataBuffer;
+
+/**
+ * @brief A nul-terminated string.
+ */
 typedef struct CosString CosString;
 typedef struct CosStringRef CosStringRef;
 typedef struct CosArray CosArray;
@@ -27,26 +28,21 @@ typedef struct CosTokenizer CosTokenizer;
 typedef struct CosObjParser CosObjParser;
 
 typedef struct CosDoc CosDoc;
-typedef struct CosBaseObj CosBaseObj;
 
-typedef struct CosObjRef CosObjRef;
 typedef struct CosObjID CosObjID;
 
-typedef struct CosObjValue CosObjValue;
-
-typedef struct CosDirectObj CosDirectObj;
+typedef struct CosObj CosObj;
 typedef struct CosBoolObj CosBoolObj;
+typedef struct CosIntObj CosIntObj;
+typedef struct CosRealObj CosRealObj;
+typedef struct CosStringObj CosStringObj;
 typedef struct CosNameObj CosNameObj;
 typedef struct CosArrayObj CosArrayObj;
 typedef struct CosDictObj CosDictObj;
-typedef struct CosStringObj CosStringObj;
-typedef struct CosNullObj CosNullObj;
-typedef struct CosIntegerObj CosIntegerObj;
-typedef struct CosRealObj CosRealObj;
-typedef struct CosIndirectObj CosIndirectObj;
 typedef struct CosStreamObj CosStreamObj;
-
-typedef struct CosObject CosObject;
+typedef struct CosNullObj CosNullObj;
+typedef struct CosIndirectObj CosIndirectObj;
+typedef struct CosReferenceObj CosReferenceObj;
 
 typedef struct CosInputStream CosInputStream;
 typedef struct CosInputStreamFunctions CosInputStreamFunctions;
@@ -56,6 +52,10 @@ typedef struct CosBufferedInputStream CosBufferedInputStream;
 
 typedef struct CosDiagnostic CosDiagnostic;
 typedef struct CosDiagnosticHandler CosDiagnosticHandler;
+
+/**
+ * @brief A logging context.
+ */
 typedef struct CosLogContext CosLogContext;
 
 COS_ASSUME_NONNULL_END

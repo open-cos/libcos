@@ -5,8 +5,8 @@
 #include "CosDataBuffer.h"
 
 #include "common/Assert.h"
-#include "common/CosString.h"
 #include "common/memory-support.h"
+#include "libcos/common/CosString.h"
 
 #include <libcos/common/CosError.h>
 

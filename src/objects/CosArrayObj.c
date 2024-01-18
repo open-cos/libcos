@@ -4,127 +4,94 @@
 
 #include "libcos/objects/CosArrayObj.h"
 
-#include "CosArrayObj-Impl.h"
-#include "CosObj-Impl.h"
 #include "common/Assert.h"
-#include "libcos/common/CosClass.h"
-#include "libcos/common/CosObj.h"
-#include "libcos/private/common/CosClass-Impl.h"
-#include "libcos/private/common/CosObj-Impl.h"
+#include "libcos/objects/CosObj.h"
 
 #include <libcos/common/CosArray.h>
 
-#include <stddef.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
-static CosClass cos_array_obj_class_;
+const CosArrayCallbacks cos_array_obj_callbacks = {
+    .retain = NULL,
+    .release = NULL,
+    .equal = NULL,
+};
 
-static void
-cos_array_obj_init_impl_(CosArrayObj *obj);
+struct CosArrayObj {
+    CosObjType type;
 
-static void
-cos_array_obj_dealloc_impl_(CosObj *obj);
+    CosArray *value;
+};
 
-CosClass *
-cos_array_obj_class(void)
+CosArrayObj *
+cos_array_obj_alloc(CosArray * COS_Nullable array)
 {
-    cos_class_init(&cos_array_obj_class_,
-                   cos_base_obj_class(),
-                   NULL,
-                   &cos_array_obj_dealloc_impl_);
+    CosArrayObj * const array_obj = calloc(1, sizeof(CosArrayObj));
+    if (!array_obj) {
+        goto failure;
+    }
 
-    return &cos_array_obj_class_;
+    array_obj->type = CosObjType_Array;
+
+    if (array) {
+        array_obj->value = (CosArray *)array;
+    }
+    else {
+        CosArray * const new_array = cos_array_alloc(sizeof(CosObj *),
+                                                     cos_array_obj_callbacks,
+                                                     0);
+        if (!new_array) {
+            goto failure;
+        }
+        array_obj->value = new_array;
+    }
+    COS_ASSERT(array_obj->value != NULL, "Expected an array value");
+
+    return array_obj;
+
+failure:
+    if (array_obj) {
+        free(array_obj);
+    }
+    return NULL;
 }
 
-static void
-cos_array_retain_obj_(void *item)
+void
+cos_array_obj_free(CosArrayObj *array_obj)
 {
-    CosObj * const obj = (CosObj *)item;
-
-    cos_obj_retain(obj);
-}
-
-static void
-cos_array_release_obj_(void *item)
-{
-    CosObj * const obj = (CosObj *)item;
-
-    cos_obj_release(obj);
-}
-
-static void
-cos_array_obj_init_impl_(CosArrayObj *obj)
-{
-    ((CosObj *)obj)->class->init((CosObj *)obj);
-
-    CosArray * const array = cos_array_alloc((CosArrayCallbacks){
-        .retain = &cos_array_retain_obj_,
-        .release = &cos_array_release_obj_,
-        .equal = NULL,
-    });
-    if (!array) {
+    if (!array_obj) {
         return;
     }
 
-    obj->array_value = array;
+    cos_array_free(array_obj->value);
+    free(array_obj);
 }
 
-static void
-cos_array_obj_dealloc_impl_(CosObj *obj)
+const CosArray *
+cos_array_obj_get_array(const CosArrayObj *array_obj)
 {
-    CosArrayObj * const array_obj = (CosArrayObj *)obj;
-
-    cos_array_free(array_obj->array_value);
-
-    obj->class->super->dealloc(obj);
-}
-
-CosArrayObj *
-cos_array_obj_create(void)
-{
-    CosArrayObj * const obj = cos_obj_alloc(sizeof(CosArrayObj),
-                                            CosObjectType_Array,
-                                            NULL);
-    if (!obj) {
+    COS_PARAMETER_ASSERT(array_obj != NULL);
+    if (!array_obj) {
         return NULL;
     }
 
-    obj->objects = NULL;
-    obj->count = 0;
-
-    return obj;
+    return array_obj->value;
 }
 
 bool
 cos_array_object_append(CosArrayObj *array_obj,
-                        CosBaseObj *object,
+                        CosObj *obj,
                         CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(array_obj != NULL);
-    COS_PARAMETER_ASSERT(object != NULL);
-
-    if (!array_obj) {
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!array_obj || !obj) {
         return false;
     }
 
-    void * const objects = realloc(array_obj->objects,
-                                   sizeof(CosBaseObj *) * (array_obj->count + 1));
-    if (!objects) {
-        if (error) {
-            COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
-                                               "Failed to allocate memory for array object"),
-                                error);
-        }
-        return false;
-    }
-
-    array_obj->objects = objects;
-    array_obj->objects[array_obj->count] = object;
-    array_obj->count++;
-
-    return true;
+    return cos_array_append(array_obj->value, obj, error);
 }
 
 COS_ASSUME_NONNULL_END
