@@ -9,6 +9,28 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+#pragma mark - Math
+
+unsigned int
+cos_next_pow2(unsigned int x)
+{
+    return 1U << cos_fls((int)x);
+}
+
+unsigned long
+cos_next_pow2l(unsigned long x)
+{
+    return 1UL << cos_flsl((long)x);
+}
+
+unsigned long long
+cos_next_pow2ll(unsigned long long x)
+{
+    return 1ULL << cos_flsll((long long)x);
+}
+
+#pragma mark - Bit Operations
+
 int
 cos_fls(int mask)
 {

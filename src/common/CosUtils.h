@@ -10,6 +10,41 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+#pragma mark - Math
+
+/**
+ * @brief Returns the next power of 2 greater than or equal to @p x.
+ *
+ * @param x The value to be rounded.
+ *
+ * @return The next power of 2 greater than or equal to @p x.
+ */
+unsigned int
+cos_next_pow2(unsigned int x)
+    COS_ATTR_PURE;
+
+/**
+ * @brief Returns the next power of 2 greater than or equal to @p x.
+ *
+ * @param x The value to be rounded.
+ *
+ * @return The next power of 2 greater than or equal to @p x.
+ */
+unsigned long
+cos_next_pow2l(unsigned long x)
+    COS_ATTR_PURE;
+
+/**
+ * @brief Returns the next power of 2 greater than or equal to @p x.
+ *
+ * @param x The value to be rounded.
+ *
+ * @return The next power of 2 greater than or equal to @p x.
+ */
+unsigned long long
+cos_next_pow2ll(unsigned long long x)
+    COS_ATTR_PURE;
+
 #pragma mark - Bit Operations
 
 /**
