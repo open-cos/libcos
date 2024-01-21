@@ -29,6 +29,9 @@ void
 cos_string_obj_set_value(CosStringObj *string_obj,
                          CosData *data);
 
+void
+cos_string_obj_print_desc(const CosStringObj *string_obj);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

@@ -2,12 +2,8 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-//
-// Created by david on 15/10/23.
-//
-
-#ifndef LIBCOS_COS_ARRAY_OBJ_H
-#define LIBCOS_COS_ARRAY_OBJ_H
+#ifndef LIBCOS_OBJECTS_COS_ARRAY_OBJ_H
+#define LIBCOS_OBJECTS_COS_ARRAY_OBJ_H
 
 #include <libcos/common/CosArray.h>
 #include <libcos/common/CosDefines.h>
@@ -19,6 +15,9 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+/**
+ * @brief The callbacks for arrays of objects.
+ */
 extern const CosArrayCallbacks cos_array_obj_callbacks;
 
 CosArrayObj * COS_Nullable
@@ -33,11 +32,17 @@ const CosArray * COS_Nullable
 cos_array_obj_get_array(const CosArrayObj *array_obj);
 
 bool
-cos_array_object_append(CosArrayObj *array_obj,
-                        CosObj *obj,
-                        CosError * COS_Nullable error);
+cos_array_obj_insert(CosArrayObj *array_obj,
+                     size_t index,
+                     CosObj *obj,
+                     CosError * COS_Nullable error);
+
+bool
+cos_array_obj_append(CosArrayObj *array_obj,
+                     CosObj *obj,
+                     CosError * COS_Nullable error);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
-#endif /* LIBCOS_COS_ARRAY_OBJ_H */
+#endif /* LIBCOS_OBJECTS_COS_ARRAY_OBJ_H */

@@ -41,7 +41,7 @@ main(int argc, char * COS_Nonnull argv[])
             goto failure;
         }
 
-        cos_obj_print_description(obj);
+        cos_obj_print_desc(obj);
     }
 
     cos_obj_parser_free(parser);

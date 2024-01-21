@@ -8,6 +8,7 @@
 #include "libcos/objects/CosObj.h"
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -63,6 +64,17 @@ cos_int_obj_set_value(CosIntObj *int_obj,
     }
 
     int_obj->value = value;
+}
+
+void
+cos_int_obj_print_desc(const CosIntObj *int_obj)
+{
+    COS_PARAMETER_ASSERT(int_obj != NULL);
+    if (!int_obj) {
+        return;
+    }
+
+    printf("Integer: %d\n", int_obj->value);
 }
 
 COS_ASSUME_NONNULL_END

@@ -23,6 +23,13 @@ cos_indirect_obj_alloc(CosObjID id,
 void
 cos_indirect_obj_free(CosIndirectObj *indirect_obj);
 
+/**
+ * @brief Gets the identifier of the indirect object.
+ *
+ * @param indirect_obj The indirect object.
+ *
+ * @return The identifier of the indirect object.
+ */
 CosObjID
 cos_indirect_obj_get_id(const CosIndirectObj *indirect_obj);
 
@@ -49,6 +56,9 @@ cos_indirect_obj_get_value(const CosIndirectObj *indirect_obj)
 CosObjValueType
 cos_indirect_obj_get_type(const CosIndirectObj *indirect_obj)
     COS_WARN_UNUSED_RESULT;
+
+void
+cos_indirect_obj_print_desc(const CosIndirectObj *indirect_obj);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

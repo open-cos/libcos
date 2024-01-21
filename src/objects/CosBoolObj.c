@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "libcos/objects/CosObj.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -64,6 +65,17 @@ cos_bool_obj_set_value(CosBoolObj *bool_obj,
     }
 
     bool_obj->value = value;
+}
+
+void
+cos_bool_obj_print_desc(const CosBoolObj *bool_obj)
+{
+    COS_PARAMETER_ASSERT(bool_obj != NULL);
+    if (!bool_obj) {
+        return;
+    }
+
+    printf("Boolean: %s\n", (bool_obj->value ? "true" : "false"));
 }
 
 COS_ASSUME_NONNULL_END

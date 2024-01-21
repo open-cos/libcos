@@ -28,6 +28,9 @@ void
 cos_real_obj_set_value(CosRealObj *real_obj,
                        double value);
 
+void
+cos_real_obj_print_desc(const CosRealObj *real_obj);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

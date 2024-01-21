@@ -34,6 +34,9 @@ void
 cos_name_obj_set_value(CosNameObj *name_obj,
                        CosString *value);
 
+void
+cos_name_obj_print_desc(const CosNameObj *name_obj);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

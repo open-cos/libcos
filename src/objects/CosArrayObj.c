@@ -81,9 +81,10 @@ cos_array_obj_get_array(const CosArrayObj *array_obj)
 }
 
 bool
-cos_array_object_append(CosArrayObj *array_obj,
-                        CosObj *obj,
-                        CosError * COS_Nullable error)
+cos_array_obj_insert(CosArrayObj *array_obj,
+                     size_t index,
+                     CosObj *obj,
+                     CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(array_obj != NULL);
     COS_PARAMETER_ASSERT(obj != NULL);
@@ -91,7 +92,21 @@ cos_array_object_append(CosArrayObj *array_obj,
         return false;
     }
 
-    return cos_array_append(array_obj->value, obj, error);
+    return cos_array_insert_item(array_obj->value, index, obj, error);
+}
+
+bool
+cos_array_obj_append(CosArrayObj *array_obj,
+                     CosObj *obj,
+                     CosError * COS_Nullable error)
+{
+    COS_PARAMETER_ASSERT(array_obj != NULL);
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!array_obj || !obj) {
+        return false;
+    }
+
+    return cos_array_append_item(array_obj->value, obj, error);
 }
 
 COS_ASSUME_NONNULL_END

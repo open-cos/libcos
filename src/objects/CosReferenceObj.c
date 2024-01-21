@@ -11,14 +11,17 @@
 #include "libcos/objects/CosNullObj.h"
 #include "libcos/objects/CosObj.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+
+COS_ASSUME_NONNULL_BEGIN
 
 struct CosReferenceObj {
     CosObjType type;
 
     CosObjID id;
     CosDoc *doc;
-    CosObj *value;
+    CosObj * COS_Nullable value;
 };
 
 static void
@@ -115,3 +118,18 @@ cos_reference_obj_resolve_value_(CosReferenceObj *reference_obj)
         reference_obj->value = (CosObj *)cos_null_obj_get();
     }
 }
+
+void
+cos_reference_obj_print_desc(const CosReferenceObj *reference_obj)
+{
+    COS_PARAMETER_ASSERT(reference_obj != NULL);
+    if (!reference_obj) {
+        return;
+    }
+
+    printf("Indirect reference: %d %d\n",
+           reference_obj->id.obj_number,
+           reference_obj->id.gen_number);
+}
+
+COS_ASSUME_NONNULL_END

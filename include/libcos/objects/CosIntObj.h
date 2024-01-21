@@ -26,7 +26,10 @@ cos_int_obj_get_value(const CosIntObj *int_obj);
 
 void
 cos_int_obj_set_value(CosIntObj *int_obj,
-                          int value);
+                      int value);
+
+void
+cos_int_obj_print_desc(const CosIntObj *int_obj);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

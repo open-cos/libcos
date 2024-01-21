@@ -13,27 +13,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_library(libcos SHARED
-        src/common/memory/CosRefCounter.c
-        src/common/memory/CosRefCounter.h
-        src/common/CosArray.c
-        include/libcos/common/CosArray.h
-        include/libcos/common/CosDict.h
-        src/common/CosDict.c
-        src/common/CosDataRef.c
-        include/libcos/common/CosDataRef.h
-        src/parse/CosToken.c
-        include/libcos/CosObject.h
-        include/libcos/objects/CosStreamObj.h
-        src/objects/CosStreamObj.c
-        include/libcos/objects/CosObjectTypes.h
-        include/libcos/objects/CosObj.h
-        src/common/CosUtils.c
-        src/common/CosUtils.h
-        src/objects/CosObj.c
-        src/objects/CosReferenceObj.c
-        include/libcos/objects/CosReferenceObj.h
-)
+add_library(libcos SHARED)
 
 target_sources(libcos PRIVATE
         src/CosDoc.c
@@ -41,23 +21,28 @@ target_sources(libcos PRIVATE
         src/common/Assert.h
         src/common/CharacterSet.c
         src/common/CharacterSet.h
+        src/common/CosArray.c
         src/common/CosData.c
-        include/libcos/common/CosData.h
         src/common/CosDataBuffer.c
         src/common/CosDataBuffer.h
+        src/common/CosDataRef.c
         src/common/CosDiagnostic.c
         src/common/CosDiagnosticHandler.c
+        src/common/CosDict.c
         src/common/CosError.c
         src/common/CosHashTable.c
         src/common/CosHashTable.h
         src/common/CosLog.c
         src/common/CosMacros.h
         src/common/CosString.c
-        include/libcos/common/CosString.h
+        src/common/CosUtils.c
+        src/common/CosUtils.h
         src/common/CosVector.c
         src/common/CosVector.h
         src/common/memory-support.c
         src/common/memory-support.h
+        src/common/memory/CosRefCounter.c
+        src/common/memory/CosRefCounter.h
         src/io/CosBufferedInputStream.c
         src/io/CosBufferedInputStream.h
         src/io/CosFileInputStream.c
@@ -73,11 +58,15 @@ target_sources(libcos PRIVATE
         src/objects/CosIntObj.c
         src/objects/CosNameObj.c
         src/objects/CosNullObj.c
+        src/objects/CosObj.c
         src/objects/CosObjID.c
         src/objects/CosRealObj.c
+        src/objects/CosReferenceObj.c
+        src/objects/CosStreamObj.c
         src/objects/CosStringObj.c
         src/parse/CosObjParser.c
         src/parse/CosObjParser.h
+        src/parse/CosToken.c
         src/parse/CosTokenizer.c
         src/parse/CosTokenizer.h
         src/parse/tokenizer/CosTokenValue.c
@@ -87,27 +76,37 @@ target_sources(libcos PRIVATE
 )
 
 target_sources(libcos PUBLIC
-        include/libcos/objects/CosArrayObj.h
         include/libcos/CosBasicTypes.h
-        include/libcos/objects/CosBoolObj.h
         include/libcos/CosDoc.h
-        include/libcos/objects/CosIndirectObj.h
-        include/libcos/objects/CosIntObj.h
-        include/libcos/objects/CosNameObj.h
-        include/libcos/objects/CosNullObj.h
         include/libcos/CosObjID.h
-        include/libcos/objects/CosRealObj.h
-        include/libcos/objects/CosStringObj.h
+        include/libcos/CosObject.h
+        include/libcos/common/CosArray.h
+        include/libcos/common/CosData.h
+        include/libcos/common/CosDataRef.h
         include/libcos/common/CosDefines.h
         include/libcos/common/CosDiagnostic.h
         include/libcos/common/CosDiagnosticHandler.h
+        include/libcos/common/CosDict.h
         include/libcos/common/CosError.h
         include/libcos/common/CosLog.h
+        include/libcos/common/CosString.h
         include/libcos/common/CosTypes.h
         include/libcos/io/CosFileInputStream.h
         include/libcos/io/CosInputStream.h
         include/libcos/io/string-support.h
+        include/libcos/objects/CosArrayObj.h
+        include/libcos/objects/CosBoolObj.h
         include/libcos/objects/CosDictObj.h
+        include/libcos/objects/CosIndirectObj.h
+        include/libcos/objects/CosIntObj.h
+        include/libcos/objects/CosNameObj.h
+        include/libcos/objects/CosNullObj.h
+        include/libcos/objects/CosObj.h
+        include/libcos/objects/CosObjectTypes.h
+        include/libcos/objects/CosRealObj.h
+        include/libcos/objects/CosReferenceObj.h
+        include/libcos/objects/CosStreamObj.h
+        include/libcos/objects/CosStringObj.h
 )
 
 target_include_directories(libcos
@@ -133,10 +132,6 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         )
     endif ()
 
-    list(APPEND COS_COMPILE_DEFINITIONS
-            _FORTIFY_SOURCE=2
-    )
-
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     list(APPEND COS_C_FLAGS_WARNINGS
             -Wall
@@ -157,13 +152,21 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             #            -Werror=incompatible-function-pointer-types
             -Werror=nullability
     )
-
-    list(APPEND COS_COMPILE_DEFINITIONS
-            _FORTIFY_SOURCE=2
-    )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
             /W4 /WX)
+endif ()
+
+if (NOT MSVC)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND COS_COMPILE_DEFINITIONS
+                _FORTIFY_SOURCE=1
+        )
+    else ()
+        list(APPEND COS_COMPILE_DEFINITIONS
+                _FORTIFY_SOURCE=2
+        )
+    endif ()
 endif ()
 
 target_compile_options(libcos PRIVATE ${COS_C_FLAGS_WARNINGS})
@@ -171,6 +174,8 @@ target_compile_definitions(libcos PRIVATE ${COS_COMPILE_DEFINITIONS})
 
 set_target_properties(libcos PROPERTIES
         PREFIX "" # Remove the "lib" prefix from the library name.
+
+        VERIFY_INTERFACE_HEADER_SETS TRUE
 )
 
 # Tests

@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "libcos/objects/CosObj.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -62,6 +63,17 @@ cos_real_obj_set_value(CosRealObj *real_obj,
     }
 
     real_obj->value = value;
+}
+
+void
+cos_real_obj_print_desc(const CosRealObj *real_obj)
+{
+    COS_PARAMETER_ASSERT(real_obj != NULL);
+    if (!real_obj) {
+        return;
+    }
+
+    printf("Real: %f\n", real_obj->value);
 }
 
 COS_ASSUME_NONNULL_END

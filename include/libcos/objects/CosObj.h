@@ -72,7 +72,7 @@ CosObjValueType
 cos_obj_get_value_type(CosObj *obj);
 
 void
-cos_obj_print_description(const CosObj *obj);
+cos_obj_print_desc(const CosObj *obj);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

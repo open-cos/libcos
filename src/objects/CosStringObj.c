@@ -9,6 +9,7 @@
 
 #include <libcos/common/CosData.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -79,6 +80,17 @@ cos_string_obj_get_value(const CosStringObj *string_obj)
     }
 
     return string_obj->data;
+}
+
+void
+cos_string_obj_print_desc(const CosStringObj *string_obj)
+{
+    COS_PARAMETER_ASSERT(string_obj != NULL);
+    if (!string_obj) {
+        return;
+    }
+
+    printf("String: \"%.*s\"\n", string_obj->data->size, string_obj->data->bytes);
 }
 
 COS_ASSUME_NONNULL_END

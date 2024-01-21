@@ -21,6 +21,9 @@ COS_ASSUME_NONNULL_BEGIN
 CosNullObj *
 cos_null_obj_get(void);
 
+void
+cos_null_obj_print_desc(const CosNullObj *null_obj);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

@@ -268,9 +268,48 @@ cos_obj_parser_next_object_(CosObjParser *parser,
         return NULL;
     }
 
-    CosToken token = cos_tokenizer_next_token(parser->tokenizer);
+    if (parser->object_count > 0) {
+        return cos_obj_parser_pop_object_(parser);
+    }
+
+    CosToken token = cos_tokenizer_peek_token(parser->tokenizer);
 
     CosObj *object = NULL;
+
+    // Deal with integers first.
+    if (token.type == CosToken_Type_Integer) {
+        token = cos_tokenizer_next_token(parser->tokenizer);
+        return cos_obj_parser_handle_integer_(parser, &token, error);
+    }
+    else if (token.type == CosToken_Type_Keyword) {
+        CosKeywordType keyword_type;
+        if (cos_token_value_get_keyword(token.value,
+                                        &keyword_type)) {
+            if (keyword_type == CosKeywordType_R) {
+                token = cos_tokenizer_next_token(parser->tokenizer);
+                return cos_obj_parser_handle_indirect_obj_ref_(parser, error);
+            }
+            else if (keyword_type == CosKeywordType_Obj) {
+                token = cos_tokenizer_next_token(parser->tokenizer);
+                return cos_obj_parser_handle_indirect_obj_def_(parser, error);
+            }
+        }
+    }
+
+    if (parser->integer_count > 0) {
+        const unsigned int peeked_int = cos_obj_parser_peek_int_(parser);
+
+        CosIntObj * const int_obj = cos_int_obj_alloc((int)peeked_int);
+        if (!int_obj) {
+            return NULL;
+        }
+
+        cos_obj_parser_pop_int_(parser);
+
+        return (CosObj *)int_obj;
+    }
+
+    token = cos_tokenizer_next_token(parser->tokenizer);
 
     switch (token.type) {
         case CosToken_Type_Unknown:
@@ -529,9 +568,9 @@ cos_obj_parser_handle_array_(CosObjParser *parser,
         }
 
         // Add the object to the array.
-        if (!cos_array_object_append(array_object,
-                                     (void *)object,
-                                     error)) {
+        if (!cos_array_obj_append(array_object,
+                                  (void *)object,
+                                  error)) {
             goto failure;
         }
     }
@@ -569,6 +608,8 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         if (!key) {
             goto failure;
         }
+
+        cos_obj_print_desc(key);
 
         // TODO: Check that the key is a name.
 

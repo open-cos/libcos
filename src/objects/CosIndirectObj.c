@@ -10,6 +10,7 @@
 #include <libcos/CosDoc.h>
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -99,6 +100,24 @@ cos_indirect_obj_get_type(const CosIndirectObj *indirect_obj)
         return CosObjValueType_Unknown;
     }
     return (CosObjValueType)cos_obj_get_type(direct_obj);
+}
+
+void
+cos_indirect_obj_print_desc(const CosIndirectObj *indirect_obj)
+{
+    COS_PARAMETER_ASSERT(indirect_obj != NULL);
+    if (!indirect_obj) {
+        return;
+    }
+
+    printf("Indirect object: %d %d\n", indirect_obj->id.obj_number, indirect_obj->id.gen_number);
+
+    const CosObj * const direct_obj = indirect_obj->value;
+    if (!direct_obj) {
+        return;
+    }
+
+    cos_obj_print_desc(direct_obj);
 }
 
 COS_ASSUME_NONNULL_END

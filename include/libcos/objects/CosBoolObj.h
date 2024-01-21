@@ -41,6 +41,9 @@ void
 cos_bool_obj_set_value(CosBoolObj *bool_obj,
                        bool value);
 
+void
+cos_bool_obj_print_desc(const CosBoolObj *bool_obj);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

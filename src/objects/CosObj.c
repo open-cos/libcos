@@ -11,6 +11,7 @@
 #include "libcos/objects/CosIndirectObj.h"
 #include "libcos/objects/CosIntObj.h"
 #include "libcos/objects/CosNameObj.h"
+#include "libcos/objects/CosNullObj.h"
 #include "libcos/objects/CosRealObj.h"
 #include "libcos/objects/CosReferenceObj.h"
 #include "libcos/objects/CosStreamObj.h"
@@ -213,7 +214,7 @@ COS_LOG(const char *message)
 }
 
 void
-cos_obj_print_description(const CosObj *obj)
+cos_obj_print_desc(const CosObj *obj)
 {
     COS_PARAMETER_ASSERT(obj != NULL);
     if (!obj) {
@@ -225,24 +226,24 @@ cos_obj_print_description(const CosObj *obj)
             COS_LOG("Unknown object");
             break;
 
-        case CosObjType_Boolean:
-            COS_LOG("Boolean object");
-            break;
+        case CosObjType_Boolean: {
+            cos_bool_obj_print_desc((const CosBoolObj *)obj);
+        } break;
 
-        case CosObjType_Integer:
-            COS_LOG("Integer object");
-            break;
+        case CosObjType_Integer: {
+            cos_int_obj_print_desc((const CosIntObj *)obj);
+        } break;
 
-        case CosObjType_Real:
-            COS_LOG("Real object");
-            break;
+        case CosObjType_Real: {
+            cos_real_obj_print_desc((const CosRealObj *)obj);
+        } break;
 
-        case CosObjType_String:
-            COS_LOG("String object");
-            break;
+        case CosObjType_String: {
+            cos_string_obj_print_desc((const CosStringObj *)obj);
+        } break;
 
         case CosObjType_Name:
-            COS_LOG("Name object");
+            cos_name_obj_print_desc((const CosNameObj *)obj);
             break;
 
         case CosObjType_Array:
@@ -257,17 +258,17 @@ cos_obj_print_description(const CosObj *obj)
             COS_LOG("Stream object");
             break;
 
-        case CosObjType_Null:
-            COS_LOG("Null object");
-            break;
+        case CosObjType_Null: {
+            cos_null_obj_print_desc((const CosNullObj *)obj);
+        } break;
 
-        case CosObjType_Indirect:
-            COS_LOG("Indirect object");
-            break;
+        case CosObjType_Indirect: {
+            cos_indirect_obj_print_desc((const CosIndirectObj *)obj);
+        } break;
 
-        case CosObjType_Reference:
-            COS_LOG("Reference object");
-            break;
+        case CosObjType_Reference: {
+            cos_reference_obj_print_desc((const CosReferenceObj *)obj);
+        } break;
     }
 }
 

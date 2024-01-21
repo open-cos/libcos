@@ -29,6 +29,9 @@ CosObj * COS_Nullable
 cos_reference_obj_get_value(CosReferenceObj *reference_obj)
     COS_WARN_UNUSED_RESULT;
 
+void
+cos_reference_obj_print_desc(const CosReferenceObj *reference_obj);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
