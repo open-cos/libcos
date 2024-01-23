@@ -32,6 +32,7 @@ target_sources(libcos PRIVATE
         src/common/CosError.c
         src/common/CosHashTable.c
         src/common/CosHashTable.h
+        src/common/CosList.c
         src/common/CosLog.c
         src/common/CosMacros.h
         src/common/CosString.c
@@ -88,6 +89,7 @@ target_sources(libcos PUBLIC
         include/libcos/common/CosDiagnosticHandler.h
         include/libcos/common/CosDict.h
         include/libcos/common/CosError.h
+        include/libcos/common/CosList.h
         include/libcos/common/CosLog.h
         include/libcos/common/CosString.h
         include/libcos/common/CosTypes.h

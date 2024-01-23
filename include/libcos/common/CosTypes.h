@@ -23,6 +23,7 @@ typedef struct CosString CosString;
 typedef struct CosStringRef CosStringRef;
 typedef struct CosArray CosArray;
 typedef struct CosDict CosDict;
+typedef struct CosList CosList;
 
 typedef struct CosTokenizer CosTokenizer;
 typedef struct CosObjParser CosObjParser;
