@@ -5,15 +5,13 @@
 #ifndef LIBCOS_COS_TOKENIZER_H
 #define LIBCOS_COS_TOKENIZER_H
 
-#include "parse/CosToken.h"
+#include "parse/tokenizer/CosToken.h"
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
-
-struct CosTokenizer;
 
 CosTokenizer * COS_Nullable
 cos_tokenizer_alloc(CosInputStream *input_stream)
@@ -42,6 +40,28 @@ cos_tokenizer_has_next_token(CosTokenizer *tokenizer);
  */
 CosToken
 cos_tokenizer_peek_token(CosTokenizer *tokenizer);
+
+/**
+ * Peek the second next token without consuming it.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return The second next token.
+ */
+CosToken
+cos_tokenizer_peek_next_token_(CosTokenizer *tokenizer);
+
+bool
+cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
+                             CosToken *out_token,
+                             CosTokenValue * COS_Nullable *out_token_value,
+                             CosError * COS_Nullable out_error);
+
+bool
+cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
+                              CosToken *out_token,
+                              const CosTokenValue * COS_Nullable *out_token_value,
+                              CosError * COS_Nullable out_error);
 
 /**
  * Consume the next token.

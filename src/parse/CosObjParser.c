@@ -5,8 +5,8 @@
 #include "CosObjParser.h"
 
 #include "common/Assert.h"
-#include "common/CosMacros.h"
 #include "libcos/CosDoc.h"
+#include "libcos/common/CosMacros.h"
 #include "libcos/objects/CosArrayObj.h"
 #include "libcos/objects/CosBoolObj.h"
 #include "libcos/objects/CosIndirectObj.h"
@@ -17,8 +17,8 @@
 #include "libcos/objects/CosRealObj.h"
 #include "libcos/objects/CosReferenceObj.h"
 #include "libcos/objects/CosStringObj.h"
-#include "parse/CosToken.h"
 #include "parse/CosTokenizer.h"
+#include "parse/tokenizer/CosToken.h"
 
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosDiagnosticHandler.h>

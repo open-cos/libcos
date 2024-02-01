@@ -13,6 +13,17 @@
 #define COS_DECLS_END
 #endif
 
+/**
+ * @def COS_INLINE
+ *
+ * @brief Marks a function as inline.
+ */
+#if defined(_MSC_VER)
+#define COS_STATIC_INLINE static __inline
+#else
+#define COS_STATIC_INLINE static inline
+#endif
+
 #if defined(__has_attribute)
 #define COS_HAS_ATTRIBUTE(x) __has_attribute(x)
 #else

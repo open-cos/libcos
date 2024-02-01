@@ -2,6 +2,7 @@
 // Created by david on 17/12/23.
 //
 
+#include "libcos/common/CosError.h"
 #include "libcos/io/CosFileInputStream.h"
 #include "parse/CosTokenizer.h"
 #include "syntax/CosSyntax.h"
@@ -29,6 +30,23 @@ mainxx(int argc, char * COS_Nonnull argv[])
     CosTokenizer * const tokenizer = cos_tokenizer_alloc((CosInputStream *)input_stream);
     if (!tokenizer) {
         goto failure;
+    }
+
+    while (cos_tokenizer_has_next_token(tokenizer)) {
+        CosToken token = {0};
+        CosTokenValue *token_value = NULL;
+        CosError error = CosErrorNone;
+
+        if (!cos_tokenizer_get_next_token(tokenizer,
+                                          &token,
+                                          &token_value,
+                                          &error)) {
+            goto failure;
+        }
+
+        if (token_value) {
+            cos_token_value_free(token_value);
+        }
     }
 
     while (cos_tokenizer_has_next_token(tokenizer)) {

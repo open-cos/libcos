@@ -147,14 +147,11 @@ cos_list_remove_at(CosList *list,
  * @brief Removes the first item from a list.
  *
  * @param list The list.
- * @param error On input, a pointer to an error object, or @c NULL.
- * On output, if an error occurred, the error object will be set with the error information.
  *
  * @return @c true if the first item was removed from the list, @c false otherwise.
  */
 bool
-cos_list_remove_first(CosList *list,
-                      CosError * COS_Nullable error);
+cos_list_remove_first(CosList *list);
 
 /**
  * @brief Removes the last item from a list.
@@ -176,6 +173,16 @@ cos_list_remove_last(CosList *list,
  */
 void
 cos_list_clear(CosList *list);
+
+/**
+ * @brief Removes and returns the first item from a list.
+ *
+ * @param list The list.
+ *
+ * @return The first item from the list, or @c NULL if the list is empty.
+ */
+void * COS_Nullable
+cos_list_pop_first(CosList *list);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

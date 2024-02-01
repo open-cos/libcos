@@ -29,6 +29,11 @@ struct CosError {
     const char * COS_Nullable message;
 };
 
+/**
+ * The default empty error value.
+ */
+extern const CosError CosErrorNone;
+
 #define COS_ERROR_PROPAGATE(source_error, destination_error) \
     cos_error_propagate_(source_error, destination_error)
 

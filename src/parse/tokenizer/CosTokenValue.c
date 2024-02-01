@@ -6,7 +6,53 @@
 
 #include "common/Assert.h"
 
+#include <stdlib.h>
+
 COS_ASSUME_NONNULL_BEGIN
+
+struct CosTokenValue {
+    enum {
+        CosTokenValue_Type_None = 0,
+
+        CosTokenValue_Type_IntegerNumber,
+        CosTokenValue_Type_RealNumber,
+        CosTokenValue_Type_String,
+        CosTokenValue_Type_Data,
+        CosTokenValue_Type_Keyword,
+    } type;
+
+    union {
+        int integer_number;
+        double real_number;
+        CosString *string;
+        CosData *data;
+        CosKeywordType keyword;
+    } value;
+};
+
+CosTokenValue *
+cos_token_value_alloc(void)
+{
+    CosTokenValue *token_value = calloc(1, sizeof(CosTokenValue));
+    if (!token_value) {
+        return NULL;
+    }
+
+    return token_value;
+}
+
+void
+cos_token_value_free(CosTokenValue *token_value)
+{
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    if (!token_value) {
+        return;
+    }
+
+    cos_token_value_reset(token_value);
+
+    free(token_value);
+}
 
 void
 cos_token_value_reset(CosTokenValue *token_value)
@@ -18,7 +64,6 @@ cos_token_value_reset(CosTokenValue *token_value)
 
     switch (token_value->type) {
         case CosTokenValue_Type_None:
-        case CosTokenValue_Type_Boolean:
         case CosTokenValue_Type_IntegerNumber:
         case CosTokenValue_Type_RealNumber:
         case CosTokenValue_Type_Keyword:
@@ -37,22 +82,6 @@ cos_token_value_reset(CosTokenValue *token_value)
 }
 
 #pragma mark - Getters
-
-bool
-cos_token_value_get_boolean(const CosTokenValue *token_value,
-                            bool *result)
-{
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
-    if (!token_value || token_value->type != CosTokenValue_Type_Boolean) {
-        return false;
-    }
-
-    if (result) {
-        *result = token_value->value.boolean;
-    }
-    return true;
-}
 
 bool
 cos_token_value_get_string(const CosTokenValue *token_value,
@@ -135,21 +164,6 @@ cos_token_value_get_keyword(const CosTokenValue *token_value,
 }
 
 #pragma mark - Setters
-
-void
-cos_token_value_set_boolean(CosTokenValue *token_value,
-                            bool value)
-{
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    if (!token_value) {
-        return;
-    }
-
-    cos_token_value_reset(token_value);
-
-    token_value->type = CosTokenValue_Type_Boolean;
-    token_value->value.boolean = value;
-}
 
 void
 cos_token_value_set_string(CosTokenValue *token_value,

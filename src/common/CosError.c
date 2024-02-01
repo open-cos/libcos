@@ -10,6 +10,11 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+const CosError CosErrorNone = {
+    .code = COS_ERROR_NONE,
+    .message = NULL,
+};
+
 CosError
 cos_error_none(void)
 {

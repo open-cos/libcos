@@ -242,9 +242,9 @@ cos_obj_print_desc(const CosObj *obj)
             cos_string_obj_print_desc((const CosStringObj *)obj);
         } break;
 
-        case CosObjType_Name:
+        case CosObjType_Name: {
             cos_name_obj_print_desc((const CosNameObj *)obj);
-            break;
+        } break;
 
         case CosObjType_Array:
             COS_LOG("Array object");

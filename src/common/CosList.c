@@ -308,7 +308,7 @@ cos_list_remove_at(CosList *list,
     }
 
     if (index == 0) {
-        return cos_list_remove_first(list, error);
+        return cos_list_remove_first(list);
     }
     else if (index == list->count - 1) {
         return cos_list_remove_last(list, error);
@@ -346,8 +346,7 @@ cos_list_remove_at(CosList *list,
 }
 
 bool
-cos_list_remove_first(CosList *list,
-                      CosError * COS_Nullable error)
+cos_list_remove_first(CosList *list)
 {
     COS_PARAMETER_ASSERT(list != NULL);
     if (!list) {
@@ -355,10 +354,8 @@ cos_list_remove_first(CosList *list,
     }
 
     if (!list->head) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
-                                           "List is empty"),
-                            error);
-        return false;
+        // Nothing to remove.
+        return true;
     }
 
     CosListNode * const node = list->head;
@@ -384,10 +381,8 @@ cos_list_remove_last(CosList *list,
     }
 
     if (!list->tail) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
-                                           "List is empty"),
-                            error);
-        return false;
+        // Nothing to remove.
+        return true;
     }
 
     CosListNode * const node = list->tail;
@@ -440,6 +435,27 @@ cos_list_clear(CosList *list)
     list->head = NULL;
     list->tail = NULL;
     list->count = 0;
+}
+
+void *
+cos_list_pop_first(CosList *list)
+{
+    COS_PARAMETER_ASSERT(list != NULL);
+    if (!list) {
+        return NULL;
+    }
+
+    CosListNode * const first = list->head;
+    if (!first) {
+        // Nothing to pop.
+        return NULL;
+    }
+
+    void * const value = first->value;
+
+    cos_list_remove_first(list);
+
+    return value;
 }
 
 #pragma mark - Private

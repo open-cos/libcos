@@ -1,15 +1,14 @@
-//
-// Created by david on 22/07/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
 #ifndef LIBCOS_COS_TOKEN_H
 #define LIBCOS_COS_TOKEN_H
 
 #include "libcos/common/CosData.h"
+#include "libcos/common/CosDefines.h"
 #include "libcos/common/CosString.h"
 #include "parse/tokenizer/CosTokenValue.h"
-
-#include <libcos/common/CosDefines.h>
 
 #include <stdbool.h>
 
@@ -52,14 +51,6 @@ struct CosToken {
      */
     CosTokenValue * COS_Nullable value;
 };
-
-/**
- * @brief Resets a token to its default state.
- *
- * @param token The token to be reset.
- */
-void
-cos_token_reset(CosToken *token);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

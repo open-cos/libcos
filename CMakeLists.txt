@@ -13,7 +13,10 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_library(libcos SHARED)
+add_library(libcos SHARED
+        src/common/CosTypedArray.h
+        src/parse/tokenizer/CosTokenEntry.c
+        src/parse/tokenizer/CosTokenEntry.h)
 
 target_sources(libcos PRIVATE
         src/CosDoc.c
@@ -34,7 +37,7 @@ target_sources(libcos PRIVATE
         src/common/CosHashTable.h
         src/common/CosList.c
         src/common/CosLog.c
-        src/common/CosMacros.h
+        include/libcos/common/CosMacros.h
         src/common/CosString.c
         src/common/CosUtils.c
         src/common/CosUtils.h
@@ -67,7 +70,6 @@ target_sources(libcos PRIVATE
         src/objects/CosStringObj.c
         src/parse/CosObjParser.c
         src/parse/CosObjParser.h
-        src/parse/CosToken.c
         src/parse/CosTokenizer.c
         src/parse/CosTokenizer.h
         src/parse/tokenizer/CosTokenValue.c
