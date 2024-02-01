@@ -5,8 +5,12 @@ name: Multi-platform CMake
 on:
   push:
     branches: [ "main" ]
+    paths-ignore: 
+      - ".github/**"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - ".github/**"
 
 jobs:
   build:
