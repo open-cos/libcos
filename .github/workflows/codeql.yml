@@ -14,8 +14,12 @@ name: "CodeQL"
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - ".github/workflows/**"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - ".github/workflows/**"
   schedule:
     - cron: '34 20 * * 4'
 
