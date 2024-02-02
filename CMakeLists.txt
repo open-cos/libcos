@@ -184,6 +184,14 @@ set_target_properties(libcos PROPERTIES
         VERIFY_INTERFACE_HEADER_SETS TRUE
 )
 
+if (MSVC)
+    set_target_properties(libcos PROPERTIES
+            # This is required to create a symbol file (.lib) in addition to the
+            # shared library (.dll).
+            WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+    )
+endif ()
+
 # Tests
 
 enable_testing()
