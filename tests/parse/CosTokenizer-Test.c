@@ -35,7 +35,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
     while (cos_tokenizer_has_next_token(tokenizer)) {
         CosToken token = {0};
         CosTokenValue *token_value = NULL;
-        CosError error = CosErrorNone;
+        CosError error = {0};
 
         if (!cos_tokenizer_get_next_token(tokenizer,
                                           &token,
