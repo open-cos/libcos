@@ -1,8 +1,8 @@
-//
-// Created by david on 17/12/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
-#include "CosSyntax.h"
+#include "CosKeywords.h"
 
 #include <libcos/common/CosString.h>
 

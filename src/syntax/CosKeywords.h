@@ -1,9 +1,9 @@
-//
-// Created by david on 17/12/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
-#ifndef LIBCOS_COS_SYNTAX_H
-#define LIBCOS_COS_SYNTAX_H
+#ifndef LIBCOS_SYNTAX_COS_KEYWORDS_H
+#define LIBCOS_SYNTAX_COS_KEYWORDS_H
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
@@ -27,13 +27,29 @@ typedef enum CosKeywordType {
     CosKeywordType_StartXRef,
 } CosKeywordType;
 
+/**
+ * @brief Gets the keyword type from a string.
+ *
+ * @param string The string.
+ *
+ * @return The keyword type, or @c CosKeywordType_Unknown if the string does not
+ * represent a keyword.
+ */
 CosKeywordType
 cos_keyword_type_from_string(CosStringRef string);
 
+/**
+ * @brief Gets the string representation of a keyword type.
+ *
+ * @param keyword_type The keyword type.
+ *
+ * @return The string representation of the keyword type, or @c NULL if the
+ * keyword type is unknown.
+ */
 const char * COS_Nullable
 cos_keyword_type_to_string(CosKeywordType keyword_type);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
-#endif /* LIBCOS_COS_SYNTAX_H */
+#endif /* LIBCOS_SYNTAX_COS_KEYWORDS_H */

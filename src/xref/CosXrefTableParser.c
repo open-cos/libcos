@@ -38,7 +38,8 @@ struct CosXrefTableParser {
 };
 
 static CosXrefSection * COS_Nullable
-cos_xref_table_parser_parse_section_(CosXrefTableParser *parser);
+cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
+                                     CosError * COS_Nullable out_error);
 
 static CosXrefSubsection * COS_Nullable
 cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser);
@@ -82,16 +83,30 @@ cos_xref_table_parser_free(CosXrefTableParser *parser)
 }
 
 static CosXrefSection *
-cos_xref_table_parser_parse_section_(CosXrefTableParser *parser)
+cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
+                                     CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
     if (!parser) {
         return NULL;
     }
 
+    CosXrefSection *section = cos_xref_section_alloc();
+    if (!section) {
+        return NULL;
+    }
+
     CosXrefSubsection *subsection = cos_xref_table_parser_parse_subsection_(parser);
+    if (subsection && !cos_xref_section_add_subsection(section, subsection, out_error)) {
+        goto failure;
+    }
 
+    return section;
 
+failure:
+    if (section) {
+        cos_xref_section_free(section);
+    }
     return NULL;
 }
 
@@ -173,7 +188,7 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
         {.required_length = COS_XREF_TABLE_ENTRY_SECOND_NUMBER_SIZE, .number = 0},
     };
 
-    for (size_t i = 0; i < 2; i++) {
+    for (size_t i = 0; i < COS_ARRAY_SIZE(items); i++) {
         CosXrefEntryItem *item = &(items[i]);
         if (!cos_read_entry_item_(parser, item, error)) {
             return false;

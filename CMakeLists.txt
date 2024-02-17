@@ -89,8 +89,8 @@ target_sources(libcos PRIVATE
         src/parse/CosTokenizer.h
         src/parse/tokenizer/CosTokenValue.c
         src/parse/tokenizer/CosTokenValue.h
-        src/syntax/CosSyntax.c
-        src/syntax/CosSyntax.h
+        src/syntax/CosKeywords.c
+        src/syntax/CosKeywords.h
 )
 
 target_sources(libcos PUBLIC
