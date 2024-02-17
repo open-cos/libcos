@@ -26,9 +26,11 @@ cos_error_none(void)
 }
 
 void
-cos_error_propagate(CosError *source_error, CosError **destination_error)
+cos_error_propagate(CosError * COS_Nullable destination_error,
+                    CosError source_error)
 {
-    if (!source_error || !destination_error) {
+    COS_PARAMETER_ASSERT(destination_error != NULL);
+    if (!destination_error) {
         return;
     }
 

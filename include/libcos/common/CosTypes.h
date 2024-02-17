@@ -25,6 +25,8 @@ typedef struct CosArray CosArray;
 typedef struct CosDict CosDict;
 typedef struct CosList CosList;
 
+typedef struct CosScanner CosScanner;
+
 typedef struct CosTokenizer CosTokenizer;
 typedef struct CosObjParser CosObjParser;
 
@@ -45,11 +47,22 @@ typedef struct CosNullObj CosNullObj;
 typedef struct CosIndirectObj CosIndirectObj;
 typedef struct CosReferenceObj CosReferenceObj;
 
+typedef struct CosXrefTable CosXrefTable;
+typedef struct CosXrefSection CosXrefSection;
+typedef struct CosXrefSubsection CosXrefSubsection;
+typedef struct CosXrefEntry CosXrefEntry;
+
+typedef struct CosXrefInUseEntry CosXrefInUseEntry;
+typedef struct CosXrefFreeEntry CosXrefFreeEntry;
+
+typedef struct CosXrefTableParser CosXrefTableParser;
+
 typedef struct CosInputStream CosInputStream;
 typedef struct CosInputStreamFunctions CosInputStreamFunctions;
 typedef struct CosFileInputStream CosFileInputStream;
 
 typedef struct CosBufferedInputStream CosBufferedInputStream;
+typedef struct CosInputStreamReader CosInputStreamReader;
 
 typedef struct CosDiagnostic CosDiagnostic;
 typedef struct CosDiagnosticHandler CosDiagnosticHandler;

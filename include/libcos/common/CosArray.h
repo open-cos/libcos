@@ -27,7 +27,7 @@ typedef struct CosArrayCallbacks {
 
 CosArray * COS_Nullable
 cos_array_alloc(size_t element_size,
-                CosArrayCallbacks callbacks,
+                const CosArrayCallbacks * COS_Nullable callbacks,
                 size_t capacity_hint)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;

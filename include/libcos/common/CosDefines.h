@@ -249,4 +249,39 @@
 #define COS_ASSUME_NONNULL_END
 #endif
 
+/*
+ * Enumerations
+ */
+
+#if COS_HAS_ATTRIBUTE(enum_extensibility)
+#define COS_ATTR_ENUM_EXTENSIBILITY(type) __attribute__((enum_extensibility(type)))
+#else
+#define COS_ATTR_ENUM_EXTENSIBILITY(type)
+#endif
+
+/**
+ * @brief Marks an enumeration as open.
+ *
+ * An open enumeration can have values that are not explicitly defined.
+ */
+#define COS_OPEN_ENUM COS_ATTR_ENUM_EXTENSIBILITY(open)
+
+/**
+ * @brief Marks an enumeration as closed.
+ *
+ * A closed enumeration can only have values that are explicitly defined.
+ */
+#define COS_CLOSED_ENUM COS_ATTR_ENUM_EXTENSIBILITY(closed)
+
+/**
+ * @def COS_ATTR_FLAG_ENUM
+ *
+ * @brief Marks an enumeration as a flag enum.
+ */
+#if COS_HAS_ATTRIBUTE(flag_enum)
+#define COS_ATTR_FLAG_ENUM __attribute__((flag_enum))
+#else
+#define COS_ATTR_FLAG_ENUM
+#endif
+
 #endif /* LIBCOS_COS_DEFINES_H */

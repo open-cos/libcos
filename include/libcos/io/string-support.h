@@ -1,6 +1,6 @@
-//
-// Created by david on 10/06/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
 #ifndef LIBCOS_STRING_SUPPORT_H
 #define LIBCOS_STRING_SUPPORT_H

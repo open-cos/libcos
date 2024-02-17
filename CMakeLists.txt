@@ -18,7 +18,20 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library(libcos SHARED
         src/common/CosTypedArray.h
         src/parse/tokenizer/CosTokenEntry.c
-        src/parse/tokenizer/CosTokenEntry.h)
+        src/parse/tokenizer/CosTokenEntry.h
+        src/xref/CosXrefTable.c
+        include/libcos/xref/CosXrefTable.h
+        include/libcos/xref/CosXrefSubsection.h
+        src/xref/CosXrefSubsection.c
+        include/libcos/xref/CosXrefEntry.h
+        src/xref/CosXrefEntry.c
+        include/libcos/xref/CosXrefSection.h
+        include/libcos/xref/CosXrefTableParser.h
+        src/xref/CosXrefTableParser.c
+        src/common/CosScanner.c
+        include/libcos/common/CosScanner.h
+        src/xref/CosXrefSection.c
+)
 
 target_sources(libcos PRIVATE
         src/CosDoc.c
@@ -131,6 +144,12 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             -Werror=return-type -Werror=incompatible-pointer-types
             -fanalyzer
     )
+
+    if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 3.4)
+        list(APPEND COS_C_FLAGS_WARNINGS
+                -ftrapv
+        )
+    endif ()
 
     if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 10.0)
         list(APPEND COS_C_FLAGS_WARNINGS

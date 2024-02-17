@@ -40,7 +40,7 @@ cos_array_obj_alloc(CosArray * COS_Nullable array)
     }
     else {
         CosArray * const new_array = cos_array_alloc(sizeof(CosObj *),
-                                                     cos_array_obj_callbacks,
+                                                     &cos_array_obj_callbacks,
                                                      0);
         if (!new_array) {
             goto failure;

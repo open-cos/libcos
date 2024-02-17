@@ -6,12 +6,11 @@
 #define LIBCOS_IO_COS_INPUT_STREAM_READER_H
 
 #include <libcos/common/CosDefines.h>
+#include <libcos/common/CosTypes.h>
 #include <libcos/io/CosInputStream.h>
 
+COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
-
-struct CosInputStreamReader;
-typedef struct CosInputStreamReader CosInputStreamReader;
 
 CosInputStreamReader * COS_Nullable
 cos_input_stream_reader_alloc(CosInputStream *input_stream)
@@ -34,5 +33,6 @@ bool
 cos_input_stream_reader_ungetc(CosInputStreamReader *input_stream_reader);
 
 COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_IO_COS_INPUT_STREAM_READER_H */

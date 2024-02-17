@@ -1,6 +1,6 @@
-//
-// Created by david on 10/06/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
 #include "libcos/io/string-support.h"
 

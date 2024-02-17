@@ -13,17 +13,6 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-struct CosBufferedInputStream {
-    CosInputStream base;
-
-    CosInputStream * COS_Nullable base_stream;
-
-    size_t buffer_size;
-    size_t buffer_capacity;
-    size_t buffer_pos;
-    unsigned char *buffer;
-};
-
 CosBufferedInputStream * COS_Nullable
 cos_buffered_input_stream_alloc(CosInputStream *base_stream,
                                 size_t buffer_size);

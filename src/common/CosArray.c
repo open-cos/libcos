@@ -67,7 +67,7 @@ cos_array_resize_(CosArray *array,
 
 CosArray *
 cos_array_alloc(size_t element_size,
-                CosArrayCallbacks callbacks,
+                const CosArrayCallbacks * COS_Nullable callbacks,
                 size_t capacity_hint)
 {
     COS_PARAMETER_ASSERT(element_size > 0);
@@ -78,7 +78,7 @@ cos_array_alloc(size_t element_size,
     CosArray *array = NULL;
     unsigned char *data = NULL;
 
-    array = malloc(sizeof(CosArray));
+    array = calloc(1, sizeof(CosArray));
     if (!array) {
         goto failure;
     }
@@ -95,7 +95,9 @@ cos_array_alloc(size_t element_size,
     array->count = 0;
     array->capacity = capacity;
 
-    array->callbacks = callbacks;
+    if (callbacks) {
+        array->callbacks = *callbacks;
+    }
 
     return array;
 
