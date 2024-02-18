@@ -83,6 +83,18 @@ cos_token_value_get_integer_number(const CosTokenValue *token_value,
                                    int *result);
 
 /**
+ * @brief Gets the long integer number value of a token value.
+ *
+ * @param token_value The token value.
+ * @param result A pointer to the variable in which to store the long integer number.
+ *
+ * @return @c true if the token value is a long integer number, @c false otherwise.
+ */
+bool
+cos_token_value_get_long_integer_number(const CosTokenValue *token_value,
+                                        long long *result);
+
+/**
  * @brief Gets the real number value of a token value.
  *
  * @param token_value The token value.
@@ -137,6 +149,16 @@ cos_token_value_set_data(CosTokenValue *token_value,
 void
 cos_token_value_set_integer_number(CosTokenValue *token_value,
                                    int value);
+
+/**
+ * @brief Sets the long integer number value of a token value.
+ *
+ * @param token_value The token value.
+ * @param value The long integer number value.
+ */
+void
+cos_token_value_set_long_integer_number(CosTokenValue *token_value,
+                                        long long value);
 
 /**
  * @brief Sets the real number value of a token value.

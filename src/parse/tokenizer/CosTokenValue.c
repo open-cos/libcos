@@ -15,6 +15,7 @@ struct CosTokenValue {
         CosTokenValue_Type_None = 0,
 
         CosTokenValue_Type_IntegerNumber,
+        CosTokenValue_Type_LongIntegerNumber,
         CosTokenValue_Type_RealNumber,
         CosTokenValue_Type_String,
         CosTokenValue_Type_Data,
@@ -23,6 +24,7 @@ struct CosTokenValue {
 
     union {
         int integer_number;
+        long long long_integer_number;
         double real_number;
         CosString *string;
         CosData *data;
@@ -65,6 +67,7 @@ cos_token_value_reset(CosTokenValue *token_value)
     switch (token_value->type) {
         case CosTokenValue_Type_None:
         case CosTokenValue_Type_IntegerNumber:
+        case CosTokenValue_Type_LongIntegerNumber:
         case CosTokenValue_Type_RealNumber:
         case CosTokenValue_Type_Keyword:
             break;
@@ -127,6 +130,22 @@ cos_token_value_get_integer_number(const CosTokenValue *token_value,
 
     if (result) {
         *result = token_value->value.integer_number;
+    }
+    return true;
+}
+
+bool
+cos_token_value_get_long_integer_number(const CosTokenValue *token_value,
+                                        long long *result)
+{
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    COS_PARAMETER_ASSERT(result != NULL);
+    if (!token_value || token_value->type != CosTokenValue_Type_LongIntegerNumber) {
+        return false;
+    }
+
+    if (result) {
+        *result = token_value->value.long_integer_number;
     }
     return true;
 }
@@ -210,6 +229,21 @@ cos_token_value_set_integer_number(CosTokenValue *token_value,
 
     token_value->type = CosTokenValue_Type_IntegerNumber;
     token_value->value.integer_number = value;
+}
+
+void
+cos_token_value_set_long_integer_number(CosTokenValue *token_value,
+                                        long long value)
+{
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    if (!token_value) {
+        return;
+    }
+
+    cos_token_value_reset(token_value);
+
+    token_value->type = CosTokenValue_Type_LongIntegerNumber;
+    token_value->value.long_integer_number = value;
 }
 
 void
