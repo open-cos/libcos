@@ -4,8 +4,8 @@
 
 #include "libcos/common/CosError.h"
 #include "libcos/io/CosFileInputStream.h"
+#include "libcos/syntax/CosKeywords.h"
 #include "parse/CosTokenizer.h"
-#include "syntax/CosKeywords.h"
 
 #include <libcos/io/CosInputStream.h>
 

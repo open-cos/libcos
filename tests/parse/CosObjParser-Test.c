@@ -5,8 +5,8 @@
 #include "libcos/CosDoc.h"
 #include "libcos/io/CosFileInputStream.h"
 #include "libcos/objects/CosObj.h"
+#include "libcos/syntax/CosKeywords.h"
 #include "parse/CosObjParser.h"
-#include "syntax/CosKeywords.h"
 
 #include <libcos/io/CosInputStream.h>
 

@@ -5,12 +5,11 @@
 #ifndef LIBCOS_COS_TOKEN_VALUE_H
 #define LIBCOS_COS_TOKEN_VALUE_H
 
-#include "syntax/CosKeywords.h"
-
 #include <libcos/common/CosData.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosString.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/syntax/CosKeywords.h>
 
 #include <stdbool.h>
 

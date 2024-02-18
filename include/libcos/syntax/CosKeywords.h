@@ -22,7 +22,28 @@ typedef enum CosKeywordType {
     CosKeywordType_EndObj,
     CosKeywordType_Stream,
     CosKeywordType_EndStream,
+
+    /**
+     * @brief The "xref" keyword.
+     *
+     * This keyword is used to indicate the start of a cross-reference table.
+     */
     CosKeywordType_XRef,
+
+    /**
+     * @brief The "n" keyword.
+     *
+     * This keyword is used to indicate in-use entries in a cross-reference table.
+     */
+    CosKeywordType_N,
+
+    /**
+     * @brief The "f" keyword.
+     *
+     * This keyword is used to indicate free entries in a cross-reference table.
+     */
+    CosKeywordType_F,
+
     CosKeywordType_Trailer,
     CosKeywordType_StartXRef,
 } CosKeywordType;

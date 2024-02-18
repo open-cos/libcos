@@ -2,7 +2,7 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "CosKeywords.h"
+#include "libcos/syntax/CosKeywords.h"
 
 #include <libcos/common/CosString.h>
 
@@ -28,12 +28,18 @@ cos_keyword_type_from_string(CosStringRef string)
             }
         } break;
         case 'f': {
-            if (cos_string_ref_cmp(string, cos_string_ref_const("false")) == 0) {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("f")) == 0) {
+                return CosKeywordType_F;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("false")) == 0) {
                 return CosKeywordType_False;
             }
         } break;
         case 'n': {
-            if (cos_string_ref_cmp(string, cos_string_ref_const("null")) == 0) {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("n")) == 0) {
+                return CosKeywordType_N;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("null")) == 0) {
                 return CosKeywordType_Null;
             }
         } break;
@@ -110,6 +116,12 @@ cos_keyword_type_to_string(CosKeywordType keyword_type)
         }
         case CosKeywordType_XRef: {
             return "xref";
+        }
+        case CosKeywordType_N: {
+            return "n";
+        }
+        case CosKeywordType_F: {
+            return "f";
         }
         case CosKeywordType_Trailer: {
             return "trailer";
