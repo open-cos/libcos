@@ -13,6 +13,7 @@
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosList.h>
 #include <libcos/common/CosString.h>
+#include <libcos/syntax/CosLimits.h>
 
 #include <errno.h>
 #include <limits.h>
@@ -26,6 +27,9 @@ struct CosTokenizer {
 
     CosList *peeked_token_entries;
     CosList *free_token_entries;
+    CosTokenEntry * COS_Nullable current_token_entry;
+
+    bool strict;
 };
 
 static CosTokenEntry * COS_Nullable
@@ -139,6 +143,17 @@ cos_number_value_real(double value)
     return number_value;
 }
 
+static inline CosNumberValue
+cos_number_value_to_real(CosNumberValue number_value)
+{
+    switch (number_value.type) {
+        case CosNumberType_Integer:
+            return cos_number_value_real((double)number_value.value.integer_value);
+        case CosNumberType_Real:
+            return number_value;
+    }
+}
+
 static bool
 cos_tokenizer_read_number_(CosTokenizer *tokenizer,
                            CosNumberValue *number_value,
@@ -163,6 +178,13 @@ cos_scan_number_(CosTokenizer *tokenizer,
                  CosError *error)
     COS_ATTR_ACCESS_WRITE_ONLY(3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
+
+static bool
+cos_read_number_(CosTokenizer *tokenizer,
+                 CosNumberValue *out_number,
+                 CosError *out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 static bool
 cos_tokenizer_read_token_(CosTokenizer *tokenizer,
@@ -202,6 +224,9 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
     }
 
     tokenizer->input_stream_reader = input_stream_reader;
+    tokenizer->peeked_token_entries = peeked_token_entries;
+    tokenizer->free_token_entries = free_token_entries;
+    tokenizer->current_token_entry = NULL;
 
     return tokenizer;
 
@@ -233,7 +258,9 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     cos_list_free(tokenizer->peeked_token_entries);
     cos_list_free(tokenizer->free_token_entries);
 
-    // Reset the peeked token values.
+    if (tokenizer->current_token_entry) {
+        cos_token_entry_free(COS_nonnull_cast(tokenizer->current_token_entry));
+    }
 
     free(tokenizer);
 }
@@ -243,7 +270,16 @@ cos_tokenizer_has_next_token(CosTokenizer *tokenizer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
-    const CosToken peeked_token = cos_tokenizer_peek_token(tokenizer);
+    CosToken peeked_token = {0};
+    const CosTokenValue *peeked_token_value = NULL;
+
+    if (!cos_tokenizer_peek_next_token(tokenizer,
+                                       &peeked_token,
+                                       &peeked_token_value,
+                                       NULL)) {
+        return false;
+    }
+
     return (peeked_token.type != CosToken_Type_EOF);
 }
 
@@ -260,33 +296,50 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
         return false;
     }
 
+    // Reset the current token entry.
+    CosTokenEntry * const previous_token_entry = tokenizer->current_token_entry;
+    if (previous_token_entry) {
+        cos_token_value_reset(previous_token_entry->value);
+
+        if (!cos_list_append(tokenizer->free_token_entries,
+                             previous_token_entry,
+                             NULL)) {
+            // Error: out of memory.
+            cos_token_entry_free(previous_token_entry);
+        }
+
+        tokenizer->current_token_entry = NULL;
+    }
+
+    CosTokenEntry *token_entry = NULL;
+
     // Check if we already have a peeked token.
     if (cos_list_get_count(tokenizer->peeked_token_entries) > 0) {
-        CosTokenEntry *entry = cos_list_pop_first(tokenizer->peeked_token_entries);
-        COS_ASSERT(entry != NULL, "Expected a token entry");
-        if (!entry) {
+        token_entry = cos_list_pop_first(tokenizer->peeked_token_entries);
+        COS_ASSERT(token_entry != NULL, "Expected a token entry");
+        if (!token_entry) {
+            goto failure;
+        }
+    }
+    else {
+        token_entry = cos_tokenizer_get_token_entry_(tokenizer);
+        if (!token_entry) {
             goto failure;
         }
 
-        *out_token = entry->token;
-        *out_token_value = entry->value;
-
-        // The entry's token value, if any, is now owned by the caller.
-        entry->value = NULL;
-
-        cos_list_append(tokenizer->free_token_entries, entry, NULL);
-
-        return true;
-    }
-    else {
         // We don't have a peeked token, so we need to read the next token.
         cos_tokenizer_read_next_token_(tokenizer,
-                                       out_token,
-                                       out_token_value,
+                                       &(token_entry->token),
+                                       &(token_entry->value),
                                        out_error);
-
-        return true;
     }
+
+    *out_token = token_entry->token;
+    *out_token_value = token_entry->value;
+
+    tokenizer->current_token_entry = token_entry;
+
+    return true;
 
 failure:
 
@@ -296,12 +349,12 @@ failure:
 bool
 cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
                               CosToken *out_token,
-                              const CosTokenValue * COS_Nullable *out_token_value,
+                              const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
                               CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(out_token != NULL);
-    if (!tokenizer || !out_token || !out_token_value) {
+    if (!tokenizer || !out_token) {
         return false;
     }
 
@@ -332,7 +385,7 @@ cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
     }
 
     *out_token = entry->token;
-    if (entry->value) {
+    if (out_token_value) {
         *out_token_value = entry->value;
     }
 
@@ -352,7 +405,15 @@ cos_tokenizer_match_token(CosTokenizer *tokenizer,
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(type != CosToken_Type_Unknown);
 
-    const CosToken token = cos_tokenizer_peek_token(tokenizer);
+    CosToken token = {0};
+
+    if (!cos_tokenizer_peek_next_token(tokenizer,
+                                       &token,
+                                       NULL,
+                                       NULL)) {
+        return false;
+    }
+
     if (token.type == type) {
         // Consume the token.
         cos_tokenizer_next_token(tokenizer);
@@ -394,11 +455,18 @@ cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(keyword_type != CosKeywordType_Unknown);
 
-    const CosToken token = cos_tokenizer_peek_token(tokenizer);
+    CosToken token = {0};
+    const CosTokenValue *token_value = NULL;
+    if (!cos_tokenizer_peek_next_token(tokenizer,
+                                       &token,
+                                       &token_value,
+                                       NULL)) {
+        return false;
+    }
 
     CosKeywordType token_keyword_type = CosKeywordType_Unknown;
     if (token.type == CosToken_Type_Keyword &&
-        cos_token_value_get_keyword(token.value,
+        cos_token_value_get_keyword(token_value,
                                     &token_keyword_type) &&
         token_keyword_type == keyword_type) {
         // Consume the token.
@@ -430,18 +498,19 @@ cos_tokenizer_get_token_entry_(CosTokenizer *tokenizer)
 
 static void
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
-                               CosToken *token,
-                               CosTokenValue * COS_Nullable *token_value,
+                               CosToken *out_token,
+                               CosTokenValue * COS_Nullable *out_token_value,
                                CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(token != NULL);
-    if (!tokenizer || !token) {
+    COS_PARAMETER_ASSERT(out_token != NULL);
+    COS_PARAMETER_ASSERT(out_token_value != NULL);
+    if (!tokenizer || !out_token || !out_token_value) {
         return;
     }
 
-    token->type = CosToken_Type_Unknown;
-    cos_token_value_reset(token->value);
+    CosToken token = {0};
+    CosTokenValue *token_value = *out_token_value;
 
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
@@ -449,14 +518,14 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
     const int c = cos_input_stream_reader_getc(tokenizer->input_stream_reader);
     switch (c) {
         case EOF: {
-            token->type = CosToken_Type_EOF;
+            token.type = CosToken_Type_EOF;
         } break;
 
         case CosCharacterSet_LeftSquareBracket: {
-            token->type = CosToken_Type_ArrayStart;
+            token.type = CosToken_Type_ArrayStart;
         } break;
         case CosCharacterSet_RightSquareBracket: {
-            token->type = CosToken_Type_ArrayEnd;
+            token.type = CosToken_Type_ArrayEnd;
         } break;
 
         case CosCharacterSet_Solidus: {
@@ -469,12 +538,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
             CosError error;
             if (cos_tokenizer_read_name_(tokenizer, string, &error)) {
-                token->type = CosToken_Type_Name;
-                cos_token_value_set_string(token->value, string);
+                token.type = CosToken_Type_Name;
+                cos_token_value_set_string(token_value, string);
             }
             else {
                 // Error: invalid name.
-                token->type = CosToken_Type_Unknown;
+                token.type = CosToken_Type_Unknown;
 
                 cos_string_free(string);
             }
@@ -489,12 +558,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             }
 
             if (cos_tokenizer_read_literal_string_(tokenizer, data)) {
-                token->type = CosToken_Type_Literal_String;
-                cos_token_value_set_data(token->value, data);
+                token.type = CosToken_Type_Literal_String;
+                cos_token_value_set_data(token_value, data);
             }
             else {
                 // Error: invalid literal string.
-                token->type = CosToken_Type_Unknown;
+                token.type = CosToken_Type_Unknown;
 
                 cos_data_free(data);
             }
@@ -503,7 +572,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         case CosCharacterSet_LessThanSign: {
             // This is either a dictionary ("<<") or a hex string ("<").
             if (cos_tokenizer_match_(tokenizer, CosCharacterSet_LessThanSign)) {
-                token->type = CosToken_Type_DictionaryStart;
+                token.type = CosToken_Type_DictionaryStart;
             }
             else {
                 // This is a hex string.
@@ -515,12 +584,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
                 CosError error;
                 if (cos_tokenizer_read_hex_string_(tokenizer, data, &error)) {
-                    token->type = CosToken_Type_Hex_String;
-                    cos_token_value_set_data(token->value, data);
+                    token.type = CosToken_Type_Hex_String;
+                    cos_token_value_set_data(token_value, data);
                 }
                 else {
                     // Error: invalid hex string.
-                    token->type = CosToken_Type_Unknown;
+                    token.type = CosToken_Type_Unknown;
 
                     cos_data_free(data);
                 }
@@ -529,7 +598,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
         case CosCharacterSet_GreaterThanSign: {
             if (cos_tokenizer_match_(tokenizer, CosCharacterSet_GreaterThanSign)) {
-                token->type = CosToken_Type_DictionaryEnd;
+                token.type = CosToken_Type_DictionaryEnd;
             }
             else {
                 // Unexpected character.
@@ -549,27 +618,27 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         case CosCharacterSet_FullStop:
         case CosCharacterSet_PlusSign:
         case CosCharacterSet_HyphenMinus: {
+            // We know that this is a number (integer or real).
             cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
 
-            // We know that this is a number (integer or real).
             CosNumberValue number_value = {0};
             CosError error;
-            if (cos_tokenizer_read_number_(tokenizer, &number_value, &error)) {
+            if (cos_read_number_(tokenizer, &number_value, &error)) {
                 // This is a number.
                 if (number_value.type == CosNumberType_Integer) {
-                    token->type = CosToken_Type_Integer;
-                    cos_token_value_set_integer_number(token->value,
+                    token.type = CosToken_Type_Integer;
+                    cos_token_value_set_integer_number(token_value,
                                                        number_value.value.integer_value);
                 }
                 else {
-                    token->type = CosToken_Type_Real;
-                    cos_token_value_set_real_number(token->value,
+                    token.type = CosToken_Type_Real;
+                    cos_token_value_set_real_number(token_value,
                                                     number_value.value.real_value);
                 }
             }
             else {
                 // Error: invalid number.
-                token->type = CosToken_Type_Unknown;
+                token.type = CosToken_Type_Unknown;
             }
         } break;
 
@@ -589,25 +658,27 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 const CosKeywordType keyword_type = cos_keyword_type_from_string(cos_string_get_ref(string));
                 if (keyword_type != CosKeywordType_Unknown) {
                     // This is a keyword.
-                    token->type = CosToken_Type_Keyword;
-                    cos_token_value_set_keyword(token->value,
+                    token.type = CosToken_Type_Keyword;
+                    cos_token_value_set_keyword(token_value,
                                                 keyword_type);
                 }
                 else {
                     // Error: unrecognized token.
-                    token->type = CosToken_Type_Unknown;
+                    token.type = CosToken_Type_Unknown;
                 }
 
                 cos_string_free(string);
             }
             else {
                 // Error: invalid token.
-                token->type = CosToken_Type_Unknown;
+                token.type = CosToken_Type_Unknown;
 
                 cos_string_free(string);
             }
         } break;
     }
+
+    *out_token = token;
 }
 
 static inline int
@@ -693,6 +764,36 @@ cos_hex_digit_to_int_(int character)
 
         default:
             return 0;
+    }
+}
+
+static int
+cos_decimal_digit_to_int_(int character)
+{
+    switch (character) {
+        case CosCharacterSet_DigitZero:
+            return 0;
+        case CosCharacterSet_DigitOne:
+            return 1;
+        case CosCharacterSet_DigitTwo:
+            return 2;
+        case CosCharacterSet_DigitThree:
+            return 3;
+        case CosCharacterSet_DigitFour:
+            return 4;
+        case CosCharacterSet_DigitFive:
+            return 5;
+        case CosCharacterSet_DigitSix:
+            return 6;
+        case CosCharacterSet_DigitSeven:
+            return 7;
+        case CosCharacterSet_DigitEight:
+            return 8;
+        case CosCharacterSet_DigitNine:
+            return 9;
+
+        default:
+            return -1;
     }
 }
 
@@ -1028,6 +1129,9 @@ cos_tokenizer_read_number_(CosTokenizer *tokenizer,
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(number_value != NULL);
+    if (!tokenizer || !number_value) {
+        return false;
+    }
 
     bool result = true;
 
@@ -1144,6 +1248,92 @@ cos_scan_number_(CosTokenizer *tokenizer,
             *error = cos_error_make(COS_ERROR_SYNTAX, "Invalid number: no digits");
         }
         return false;
+    }
+
+    return true;
+}
+
+static bool
+cos_read_number_(CosTokenizer *tokenizer,
+                 CosNumberValue *out_number,
+                 CosError *out_error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(out_number != NULL);
+    if (!tokenizer || !out_number) {
+        return false;
+    }
+
+    bool has_sign = false;
+    bool has_decimal_point = false;
+    unsigned int digit_count = 0;
+    unsigned int fractional_digit_count = 0;
+    double fractional_scale = 0.1;
+
+    int int_value = 0;
+    double real_value = 0.0;
+
+    /*
+     * The following is a regular expression for a number:
+     * [\+-]?\d*(\.?\d*)?
+     *
+     * That is: an optional sign, followed by zero or more digits,
+     * followed by an optional decimal point and zero or more digits.
+     */
+
+    int c = EOF;
+    int digit_value = 0;
+    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
+        digit_value = cos_decimal_digit_to_int_(c);
+        if (digit_value >= 0) {
+            digit_count++;
+
+            if (has_decimal_point) {
+                fractional_digit_count++;
+                real_value = real_value + (digit_value * fractional_scale);
+                fractional_scale *= 0.1;
+            }
+            else {
+                int_value = (int_value * 10) + digit_value;
+            }
+        }
+        else if ((c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) &&
+                 !(has_sign || has_decimal_point || digit_count > 0)) {
+            has_sign = true;
+        }
+        else if (c == CosCharacterSet_FullStop && !has_decimal_point) {
+            // Switch to reading the fractional part of a real number.
+            has_decimal_point = true;
+            real_value = (double)int_value;
+        }
+        else {
+            // This is the end of the number.
+            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            break;
+        }
+    }
+
+    if (digit_count == 0) {
+        // Error: invalid number.
+        if (out_error) {
+            *out_error = cos_error_make(COS_ERROR_SYNTAX, "Invalid number: no digits");
+        }
+        return false;
+    }
+
+    if (tokenizer->strict && fractional_digit_count > COS_REAL_MAX_SIG_FRAC_DIG) {
+        if (out_error) {
+            *out_error = cos_error_make(COS_ERROR_SYNTAX,
+                                        "Too many fractional digits");
+        }
+        return false;
+    }
+
+    if (has_decimal_point) {
+        *out_number = cos_number_value_real(real_value);
+    }
+    else {
+        *out_number = cos_number_value_integer(int_value);
     }
 
     return true;

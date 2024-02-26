@@ -65,12 +65,12 @@ cos_obj_parser_handle_hex_string_(CosObjParser *parser,
 
 static CosObj * COS_Nullable
 cos_obj_parser_handle_name_(CosObjParser *parser,
-                            CosToken *token,
+                            CosTokenValue *token_value,
                             CosError * COS_Nullable error);
 
 static CosObj * COS_Nullable
 cos_obj_parser_handle_integer_(CosObjParser *parser,
-                               const CosToken *token,
+                               CosTokenValue *token_value,
                                CosError * COS_Nullable error);
 
 static CosObj * COS_Nullable
@@ -272,25 +272,32 @@ cos_obj_parser_next_object_(CosObjParser *parser,
         return cos_obj_parser_pop_object_(parser);
     }
 
-    CosToken token = cos_tokenizer_peek_token(parser->tokenizer);
+    CosToken peeked_token = {0};
+    const CosTokenValue *peeked_token_value = NULL;
+    if (!cos_tokenizer_peek_next_token(parser->tokenizer,
+                                       &peeked_token,
+                                       &peeked_token_value,
+                                       error)) {
+        return NULL;
+    }
 
     CosObj *object = NULL;
 
     // Deal with integers first.
-    if (token.type == CosToken_Type_Integer) {
-        token = cos_tokenizer_next_token(parser->tokenizer);
-        return cos_obj_parser_handle_integer_(parser, &token, error);
+    if (peeked_token.type == CosToken_Type_Integer) {
+        peeked_token = cos_tokenizer_next_token(parser->tokenizer);
+        return cos_obj_parser_handle_integer_(parser, (CosTokenValue *)peeked_token_value, error);
     }
-    else if (token.type == CosToken_Type_Keyword) {
+    else if (peeked_token.type == CosToken_Type_Keyword) {
         CosKeywordType keyword_type;
-        if (cos_token_value_get_keyword(token.value,
+        if (cos_token_value_get_keyword(peeked_token_value,
                                         &keyword_type)) {
             if (keyword_type == CosKeywordType_R) {
-                token = cos_tokenizer_next_token(parser->tokenizer);
+                peeked_token = cos_tokenizer_next_token(parser->tokenizer);
                 return cos_obj_parser_handle_indirect_obj_ref_(parser, error);
             }
             else if (keyword_type == CosKeywordType_Obj) {
-                token = cos_tokenizer_next_token(parser->tokenizer);
+                peeked_token = cos_tokenizer_next_token(parser->tokenizer);
                 return cos_obj_parser_handle_indirect_obj_def_(parser, error);
             }
         }
@@ -309,7 +316,15 @@ cos_obj_parser_next_object_(CosObjParser *parser,
         return (CosObj *)int_obj;
     }
 
-    token = cos_tokenizer_next_token(parser->tokenizer);
+    CosToken token = {0};
+    CosTokenValue *token_value = NULL;
+
+    if (!cos_tokenizer_get_next_token(parser->tokenizer,
+                                      &token,
+                                      &token_value,
+                                      error)) {
+        return NULL;
+    }
 
     switch (token.type) {
         case CosToken_Type_Unknown:
@@ -323,11 +338,11 @@ cos_obj_parser_next_object_(CosObjParser *parser,
         } break;
 
         case CosToken_Type_Name: {
-            object = cos_obj_parser_handle_name_(parser, &token, error);
+            object = cos_obj_parser_handle_name_(parser, token_value, error);
         } break;
 
         case CosToken_Type_Integer: {
-            object = cos_obj_parser_handle_integer_(parser, &token, error);
+            object = cos_obj_parser_handle_integer_(parser, token_value, error);
         } break;
         case CosToken_Type_Real: {
             object = cos_obj_parser_handle_real_(parser, &token, error);
@@ -409,17 +424,17 @@ cos_obj_parser_handle_hex_string_(CosObjParser *parser,
 
 static CosObj *
 cos_obj_parser_handle_name_(CosObjParser *parser,
-                            CosToken *token,
+                            CosTokenValue *token_value,
                             CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
-    COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Name);
-    if (!parser || !token) {
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    if (!parser || !token_value) {
         return NULL;
     }
 
     CosString *name = NULL;
-    if (cos_token_value_take_string(token->value, &name)) {
+    if (cos_token_value_take_string(token_value, &name)) {
         return (CosObj *)cos_name_obj_alloc(name);
     }
     else {
@@ -432,7 +447,7 @@ cos_obj_parser_handle_name_(CosObjParser *parser,
 
 static CosObj *
 cos_obj_parser_handle_integer_(CosObjParser *parser,
-                               const CosToken *token,
+                               CosTokenValue *token_value,
                                CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
@@ -444,7 +459,7 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
 
     // Get the integer value of the token.
     int int_value = 0;
-    if (!cos_token_value_get_integer_number(token->value,
+    if (!cos_token_value_get_integer_number(token_value,
                                             &int_value)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid integer token"),
@@ -684,6 +699,8 @@ cos_obj_parser_handle_keyword_(CosObjParser *parser,
         case CosKeywordType_EndStream:
             break;
         case CosKeywordType_XRef:
+        case CosKeywordType_N:
+        case CosKeywordType_F:
         case CosKeywordType_Trailer:
         case CosKeywordType_StartXRef:
             break;

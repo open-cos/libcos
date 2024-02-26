@@ -60,7 +60,7 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
 bool
 cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
                               CosToken *out_token,
-                              const CosTokenValue * COS_Nullable *out_token_value,
+                              const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
                               CosError * COS_Nullable out_error);
 
 /**

@@ -15,7 +15,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 typedef struct CosTokenEntry {
     CosToken token;
-    CosTokenValue * COS_Nullable value;
+    CosTokenValue *value;
 } CosTokenEntry;
 
 CosTokenEntry * COS_Nullable

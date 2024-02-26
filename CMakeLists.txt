@@ -31,6 +31,7 @@ add_library(libcos SHARED
         src/common/CosScanner.c
         include/libcos/common/CosScanner.h
         src/xref/CosXrefSection.c
+        include/libcos/syntax/CosLimits.h
 )
 
 target_sources(libcos PRIVATE

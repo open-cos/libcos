@@ -47,10 +47,8 @@ cos_token_entry_free(CosTokenEntry *entry)
         return;
     }
 
-    CosTokenValue *value = entry->value;
-    if (value) {
-        cos_token_value_free(value);
-    }
+    cos_token_value_free(entry->value);
+
     free(entry);
 }
 
