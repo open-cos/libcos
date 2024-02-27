@@ -399,17 +399,6 @@ cos_tokenizer_next_token(CosTokenizer *tokenizer)
     return token;
 }
 
-CosToken
-cos_tokenizer_peek_token(CosTokenizer *tokenizer)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    CosToken token = {0};
-    cos_tokenizer_peek_next_token(tokenizer, &token, NULL, NULL);
-
-    return token;
-}
-
 bool
 cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
                             CosKeywordType keyword_type)

@@ -32,16 +32,6 @@ bool
 cos_tokenizer_has_next_token(CosTokenizer *tokenizer);
 
 /**
- * Peek the next token without consuming it.
- *
- * @param tokenizer The tokenizer.
- *
- * @return The next token.
- */
-CosToken
-cos_tokenizer_peek_token(CosTokenizer *tokenizer);
-
-/**
  * Peek the second next token without consuming it.
  *
  * @param tokenizer The tokenizer.
