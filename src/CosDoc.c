@@ -22,7 +22,7 @@ struct CosDoc {
 CosDoc *
 cos_doc_alloc(void)
 {
-    CosDoc * const doc = malloc(sizeof(CosDoc));
+    CosDoc * const doc = calloc(1, sizeof(CosDoc));
     return doc;
 }
 
