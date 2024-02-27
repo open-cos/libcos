@@ -42,6 +42,8 @@ main(int argc, char * COS_Nonnull argv[])
         }
 
         cos_obj_print_desc(obj);
+
+        cos_obj_free(obj);
     }
 
     cos_obj_parser_free(parser);
