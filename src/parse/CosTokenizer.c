@@ -9,13 +9,11 @@
 #include "io/CosInputStreamReader.h"
 #include "parse/tokenizer/CosTokenEntry.h"
 
-#include <libcos/common/CosArray.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosList.h>
 #include <libcos/common/CosString.h>
 #include <libcos/syntax/CosLimits.h>
 
-#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +36,7 @@ cos_tokenizer_get_token_entry_(CosTokenizer *tokenizer);
 static void
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                                CosToken *out_token,
-                               CosTokenValue * COS_Nullable *out_token_value,
+                               CosTokenValue *token_value,
                                CosError * COS_Nullable out_error);
 
 static inline int
@@ -142,42 +140,6 @@ cos_number_value_real(double value)
     };
     return number_value;
 }
-
-static inline CosNumberValue
-cos_number_value_to_real(CosNumberValue number_value)
-{
-    switch (number_value.type) {
-        case CosNumberType_Integer:
-            return cos_number_value_real((double)number_value.value.integer_value);
-        case CosNumberType_Real:
-            return number_value;
-    }
-}
-
-static bool
-cos_tokenizer_read_number_(CosTokenizer *tokenizer,
-                           CosNumberValue *number_value,
-                           CosError *error)
-    COS_ATTR_ACCESS_WRITE_ONLY(2)
-    COS_ATTR_ACCESS_WRITE_ONLY(3);
-
-/**
- * @brief Scans a number.
- *
- * @param tokenizer The tokenizer.
- * @param string The output parameter for the number string.
- * @param number_type The output parameter for the number type (integer or real).
- * @param error The output parameter for the error.
- *
- * @return @c true if the number was scanned successfully, @c false otherwise.
- */
-static bool
-cos_scan_number_(CosTokenizer *tokenizer,
-                 CosString *string,
-                 CosNumberType *number_type,
-                 CosError *error)
-    COS_ATTR_ACCESS_WRITE_ONLY(3)
-    COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 static bool
 cos_read_number_(CosTokenizer *tokenizer,
@@ -330,7 +292,7 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
         // We don't have a peeked token, so we need to read the next token.
         cos_tokenizer_read_next_token_(tokenizer,
                                        &(token_entry->token),
-                                       &(token_entry->value),
+                                       token_entry->value,
                                        out_error);
     }
 
@@ -378,7 +340,7 @@ cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
 
         cos_tokenizer_read_next_token_(tokenizer,
                                        &(entry->token),
-                                       &(entry->value),
+                                       entry->value,
                                        out_error);
 
         cos_list_append(tokenizer->peeked_token_entries, entry, NULL);
@@ -499,18 +461,17 @@ cos_tokenizer_get_token_entry_(CosTokenizer *tokenizer)
 static void
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                                CosToken *out_token,
-                               CosTokenValue * COS_Nullable *out_token_value,
+                               CosTokenValue *token_value,
                                CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(out_token != NULL);
-    COS_PARAMETER_ASSERT(out_token_value != NULL);
-    if (!tokenizer || !out_token || !out_token_value) {
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    if (!tokenizer || !out_token || !token_value) {
         return;
     }
 
     CosToken token = {0};
-    CosTokenValue *token_value = *out_token_value;
 
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
@@ -544,6 +505,8 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             else {
                 // Error: invalid name.
                 token.type = CosToken_Type_Unknown;
+
+                cos_error_propagate(out_error, error);
 
                 cos_string_free(string);
             }
@@ -590,6 +553,8 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 else {
                     // Error: invalid hex string.
                     token.type = CosToken_Type_Unknown;
+
+                    cos_error_propagate(out_error, error);
 
                     cos_data_free(data);
                 }
@@ -639,6 +604,8 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             else {
                 // Error: invalid number.
                 token.type = CosToken_Type_Unknown;
+
+                cos_error_propagate(out_error, error);
             }
         } break;
 
@@ -672,6 +639,8 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             else {
                 // Error: invalid token.
                 token.type = CosToken_Type_Unknown;
+
+                cos_error_propagate(out_error, error);
 
                 cos_string_free(string);
             }
@@ -1123,137 +1092,6 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
 }
 
 static bool
-cos_tokenizer_read_number_(CosTokenizer *tokenizer,
-                           CosNumberValue *number_value,
-                           CosError *error)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(number_value != NULL);
-    if (!tokenizer || !number_value) {
-        return false;
-    }
-
-    bool result = true;
-
-    CosString * const string = cos_string_alloc(0);
-    if (!string) {
-        // Error: out of memory.
-        if (error) {
-            *error = cos_error_make(COS_ERROR_MEMORY, "Out of memory");
-        }
-        goto failure;
-    }
-
-    CosNumberType number_type = CosNumberType_Integer;
-    if (!cos_scan_number_(tokenizer, string, &number_type, error)) {
-        // Error: invalid number.
-        goto failure;
-    }
-
-    const char * const string_data = cos_string_get_data(string);
-    if (!string_data) {
-        // Error: invalid string.
-        goto failure;
-    }
-
-    if (number_type == CosNumberType_Integer) {
-        char *end_ptr = NULL;
-        errno = 0;
-        const long long_value = strtol(string_data, &end_ptr, 10);
-        if (end_ptr == string_data || errno == ERANGE) {
-            // Error: invalid integer.
-            goto failure;
-        }
-
-        if (number_value) {
-            *number_value = cos_number_value_integer((int)long_value);
-        }
-    }
-    else {
-        char *end_ptr = NULL;
-        errno = 0;
-        const double double_value = strtod(string_data, &end_ptr);
-        if (end_ptr == string_data || errno == ERANGE) {
-            // Error: invalid real.
-            goto failure;
-        }
-
-        if (number_value) {
-            *number_value = cos_number_value_real(double_value);
-        }
-    }
-
-    goto cleanup;
-
-failure:
-    result = false;
-
-cleanup:
-    if (string) {
-        cos_string_free(string);
-    }
-
-    return result;
-}
-
-static bool
-cos_scan_number_(CosTokenizer *tokenizer,
-                 CosString *string,
-                 CosNumberType *number_type,
-                 CosError *error)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(string != NULL);
-    COS_PARAMETER_ASSERT(number_type != NULL);
-    if (!tokenizer || !string || !number_type) {
-        return false;
-    }
-
-    bool has_sign = false;
-    bool has_decimal_point = false;
-    unsigned int digit_count = 0;
-
-    /*
-     * The following is a regular expression for a number:
-     * [\+-]?\d*(\.?\d*)?
-     *
-     * That is: an optional sign, followed by zero or more digits,
-     * followed by an optional decimal point and zero or more digits.
-     */
-
-    int c = EOF;
-    while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
-        if (cos_is_decimal_digit(c)) {
-            digit_count++;
-        }
-        else if ((c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) &&
-                 !(has_sign || has_decimal_point || digit_count > 0)) {
-            has_sign = true;
-        }
-        else if (c == CosCharacterSet_FullStop && !has_decimal_point) {
-            *number_type = CosNumberType_Real;
-            has_decimal_point = true;
-        }
-        else {
-            // This is the end of the number.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
-            break;
-        }
-        cos_string_push_back(string, (char)c);
-    }
-
-    if (digit_count == 0) {
-        // Error: invalid number.
-        if (error) {
-            *error = cos_error_make(COS_ERROR_SYNTAX, "Invalid number: no digits");
-        }
-        return false;
-    }
-
-    return true;
-}
-
-static bool
 cos_read_number_(CosTokenizer *tokenizer,
                  CosNumberValue *out_number,
                  CosError *out_error)
@@ -1274,17 +1112,12 @@ cos_read_number_(CosTokenizer *tokenizer,
     double real_value = 0.0;
 
     /*
-     * The following is a regular expression for a number:
-     * [\+-]?\d*(\.?\d*)?
-     *
-     * That is: an optional sign, followed by zero or more digits,
-     * followed by an optional decimal point and zero or more digits.
+     * A number is an optional sign and a sequence of digits, with an optional decimal point.
      */
 
     int c = EOF;
-    int digit_value = 0;
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
-        digit_value = cos_decimal_digit_to_int_(c);
+        const int digit_value = cos_decimal_digit_to_int_(c);
         if (digit_value >= 0) {
             digit_count++;
 
@@ -1362,10 +1195,11 @@ cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
 }
 
 static void
-cos_tokenizer_skip_character_(CosTokenizer *tokenizer)
+cos_tokenizer_skip_character_(CosTokenizer *tokenizer,
+                              int character)
 {
-    int c = EOF;
-    if ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF && c != 10) {
+    const int c = cos_tokenizer_get_next_char_(tokenizer);
+    if (c != EOF && c != character) {
         cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
     }
 }
@@ -1380,7 +1214,8 @@ cos_tokenizer_skip_comment_(CosTokenizer *tokenizer)
         if (cos_is_end_of_line(c)) {
             // This is the end of the comment.
             if (c == CosCharacterSet_CarriageReturn) {
-                cos_tokenizer_skip_character_(tokenizer);
+                cos_tokenizer_skip_character_(tokenizer,
+                                              CosCharacterSet_LineFeed);
             }
             return;
         }
