@@ -88,7 +88,7 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
 
 static CosObj * COS_Nullable
 cos_obj_parser_handle_keyword_(CosObjParser *parser,
-                               const CosToken *token,
+                               const CosTokenValue *token_value,
                                CosError * COS_Nullable error);
 
 static CosObj * COS_Nullable
@@ -361,7 +361,7 @@ cos_obj_parser_next_object_(CosObjParser *parser,
             break;
 
         case CosToken_Type_Keyword: {
-            object = cos_obj_parser_handle_keyword_(parser, &token, error);
+            object = cos_obj_parser_handle_keyword_(parser, token_value, error);
         } break;
 
         case CosToken_Type_EOF:
@@ -514,7 +514,10 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
 
         cos_obj_parser_push_int_(parser, (unsigned int)int_value);
 
-        if (parser->integer_count >= 3) {
+        if (int_obj) {
+            return (CosObj *)int_obj;
+        }
+        else if (parser->integer_count >= 3) {
             const int popped_integer = (int)cos_obj_parser_pop_int_(parser);
 
             return (CosObj *)cos_int_obj_alloc(popped_integer);
@@ -652,17 +655,17 @@ failure:
 
 static CosObj *
 cos_obj_parser_handle_keyword_(CosObjParser *parser,
-                               const CosToken *token,
+                               const CosTokenValue *token_value,
                                CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(parser != NULL);
-    COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Keyword);
-    if (!parser || !token) {
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    if (!parser || !token_value) {
         return NULL;
     }
 
     CosKeywordType keyword_type;
-    if (!cos_token_value_get_keyword(token->value,
+    if (!cos_token_value_get_keyword(token_value,
                                      &keyword_type)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid keyword token"),
