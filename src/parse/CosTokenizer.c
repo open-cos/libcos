@@ -361,6 +361,58 @@ failure:
 }
 
 bool
+cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
+                                   CosToken *out_token,
+                                   const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
+                                   CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(out_token != NULL);
+    if (!tokenizer || !out_token) {
+        return false;
+    }
+
+    CosTokenEntry *entry = NULL;
+
+    // Check if we already have a second peeked token.
+    if (cos_list_get_count(tokenizer->peeked_token_entries) > 1) {
+        // We have a peeked token, so we can use it.
+        entry = cos_list_get_first(tokenizer->peeked_token_entries);
+        COS_ASSERT(entry != NULL, "Expected a token entry");
+        if (!entry) {
+            goto failure;
+        }
+    }
+    else {
+        // We don't have enough peeked tokens, so we need to read the next token.
+        entry = cos_tokenizer_get_token_entry_(tokenizer);
+        if (!entry) {
+            goto failure;
+        }
+
+        cos_tokenizer_read_next_token_(tokenizer,
+                                       &(entry->token),
+                                       entry->value,
+                                       out_error);
+
+        cos_list_append(tokenizer->peeked_token_entries, entry, NULL);
+    }
+
+    *out_token = entry->token;
+    if (out_token_value) {
+        *out_token_value = entry->value;
+    }
+
+    return true;
+
+failure:
+    if (entry) {
+        cos_token_entry_free(entry);
+    }
+    return false;
+}
+
+bool
 cos_tokenizer_match_token(CosTokenizer *tokenizer,
                           CosToken_Type type)
 {
