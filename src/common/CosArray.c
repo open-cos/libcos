@@ -199,12 +199,16 @@ cos_array_append_item(CosArray *array,
 {
     COS_PARAMETER_ASSERT(array != NULL);
     COS_PARAMETER_ASSERT(item != NULL);
-    if (!array) {
+    if (!array || !item) {
         return false;
     }
 
     // Insert the item at the end of the array.
-    return cos_array_insert_items_(array, array->count, item, 1, error);
+    return cos_array_insert_items_(array,
+                                   array->count,
+                                   item,
+                                   1,
+                                   error);
 }
 
 bool
@@ -216,8 +220,15 @@ cos_array_insert_items(CosArray *array,
 {
     COS_PARAMETER_ASSERT(array != NULL);
     COS_PARAMETER_ASSERT(items != NULL);
+    if (!array || !items) {
+        return false;
+    }
 
-    return cos_array_insert_items_(array, index, items, count, error);
+    return cos_array_insert_items_(array,
+                                   index,
+                                   items,
+                                   count,
+                                   error);
 }
 
 bool
