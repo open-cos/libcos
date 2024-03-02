@@ -187,6 +187,26 @@
 #define COS_ATTR_ALLOC_SIZES(size_index1, size_index2)
 #endif
 
+#if COS_HAS_ATTRIBUTE(ownership_returns)
+#define COS_ATTR_OWNERSHIP_RETURNS(module) __attribute__((ownership_returns(module)))
+#define COS_ATTR_OWNERSHIP_RETURNS_SIZE(module, size_index) __attribute__((ownership_returns(module, size_index)))
+#else
+#define COS_ATTR_OWNERSHIP_RETURNS(module)
+#define COS_ATTR_OWNERSHIP_RETURNS_SIZE(module, size_index)
+#endif
+
+#if COS_HAS_ATTRIBUTE(ownership_holds)
+#define COS_ATTR_OWNERSHIP_HOLDS(module, ptr_index) __attribute__((ownership_holds(module, ptr_index)))
+#else
+#define COS_ATTR_OWNERSHIP_HOLDS(module, ptr_index)
+#endif
+
+#if COS_HAS_ATTRIBUTE(ownership_takes)
+#define COS_ATTR_OWNERSHIP_TAKES(module, ptr_index) __attribute__((ownership_takes(module, ptr_index)))
+#else
+#define COS_ATTR_OWNERSHIP_TAKES(module, ptr_index)
+#endif
+
 #if COS_HAS_ATTRIBUTE(access)
 #define COS_ATTR_ACCESS(access_mode, ref_index) __attribute__((access(access_mode, ref_index)))
 #define COS_ATTR_ACCESS_SIZE(access_mode, ref_index, size_index) __attribute__((access(access_mode, ref_index, size_index)))

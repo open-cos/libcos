@@ -587,7 +587,7 @@ cos_obj_parser_handle_array_(CosObjParser *parser,
 
         // Add the object to the array.
         if (!cos_array_obj_append(array_object,
-                                  (void *)object,
+                                  object,
                                   error)) {
             goto failure;
         }
@@ -596,7 +596,8 @@ cos_obj_parser_handle_array_(CosObjParser *parser,
     return (CosObj *)array_object;
 
 failure:
-    return NULL;
+    // We still return the array object even if an error occurred.
+    return (CosObj *)array_object;
 }
 
 static CosObj *
@@ -608,7 +609,11 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         return NULL;
     }
 
-    CosDictObj * const dict_obj = cos_dict_obj_alloc(NULL);
+    CosDictObj *dict_obj = NULL;
+    CosObj *key = NULL;
+    CosObj *value = NULL;
+
+    dict_obj = cos_dict_obj_alloc(NULL);
     if (!dict_obj) {
         goto failure;
     }
@@ -621,8 +626,8 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         }
 
         // Parse the next object.
-        CosObj * const key = cos_obj_parser_next_object_(parser,
-                                                         error);
+        key = cos_obj_parser_next_object_(parser,
+                                          error);
         if (!key) {
             goto failure;
         }
@@ -632,8 +637,8 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         // TODO: Check that the key is a name.
 
         // Parse the next object.
-        CosObj * const value = cos_obj_parser_next_object_(parser,
-                                                           error);
+        value = cos_obj_parser_next_object_(parser,
+                                            error);
         if (!value) {
             goto failure;
         }
@@ -641,16 +646,28 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
         // Add the object to the dictionary.
         if (!cos_dict_obj_set(dict_obj,
                               (CosNameObj *)key,
-                              (CosObj *)value,
+                              value,
                               error)) {
             goto failure;
         }
+
+        // Clear the key and value for the next iteration.
+        key = NULL;
+        value = NULL;
     }
 
     return (CosObj *)dict_obj;
 
 failure:
-    return NULL;
+    if (key) {
+        cos_obj_free(key);
+    }
+    if (value) {
+        cos_obj_free(value);
+    }
+
+    // We still return the dictionary object even if an error occurred.
+    return (CosObj *)dict_obj;
 }
 
 static CosObj *
@@ -800,6 +817,8 @@ cos_obj_parser_handle_indirect_obj_ref_(CosObjParser *parser,
     return (CosObj *)cos_reference_obj_alloc(obj_id,
                                              parser->doc);
 }
+
+// NOLINTEND(misc-no-recursion)
 
 static void
 cos_obj_parser_push_int_(CosObjParser *parser,

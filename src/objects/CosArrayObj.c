@@ -65,19 +65,39 @@ cos_array_obj_free(CosArrayObj *array_obj)
         return;
     }
 
+    const size_t count = cos_array_get_count(array_obj->value);
+    for (size_t i = 0; i < count; i++) {
+        CosObj * const obj = cos_array_get_item(array_obj->value, i, NULL);
+        cos_obj_free(obj);
+    }
     cos_array_free(array_obj->value);
     free(array_obj);
 }
 
-const CosArray *
-cos_array_obj_get_array(const CosArrayObj *array_obj)
+size_t
+cos_array_obj_get_count(const CosArrayObj *array_obj)
+{
+    COS_PARAMETER_ASSERT(array_obj != NULL);
+    if (!array_obj) {
+        return 0;
+    }
+
+    return cos_array_get_count(array_obj->value);
+}
+
+CosObj *
+cos_array_obj_get_at(const CosArrayObj *array_obj,
+                     size_t index,
+                     CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(array_obj != NULL);
     if (!array_obj) {
         return NULL;
     }
 
-    return array_obj->value;
+    return cos_array_get_item(array_obj->value,
+                              index,
+                              out_error);
 }
 
 bool
@@ -92,7 +112,10 @@ cos_array_obj_insert(CosArrayObj *array_obj,
         return false;
     }
 
-    return cos_array_insert_item(array_obj->value, index, obj, error);
+    return cos_array_insert_item(array_obj->value,
+                                 index,
+                                 &obj,
+                                 error);
 }
 
 bool
@@ -106,7 +129,9 @@ cos_array_obj_append(CosArrayObj *array_obj,
         return false;
     }
 
-    return cos_array_append_item(array_obj->value, obj, error);
+    return cos_array_append_item(array_obj->value,
+                                 &obj,
+                                 error);
 }
 
 COS_ASSUME_NONNULL_END
