@@ -13,7 +13,8 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-extern int mainxx(int argc, char * COS_Nonnull argv[]);
+extern int
+mainxx(int argc, char * COS_Nonnull argv[]);
 
 int
 mainxx(int argc, char * COS_Nonnull argv[])
@@ -44,17 +45,10 @@ mainxx(int argc, char * COS_Nonnull argv[])
             goto failure;
         }
 
-        if (token_value) {
-            cos_token_value_free(token_value);
-        }
-    }
-
-    while (cos_tokenizer_has_next_token(tokenizer)) {
-        const CosToken token = cos_tokenizer_next_token(tokenizer);
         switch (token.type) {
             case CosToken_Type_Unknown: {
                 const CosString *string = NULL;
-                if (cos_token_value_get_string(token.value,
+                if (cos_token_value_get_string(token_value,
                                                &string)) {
                     printf("Unknown: %s\n",
                            cos_string_get_data(string));
@@ -66,7 +60,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
 
             case CosToken_Type_Literal_String: {
                 const CosData *data = NULL;
-                if (cos_token_value_get_data(token.value,
+                if (cos_token_value_get_data(token_value,
                                              &data)) {
                     printf("Literal String: %.*s\n",
                            (int)data->size,
@@ -75,7 +69,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
             } break;
             case CosToken_Type_Hex_String: {
                 const CosData *data = NULL;
-                if (cos_token_value_get_data(token.value,
+                if (cos_token_value_get_data(token_value,
                                              &data)) {
                     printf("Hex String: %.*s\n",
                            (int)data->size,
@@ -85,7 +79,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
 
             case CosToken_Type_Name: {
                 const CosString *string = NULL;
-                if (cos_token_value_get_string(token.value,
+                if (cos_token_value_get_string(token_value,
                                                &string)) {
                     printf("Name: %s\n",
                            cos_string_get_data(string));
@@ -94,7 +88,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
 
             case CosToken_Type_Integer: {
                 int value = 0;
-                if (cos_token_value_get_integer_number(token.value,
+                if (cos_token_value_get_integer_number(token_value,
                                                        &value)) {
                     printf("Integer: %d\n",
                            value);
@@ -102,7 +96,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
             } break;
             case CosToken_Type_Real: {
                 double value = 0.0;
-                if (cos_token_value_get_real_number(token.value,
+                if (cos_token_value_get_real_number(token_value,
                                                     &value)) {
                     printf("Real: %f\n",
                            value);
@@ -125,7 +119,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
 
             case CosToken_Type_Keyword: {
                 CosKeywordType value = CosKeywordType_Unknown;
-                if (cos_token_value_get_keyword(token.value,
+                if (cos_token_value_get_keyword(token_value,
                                                 &value)) {
                     printf("Keyword: %s\n",
                            cos_keyword_type_to_string(value));
@@ -135,6 +129,10 @@ mainxx(int argc, char * COS_Nonnull argv[])
             case CosToken_Type_EOF: {
                 printf("EOF\n");
             } break;
+        }
+
+        if (token_value) {
+            cos_token_value_free(token_value);
         }
     }
 

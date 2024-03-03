@@ -44,7 +44,7 @@ cos_tokenizer_peek_next_token_(CosTokenizer *tokenizer);
 bool
 cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
                              CosToken *out_token,
-                             CosTokenValue * COS_Nullable *out_token_value,
+                             CosTokenValue * COS_Nullable * COS_Nonnull out_token_value,
                              CosError * COS_Nullable out_error);
 
 bool

@@ -187,6 +187,10 @@
 #define COS_ATTR_ALLOC_SIZES(size_index1, size_index2)
 #endif
 
+/**
+ * Ownership attributes.
+ */
+
 #if COS_HAS_ATTRIBUTE(ownership_returns)
 #define COS_ATTR_OWNERSHIP_RETURNS(module) __attribute__((ownership_returns(module)))
 #define COS_ATTR_OWNERSHIP_RETURNS_SIZE(module, size_index) __attribute__((ownership_returns(module, size_index)))
@@ -207,6 +211,15 @@
 #define COS_ATTR_OWNERSHIP_TAKES(module, ptr_index)
 #endif
 
+#define COS_MALLOC_OWNERSHIP_RETURNS COS_ATTR_OWNERSHIP_RETURNS(malloc)
+#define COS_MALLOC_OWNERSHIP_RETURNS_SIZE(size_index) COS_ATTR_OWNERSHIP_RETURNS_SIZE(malloc, size_index)
+#define COS_MALLOC_OWNERSHIP_HOLDS(ptr_index) COS_ATTR_OWNERSHIP_HOLDS(malloc, ptr_index)
+#define COS_MALLOC_OWNERSHIP_TAKES(ptr_index) COS_ATTR_OWNERSHIP_TAKES(malloc, ptr_index)
+
+/**
+ * Access control.
+ */
+
 #if COS_HAS_ATTRIBUTE(access)
 #define COS_ATTR_ACCESS(access_mode, ref_index) __attribute__((access(access_mode, ref_index)))
 #define COS_ATTR_ACCESS_SIZE(access_mode, ref_index, size_index) __attribute__((access(access_mode, ref_index, size_index)))
@@ -216,7 +229,7 @@
 #endif
 
 #define COS_ATTR_ACCESS_READ_ONLY(ref_index) COS_ATTR_ACCESS(read_only, ref_index)
-#define COS_ATTR_ACCESS_READWRITE(ref_index) COS_ATTR_ACCESS(read_write, ref_index)
+#define COS_ATTR_ACCESS_READ_WRITE(ref_index) COS_ATTR_ACCESS(read_write, ref_index)
 #define COS_ATTR_ACCESS_WRITE_ONLY(ref_index) COS_ATTR_ACCESS(write_only, ref_index)
 #define COS_ATTR_ACCESS_NONE(ref_index) COS_ATTR_ACCESS(none, ref_index)
 
@@ -238,6 +251,64 @@
 
 #define COS_ATTR_DIAGNOSE_WARNING(condition, message) COS_ATTR_DIAGNOSE_IF(condition, message, "warning")
 #define COS_ATTR_DIAGNOSE_ERROR(condition, message) COS_ATTR_DIAGNOSE_IF(condition, message, "error")
+
+/*
+ * Allocator.
+ */
+
+/**
+ * @brief Marks a function as an allocator.
+ */
+#define COS_ALLOCATOR_FUNC \
+    COS_ATTR_MALLOC        \
+    COS_MALLOC_OWNERSHIP_RETURNS \
+    COS_WARN_UNUSED_RESULT
+
+/**
+ * @brief Marks a function as an allocator that returns a pointer to memory of the specified size.
+ *
+ * @param size_index The index of the size argument.
+ */
+#define COS_ALLOCATOR_FUNC_SIZE(size_index)       \
+    COS_ATTR_MALLOC                               \
+    COS_ATTR_ALLOC_SIZE(size_index)               \
+    COS_MALLOC_OWNERSHIP_RETURNS_SIZE(size_index) \
+    COS_WARN_UNUSED_RESULT
+
+/**
+ * @brief Marks a function as the matching allocator of the specified deallocator.
+ *
+ * @param deallocator The deallocator function.
+ *
+ * @note The deallocator function must be declared before it can be referenced by this macro.
+ */
+#define COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(deallocator) \
+    COS_ATTR_MALLOC_DEALLOC(deallocator)
+
+#define COS_ALLOCATOR_FUNC_MATCHED_DEALLOC_INDEX(deallocator, ptr_index) \
+    COS_ATTR_MALLOC_DEALLOC_INDEX(deallocator, ptr_index)
+
+/**
+ * @brief Marks a function as a deallocator.
+ *
+ * @see COS_DEALLOCATOR_FUNC_INDEX
+ */
+#define COS_DEALLOCATOR_FUNC COS_DEALLOCATOR_FUNC_INDEX(1)
+
+/**
+ * @brief Marks a function as a deallocator that takes ownership of the pointer.
+ *
+ * Read-write access to the pointer argument is required.
+ *
+ * @param ptr_index The index of the pointer argument.
+ */
+#define COS_DEALLOCATOR_FUNC_INDEX(ptr_index) \
+    COS_MALLOC_OWNERSHIP_TAKES(ptr_index)     \
+    COS_ATTR_ACCESS_READ_WRITE(ptr_index)
+
+/**
+ * Precondition.
+ */
 
 #define COS_PRECONDITION(condition) COS_ATTR_DIAGNOSE_WARNING(!(condition), "Precondition not satisfied: " #condition)
 

@@ -20,15 +20,14 @@ COS_ASSUME_NONNULL_BEGIN
  */
 extern const CosArrayCallbacks cos_array_obj_callbacks;
 
-CosArrayObj * COS_Nullable
-cos_array_obj_alloc(CosArray * COS_Nullable array)
-    COS_ATTR_MALLOC
-    COS_ATTR_OWNERSHIP_RETURNS(malloc)
-    COS_WARN_UNUSED_RESULT;
-
 void
 cos_array_obj_free(CosArrayObj *array_obj)
-    COS_ATTR_OWNERSHIP_TAKES(malloc, 1);
+    COS_DEALLOCATOR_FUNC;
+
+CosArrayObj * COS_Nullable
+cos_array_obj_alloc(CosArray * COS_Nullable array)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_array_obj_free);
 
 /**
  * @brief Get the number of objects in the array.

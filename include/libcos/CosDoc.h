@@ -8,6 +8,9 @@
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosTypes.h>
 
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
+
 CosDoc *
 cos_doc_alloc(void);
 
@@ -40,5 +43,8 @@ cos_doc_get_diagnostic_handler(const CosDoc *doc);
 void
 cos_doc_set_diagnostic_handler(CosDoc *doc,
                                CosDiagnosticHandler * COS_Nullable handler);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_DOC_H */

@@ -49,6 +49,10 @@ cos_doc_get_object(CosDoc *doc,
                    CosObjID id,
                    CosError * COS_Nullable error)
 {
+    (void)doc;
+    (void)id;
+    (void)error;
+
     return NULL;
 }
 

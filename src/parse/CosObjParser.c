@@ -74,6 +74,11 @@ cos_obj_parser_handle_integer_(CosObjParser *parser,
                                CosError * COS_Nullable error);
 
 static CosObj * COS_Nullable
+cos_handle_integer_(CosObjParser *parser,
+                    CosTokenValue *token_value,
+                    CosError * COS_Nullable out_error);
+
+static CosObj * COS_Nullable
 cos_obj_parser_handle_real_(CosObjParser *parser,
                             const CosToken *token,
                             CosError * COS_Nullable error);
@@ -258,6 +263,8 @@ cos_obj_parser_next_object(CosObjParser *parser,
 }
 
 #pragma mark - Implementation
+
+// NOLINTBEGIN(misc-no-recursion)
 
 static CosObj *
 cos_obj_parser_next_object_(CosObjParser *parser,
@@ -535,6 +542,89 @@ failure:
 }
 
 static CosObj *
+cos_handle_integer_(CosObjParser *parser,
+                    CosTokenValue *token_value,
+                    CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_PARAMETER_ASSERT(token_value != NULL);
+    if (!parser || !token_value) {
+        return NULL;
+    }
+
+    // Get the integer value of the token.
+    int int_value = 0;
+    if (!cos_token_value_get_integer_number(token_value,
+                                            &int_value)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid integer token"),
+                            out_error);
+        goto failure;
+    }
+
+    CosToken peeked_token = {0};
+    CosToken peeked_next_token = {0};
+    const CosTokenValue *peeked_token_value = NULL;
+    const CosTokenValue *peeked_next_token_value = NULL;
+
+    if (!cos_tokenizer_peek_next_token(parser->tokenizer,
+                                       &peeked_token,
+                                       &peeked_token_value,
+                                       out_error) ||
+        !cos_tokenizer_peek_next_next_token(parser->tokenizer,
+                                            &peeked_next_token,
+                                            &peeked_next_token_value,
+                                            out_error)) {
+        goto failure;
+    }
+
+    if (peeked_token.type == CosToken_Type_Integer &&
+        peeked_next_token.type == CosToken_Type_Keyword) {
+        // This could be an indirect object definition or reference.
+        // Check the keyword type to determine which one it is.
+        CosKeywordType keyword_type = CosKeywordType_Unknown;
+        if (!cos_token_value_get_keyword(peeked_next_token_value,
+                                         &keyword_type)) {
+            COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                               "Invalid keyword token"),
+                                out_error);
+            goto failure;
+        }
+
+        switch (keyword_type) {
+            case CosKeywordType_Obj: {
+                // This is an indirect object definition.
+                return cos_obj_parser_handle_indirect_obj_def_(parser, out_error);
+            }
+            case CosKeywordType_R: {
+                // This is an indirect object reference.
+                return cos_obj_parser_handle_indirect_obj_ref_(parser, out_error);
+            }
+
+            case CosKeywordType_Unknown:
+            case CosKeywordType_True:
+            case CosKeywordType_False:
+            case CosKeywordType_Null:
+            case CosKeywordType_EndObj:
+            case CosKeywordType_Stream:
+            case CosKeywordType_EndStream:
+            case CosKeywordType_XRef:
+            case CosKeywordType_N:
+            case CosKeywordType_F:
+            case CosKeywordType_Trailer:
+            case CosKeywordType_StartXRef:
+                break;
+        }
+    }
+
+    // This is just a regular integer.
+    return (CosObj *)cos_int_obj_alloc(int_value);
+
+failure:
+    return NULL;
+}
+
+static CosObj *
 cos_obj_parser_handle_real_(CosObjParser *parser,
                             const CosToken *token,
                             CosError * COS_Nullable error)
@@ -731,7 +821,7 @@ cos_obj_parser_handle_keyword_(CosObjParser *parser,
 
 static CosObjID
 cos_parser_get_obj_id_(CosObjParser *parser,
-                       CosError * COS_Nullable error)
+                       CosError * COS_Nullable out_error)
 {
     if (parser->integer_count >= 2) {
         const unsigned int obj_number = cos_obj_parser_pop_int_(parser);
@@ -772,6 +862,21 @@ cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
         return NULL;
     }
 
+    printf("Obj ID: %d %d\n", obj_id.obj_number, obj_id.gen_number);
+
+    // ISO 19005-1:2005(E), Section 6.1.8 Indirect objects (PDF/A-1a, PDF/A-1b)
+    // "The object number and generation number shall be separated by a single white-space character."
+    // "The generation number and the obj keyword shall be separated by a single white-space character."
+    // "The object number and endobj keyword shall each be preceded by an EOL marker."
+    // "The obj and endobj keywords shall each be followed by an EOL marker.
+
+    if (!cos_tokenizer_match_keyword(parser->tokenizer,
+                                     CosKeywordType_Obj)) {
+        cos_diagnose(parser->diagnostic_handler,
+                     CosDiagnosticLevel_Error,
+                     "Invalid indirect object definition: missing 'obj' keyword");
+    }
+
     // The value of the indirect object follows the "obj" keyword.
     CosObj * const obj = cos_obj_parser_next_object_(parser, error);
     if (!obj) {
@@ -795,6 +900,18 @@ cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
     }
 
     return (CosObj *)indirect_obj;
+}
+
+static CosObj *
+cos_handle_indirect_obj_def_(CosObjParser *parser,
+                             CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    if (!parser) {
+        return NULL;
+    }
+
+    return NULL;
 }
 
 static CosObj * COS_Nullable

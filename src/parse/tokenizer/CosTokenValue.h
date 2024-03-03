@@ -56,7 +56,7 @@ cos_token_value_reset(CosTokenValue *token_value);
  */
 bool
 cos_token_value_get_string(const CosTokenValue *token_value,
-                           const CosString * COS_Nullable *result);
+                           const CosString * COS_Nullable * COS_Nonnull result);
 
 /**
  * @brief Gets the data value of a token value.
@@ -68,7 +68,7 @@ cos_token_value_get_string(const CosTokenValue *token_value,
  */
 bool
 cos_token_value_get_data(const CosTokenValue *token_value,
-                         const CosData * COS_Nullable *result);
+                         const CosData * COS_Nullable * COS_Nonnull result);
 
 /**
  * @brief Gets the integer number value of a token value.
@@ -192,7 +192,7 @@ cos_token_value_set_keyword(CosTokenValue *token_value,
  */
 bool
 cos_token_value_take_string(CosTokenValue *token_value,
-                            CosString * COS_Nullable *result);
+                            CosString * COS_Nullable * COS_Nonnull result);
 
 /**
  * @brief Transfers ownership of the value's data to the caller.
@@ -204,7 +204,7 @@ cos_token_value_take_string(CosTokenValue *token_value,
  */
 bool
 cos_token_value_take_data(CosTokenValue *token_value,
-                          CosData * COS_Nullable *result);
+                          CosData * COS_Nullable * COS_Nonnull result);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

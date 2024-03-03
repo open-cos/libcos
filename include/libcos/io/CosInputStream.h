@@ -12,6 +12,9 @@
 #include <stddef.h>
 #include <stdio.h>
 
+COS_DECLS_BEGIN
+COS_ASSUME_NONNULL_BEGIN
+
 struct CosInputStreamFunctions {
     size_t (*read_func)(CosInputStream *input_stream,
                         void *buffer,
@@ -55,7 +58,7 @@ size_t
 cos_input_stream_read(CosInputStream *input_stream,
                       void *buffer,
                       size_t count)
-    COS_ATTR_ACCESS_WRITE_ONLY(2);
+    COS_ATTR_ACCESS_WRITE_ONLY_SIZE(2, 3);
 
 /**
  * @brief Returns the error code of the input stream.
@@ -90,5 +93,8 @@ typedef CosInputStream CosMemoryInputStream;
 CosMemoryInputStream *
 cos_memory_input_stream_open(unsigned char *data,
                              size_t length);
+
+COS_ASSUME_NONNULL_END
+COS_DECLS_END
 
 #endif /* LIBCOS_COS_INPUT_STREAM_H */

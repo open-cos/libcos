@@ -36,8 +36,6 @@ typedef enum CosToken_Type {
     CosToken_Type_EOF,
 } CosToken_Type;
 
-typedef struct CosTokenValue CosTokenValue;
-
 struct CosToken {
     /**
      * @brief The type of the token.
