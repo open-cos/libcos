@@ -100,6 +100,10 @@ static CosObj * COS_Nullable
 cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
                                         CosError * COS_Nullable error);
 
+static CosIndirectObj * COS_Nullable
+cos_handle_indirect_obj_def_(CosObjParser *parser,
+                             CosError * COS_Nullable out_error);
+
 static CosObj * COS_Nullable
 cos_obj_parser_handle_indirect_obj_ref_(CosObjParser *parser,
                                         CosError * COS_Nullable error);
@@ -902,7 +906,7 @@ cos_obj_parser_handle_indirect_obj_def_(CosObjParser *parser,
     return (CosObj *)indirect_obj;
 }
 
-static CosObj *
+static CosIndirectObj *
 cos_handle_indirect_obj_def_(CosObjParser *parser,
                              CosError * COS_Nullable out_error)
 {

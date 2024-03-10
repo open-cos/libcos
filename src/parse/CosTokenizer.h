@@ -13,13 +13,19 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+/**
+ * @brief Deallocates a tokenizer.
+ *
+ * @param tokenizer The tokenizer.
+ */
+void
+cos_tokenizer_free(CosTokenizer *tokenizer)
+    COS_DEALLOCATOR_FUNC;
+
 CosTokenizer * COS_Nullable
 cos_tokenizer_alloc(CosInputStream *input_stream)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
-void
-cos_tokenizer_free(CosTokenizer *tokenizer);
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_free);
 
 /**
  * Checks if there is a next token or if the end of the input stream has been reached.

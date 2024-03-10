@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "io/CosInputStreamReader.h"
+#include "libcos/common/CosNumber.h"
 #include "parse/tokenizer/CosTokenEntry.h"
 
 #include <libcos/common/CosError.h>
@@ -105,45 +106,9 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
                                CosData *data,
                                CosError *error);
 
-typedef enum CosNumberType {
-    CosNumberType_Integer,
-    CosNumberType_Real,
-} CosNumberType;
-
-typedef struct CosNumberValue CosNumberValue;
-
-struct CosNumberValue {
-    CosNumberType type;
-
-    union {
-        int integer_value;
-        double real_value;
-    } value;
-};
-
-static inline CosNumberValue
-cos_number_value_integer(int value)
-{
-    const CosNumberValue number_value = {
-        .type = CosNumberType_Integer,
-        .value.integer_value = value,
-    };
-    return number_value;
-}
-
-static inline CosNumberValue
-cos_number_value_real(double value)
-{
-    const CosNumberValue number_value = {
-        .type = CosNumberType_Real,
-        .value.real_value = value,
-    };
-    return number_value;
-}
-
 static bool
 cos_read_number_(CosTokenizer *tokenizer,
-                 CosNumberValue *out_number,
+                 CosNumber *out_number,
                  CosError *out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2)
     COS_ATTR_ACCESS_WRITE_ONLY(3);
@@ -627,19 +592,19 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             // We know that this is a number (integer or real).
             cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
 
-            CosNumberValue number_value = {0};
+            CosNumber number_value = {0};
             CosError error;
             if (cos_read_number_(tokenizer, &number_value, &error)) {
                 // This is a number.
                 if (number_value.type == CosNumberType_Integer) {
                     token.type = CosToken_Type_Integer;
                     cos_token_value_set_integer_number(token_value,
-                                                       number_value.value.integer_value);
+                                                       number_value.value.integer);
                 }
                 else {
                     token.type = CosToken_Type_Real;
                     cos_token_value_set_real_number(token_value,
-                                                    number_value.value.real_value);
+                                                    number_value.value.real);
                 }
             }
             else {
@@ -1134,7 +1099,7 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
 
 static bool
 cos_read_number_(CosTokenizer *tokenizer,
-                 CosNumberValue *out_number,
+                 CosNumber *out_number,
                  CosError *out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
@@ -1204,10 +1169,10 @@ cos_read_number_(CosTokenizer *tokenizer,
     }
 
     if (has_decimal_point) {
-        *out_number = cos_number_value_real(real_value);
+        *out_number = cos_number_make_real(real_value);
     }
     else {
-        *out_number = cos_number_value_integer(int_value);
+        *out_number = cos_number_make_integer(int_value);
     }
 
     return true;

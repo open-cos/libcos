@@ -14,15 +14,16 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+void
+cos_string_obj_free(CosStringObj *string_obj)
+    COS_DEALLOCATOR_FUNC;
+
 CosStringObj * COS_Nullable
 cos_string_obj_alloc(CosData *data)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_string_obj_free);
 
-void
-cos_string_obj_free(CosStringObj *string_obj);
-
-CosData * COS_Nullable
+const CosData * COS_Nullable
 cos_string_obj_get_value(const CosStringObj *string_obj);
 
 void

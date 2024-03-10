@@ -5,9 +5,9 @@
 #include "libcos/objects/CosStringObj.h"
 
 #include "common/Assert.h"
-#include "libcos/objects/CosObj.h"
 
 #include <libcos/common/CosData.h>
+#include <libcos/objects/CosObj.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +71,7 @@ cos_string_obj_set_value(CosStringObj *string_obj,
     string_obj->data = data;
 }
 
-CosData *
+const CosData *
 cos_string_obj_get_value(const CosStringObj *string_obj)
 {
     COS_PARAMETER_ASSERT(string_obj != NULL);
@@ -90,7 +90,9 @@ cos_string_obj_print_desc(const CosStringObj *string_obj)
         return;
     }
 
-    printf("String: \"%.*s\"\n", string_obj->data->size, string_obj->data->bytes);
+    printf("String: \"%.*s\"\n",
+           (int)(string_obj->data->size),
+           string_obj->data->bytes);
 }
 
 COS_ASSUME_NONNULL_END

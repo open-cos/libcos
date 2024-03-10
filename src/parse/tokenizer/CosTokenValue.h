@@ -16,7 +16,14 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosTokenValue CosTokenValue;
+/**
+ * @brief Frees a token value.
+ *
+ * @param token_value The token value.
+ */
+void
+cos_token_value_free(CosTokenValue *token_value)
+    COS_DEALLOCATOR_FUNC;
 
 /**
  * @brief Allocates a new token value.
@@ -25,16 +32,8 @@ typedef struct CosTokenValue CosTokenValue;
  */
 CosTokenValue * COS_Nullable
 cos_token_value_alloc(void)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
-/**
- * @brief Frees a token value.
- *
- * @param token_value The token value.
- */
-void
-cos_token_value_free(CosTokenValue *token_value);
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_token_value_free);
 
 /**
  * @brief Frees the resources used by a token value and resets its fields.

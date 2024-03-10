@@ -10,6 +10,8 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+typedef struct CosAllocator CosAllocator;
+
 typedef struct CosError CosError;
 
 typedef struct CosData CosData;
@@ -25,7 +27,12 @@ typedef struct CosArray CosArray;
 typedef struct CosDict CosDict;
 typedef struct CosList CosList;
 
+typedef struct CosNumber CosNumber;
+
 typedef struct CosScanner CosScanner;
+
+typedef struct CosToken CosToken;
+typedef struct CosTokenValue CosTokenValue;
 
 typedef struct CosTokenizer CosTokenizer;
 typedef struct CosObjParser CosObjParser;

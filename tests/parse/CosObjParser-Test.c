@@ -15,13 +15,14 @@
 COS_ASSUME_NONNULL_BEGIN
 
 int
-main(int argc, char * COS_Nonnull argv[])
+main(COS_ATTR_UNUSED int argc,
+     COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.
 
-    CosFileInputStream * const input_stream = cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                                         "r",
-                                                                         NULL);
+    CosInputStream * const input_stream = (CosInputStream * const)cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                                                                             "r",
+                                                                                             NULL);
     if (!input_stream) {
         goto failure;
     }
@@ -29,7 +30,7 @@ main(int argc, char * COS_Nonnull argv[])
     CosDoc * const doc = cos_doc_alloc();
 
     CosObjParser * const parser = cos_obj_parser_alloc(doc,
-                                                       (CosInputStream *)input_stream);
+                                                       input_stream);
     if (!parser) {
         goto failure;
     }
@@ -48,7 +49,7 @@ main(int argc, char * COS_Nonnull argv[])
 
     cos_obj_parser_free(parser);
     cos_doc_free(doc);
-    cos_input_stream_close((CosInputStream *)input_stream);
+    cos_input_stream_close(input_stream);
 
     return EXIT_SUCCESS;
 

@@ -259,10 +259,10 @@
 /**
  * @brief Marks a function as an allocator.
  */
-#define COS_ALLOCATOR_FUNC \
-    COS_ATTR_MALLOC        \
+#define COS_ALLOCATOR_FUNC       \
+    COS_ATTR_MALLOC              \
     COS_MALLOC_OWNERSHIP_RETURNS \
-    COS_WARN_UNUSED_RESULT
+        COS_WARN_UNUSED_RESULT
 
 /**
  * @brief Marks a function as an allocator that returns a pointer to memory of the specified size.
@@ -307,6 +307,16 @@
     COS_ATTR_ACCESS_READ_WRITE(ptr_index)
 
 /**
+ * @brief Marks a function as a reallocator.
+ *
+ * @param ptr_index The index of the pointer argument.
+ * @param size_index The index of the size argument.
+ */
+#define COS_REALLOCATOR_FUNC(ptr_index, size_index) \
+    COS_DEALLOCATOR_FUNC_INDEX(ptr_index)           \
+    COS_ALLOCATOR_FUNC_SIZE(size_index)
+
+/**
  * Precondition.
  */
 
@@ -324,7 +334,7 @@
 #define COS_Nullable _Nullable
 #define COS_Nonnull _Nonnull
 
-#define COS_nonnull_cast(x) ((__typeof__(*(x)) *)(x))
+#define COS_nonnull_cast(x) ((__typeof__(*(x)) * _Nonnull)(x))
 #else
 #define COS_Nullable /* nothing */
 #define COS_Nonnull  /* nothing */

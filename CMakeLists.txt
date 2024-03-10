@@ -32,6 +32,8 @@ add_library(libcos SHARED
         include/libcos/common/CosScanner.h
         src/xref/CosXrefSection.c
         include/libcos/syntax/CosLimits.h
+        include/libcos/common/memory/CosAllocator.h
+        src/common/memory/CosAllocator.c
 )
 
 target_sources(libcos PRIVATE
@@ -141,6 +143,7 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
             -Wall -Wextra
             -Wno-unknown-pragmas
             -Werror=missing-declarations
+            -Werror=missing-prototypes
             -Werror=implicit-function-declaration
             -Werror=return-type -Werror=incompatible-pointer-types
             -fanalyzer
@@ -165,7 +168,6 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Weverything
             -Wint-conversion
             -Wstrict-prototypes
-            #            -Werror=incompatible-function-pointer-types-strict
             -Wno-declaration-after-statement
             -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
             -Wno-gcc-compat
@@ -175,6 +177,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -Werror=missing-declarations -Werror=missing-variable-declarations
             -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
             -Werror=undefined-internal
+            -Werror=incompatible-function-pointer-types-strict
             #            -Werror=incompatible-function-pointer-types
             -Werror=nullability
     )

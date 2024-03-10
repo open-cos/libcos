@@ -15,8 +15,6 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosToken CosToken;
-
 typedef enum CosToken_Type {
     CosToken_Type_Unknown,
 

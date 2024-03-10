@@ -17,18 +17,19 @@ extern int
 mainxx(int argc, char * COS_Nonnull argv[]);
 
 int
-mainxx(int argc, char * COS_Nonnull argv[])
+mainxx(COS_ATTR_UNUSED int argc,
+       COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.
 
-    CosFileInputStream * const input_stream = cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                                         "r",
-                                                                         NULL);
+    CosInputStream * const input_stream = (CosInputStream *)cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                                                                       "r",
+                                                                                       NULL);
     if (!input_stream) {
         goto failure;
     }
 
-    CosTokenizer * const tokenizer = cos_tokenizer_alloc((CosInputStream *)input_stream);
+    CosTokenizer * const tokenizer = cos_tokenizer_alloc(input_stream);
     if (!tokenizer) {
         goto failure;
     }
@@ -137,7 +138,7 @@ mainxx(int argc, char * COS_Nonnull argv[])
     }
 
     cos_tokenizer_free(tokenizer);
-    cos_input_stream_close((CosInputStream *)input_stream);
+    cos_input_stream_close(input_stream);
 
     return EXIT_SUCCESS;
 

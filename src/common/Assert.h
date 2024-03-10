@@ -9,7 +9,7 @@
 
 #define COS_ASSERT(condition, ...)         \
     do {                                   \
-        if (!(condition)) {                \
+        if (COS_UNLIKELY(!(condition))) {  \
             cos_assert_impl_(#condition,   \
                              __func__,     \
                              __FILE__,     \
@@ -20,7 +20,7 @@
 
 #define COS_PARAMETER_ASSERT(condition)            \
     do {                                           \
-        if (!(condition)) {                        \
+        if (COS_UNLIKELY(!(condition))) {          \
             cos_assert_impl_(#condition,           \
                              __func__,             \
                              __FILE__,             \
