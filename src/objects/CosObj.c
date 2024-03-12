@@ -66,7 +66,7 @@ cos_obj_free(CosObj *obj)
         } break;
 
         case CosObjType_Stream: {
-            cos_stream_obj_free((CosStreamObj *)obj);
+            cos_stream_obj_destroy((CosStreamObj *)obj);
         } break;
 
         case CosObjType_Null: {

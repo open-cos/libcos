@@ -108,14 +108,14 @@ cos_allocator_realloc(CosAllocator *allocator,
 
 void
 cos_allocator_dealloc(CosAllocator *allocator,
-                      void *ptr)
+                      void * COS_Nullable ptr)
 {
     COS_PARAMETER_ASSERT(allocator != NULL);
     if (!allocator || !allocator->callbacks.dealloc || !ptr) {
         return;
     }
 
-    allocator->callbacks.dealloc(ptr,
+    allocator->callbacks.dealloc(COS_nonnull_cast(ptr),
                                  allocator->user_data);
 }
 

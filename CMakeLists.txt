@@ -34,6 +34,8 @@ add_library(libcos SHARED
         include/libcos/syntax/CosLimits.h
         include/libcos/common/memory/CosAllocator.h
         src/common/memory/CosAllocator.c
+        include/libcos/common/memory/CosMemory.h
+        src/common/memory/CosMemory.c
 )
 
 target_sources(libcos PRIVATE

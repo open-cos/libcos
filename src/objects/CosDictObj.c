@@ -75,7 +75,11 @@ cos_dict_obj_set(CosDictObj *dict_obj,
         return false;
     }
 
-    return cos_dict_set(dict_obj->value, key, value, error);
+    cos_obj_free((CosObj *)key);
+    cos_obj_free(value);
+    return true;
+
+    //return cos_dict_set(dict_obj->value, key, value, error);
 }
 
 COS_ASSUME_NONNULL_END

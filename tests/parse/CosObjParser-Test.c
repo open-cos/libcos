@@ -27,7 +27,7 @@ main(COS_ATTR_UNUSED int argc,
         goto failure;
     }
 
-    CosDoc * const doc = cos_doc_alloc();
+    CosDoc * const doc = cos_doc_create(NULL);
 
     CosObjParser * const parser = cos_obj_parser_alloc(doc,
                                                        input_stream);
@@ -48,7 +48,7 @@ main(COS_ATTR_UNUSED int argc,
     }
 
     cos_obj_parser_free(parser);
-    cos_doc_free(doc);
+    cos_doc_destroy(doc);
     cos_input_stream_close(input_stream);
 
     return EXIT_SUCCESS;

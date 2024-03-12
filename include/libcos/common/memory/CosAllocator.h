@@ -83,11 +83,12 @@ cos_allocator_create(CosAllocator * COS_Nullable allocator,
  * allocator, the behavior is undefined.
  *
  * @param allocator The allocator.
- * @param ptr The pointer to the block of memory to deallocate.
+ * @param ptr The pointer to the block of memory to deallocate. If the pointer is @c NULL, this
+ * function does nothing.
  */
 void
 cos_allocator_dealloc(CosAllocator *allocator,
-                      void *ptr)
+                      void * COS_Nullable ptr)
     COS_DEALLOCATOR_FUNC_INDEX(2);
 
 /**

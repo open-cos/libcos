@@ -5,36 +5,54 @@
 #include "libcos/CosDoc.h"
 
 #include "common/Assert.h"
+#include "libcos/common/memory/CosAllocator.h"
 
-#include <stdlib.h>
+#include <libcos/common/memory/CosMemory.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
 struct CosDoc {
     int version;
-    int x;
 
-    CosObj *root;
+    CosAllocator *allocator;
+    CosObj * COS_Nullable root;
 
     CosDiagnosticHandler * COS_Nullable diagnostic_handler;
 };
 
 CosDoc *
-cos_doc_alloc(void)
+cos_doc_create(CosAllocator * COS_Nullable allocator)
 {
-    CosDoc * const doc = calloc(1, sizeof(CosDoc));
+    CosAllocator * const doc_allocator = allocator ? allocator : CosAllocatorDefault;
+
+    CosDoc * const doc = cos_alloc(doc_allocator,
+                                   sizeof(CosDoc));
+    if (!doc) {
+        return NULL;
+    }
+
+    doc->allocator = doc_allocator;
+
     return doc;
 }
 
 void
-cos_doc_free(CosDoc *doc)
+cos_doc_destroy(CosDoc *doc)
 {
-    free(doc);
+    if (!doc) {
+        return;
+    }
+
+    cos_free(doc->allocator, doc);
 }
 
 int
 cos_doc_get_version(CosDoc *doc)
 {
+    if (!doc) {
+        return 0;
+    }
+
     return doc->version;
 }
 

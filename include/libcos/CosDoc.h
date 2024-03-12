@@ -1,6 +1,6 @@
-//
-// Created by david on 18/05/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
 #ifndef LIBCOS_COS_DOC_H
 #define LIBCOS_COS_DOC_H
@@ -11,11 +11,14 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosDoc *
-cos_doc_alloc(void);
-
 void
-cos_doc_free(CosDoc *doc);
+cos_doc_destroy(CosDoc *doc)
+    COS_DEALLOCATOR_FUNC;
+
+CosDoc * COS_Nullable
+cos_doc_create(CosAllocator * COS_Nullable allocator)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_doc_destroy);
 
 int
 cos_doc_get_version(CosDoc *doc);
