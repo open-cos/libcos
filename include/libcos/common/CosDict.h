@@ -52,6 +52,9 @@ cos_dict_get_key_callbacks(const CosDict *dict);
 const CosDictValueCallbacks * COS_Nullable
 cos_dict_get_value_callbacks(const CosDict *dict);
 
+size_t
+cos_dict_get_count(const CosDict *dict);
+
 bool
 cos_dict_set(CosDict *dict,
              void *key,

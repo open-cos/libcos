@@ -41,6 +41,19 @@ size_t
 cos_stream_obj_get_length(const CosStreamObj *stream_obj);
 
 /**
+ * @brief Get the filter names for the stream.
+ *
+ * @param stream_obj The stream object.
+ * @param out_error The error information.
+ *
+ * @return The filter names for the stream, or @c NULL if an error occurred.
+ */
+CosArray * COS_Nullable
+cos_stream_obj_get_filter_names(const CosStreamObj *stream_obj,
+                                CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+/**
  * @brief Get the length in bytes of the decoded stream data.
  *
  * @param stream_obj The stream object.
@@ -53,7 +66,8 @@ bool
 cos_stream_obj_get_decoded_length_hint(const CosStreamObj *stream_obj,
                                        size_t *out_length_hint,
                                        CosError * COS_Nullable out_error)
-    COS_ATTR_ACCESS_WRITE_ONLY(2);
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -19,7 +19,7 @@ typedef enum CosObjValueType {
     CosObjValueType_String,
     CosObjValueType_Name,
     CosObjValueType_Array,
-    CosObjValueType_Dictionary,
+    CosObjValueType_Dict,
     CosObjValueType_Stream,
     CosObjValueType_Null,
 } CosObjValueType;

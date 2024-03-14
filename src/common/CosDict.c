@@ -110,6 +110,17 @@ cos_dict_get_value_callbacks(const CosDict *dict)
     return dict->value_callbacks;
 }
 
+size_t
+cos_dict_get_count(const CosDict *dict)
+{
+    COS_PARAMETER_ASSERT(dict != NULL);
+    if (!dict) {
+        return 0;
+    }
+
+    return dict->count;
+}
+
 bool
 cos_dict_set(CosDict *dict,
              void *key,

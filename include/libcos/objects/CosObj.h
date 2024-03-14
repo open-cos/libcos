@@ -33,7 +33,11 @@ typedef enum CosObjType {
 } CosObjType;
 
 void
-cos_obj_free(CosObj *obj);
+cos_obj_free(CosObj *obj)
+    COS_DEALLOCATOR_FUNC;
+
+/** @name Object type **/
+/** @{ **/
 
 CosObjType
 cos_obj_get_type(const CosObj *obj);
@@ -71,8 +75,105 @@ cos_obj_is_indirect(const CosObj *obj);
 CosObjValueType
 cos_obj_get_value_type(CosObj *obj);
 
+/**
+ * @brief Determines whether an object is a boolean.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is a boolean, @c false otherwise.
+ */
+bool
+cos_obj_is_boolean(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is an integer.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is an integer, @c false otherwise.
+ */
+bool
+cos_obj_is_integer(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is a real number.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is a real number, @c false otherwise.
+ */
+bool
+cos_obj_is_real(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is a string.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is a string, @c false otherwise.
+ */
+bool
+cos_obj_is_string(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is a name.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is a name, @c false otherwise.
+ */
+bool
+cos_obj_is_name(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is an array.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is an array, @c false otherwise.
+ */
+bool
+cos_obj_is_array(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is a dictionary.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is a dictionary, @c false otherwise.
+ */
+bool
+cos_obj_is_dict(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is a stream.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is a stream, @c false otherwise.
+ */
+bool
+cos_obj_is_stream(CosObj *obj);
+
+/**
+ * @brief Determines whether an object is null.
+ *
+ * @param obj The object.
+ *
+ * @return @c true if the object is null, @c false otherwise.
+ */
+bool
+cos_obj_is_null(CosObj *obj);
+
+/** @} **/
+
+/** @name Debugging **/
+/** @{ **/
+
 void
 cos_obj_print_desc(const CosObj *obj);
+
+/** @} **/
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

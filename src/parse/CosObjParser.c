@@ -707,7 +707,7 @@ cos_obj_parser_handle_dictionary_(CosObjParser *parser,
     CosObj *key = NULL;
     CosObj *value = NULL;
 
-    dict_obj = cos_dict_obj_alloc(NULL);
+    dict_obj = cos_dict_obj_create(NULL);
     if (!dict_obj) {
         goto failure;
     }

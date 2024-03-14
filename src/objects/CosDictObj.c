@@ -19,7 +19,7 @@ struct CosDictObj {
 };
 
 CosDictObj *
-cos_dict_obj_alloc(CosDict * COS_Nullable dict)
+cos_dict_obj_create(CosDict * COS_Nullable dict)
 {
     CosDictObj * const dict_obj = calloc(1, sizeof(CosDictObj));
     if (!dict_obj) {
@@ -52,7 +52,7 @@ failure:
 }
 
 void
-cos_dict_obj_free(CosDictObj *dict_obj)
+cos_dict_obj_destroy(CosDictObj *dict_obj)
 {
     if (!dict_obj) {
         return;
@@ -60,6 +60,37 @@ cos_dict_obj_free(CosDictObj *dict_obj)
 
     cos_dict_free(dict_obj->value);
     free(dict_obj);
+}
+
+size_t
+cos_dict_obj_get_count(const CosDictObj *dict_obj)
+{
+    COS_PARAMETER_ASSERT(dict_obj != NULL);
+    if (!dict_obj) {
+        return 0;
+    }
+
+    return cos_dict_get_count(dict_obj->value);
+}
+
+bool
+cos_dict_obj_get_value(const CosDictObj *dict_obj,
+                       CosStringRef key,
+                       CosObj * COS_Nullable *out_value,
+                       CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(dict_obj != NULL);
+    COS_PARAMETER_ASSERT(key.data != NULL && key.length > 0);
+    COS_PARAMETER_ASSERT(out_value != NULL);
+    if (!dict_obj || !key.data || key.length == 0 || !out_value) {
+        return false;
+    }
+
+
+
+    return false;
+
+    //    return cos_dict_get(dict_obj->value, key, value, error);
 }
 
 bool

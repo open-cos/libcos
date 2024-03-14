@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.11)
 project(libcos
         VERSION 0.0.0
         DESCRIPTION "The Carousel Object System (COS) library."
@@ -16,26 +16,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_library(libcos SHARED
-        src/common/CosTypedArray.h
-        src/parse/tokenizer/CosTokenEntry.c
-        src/parse/tokenizer/CosTokenEntry.h
-        src/xref/CosXrefTable.c
-        include/libcos/xref/CosXrefTable.h
-        include/libcos/xref/CosXrefSubsection.h
-        src/xref/CosXrefSubsection.c
-        include/libcos/xref/CosXrefEntry.h
-        src/xref/CosXrefEntry.c
-        include/libcos/xref/CosXrefSection.h
-        include/libcos/xref/CosXrefTableParser.h
-        src/xref/CosXrefTableParser.c
-        src/common/CosScanner.c
-        include/libcos/common/CosScanner.h
-        src/xref/CosXrefSection.c
-        include/libcos/syntax/CosLimits.h
-        include/libcos/common/memory/CosAllocator.h
-        src/common/memory/CosAllocator.c
-        include/libcos/common/memory/CosMemory.h
-        src/common/memory/CosMemory.c
+        src/dummy.c
+
 )
 
 target_sources(libcos PRIVATE
@@ -57,14 +39,17 @@ target_sources(libcos PRIVATE
         src/common/CosHashTable.h
         src/common/CosList.c
         src/common/CosLog.c
-        include/libcos/common/CosMacros.h
+        src/common/CosScanner.c
         src/common/CosString.c
+        src/common/CosTypedArray.h
         src/common/CosUtils.c
         src/common/CosUtils.h
         src/common/CosVector.c
         src/common/CosVector.h
         src/common/memory-support.c
         src/common/memory-support.h
+        src/common/memory/CosAllocator.c
+        src/common/memory/CosMemory.c
         src/common/memory/CosRefCounter.c
         src/common/memory/CosRefCounter.h
         src/io/CosBufferedInputStream.c
@@ -92,13 +77,21 @@ target_sources(libcos PRIVATE
         src/parse/CosObjParser.h
         src/parse/CosTokenizer.c
         src/parse/CosTokenizer.h
+        src/parse/tokenizer/CosTokenEntry.c
+        src/parse/tokenizer/CosTokenEntry.h
         src/parse/tokenizer/CosTokenValue.c
         src/parse/tokenizer/CosTokenValue.h
         src/syntax/CosKeywords.c
-        include/libcos/syntax/CosKeywords.h
+        src/xref/CosXrefEntry.c
+        src/xref/CosXrefSection.c
+        src/xref/CosXrefSubsection.c
+        src/xref/CosXrefTable.c
+        src/xref/CosXrefTableParser.c
 )
 
-target_sources(libcos PUBLIC
+target_sources(libcos
+        PUBLIC
+        FILE_SET HEADERS BASE_DIRS include/ FILES
         include/libcos/CosBasicTypes.h
         include/libcos/CosDoc.h
         include/libcos/CosObjID.h
@@ -113,8 +106,12 @@ target_sources(libcos PUBLIC
         include/libcos/common/CosError.h
         include/libcos/common/CosList.h
         include/libcos/common/CosLog.h
+        include/libcos/common/CosMacros.h
+        include/libcos/common/CosScanner.h
         include/libcos/common/CosString.h
         include/libcos/common/CosTypes.h
+        include/libcos/common/memory/CosAllocator.h
+        include/libcos/common/memory/CosMemory.h
         include/libcos/io/CosFileInputStream.h
         include/libcos/io/CosInputStream.h
         include/libcos/io/string-support.h
@@ -131,6 +128,13 @@ target_sources(libcos PUBLIC
         include/libcos/objects/CosReferenceObj.h
         include/libcos/objects/CosStreamObj.h
         include/libcos/objects/CosStringObj.h
+        include/libcos/syntax/CosKeywords.h
+        include/libcos/syntax/CosLimits.h
+        include/libcos/xref/CosXrefEntry.h
+        include/libcos/xref/CosXrefSection.h
+        include/libcos/xref/CosXrefSubsection.h
+        include/libcos/xref/CosXrefTable.h
+        include/libcos/xref/CosXrefTableParser.h
 )
 
 target_include_directories(libcos

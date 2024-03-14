@@ -62,7 +62,7 @@ cos_obj_free(CosObj *obj)
         } break;
 
         case CosObjType_Dict: {
-            cos_dict_obj_free((CosDictObj *)obj);
+            cos_dict_obj_destroy((CosDictObj *)obj);
         } break;
 
         case CosObjType_Stream: {
@@ -187,7 +187,7 @@ cos_obj_get_value_type(CosObj *obj)
             return CosObjValueType_Array;
 
         case CosObjType_Dict:
-            return CosObjValueType_Dictionary;
+            return CosObjValueType_Dict;
 
         case CosObjType_Stream:
             return CosObjValueType_Stream;
@@ -205,6 +205,94 @@ cos_obj_get_value_type(CosObj *obj)
     COS_ASSERT(false, "Invalid obj type: %d", obj->type);
 
     return CosObjValueType_Unknown;
+}
+
+bool
+cos_obj_is_boolean(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Boolean;
+}
+
+bool
+cos_obj_is_integer(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Integer;
+}
+
+bool
+cos_obj_is_real(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Real;
+}
+
+bool
+cos_obj_is_string(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_String;
+}
+
+bool
+cos_obj_is_name(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Name;
+}
+
+bool
+cos_obj_is_array(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Array;
+}
+
+bool
+cos_obj_is_dict(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Dict;
+}
+
+bool
+cos_obj_is_stream(CosObj *obj)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_value_type(obj) == CosObjValueType_Stream;
 }
 
 static void
