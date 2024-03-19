@@ -27,7 +27,7 @@ cos_name_obj_alloc(CosString *value)
 void
 cos_name_obj_free(CosNameObj *name_obj);
 
-CosString * COS_Nullable
+const CosString * COS_Nullable
 cos_name_obj_get_value(const CosNameObj *name_obj);
 
 void

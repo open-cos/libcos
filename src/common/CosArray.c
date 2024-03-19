@@ -166,7 +166,7 @@ cos_array_get_item(const CosArray *array,
     }
 
     if (index >= array->count) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
                                            "Index out of bounds"),
                             error);
         return NULL;

@@ -9,6 +9,8 @@
 #include <libcos/objects/CosStreamObj.h>
 
 #include <cstddef>
+#include <string>
+#include <vector>
 
 namespace opencos {
 
@@ -19,10 +21,13 @@ public:
     std::size_t
     getLength() const;
 
+    std::vector<std::string>
+    getFilterNames() const;
+
     explicit StreamObj(CosStreamObj *impl);
 
     CosStreamObj *
-    getStreamImpl() const;
+    getStreamImpl() const noexcept;
 };
 
 } // namespace opencos

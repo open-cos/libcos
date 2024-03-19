@@ -5,27 +5,38 @@
 #ifndef LIBCOSXX_OBJECTS_OBJ_HPP
 #define LIBCOSXX_OBJECTS_OBJ_HPP
 
+#include <cbind/ownership/Ownable.hpp>
 #include <libcos/common/CosTypes.h>
 
 #include <memory>
 
 namespace opencos {
 
+template <typename T>
+using SharedOwnablePtr = std::shared_ptr<cbind::Ownable<T>>;
+
 class Obj {
 public:
-    Obj() = delete;
-    Obj(const Obj &other);
+    Obj();
     virtual ~Obj();
 
-    explicit operator bool() const;
+    Obj(const Obj &other) = default;
+    Obj &
+    operator=(const Obj &other) = default;
 
-    explicit Obj(CosObj *impl);
+    explicit
+    operator bool() const;
+
+    bool
+    is_name() const noexcept;
+
+    explicit Obj(CosObj *impl, bool owner = false);
 
     CosObj *
-    getImpl() const;
+    getImpl() const noexcept;
 
 private:
-    std::shared_ptr<CosObj> impl_;
+    SharedOwnablePtr<CosObj *> impl_;
 };
 
 } // namespace opencos

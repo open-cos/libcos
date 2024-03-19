@@ -51,7 +51,8 @@ cos_array_obj_get_count(const CosArrayObj *array_obj);
 CosObj * COS_Nullable
 cos_array_obj_get_at(const CosArrayObj *array_obj,
                      size_t index,
-                     CosError * COS_Nullable out_error);
+                     CosError * COS_Nullable out_error)
+    COS_WARN_UNUSED_RESULT;
 
 bool
 cos_array_obj_insert(CosArrayObj *array_obj,

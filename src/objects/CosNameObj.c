@@ -49,7 +49,7 @@ cos_name_obj_free(CosNameObj *name_obj)
     free(name_obj);
 }
 
-CosString *
+const CosString *
 cos_name_obj_get_value(const CosNameObj *name_obj)
 {
     COS_PARAMETER_ASSERT(name_obj != NULL);

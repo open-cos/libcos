@@ -48,7 +48,7 @@ cos_stream_obj_get_length(const CosStreamObj *stream_obj);
  *
  * @return The filter names for the stream, or @c NULL if an error occurred.
  */
-CosArray * COS_Nullable
+CosArrayObj * COS_Nullable
 cos_stream_obj_get_filter_names(const CosStreamObj *stream_obj,
                                 CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);

@@ -24,8 +24,15 @@ endif ()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 add_library(libcos SHARED
     src/dummy.c
+)
+
+target_include_directories(libcos
+    PUBLIC include/
+    PRIVATE src/
 )
 
 target_sources(libcos PRIVATE
@@ -97,9 +104,10 @@ target_sources(libcos PRIVATE
     src/xref/CosXrefTableParser.c
 )
 
-target_sources(libcos
-    PUBLIC
-    FILE_SET HEADERS BASE_DIRS include/ FILES
+target_sources(libcos PUBLIC
+    FILE_SET HEADERS
+    BASE_DIRS include/libcos
+    FILES
     include/libcos/CosBasicTypes.h
     include/libcos/CosDoc.h
     include/libcos/CosObjID.h
@@ -145,21 +153,53 @@ target_sources(libcos
     include/libcos/xref/CosXrefTableParser.h
 )
 
-target_include_directories(libcos
-    PUBLIC include/
-    PRIVATE src/)
+# libcos++
 
-add_library(libcosxx INTERFACE
-    include/libcos++/impl/objects/StreamObj.inl
-    include/libcos++/Doc.hpp
-    include/libcos++/impl/Doc.inl
-    include/libcos++/objects/Obj.hpp
-    include/libcos++/impl/objects/Obj.inl
+add_library(libcos++ INTERFACE
+    include/libcos++/objects/ArrayObj.hpp
+    include/libcos++/impl/objects/ArrayObj.inl
 )
 
-target_sources(libcosxx INTERFACE
-    FILE_SET HEADERS BASE_DIRS include/ FILES
+set_target_properties(libcos++ PROPERTIES
+    FOLDER include/libcos++
+)
+
+target_include_directories(libcos++ INTERFACE
+    include/
+)
+
+target_sources(libcos++ INTERFACE
+    FILE_SET HEADERS
+    BASE_DIRS include/libcos++
+    FILES
+    include/libcos++/Doc.hpp
+    include/libcos++/common/Exceptions.hpp
+    include/libcos++/impl/Doc.inl
+    include/libcos++/impl/common/Exceptions.inl
+    include/libcos++/impl/objects/NameObj.inl
+    include/libcos++/impl/objects/Obj.inl
+    include/libcos++/impl/objects/StreamObj.inl
+    include/libcos++/objects/NameObj.hpp
+    include/libcos++/objects/Obj.hpp
     include/libcos++/objects/StreamObj.hpp
+)
+
+add_library(cbind INTERFACE
+    include/cbind/common/unique.hpp)
+
+target_sources(cbind INTERFACE
+    FILE_SET HEADERS
+    BASE_DIRS include/cbind
+    FILES
+    include/cbind/ownership/Ownable.hpp
+)
+
+set_target_properties(cbind PROPERTIES
+    FOLDER include/cbind
+)
+
+target_include_directories(cbind INTERFACE
+    include/
 )
 
 set(COS_COMPILE_DEFINITIONS "")
@@ -254,16 +294,27 @@ target_compile_options(libcos PRIVATE
     ${COS_C_FLAGS_WARNINGS}
 )
 
-target_compile_definitions(libcosxx INTERFACE
+target_compile_definitions(cbind INTERFACE
     ${COS_COMPILE_DEFINITIONS}
+    ${COS_C_COMPILE_DEFINITIONS}
     ${COS_CXX_COMPILE_DEFINITIONS}
 )
-target_compile_options(libcosxx INTERFACE
+
+target_compile_options(cbind INTERFACE
     ${COS_C_FLAGS_WARNINGS}
     ${COS_CXX_FLAGS_WARNINGS}
 )
 
-set_target_properties(libcos libcosxx PROPERTIES
+target_compile_definitions(libcos++ INTERFACE
+    ${COS_COMPILE_DEFINITIONS}
+    ${COS_CXX_COMPILE_DEFINITIONS}
+)
+target_compile_options(libcos++ INTERFACE
+    ${COS_C_FLAGS_WARNINGS}
+    ${COS_CXX_FLAGS_WARNINGS}
+)
+
+set_target_properties(libcos cbind libcos++ PROPERTIES
     PREFIX "" # Remove the "lib" prefix from the library name.
     
     VERIFY_INTERFACE_HEADER_SETS TRUE
@@ -277,7 +328,9 @@ if (MSVC)
     )
 endif ()
 
-target_link_libraries(libcosxx INTERFACE libcos)
+target_link_libraries(libcos++ INTERFACE
+    libcos cbind
+)
 
 # Tests
 
@@ -301,7 +354,7 @@ target_compile_options(libcos-tests PRIVATE
 )
 
 target_link_libraries(libcos-tests
-    PUBLIC libcos libcosxx
+    PUBLIC libcos libcos++
 )
 
 if (COS_BUILD_DOCUMENTATION)

@@ -85,7 +85,7 @@ cos_stream_obj_get_length(const CosStreamObj *stream_obj)
     return stream_obj->data->size;
 }
 
-CosArray *
+CosArrayObj *
 cos_stream_obj_get_filter_names(const CosStreamObj *stream_obj,
                                 CosError * COS_Nullable out_error)
 {

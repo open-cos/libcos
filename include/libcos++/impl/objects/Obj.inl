@@ -19,23 +19,31 @@ struct ObjDeleter {
 
 } // namespace detail
 
-Obj::Obj(const Obj &other) = default;
+Obj::Obj() = default;
 
 Obj::~Obj() = default;
 
 Obj::operator bool() const
 {
-    return impl_ != nullptr;
+    return impl_ && (impl_->value() != nullptr);
 }
 
-Obj::Obj(CosObj *impl)
-    : impl_(impl, detail::ObjDeleter())
+bool
+Obj::is_name() const noexcept
+{
+    return cos_obj_is_name(getImpl());
+}
+
+Obj::Obj(CosObj *impl, bool owner)
+    : impl_(cbind::make_ownable(impl,
+                                owner,
+                                detail::ObjDeleter()))
 {}
 
 CosObj *
-Obj::getImpl() const
+Obj::getImpl() const noexcept
 {
-    return impl_.get();
+    return impl_->value();
 }
 
 } // namespace opencos
