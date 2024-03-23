@@ -25,15 +25,16 @@ typedef struct CosArrayCallbacks {
     CosArrayEqualItemsCallback COS_Nullable equal;
 } CosArrayCallbacks;
 
-CosArray * COS_Nullable
-cos_array_alloc(size_t element_size,
-                const CosArrayCallbacks * COS_Nullable callbacks,
-                size_t capacity_hint)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
 void
-cos_array_free(CosArray *array);
+cos_array_destroy(CosArray *array)
+    COS_DEALLOCATOR_FUNC;
+
+CosArray * COS_Nullable
+cos_array_create(size_t element_size,
+                 const CosArrayCallbacks * COS_Nullable callbacks,
+                 size_t capacity_hint)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_array_destroy);
 
 #pragma mark - Accessors
 
@@ -71,7 +72,8 @@ cos_array_get_item(const CosArray *array,
                    size_t index,
                    CosError * COS_Nullable error);
 
-#pragma mark Insertion
+/** @name Insertion */
+/** @{ **/
 
 bool
 cos_array_insert_item(CosArray *array,
@@ -97,7 +99,10 @@ cos_array_append_items(CosArray *array,
                        size_t count,
                        CosError * COS_Nullable error);
 
-#pragma mark Removal
+/** @} */
+
+/** @name Removal */
+/** @{ **/
 
 bool
 cos_array_remove_item(CosArray *array,
@@ -109,6 +114,8 @@ cos_array_remove_items(CosArray *array,
                        size_t index,
                        size_t count,
                        CosError * COS_Nullable error);
+
+/** @} */
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

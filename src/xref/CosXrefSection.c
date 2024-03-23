@@ -27,9 +27,9 @@ cos_xref_section_alloc(void)
         goto failure;
     }
 
-    subsections = cos_array_alloc(sizeof(CosXrefSubsection *),
-                                  NULL,
-                                  0);
+    subsections = cos_array_create(sizeof(CosXrefSubsection *),
+                                   NULL,
+                                   0);
     if (!subsections) {
         goto failure;
     }
@@ -43,7 +43,7 @@ failure:
         free(section);
     }
     if (subsections) {
-        cos_array_free(subsections);
+        cos_array_destroy(subsections);
     }
     return NULL;
 }
@@ -55,7 +55,7 @@ cos_xref_section_free(CosXrefSection *section)
         return;
     }
 
-    cos_array_free(section->subsections);
+    cos_array_destroy(section->subsections);
 
     free(section);
 }

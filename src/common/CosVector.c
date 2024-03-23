@@ -15,7 +15,7 @@ struct CosVector {
     unsigned int capacity;
     unsigned int length;
 
-    unsigned char *elements COS_NONSTRING;
+    unsigned char *elements COS_ATTR_NONSTRING;
 };
 
 static bool

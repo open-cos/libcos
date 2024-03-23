@@ -27,7 +27,7 @@ COS_ASSUME_NONNULL_BEGIN
         COS_ATTR_MALLOC                                                                                             \
             COS_WARN_UNUSED_RESULT                                                                                  \
     {                                                                                                               \
-        return cos_array_alloc(sizeof(T), (CosArrayCallbacks){0}, 0);                                               \
+        return cos_array_create(sizeof(T), (CosArrayCallbacks){0}, 0);                                               \
     }                                                                                                               \
                                                                                                                     \
     COS_STATIC_INLINE                                                                                               \

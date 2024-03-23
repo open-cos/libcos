@@ -99,14 +99,14 @@
 #endif
 
 /**
- * @def COS_NONSTRING
+ * @def COS_ATTR_NONSTRING
  *
  * @brief Marks a "string-like" variable as not being a NUL-terminated string.
  */
 #if COS_HAS_ATTRIBUTE(nonstring)
-#define COS_NONSTRING __attribute__((nonstring))
+#define COS_ATTR_NONSTRING __attribute__((nonstring))
 #else
-#define COS_NONSTRING
+#define COS_ATTR_NONSTRING
 #endif
 
 /**

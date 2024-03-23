@@ -156,6 +156,18 @@ cos_obj_is_indirect(const CosObj *obj)
     return false;
 }
 
+bool
+cos_obj_is_type(const CosObj *obj,
+                CosObjType type)
+{
+    COS_PARAMETER_ASSERT(obj != NULL);
+    if (!obj) {
+        return false;
+    }
+
+    return cos_obj_get_type(obj) == type;
+}
+
 CosObjValueType
 cos_obj_get_value_type(CosObj *obj)
 {

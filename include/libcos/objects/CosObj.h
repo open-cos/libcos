@@ -63,6 +63,18 @@ bool
 cos_obj_is_indirect(const CosObj *obj);
 
 /**
+ * @brief Determines whether an object is of a specific type.
+ *
+ * @param obj The object.
+ * @param type The type to check for.
+ *
+ * @return @c true if the object is of the specified type, @c false otherwise.
+ */
+bool
+cos_obj_is_type(const CosObj *obj,
+                CosObjType type);
+
+/**
  * @brief Gets the value type of an object.
  *
  * For indirect objects, this function will return the value type of the

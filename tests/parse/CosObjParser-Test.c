@@ -20,6 +20,7 @@ main(COS_ATTR_UNUSED int argc,
 {
     // Get the current working directory.
 
+
     CosInputStream * const input_stream = (CosInputStream * const)cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
                                                                                              "r",
                                                                                              NULL);
@@ -28,7 +29,10 @@ main(COS_ATTR_UNUSED int argc,
     }
 
     CosDoc * const doc = cos_doc_create(NULL);
-
+    if (!doc) {
+        goto failure;
+    }
+    
     CosObjParser * const parser = cos_obj_parser_alloc(doc,
                                                        input_stream);
     if (!parser) {

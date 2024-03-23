@@ -15,7 +15,7 @@
 COS_ASSUME_NONNULL_BEGIN
 
 struct CosArray {
-    unsigned char *data COS_NONSTRING;
+    unsigned char *data COS_ATTR_NONSTRING;
     size_t element_size;
     size_t count;
     size_t capacity;
@@ -66,9 +66,9 @@ cos_array_resize_(CosArray *array,
 #pragma mark - Public
 
 CosArray *
-cos_array_alloc(size_t element_size,
-                const CosArrayCallbacks * COS_Nullable callbacks,
-                size_t capacity_hint)
+cos_array_create(size_t element_size,
+                 const CosArrayCallbacks * COS_Nullable callbacks,
+                 size_t capacity_hint)
 {
     COS_PARAMETER_ASSERT(element_size > 0);
     if (element_size == 0) {
@@ -112,7 +112,7 @@ failure:
 }
 
 void
-cos_array_free(CosArray *array)
+cos_array_destroy(CosArray *array)
 {
     if (!array) {
         return;

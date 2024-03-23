@@ -13,10 +13,17 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+static void
+cos_array_obj_callbacks_release_(void *item);
+
+static bool
+cos_array_obj_callbacks_equal_(const void *item1,
+                               const void *item2);
+
 const CosArrayCallbacks cos_array_obj_callbacks = {
     .retain = NULL,
-    .release = NULL,
-    .equal = NULL,
+    .release = &cos_array_obj_callbacks_release_,
+    .equal = &cos_array_obj_callbacks_equal_,
 };
 
 struct CosArrayObj {
@@ -39,9 +46,9 @@ cos_array_obj_alloc(CosArray * COS_Nullable array)
         array_obj->value = (CosArray *)array;
     }
     else {
-        CosArray * const new_array = cos_array_alloc(sizeof(CosObj *),
-                                                     &cos_array_obj_callbacks,
-                                                     0);
+        CosArray * const new_array = cos_array_create(sizeof(CosObj *),
+                                                      &cos_array_obj_callbacks,
+                                                      0);
         if (!new_array) {
             goto failure;
         }
@@ -65,12 +72,7 @@ cos_array_obj_free(CosArrayObj *array_obj)
         return;
     }
 
-    const size_t count = cos_array_get_count(array_obj->value);
-    for (size_t i = 0; i < count; i++) {
-        CosObj * const obj = cos_array_get_item(array_obj->value, i, NULL);
-        cos_obj_free(obj);
-    }
-    cos_array_free(array_obj->value);
+    cos_array_destroy(array_obj->value);
     free(array_obj);
 }
 
@@ -132,6 +134,52 @@ cos_array_obj_append(CosArrayObj *array_obj,
     return cos_array_append_item(array_obj->value,
                                  &obj,
                                  error);
+}
+
+bool
+cos_array_obj_remove_at(CosArrayObj *array_obj,
+                        size_t index,
+                        CosError * COS_Nullable error)
+{
+    COS_PARAMETER_ASSERT(array_obj != NULL);
+    if (!array_obj) {
+        return false;
+    }
+
+    return cos_array_remove_item(array_obj->value,
+                                 index,
+                                 error);
+}
+
+static void
+cos_array_obj_callbacks_release_(void *item)
+{
+    COS_ASSERT(item != NULL, "Expected a non-NULL item");
+    if (!item) {
+        return;
+    }
+
+    CosObj * const obj = *(CosObj **)item;
+    cos_obj_free(obj);
+}
+
+static bool
+cos_array_obj_callbacks_equal_(const void *item1,
+                               const void *item2)
+{
+    COS_ASSERT(item1 != NULL, "Expected a non-NULL item1");
+    COS_ASSERT(item2 != NULL, "Expected a non-NULL item2");
+    if (item1 == item2) {
+        return true;
+    }
+    else if (!item1 || !item2) {
+        return false;
+    }
+
+    const CosObj * const obj1 = *(CosObj * const *)item1;
+    const CosObj * const obj2 = *(CosObj * const *)item2;
+
+    return obj1 == obj2;
 }
 
 COS_ASSUME_NONNULL_END
