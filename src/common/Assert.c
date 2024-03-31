@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 void
-cos_assert_impl_(const char *condition,
+cos_assertion_failure_(const char *condition,
                  const char *function_name,
                  const char *file,
                  int line,

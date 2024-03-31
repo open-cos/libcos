@@ -9,8 +9,17 @@ project(libcos
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 include(CheckLanguage)
+include(CMakeDependentOption)
+
+include(Common)
 
 option(COS_BUILD_DOCUMENTATION "Build the documentation" OFF)
+
+option(COS_BUILD_FOR_FUZZING "Build for fuzzing" OFF)
+
+cmake_dependent_option(COS_DETERMINISTIC_FUZZING "Enable deterministic fuzzing" OFF
+    "COS_BUILD_FOR_FUZZING" OFF
+)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -20,6 +29,57 @@ if (CMAKE_CXX_COMPILER)
     enable_language(CXX)
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif ()
+
+set(COS_COMPILE_DEFINITIONS "")
+
+set(COS_C_FLAGS "")
+set(COS_C_FLAGS_WARNINGS "")
+set(COS_C_COMPILE_DEFINITIONS "")
+
+set(COS_CXX_FLAGS "")
+set(COS_CXX_FLAGS_WARNINGS "")
+set(COS_CXX_COMPILE_DEFINITIONS "")
+
+set(COS_LINKER_FLAGS "")
+
+if (COS_BUILD_FOR_FUZZING)
+    
+    if (NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        message(FATAL_ERROR "Fuzzing is only supported with Clang.")
+    else ()
+        message(STATUS "Building for fuzzing with LibFuzzer.")
+    endif ()
+    
+    if (CMAKE_C_COMPILER_VERSION VERSION_LESS "6.0.0")
+        message(FATAL_ERROR "Clang ≥ 6.0.0 is required for fuzzing with LibFuzzer.")
+    endif ()
+    
+    add_flags(COS_COMPILE_DEFINITIONS
+        COS_BUILD_FOR_FUZZING=1
+        COS_DISABLE_ASSERTIONS=1
+    )
+    
+    if (COS_DETERMINISTIC_FUZZING)
+        add_flags(COS_COMPILE_DEFINITIONS
+            COS_DETERMINISTIC_FUZZING=1
+            FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1
+        )
+    endif ()
+    
+    add_flags(COS_C_FLAGS
+        -fsanitize=address,fuzzer-no-link
+        -fsanitize-coverage=edge,indirect-calls
+    )
+    add_flags(COS_CXX_FLAGS
+        -fsanitize=address,fuzzer-no-link
+        -fsanitize-coverage=edge,indirect-calls
+    )
+    
+    add_flags(COS_LINKER_FLAGS
+        -fsanitize=fuzzer
+    )
+
 endif ()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -153,6 +213,9 @@ target_sources(libcos PUBLIC
     include/libcos/xref/CosXrefTableParser.h
 )
 
+include(Sanitizers)
+add_sanitizers(libcos)
+
 # libcos++
 
 add_library(libcos++ INTERFACE
@@ -201,14 +264,6 @@ set_target_properties(cbind PROPERTIES
 target_include_directories(cbind INTERFACE
     include/
 )
-
-set(COS_COMPILE_DEFINITIONS "")
-
-set(COS_C_FLAGS_WARNINGS "")
-set(COS_C_COMPILE_DEFINITIONS "")
-
-set(COS_CXX_FLAGS_WARNINGS "")
-set(COS_CXX_COMPILE_DEFINITIONS "")
 
 if (NOT MSVC)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -264,6 +319,21 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Werror=incompatible-function-pointer-types-strict
         #-Werror=incompatible-function-pointer-types
         -Werror=nullability
+        
+        #        -g -O1 -fsanitize=address -fno-omit-frame-pointer
+        
+        -g
+        
+        -fsanitize=address
+        
+        -fsanitize=undefined
+        -fsanitize=float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,nullability
+        
+        -fno-omit-frame-pointer
+        -fno-optimize-sibling-calls
+    )
+    add_flags(COS_LINKER_FLAGS
+        -fsanitize=address,undefined
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
@@ -292,6 +362,9 @@ target_compile_definitions(libcos PRIVATE
 )
 target_compile_options(libcos PRIVATE
     ${COS_C_FLAGS_WARNINGS}
+)
+target_link_options(libcos PUBLIC
+    ${COS_LINKER_FLAGS}
 )
 
 target_compile_definitions(cbind INTERFACE
@@ -332,38 +405,8 @@ target_link_libraries(libcos++ INTERFACE
     libcos cbind
 )
 
-# Tests
-
-enable_testing()
-
-add_executable(libcos-tests
-    tests/libcos++/ObjectTest.cpp
-    tests/parse/CosTokenizer-Test.c
-    tests/parse/CosObjParser-Test.c
-)
-
-target_include_directories(libcos-tests
-    PUBLIC include/
-    PRIVATE src/
-    PRIVATE tests/
-)
-
-target_compile_options(libcos-tests PRIVATE
-    ${COS_C_FLAGS_WARNINGS}
-    ${COS_CXX_FLAGS_WARNINGS}
-)
-
-target_link_libraries(libcos-tests
-    PUBLIC libcos libcos++
-)
+add_subdirectory(tests)
 
 if (COS_BUILD_DOCUMENTATION)
-    # Doxygen
-    find_package(Doxygen)
-    if (DOXYGEN_FOUND)
-        doxygen_add_docs(libcos-docs
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/libcos
-            COMMENT "Generating API documentation with Doxygen"
-        )
-    endif (DOXYGEN_FOUND)
+    add_subdirectory(docs)
 endif (COS_BUILD_DOCUMENTATION)

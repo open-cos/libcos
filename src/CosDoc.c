@@ -9,6 +9,8 @@
 
 #include <libcos/common/memory/CosMemory.h>
 
+#include <string.h>
+
 COS_ASSUME_NONNULL_BEGIN
 
 struct CosDoc {
@@ -30,6 +32,8 @@ cos_doc_create(CosAllocator * COS_Nullable allocator)
     if (!doc) {
         return NULL;
     }
+
+    memset(doc, 0, sizeof(CosDoc));
 
     doc->allocator = doc_allocator;
 

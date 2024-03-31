@@ -33,7 +33,7 @@ struct CosInputStreamFunctions {
 
 struct CosInputStream {
     CosInputStreamFunctions functions;
-    void *user_data;
+    void * COS_Nullable user_data;
 };
 
 CosInputStream *

@@ -63,7 +63,7 @@ cos_memory_input_stream_close(CosMemoryInputStream *input_stream,
 {
     CosMemoryInputStreamUserData * const memory = (CosMemoryInputStreamUserData *)user_data;
 
-    free(memory->data);
+    //free(memory->data);
 
     free(memory);
 }

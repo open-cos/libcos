@@ -32,7 +32,7 @@ main(COS_ATTR_UNUSED int argc,
     if (!doc) {
         goto failure;
     }
-    
+
     CosObjParser * const parser = cos_obj_parser_alloc(doc,
                                                        input_stream);
     if (!parser) {

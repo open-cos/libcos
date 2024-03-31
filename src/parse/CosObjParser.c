@@ -135,7 +135,7 @@ cos_obj_parser_alloc(CosDoc *document,
         return NULL;
     }
 
-    CosObjParser * const parser = malloc(sizeof(CosObjParser));
+    CosObjParser * const parser = calloc(1, sizeof(CosObjParser));
     if (!parser) {
         goto failure;
     }
