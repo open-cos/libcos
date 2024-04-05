@@ -104,8 +104,6 @@ target_sources(libcos PRIVATE
     src/common/CharacterSet.h
     src/common/CosArray.c
     src/common/CosData.c
-    src/common/CosDataBuffer.c
-    src/common/CosDataBuffer.h
     src/common/CosDataRef.c
     src/common/CosDiagnostic.c
     src/common/CosDiagnosticHandler.c
