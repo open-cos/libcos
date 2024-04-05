@@ -48,6 +48,12 @@ cos_error_make(CosErrorCode code,
     return result;
 }
 
+CosError
+cos_error_make_invalid_argument(const char *message)
+{
+    return cos_error_make(COS_ERROR_INVALID_ARGUMENT, message);
+}
+
 void
 cos_error_propagate_(CosError source_error,
                      CosError * COS_Nullable destination_error)

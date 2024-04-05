@@ -46,6 +46,9 @@ CosError
 cos_error_make(CosErrorCode code,
                const char *message);
 
+CosError
+cos_error_make_invalid_argument(const char *message);
+
 /**
  * @brief Propagates the source error to the destination error.
  *

@@ -217,7 +217,22 @@
 #define COS_MALLOC_OWNERSHIP_TAKES(ptr_index) COS_ATTR_OWNERSHIP_TAKES(malloc, ptr_index)
 
 /**
- * Access control.
+ * @brief Marks a function as returning ownership of a pointer.
+ */
+#define COS_OWNERSHIP_RETURNS COS_MALLOC_OWNERSHIP_RETURNS COS_WARN_UNUSED_RESULT
+
+/**
+ * @brief Marks a function as holding ownership of a pointer.
+ */
+#define COS_OWNERSHIP_HOLDS(ptr_index) COS_MALLOC_OWNERSHIP_HOLDS(ptr_index)
+
+/**
+ * @brief Marks a function as taking ownership of a pointer.
+ */
+#define COS_OWNERSHIP_TAKES(ptr_index) COS_MALLOC_OWNERSHIP_TAKES(ptr_index)
+
+/**
+ * Pointer access mode attributes.
  */
 
 #if COS_HAS_ATTRIBUTE(access)
