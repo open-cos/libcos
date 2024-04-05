@@ -109,8 +109,6 @@ target_sources(libcos PRIVATE
     src/common/CosDiagnosticHandler.c
     src/common/CosDict.c
     src/common/CosError.c
-    src/common/CosHashTable.c
-    src/common/CosHashTable.h
     src/common/CosList.c
     src/common/CosLog.c
     src/common/CosRingBuffer.c
