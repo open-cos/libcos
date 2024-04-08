@@ -1,16 +1,16 @@
-//
-// Created by david on 03/06/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
 #include "CosTokenizer.h"
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "io/CosInputStreamReader.h"
-#include "libcos/common/CosNumber.h"
 #include "parse/tokenizer/CosTokenEntry.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/CosNumber.h>
 #include <libcos/common/CosRingBuffer.h>
 #include <libcos/common/CosString.h>
 #include <libcos/syntax/CosLimits.h>
@@ -26,7 +26,7 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosTokenizer {
     CosInputStreamReader *input_stream_reader;
 
-    CosTokenEntry * COS_Nullable current_token_entry_;
+    CosTokenEntry * COS_Nullable current_token_entry;
 
     CosRingBuffer *peeked_token_entries;
     CosRingBuffer *free_token_entries;
@@ -156,7 +156,7 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
     }
 
     tokenizer->input_stream_reader = input_stream_reader;
-    tokenizer->current_token_entry_ = NULL;
+    tokenizer->current_token_entry = NULL;
     tokenizer->peeked_token_entries = peeked_token_entries;
     tokenizer->free_token_entries = free_token_entries;
 
@@ -204,8 +204,8 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     }
     cos_ring_buffer_destroy(tokenizer->free_token_entries);
 
-    if (tokenizer->current_token_entry_) {
-        cos_token_entry_free(COS_nonnull_cast(tokenizer->current_token_entry_));
+    if (tokenizer->current_token_entry) {
+        cos_token_entry_free(COS_nonnull_cast(tokenizer->current_token_entry));
     }
 
     free(tokenizer);
@@ -243,7 +243,7 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
     }
 
     // Reset the current token entry.
-    CosTokenEntry * const previous_token_entry = tokenizer->current_token_entry_;
+    CosTokenEntry * const previous_token_entry = tokenizer->current_token_entry;
     if (previous_token_entry) {
         cos_token_value_reset(previous_token_entry->value);
 
@@ -254,7 +254,7 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
             cos_token_entry_free(previous_token_entry);
         }
 
-        tokenizer->current_token_entry_ = NULL;
+        tokenizer->current_token_entry = NULL;
     }
 
     CosTokenEntry *token_entry = NULL;
@@ -283,7 +283,7 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
     *out_token = token_entry->token;
     *out_token_value = token_entry->value;
 
-    tokenizer->current_token_entry_ = token_entry;
+    tokenizer->current_token_entry = token_entry;
 
     return true;
 
