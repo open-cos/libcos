@@ -187,7 +187,21 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     }
 
     cos_input_stream_reader_free(tokenizer->input_stream_reader);
+    while (cos_ring_buffer_get_count(tokenizer->peeked_token_entries) > 0) {
+        CosTokenEntry *entry = NULL;
+        if (cos_ring_buffer_pop_front(tokenizer->peeked_token_entries,
+                                      &entry)) {
+            cos_token_entry_free(entry);
+        }
+    }
     cos_ring_buffer_destroy(tokenizer->peeked_token_entries);
+    while (cos_ring_buffer_get_count(tokenizer->free_token_entries) > 0) {
+        CosTokenEntry *entry = NULL;
+        if (cos_ring_buffer_pop_front(tokenizer->free_token_entries,
+                                      &entry)) {
+            cos_token_entry_free(entry);
+        }
+    }
     cos_ring_buffer_destroy(tokenizer->free_token_entries);
 
     if (tokenizer->current_token_entry_) {
@@ -246,8 +260,8 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
     CosTokenEntry *token_entry = NULL;
 
     // Check if we already have a peeked token.
-    if (cos_ring_buffer_get_first_item(tokenizer->peeked_token_entries,
-                                       &token_entry)) {
+    if (cos_ring_buffer_pop_front(tokenizer->peeked_token_entries,
+                                  &token_entry)) {
         COS_ASSERT(token_entry != NULL, "Expected a token entry");
         if (!token_entry) {
             goto failure;
@@ -294,7 +308,7 @@ cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
 
     // Check if we have a token in the buffer.
     if (cos_ring_buffer_get_first_item(tokenizer->peeked_token_entries,
-                                       (void **)&entry)) {
+                                       &entry)) {
         // We have a peeked token.
         COS_ASSERT(entry != NULL, "Expected a token entry");
         if (COS_UNLIKELY(!entry)) {
@@ -348,10 +362,10 @@ cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
 
     // Check if we already have a second peeked token.
     if (cos_ring_buffer_get_count(tokenizer->peeked_token_entries) > 1) {
-        // We have a peeked token, so we can use it.
+        // We have at least 2 peeked tokens.
         if (!cos_ring_buffer_get_item(tokenizer->peeked_token_entries,
                                       1,
-                                      (void **)&entry,
+                                      &entry,
                                       NULL)) {
             goto failure;
         }
