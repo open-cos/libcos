@@ -117,10 +117,6 @@ target_sources(libcos PRIVATE
     src/common/CosTypedArray.h
     src/common/CosUtils.c
     src/common/CosUtils.h
-    src/common/CosVector.c
-    src/common/CosVector.h
-    src/common/memory-support.c
-    src/common/memory-support.h
     src/common/memory/CosAllocator.c
     src/common/memory/CosMemory.c
     src/common/memory/CosRefCounter.c
@@ -166,10 +162,8 @@ target_sources(libcos PUBLIC
     FILE_SET HEADERS
     BASE_DIRS include/libcos
     FILES
-    include/libcos/CosBasicTypes.h
     include/libcos/CosDoc.h
     include/libcos/CosObjID.h
-    include/libcos/CosObject.h
     include/libcos/common/CosArray.h
     include/libcos/common/CosData.h
     include/libcos/common/CosDataRef.h
