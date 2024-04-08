@@ -69,34 +69,44 @@ cos_ring_buffer_get_capacity(const CosRingBuffer *ring_buffer);
  *
  * @param ring_buffer The ring buffer.
  * @param index The index of the item to get.
+ * @param out_item The output item.
  * @param out_error On input, a pointer to an error object, or @c NULL.
  *
- * @return The item at the given index, or @c NULL if an error occurred.
+ * @return @c true if the item was retrieved, @c false if an error occurred.
  */
-void * COS_Nullable
+bool
 cos_ring_buffer_get_item(const CosRingBuffer *ring_buffer,
                          size_t index,
-                         CosError * COS_Nullable out_error);
+                         void *out_item,
+                         CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 /**
  * @brief Gets the first item in a ring buffer.
  *
  * @param ring_buffer The ring buffer.
+ * @param out_item The output item.
  *
- * @return The first item in the ring buffer, or @c NULL if the ring buffer is empty.
+ * @return @c true if the first item was retrieved, @c false if the ring buffer is empty.
  */
-void * COS_Nullable
-cos_ring_buffer_get_first_item(const CosRingBuffer *ring_buffer);
+bool
+cos_ring_buffer_get_first_item(const CosRingBuffer *ring_buffer,
+                               void *out_item)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /**
  * @brief Gets the last item in a ring buffer.
  *
  * @param ring_buffer The ring buffer.
+ * @param out_item The output item.
  *
- * @return The last item in the ring buffer, or @c NULL if the ring buffer is empty.
+ * @return @c true if the last item was retrieved, @c false if the ring buffer is empty.
  */
-void * COS_Nullable
-cos_ring_buffer_get_last_item(const CosRingBuffer *ring_buffer);
+bool
+cos_ring_buffer_get_last_item(const CosRingBuffer *ring_buffer,
+                              void *out_item)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /** @} **/
 
@@ -116,7 +126,8 @@ bool
 cos_ring_buffer_push_front(CosRingBuffer *ring_buffer,
                            const void *item,
                            CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_HOLDS(2);
+    COS_ATTR_ACCESS_READ_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 /**
  * @brief Pushes an item to the back of a ring buffer.
@@ -131,33 +142,34 @@ bool
 cos_ring_buffer_push_back(CosRingBuffer *ring_buffer,
                           const void *item,
                           CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_HOLDS(2);
+    COS_ATTR_ACCESS_READ_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 /**
  * @brief Pops an item from the front of a ring buffer.
  *
  * @param ring_buffer The ring buffer.
- * @param out_error On input, a pointer to an error object, or @c NULL.
+ * @param out_item The output item.
  *
- * @return The item that was popped, or @c NULL if an error occurred.
+ * @return @c true if the item was popped, @c false if the ring buffer is empty.
  */
-void * COS_Nullable
+bool
 cos_ring_buffer_pop_front(CosRingBuffer *ring_buffer,
-                          CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_RETURNS;
+                          void *out_item)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /**
  * @brief Pops an item from the back of a ring buffer.
  *
  * @param ring_buffer The ring buffer.
- * @param out_error On input, a pointer to an error object, or @c NULL.
+ * @param out_item The output item.
  *
- * @return The item that was popped, or @c NULL if an error occurred.
+ * @return @c true if the item was popped, @c false if the ring buffer is empty.
  */
-void * COS_Nullable
+bool
 cos_ring_buffer_pop_back(CosRingBuffer *ring_buffer,
-                         CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_RETURNS;
+                         void *out_item)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /** @} **/
 
