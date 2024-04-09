@@ -144,13 +144,14 @@ target_sources(libcos PRIVATE
     src/objects/CosStringObj.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
-    src/parse/CosTokenizer.c
-    src/parse/CosTokenizer.h
-    src/parse/tokenizer/CosTokenEntry.c
-    src/parse/tokenizer/CosTokenEntry.h
-    src/parse/tokenizer/CosTokenValue.c
-    src/parse/tokenizer/CosTokenValue.h
+    src/syntax/tokenizer/CosTokenizer.c
+    src/syntax/tokenizer/CosTokenizer.h
     src/syntax/CosKeywords.c
+    src/syntax/tokenizer/CosToken.h
+    src/syntax/tokenizer/CosTokenEntry.c
+    src/syntax/tokenizer/CosTokenEntry.h
+    src/syntax/tokenizer/CosTokenValue.c
+    src/syntax/tokenizer/CosTokenValue.h
     src/xref/CosXrefEntry.c
     src/xref/CosXrefSection.c
     src/xref/CosXrefSubsection.c

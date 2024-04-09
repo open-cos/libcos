@@ -6,6 +6,7 @@
 #define LIBCOS_COS_DOC_H
 
 #include <libcos/CosObjID.h>
+#include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
 COS_DECLS_BEGIN
@@ -23,7 +24,7 @@ cos_doc_create(CosAllocator * COS_Nullable allocator)
 int
 cos_doc_get_version(CosDoc *doc);
 
-CosObj *
+CosObj * COS_Nullable
 cos_doc_get_root(CosDoc *doc);
 
 void * COS_Nullable

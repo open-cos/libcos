@@ -5,10 +5,10 @@
 #ifndef LIBCOS_PARSE_COS_TOKEN_ENTRY_H
 #define LIBCOS_PARSE_COS_TOKEN_ENTRY_H
 
-#include "parse/tokenizer/CosToken.h"
-#include "parse/tokenizer/CosTokenValue.h"
+#include "libcos/common/CosDefines.h"
 
-#include <libcos/common/CosDefines.h>
+#include "CosToken.h"
+#include "CosTokenValue.h"
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN

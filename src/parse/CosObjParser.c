@@ -17,8 +17,8 @@
 #include "libcos/objects/CosRealObj.h"
 #include "libcos/objects/CosReferenceObj.h"
 #include "libcos/objects/CosStringObj.h"
-#include "parse/CosTokenizer.h"
-#include "parse/tokenizer/CosToken.h"
+#include "syntax/tokenizer/CosToken.h"
+#include "syntax/tokenizer/CosTokenizer.h"
 
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosDiagnosticHandler.h>
@@ -126,8 +126,8 @@ static CosObj * COS_Nullable
 cos_obj_parser_pop_object_(CosObjParser *parser);
 
 CosObjParser *
-cos_obj_parser_alloc(CosDoc *document,
-                     CosInputStream *input_stream)
+cos_obj_parser_create(CosDoc *document,
+                      CosInputStream *input_stream)
 {
     COS_PARAMETER_ASSERT(document != NULL);
     COS_PARAMETER_ASSERT(input_stream != NULL);
@@ -196,7 +196,7 @@ failure:
 }
 
 void
-cos_obj_parser_free(CosObjParser *parser)
+cos_obj_parser_destroy(CosObjParser *parser)
 {
     if (!parser) {
         return;

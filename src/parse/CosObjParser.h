@@ -16,6 +16,15 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 /**
+ * Frees an object parser.
+ *
+ * @param parser The object parser.
+ */
+void
+cos_obj_parser_destroy(CosObjParser *parser)
+    COS_DEALLOCATOR_FUNC;
+
+/**
  * @brief Allocate a new object parser.
  *
  * @param document The document.
@@ -24,18 +33,10 @@ COS_ASSUME_NONNULL_BEGIN
  * @return The object parser, or @c NULL if an error occurred.
  */
 CosObjParser * COS_Nullable
-cos_obj_parser_alloc(CosDoc *document,
-                     CosInputStream *input_stream)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
-/**
- * Frees an object parser.
- *
- * @param parser The object parser.
- */
-void
-cos_obj_parser_free(CosObjParser *parser);
+cos_obj_parser_create(CosDoc *document,
+                      CosInputStream *input_stream)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_parser_destroy);
 
 /**
  * Checks if there is a next object or if the end of the input stream has been reached.

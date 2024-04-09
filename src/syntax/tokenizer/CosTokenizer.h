@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
+
 //
 // Created by david on 03/06/23.
 //
@@ -5,10 +9,9 @@
 #ifndef LIBCOS_COS_TOKENIZER_H
 #define LIBCOS_COS_TOKENIZER_H
 
-#include "parse/tokenizer/CosToken.h"
-
-#include <libcos/common/CosDefines.h>
-#include <libcos/common/CosTypes.h>
+#include "libcos/common/CosDefines.h"
+#include "libcos/common/CosTypes.h"
+#include "syntax/tokenizer/CosToken.h"
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN

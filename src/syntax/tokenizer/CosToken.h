@@ -5,12 +5,13 @@
 #ifndef LIBCOS_COS_TOKEN_H
 #define LIBCOS_COS_TOKEN_H
 
-#include "libcos/common/CosData.h"
-#include "libcos/common/CosDefines.h"
-#include "libcos/common/CosString.h"
-#include "parse/tokenizer/CosTokenValue.h"
+#include <libcos/common/CosData.h>
+#include <libcos/common/CosDefines.h>
+#include <libcos/common/CosString.h>
 
 #include <stdbool.h>
+
+#include "CosTokenValue.h"
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN

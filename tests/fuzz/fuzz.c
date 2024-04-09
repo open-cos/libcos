@@ -22,7 +22,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
 
     CosDoc *doc = cos_doc_create(NULL);
 
-    CosObjParser *parser = cos_obj_parser_alloc(doc,
+    CosObjParser *parser = cos_obj_parser_create(doc,
                                                 stream);
 
     if (!parser) {
@@ -41,14 +41,14 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
         cos_obj_free(obj);
     }
 
-    cos_obj_parser_free(parser);
+    cos_obj_parser_destroy(parser);
     cos_doc_destroy(doc);
     cos_input_stream_close(stream);
 
     return 0;
 
 failure:
-    cos_obj_parser_free(parser);
+    cos_obj_parser_destroy(parser);
     cos_doc_destroy(doc);
     cos_input_stream_close(stream);
     return 0;
