@@ -88,6 +88,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
+    src/syntax/tokenizer/CosToken.c
 
 )
 

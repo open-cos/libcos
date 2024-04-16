@@ -40,6 +40,8 @@ cos_token_value_alloc(void)
         return NULL;
     }
 
+    token_value->type = CosTokenValue_Type_None;
+
     return token_value;
 }
 

@@ -25,22 +25,35 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosTokenizer {
     CosInputStreamReader *input_stream_reader;
 
-    CosTokenEntry * COS_Nullable current_token_entry;
-
-    CosRingBuffer *peeked_token_entries;
-    CosRingBuffer *free_token_entries;
+    CosRingBuffer *peeked_tokens;
+    CosRingBuffer *free_tokens;
 
     bool strict;
 };
 
-static CosTokenEntry * COS_Nullable
-cos_tokenizer_get_token_entry_(CosTokenizer *tokenizer);
+static CosToken * COS_Nullable
+cos_acquire_token_(CosTokenizer *tokenizer)
+    COS_OWNERSHIP_RETURNS;
 
 static void
+cos_release_token_(CosTokenizer *tokenizer,
+                   CosToken *token)
+    COS_OWNERSHIP_TAKES(2);
+
+static CosToken * COS_Nullable
+cos_get_next_token_(CosTokenizer *tokenizer,
+                    CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+static void
+cos_consume_next_token_(CosTokenizer *tokenizer);
+
+static CosToken * COS_Nullable
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
-                               CosToken *out_token,
-                               CosTokenValue *token_value,
-                               CosError * COS_Nullable out_error);
+                               CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 static inline int
 cos_tokenizer_get_next_char_(CosTokenizer *tokenizer);
@@ -130,8 +143,8 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
     CosTokenizer *tokenizer = NULL;
     CosInputStreamReader *input_stream_reader = NULL;
 
-    CosRingBuffer *peeked_token_entries = NULL;
-    CosRingBuffer *free_token_entries = NULL;
+    CosRingBuffer *peeked_tokens = NULL;
+    CosRingBuffer *free_tokens = NULL;
 
     tokenizer = calloc(1, sizeof(CosTokenizer));
     if (!tokenizer) {
@@ -143,21 +156,20 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
         goto failure;
     }
 
-    peeked_token_entries = cos_ring_buffer_create(sizeof(CosTokenEntry *),
-                                                  COS_TOKENIZER_MAX_PEEKED_TOKENS);
-    if (!peeked_token_entries) {
+    peeked_tokens = cos_ring_buffer_create(sizeof(CosToken *),
+                                           COS_TOKENIZER_MAX_PEEKED_TOKENS);
+    if (!peeked_tokens) {
         goto failure;
     }
-    free_token_entries = cos_ring_buffer_create(sizeof(CosTokenEntry *),
-                                                COS_TOKENIZER_MAX_PEEKED_TOKENS);
-    if (!free_token_entries) {
+    free_tokens = cos_ring_buffer_create(sizeof(CosToken *),
+                                         COS_TOKENIZER_MAX_PEEKED_TOKENS);
+    if (!free_tokens) {
         goto failure;
     }
 
     tokenizer->input_stream_reader = input_stream_reader;
-    tokenizer->current_token_entry = NULL;
-    tokenizer->peeked_token_entries = peeked_token_entries;
-    tokenizer->free_token_entries = free_token_entries;
+    tokenizer->peeked_tokens = peeked_tokens;
+    tokenizer->free_tokens = free_tokens;
 
     return tokenizer;
 
@@ -168,11 +180,11 @@ failure:
     if (input_stream_reader) {
         cos_input_stream_reader_free(input_stream_reader);
     }
-    if (peeked_token_entries) {
-        cos_ring_buffer_destroy(peeked_token_entries);
+    if (peeked_tokens) {
+        cos_ring_buffer_destroy(peeked_tokens);
     }
-    if (free_token_entries) {
-        cos_ring_buffer_destroy(free_token_entries);
+    if (free_tokens) {
+        cos_ring_buffer_destroy(free_tokens);
     }
 
     return NULL;
@@ -185,27 +197,25 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
         return;
     }
 
-    cos_input_stream_reader_free(tokenizer->input_stream_reader);
-    while (cos_ring_buffer_get_count(tokenizer->peeked_token_entries) > 0) {
-        CosTokenEntry *entry = NULL;
-        if (cos_ring_buffer_pop_front(tokenizer->peeked_token_entries,
-                                      &entry)) {
-            cos_token_entry_free(entry);
+    while (cos_ring_buffer_get_count(tokenizer->peeked_tokens) > 0) {
+        CosToken *token = NULL;
+        if (cos_ring_buffer_pop_front(tokenizer->peeked_tokens,
+                                      &token)) {
+            cos_token_destroy(token);
         }
     }
-    cos_ring_buffer_destroy(tokenizer->peeked_token_entries);
-    while (cos_ring_buffer_get_count(tokenizer->free_token_entries) > 0) {
-        CosTokenEntry *entry = NULL;
-        if (cos_ring_buffer_pop_front(tokenizer->free_token_entries,
-                                      &entry)) {
-            cos_token_entry_free(entry);
-        }
-    }
-    cos_ring_buffer_destroy(tokenizer->free_token_entries);
+    cos_ring_buffer_destroy(tokenizer->peeked_tokens);
 
-    if (tokenizer->current_token_entry) {
-        cos_token_entry_free(COS_nonnull_cast(tokenizer->current_token_entry));
+    while (cos_ring_buffer_get_count(tokenizer->free_tokens) > 0) {
+        CosToken *token = NULL;
+        if (cos_ring_buffer_pop_front(tokenizer->free_tokens,
+                                      &token)) {
+            cos_token_destroy(token);
+        }
     }
+    cos_ring_buffer_destroy(tokenizer->free_tokens);
+
+    cos_input_stream_reader_free(tokenizer->input_stream_reader);
 
     free(tokenizer);
 }
@@ -215,134 +225,146 @@ cos_tokenizer_has_next_token(CosTokenizer *tokenizer)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
 
-    CosToken peeked_token = {0};
-    const CosTokenValue *peeked_token_value = NULL;
-
-    if (!cos_tokenizer_peek_next_token(tokenizer,
-                                       &peeked_token,
-                                       &peeked_token_value,
-                                       NULL)) {
+    const CosToken *peeked_token = cos_tokenizer_peek_next_token(tokenizer,
+                                                                 NULL);
+    if (!peeked_token) {
         return false;
     }
 
-    return (peeked_token.type != CosToken_Type_EOF);
+    return (peeked_token->type != CosToken_Type_EOF);
 }
 
-bool
-cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
-                             CosToken *out_token,
-                             CosTokenValue * COS_Nullable *out_token_value,
-                             CosError * COS_Nullable out_error)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(out_token != NULL);
-    COS_PARAMETER_ASSERT(out_token_value != NULL);
-    if (!tokenizer || !out_token || !out_token_value) {
-        return false;
-    }
-
-    // Reset the current token entry.
-    CosTokenEntry * const previous_token_entry = tokenizer->current_token_entry;
-    if (previous_token_entry) {
-        cos_token_value_reset(previous_token_entry->value);
-
-        if (!cos_ring_buffer_push_back(tokenizer->free_token_entries,
-                                       &previous_token_entry,
-                                       NULL)) {
-            // Error: out of memory.
-            cos_token_entry_free(previous_token_entry);
-        }
-
-        tokenizer->current_token_entry = NULL;
-    }
-
-    CosTokenEntry *token_entry = NULL;
-
-    // Check if we already have a peeked token.
-    if (cos_ring_buffer_pop_front(tokenizer->peeked_token_entries,
-                                  &token_entry)) {
-        COS_ASSERT(token_entry != NULL, "Expected a token entry");
-        if (!token_entry) {
-            goto failure;
-        }
-    }
-    else {
-        token_entry = cos_tokenizer_get_token_entry_(tokenizer);
-        if (!token_entry) {
-            goto failure;
-        }
-
-        // We don't have a peeked token, so we need to read the next token.
-        cos_tokenizer_read_next_token_(tokenizer,
-                                       &(token_entry->token),
-                                       token_entry->value,
-                                       out_error);
-    }
-
-    *out_token = token_entry->token;
-    *out_token_value = token_entry->value;
-
-    tokenizer->current_token_entry = token_entry;
-
-    return true;
-
-failure:
-
-    return false;
-}
-
-bool
+const CosToken *
 cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
-                              CosToken *out_token,
-                              const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
                               CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(out_token != NULL);
-    if (!tokenizer || !out_token) {
-        return false;
+    if (!tokenizer) {
+        return NULL;
     }
 
-    CosTokenEntry *entry = NULL;
+    CosToken *token = NULL;
 
-    // Check if we have a token in the buffer.
-    if (cos_ring_buffer_get_first_item(tokenizer->peeked_token_entries,
-                                       &entry)) {
-        // We have a peeked token.
-        COS_ASSERT(entry != NULL, "Expected a token entry");
-        if (COS_UNLIKELY(!entry)) {
+    // Check if we already have a token in the buffer.
+    if (cos_ring_buffer_get_first_item(tokenizer->peeked_tokens,
+                                       &token)) {
+        COS_ASSERT(token != NULL, "Expected a token");
+        if (!token) {
             goto failure;
         }
     }
     else {
         // We don't have a token in the buffer, so we need to read the next token.
-        entry = cos_tokenizer_get_token_entry_(tokenizer);
-        if (COS_UNLIKELY(!entry)) {
+        token = cos_get_next_token_(tokenizer,
+                                    out_error);
+        if (!token) {
             goto failure;
         }
 
-        cos_tokenizer_read_next_token_(tokenizer,
-                                       &(entry->token),
-                                       entry->value,
-                                       out_error);
-
-        cos_ring_buffer_push_back(tokenizer->peeked_token_entries,
-                                  &entry,
-                                  NULL);
+        cos_ring_buffer_push_back(tokenizer->peeked_tokens,
+                                  &token,
+                                  out_error);
     }
-
-    *out_token = entry->token;
-    if (out_token_value) {
-        *out_token_value = entry->value;
-    }
-
-    return true;
+    return token;
 
 failure:
-    if (entry) {
-        cos_token_entry_free(entry);
+
+    return NULL;
+}
+
+CosToken *
+cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
+                             CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+
+    CosToken *token = NULL;
+
+    // Check if we already have a token in the buffer.
+    if (cos_ring_buffer_pop_front(tokenizer->peeked_tokens,
+                                  &token)) {
+        COS_ASSERT(token != NULL, "Expected a token");
+        if (!token) {
+            goto failure;
+        }
     }
-    return false;
+    else {
+        // We don't have a token in the buffer, so we need to read the next token.
+        token = cos_get_next_token_(tokenizer,
+                                    out_error);
+        if (!token) {
+            goto failure;
+        }
+    }
+
+    return token;
+
+failure:
+    return NULL;
+}
+
+void
+cos_tokenizer_release_token(CosTokenizer *tokenizer,
+                            CosToken *token)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(token != NULL);
+    if (!tokenizer || !token) {
+        return;
+    }
+
+    cos_release_token_(tokenizer, token);
+}
+
+static CosToken *
+cos_acquire_token_(CosTokenizer *tokenizer)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+
+    CosToken *token = NULL;
+
+    // Check if we have an available token.
+    if (cos_ring_buffer_pop_front(tokenizer->free_tokens,
+                                  &token)) {
+        COS_ASSERT(token != NULL, "Expected a token");
+        return token;
+    }
+
+    // Allocate a new token.
+    return cos_token_create();
+}
+
+static void
+cos_release_token_(CosTokenizer *tokenizer,
+                   CosToken *token)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(token != NULL);
+    if (!tokenizer || !token) {
+        return;
+    }
+
+    cos_token_reset(token);
+
+    if (!cos_ring_buffer_push_back(tokenizer->free_tokens,
+                                   &token,
+                                   NULL)) {
+        // Error: out of memory.
+        cos_token_destroy(token);
+    }
+}
+
+static CosToken *
+cos_get_next_token_(CosTokenizer *tokenizer,
+                    CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    if (!tokenizer) {
+        return NULL;
+    }
+
+    return cos_tokenizer_read_next_token_(tokenizer,
+                                          out_error);
 }
 
 bool
@@ -357,51 +379,62 @@ cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
         return false;
     }
 
-    CosTokenEntry *entry = NULL;
+    CosToken *token = NULL;
 
     // Check if we already have a second peeked token.
-    if (cos_ring_buffer_get_count(tokenizer->peeked_token_entries) > 1) {
+    if (cos_ring_buffer_get_count(tokenizer->peeked_tokens) > 1) {
         // We have at least 2 peeked tokens.
-        if (!cos_ring_buffer_get_item(tokenizer->peeked_token_entries,
+        if (!cos_ring_buffer_get_item(tokenizer->peeked_tokens,
                                       1,
-                                      &entry,
+                                      &token,
                                       NULL)) {
             goto failure;
         }
-        COS_ASSERT(entry != NULL, "Expected a token entry");
-        if (!entry) {
+        COS_ASSERT(token != NULL, "Expected a token");
+        if (!token) {
             goto failure;
         }
     }
     else {
         // We don't have enough peeked tokens, so we need to read the next token.
-        entry = cos_tokenizer_get_token_entry_(tokenizer);
-        if (!entry) {
+
+        token = cos_tokenizer_read_next_token_(tokenizer,
+                                               out_error);
+        if (!token) {
             goto failure;
         }
 
-        cos_tokenizer_read_next_token_(tokenizer,
-                                       &(entry->token),
-                                       entry->value,
-                                       out_error);
-
-        cos_ring_buffer_push_back(tokenizer->peeked_token_entries,
-                                  &entry,
+        cos_ring_buffer_push_back(tokenizer->peeked_tokens,
+                                  &token,
                                   NULL);
     }
 
-    *out_token = entry->token;
+    if (out_token) {
+        *out_token = *token;
+    }
     if (out_token_value) {
-        *out_token_value = entry->value;
+        *out_token_value = token->value;
     }
 
     return true;
 
 failure:
-    if (entry) {
-        cos_token_entry_free(entry);
-    }
+
     return false;
+}
+
+static void
+cos_consume_next_token_(CosTokenizer *tokenizer)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    if (!tokenizer) {
+        return;
+    }
+
+    CosToken *token = cos_get_next_token_(tokenizer, NULL);
+    if (token) {
+        cos_release_token_(tokenizer, token);
+    }
 }
 
 bool
@@ -411,36 +444,19 @@ cos_tokenizer_match_token(CosTokenizer *tokenizer,
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(type != CosToken_Type_Unknown);
 
-    CosToken token = {0};
-
-    if (!cos_tokenizer_peek_next_token(tokenizer,
-                                       &token,
-                                       NULL,
-                                       NULL)) {
+    const CosToken *peeked_token = cos_tokenizer_peek_next_token(tokenizer,
+                                                                 NULL);
+    if (!peeked_token) {
         return false;
     }
 
-    if (token.type == type) {
+    if (peeked_token->type == type) {
         // Consume the token.
-        cos_tokenizer_next_token(tokenizer);
+        cos_consume_next_token_(tokenizer);
         return true;
     }
 
     return false;
-}
-
-CosToken
-cos_tokenizer_next_token(CosTokenizer *tokenizer)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    CosToken token = {0};
-    CosTokenValue *token_value = NULL;
-    CosError error = CosErrorNone;
-
-    cos_tokenizer_get_next_token(tokenizer, &token, &token_value, &error);
-
-    return token;
 }
 
 bool
@@ -450,22 +466,19 @@ cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
     COS_PARAMETER_ASSERT(tokenizer != NULL);
     COS_PARAMETER_ASSERT(keyword_type != CosKeywordType_Unknown);
 
-    CosToken token = {0};
-    const CosTokenValue *token_value = NULL;
-    if (!cos_tokenizer_peek_next_token(tokenizer,
-                                       &token,
-                                       &token_value,
-                                       NULL)) {
+    const CosToken *peeked_token = cos_tokenizer_peek_next_token(tokenizer,
+                                                                 NULL);
+    if (!peeked_token) {
         return false;
     }
 
     CosKeywordType token_keyword_type = CosKeywordType_Unknown;
-    if (token.type == CosToken_Type_Keyword &&
-        cos_token_value_get_keyword(token_value,
+    if (peeked_token->type == CosToken_Type_Keyword &&
+        cos_token_value_get_keyword(peeked_token->value,
                                     &token_keyword_type) &&
         token_keyword_type == keyword_type) {
         // Consume the token.
-        cos_tokenizer_next_token(tokenizer);
+        cos_consume_next_token_(tokenizer);
 
         return true;
     }
@@ -473,37 +486,19 @@ cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
     return false;
 }
 
-static CosTokenEntry *
-cos_tokenizer_get_token_entry_(CosTokenizer *tokenizer)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    // Check if we have an available token entry.
-    CosTokenEntry *entry = NULL;
-    if (cos_ring_buffer_pop_front(tokenizer->free_token_entries,
-                                  &entry)) {
-        COS_ASSERT(entry != NULL, "Expected a token entry");
-        return entry;
-    }
-
-    // Allocate a new token entry.
-    return cos_token_entry_alloc();
-}
-
-static void
+static CosToken *
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
-                               CosToken *out_token,
-                               CosTokenValue *token_value,
                                CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(out_token != NULL);
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    if (!tokenizer || !out_token || !token_value) {
-        return;
+    if (!tokenizer) {
+        return NULL;
     }
 
-    CosToken token = {0};
+    CosToken * const token = cos_acquire_token_(tokenizer);
+    if (!token) {
+        goto failure;
+    }
 
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
@@ -511,14 +506,14 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
     const int c = cos_input_stream_reader_getc(tokenizer->input_stream_reader);
     switch (c) {
         case EOF: {
-            token.type = CosToken_Type_EOF;
+            token->type = CosToken_Type_EOF;
         } break;
 
         case CosCharacterSet_LeftSquareBracket: {
-            token.type = CosToken_Type_ArrayStart;
+            token->type = CosToken_Type_ArrayStart;
         } break;
         case CosCharacterSet_RightSquareBracket: {
-            token.type = CosToken_Type_ArrayEnd;
+            token->type = CosToken_Type_ArrayEnd;
         } break;
 
         case CosCharacterSet_Solidus: {
@@ -531,12 +526,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
             CosError error;
             if (cos_tokenizer_read_name_(tokenizer, string, &error)) {
-                token.type = CosToken_Type_Name;
-                cos_token_value_set_string(token_value, string);
+                token->type = CosToken_Type_Name;
+                cos_token_value_set_string(token->value, string);
             }
             else {
                 // Error: invalid name.
-                token.type = CosToken_Type_Unknown;
+                token->type = CosToken_Type_Unknown;
 
                 cos_error_propagate(out_error, error);
 
@@ -553,12 +548,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             }
 
             if (cos_tokenizer_read_literal_string_(tokenizer, data)) {
-                token.type = CosToken_Type_Literal_String;
-                cos_token_value_set_data(token_value, data);
+                token->type = CosToken_Type_Literal_String;
+                cos_token_value_set_data(token->value, data);
             }
             else {
                 // Error: invalid literal string.
-                token.type = CosToken_Type_Unknown;
+                token->type = CosToken_Type_Unknown;
 
                 cos_data_free(data);
             }
@@ -567,7 +562,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         case CosCharacterSet_LessThanSign: {
             // This is either a dictionary ("<<") or a hex string ("<").
             if (cos_tokenizer_match_(tokenizer, CosCharacterSet_LessThanSign)) {
-                token.type = CosToken_Type_DictionaryStart;
+                token->type = CosToken_Type_DictionaryStart;
             }
             else {
                 // This is a hex string.
@@ -579,12 +574,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
                 CosError error;
                 if (cos_tokenizer_read_hex_string_(tokenizer, data, &error)) {
-                    token.type = CosToken_Type_Hex_String;
-                    cos_token_value_set_data(token_value, data);
+                    token->type = CosToken_Type_Hex_String;
+                    cos_token_value_set_data(token->value, data);
                 }
                 else {
                     // Error: invalid hex string.
-                    token.type = CosToken_Type_Unknown;
+                    token->type = CosToken_Type_Unknown;
 
                     cos_error_propagate(out_error, error);
 
@@ -595,7 +590,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
         case CosCharacterSet_GreaterThanSign: {
             if (cos_tokenizer_match_(tokenizer, CosCharacterSet_GreaterThanSign)) {
-                token.type = CosToken_Type_DictionaryEnd;
+                token->type = CosToken_Type_DictionaryEnd;
             }
             else {
                 // Unexpected character.
@@ -623,19 +618,19 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             if (cos_read_number_(tokenizer, &number_value, &error)) {
                 // This is a number.
                 if (number_value.type == CosNumberType_Integer) {
-                    token.type = CosToken_Type_Integer;
-                    cos_token_value_set_integer_number(token_value,
+                    token->type = CosToken_Type_Integer;
+                    cos_token_value_set_integer_number(token->value,
                                                        number_value.value.integer);
                 }
                 else {
-                    token.type = CosToken_Type_Real;
-                    cos_token_value_set_real_number(token_value,
+                    token->type = CosToken_Type_Real;
+                    cos_token_value_set_real_number(token->value,
                                                     number_value.value.real);
                 }
             }
             else {
                 // Error: invalid number.
-                token.type = CosToken_Type_Unknown;
+                token->type = CosToken_Type_Unknown;
 
                 cos_error_propagate(out_error, error);
             }
@@ -657,20 +652,20 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 const CosKeywordType keyword_type = cos_keyword_type_from_string(cos_string_get_ref(string));
                 if (keyword_type != CosKeywordType_Unknown) {
                     // This is a keyword.
-                    token.type = CosToken_Type_Keyword;
-                    cos_token_value_set_keyword(token_value,
+                    token->type = CosToken_Type_Keyword;
+                    cos_token_value_set_keyword(token->value,
                                                 keyword_type);
                 }
                 else {
                     // Error: unrecognized token.
-                    token.type = CosToken_Type_Unknown;
+                    token->type = CosToken_Type_Unknown;
                 }
 
                 cos_string_free(string);
             }
             else {
                 // Error: invalid token.
-                token.type = CosToken_Type_Unknown;
+                token->type = CosToken_Type_Unknown;
 
                 cos_error_propagate(out_error, error);
 
@@ -679,7 +674,13 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         } break;
     }
 
-    *out_token = token;
+    return token;
+
+failure:
+    if (token) {
+        cos_release_token_(tokenizer, token);
+    }
+    return NULL;
 }
 
 static inline int

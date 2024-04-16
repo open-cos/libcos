@@ -300,47 +300,34 @@ cos_obj_parser_next_object_(CosObjParser *parser,
         return popped_obj;
     }
 
-    CosToken peeked_token = {0};
-    const CosTokenValue *peeked_token_value = NULL;
-    if (!cos_tokenizer_peek_next_token(parser->tokenizer,
-                                       &peeked_token,
-                                       &peeked_token_value,
-                                       error)) {
-        return NULL;
-    }
-
     CosObj *object = NULL;
 
-    CosToken token = {0};
-    CosTokenValue *token_value = NULL;
-
-    if (!cos_tokenizer_get_next_token(parser->tokenizer,
-                                      &token,
-                                      &token_value,
-                                      error)) {
+    CosToken *token = cos_tokenizer_get_next_token(parser->tokenizer,
+                                                   error);
+    if (!token) {
         return NULL;
     }
 
-    switch (token.type) {
+    switch (token->type) {
         case CosToken_Type_Unknown:
             break;
 
         case CosToken_Type_Literal_String: {
-            object = cos_obj_parser_handle_literal_string_(parser, &token, error);
+            object = cos_obj_parser_handle_literal_string_(parser, token, error);
         } break;
         case CosToken_Type_Hex_String: {
-            object = cos_obj_parser_handle_hex_string_(parser, &token, error);
+            object = cos_obj_parser_handle_hex_string_(parser, token, error);
         } break;
 
         case CosToken_Type_Name: {
-            object = cos_obj_parser_handle_name_(parser, token_value, error);
+            object = cos_obj_parser_handle_name_(parser, token->value, error);
         } break;
 
         case CosToken_Type_Integer: {
-            object = cos_handle_integer_(parser, token_value, error);
+            object = cos_handle_integer_(parser, token->value, error);
         } break;
         case CosToken_Type_Real: {
-            object = cos_obj_parser_handle_real_(parser, &token, error);
+            object = cos_obj_parser_handle_real_(parser, token, error);
         } break;
 
         case CosToken_Type_ArrayStart: {
@@ -356,12 +343,15 @@ cos_obj_parser_next_object_(CosObjParser *parser,
             break;
 
         case CosToken_Type_Keyword: {
-            object = cos_obj_parser_handle_keyword_(parser, token_value, error);
+            object = cos_obj_parser_handle_keyword_(parser, token->value, error);
         } break;
 
         case CosToken_Type_EOF:
             break;
     }
+
+    cos_tokenizer_release_token(parser->tokenizer,
+                                token);
 
     return object;
 }
@@ -461,15 +451,13 @@ cos_handle_integer_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken peeked_token = {0};
+    const CosToken *peeked_token = cos_tokenizer_peek_next_token(parser->tokenizer,
+                                                                 out_error);
+
     CosToken peeked_next_token = {0};
-    const CosTokenValue *peeked_token_value = NULL;
     const CosTokenValue *peeked_next_token_value = NULL;
 
-    if (!cos_tokenizer_peek_next_token(parser->tokenizer,
-                                       &peeked_token,
-                                       &peeked_token_value,
-                                       out_error) ||
+    if (!peeked_token ||
         !cos_tokenizer_peek_next_next_token(parser->tokenizer,
                                             &peeked_next_token,
                                             &peeked_next_token_value,
@@ -477,7 +465,7 @@ cos_handle_integer_(CosObjParser *parser,
         goto integer_number;
     }
 
-    if (peeked_token.type == CosToken_Type_Integer &&
+    if (peeked_token->type == CosToken_Type_Integer &&
         peeked_next_token.type == CosToken_Type_Keyword) {
         // This could be an indirect object definition or reference.
         // Check the keyword type to determine which one it is.

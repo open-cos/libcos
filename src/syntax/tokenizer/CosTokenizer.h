@@ -2,16 +2,13 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-//
-// Created by david on 03/06/23.
-//
+#ifndef LIBCOS_SYNTAX_TOKENIZER_COS_TOKENIZER_H
+#define LIBCOS_SYNTAX_TOKENIZER_COS_TOKENIZER_H
 
-#ifndef LIBCOS_COS_TOKENIZER_H
-#define LIBCOS_COS_TOKENIZER_H
-
-#include "libcos/common/CosDefines.h"
-#include "libcos/common/CosTypes.h"
 #include "syntax/tokenizer/CosToken.h"
+
+#include <libcos/common/CosDefines.h>
+#include <libcos/common/CosTypes.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -40,27 +37,21 @@ cos_tokenizer_alloc(CosInputStream *input_stream)
 bool
 cos_tokenizer_has_next_token(CosTokenizer *tokenizer);
 
-/**
- * Peek the second next token without consuming it.
- *
- * @param tokenizer The tokenizer.
- *
- * @return The second next token.
- */
-CosToken
-cos_tokenizer_peek_next_token_(CosTokenizer *tokenizer);
-
-bool
-cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
-                             CosToken *out_token,
-                             CosTokenValue * COS_Nullable * COS_Nonnull out_token_value,
-                             CosError * COS_Nullable out_error);
-
-bool
+const CosToken * COS_Nullable
 cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
-                              CosToken *out_token,
-                              const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
-                              CosError * COS_Nullable out_error);
+                              CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+CosToken * COS_Nullable
+cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
+                             CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+void
+cos_tokenizer_release_token(CosTokenizer *tokenizer,
+                            CosToken *token)
+    COS_OWNERSHIP_TAKES(2);
 
 /**
  * @brief Peek the second next token without consuming it.
@@ -77,16 +68,6 @@ cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
                                    CosToken *out_token,
                                    const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
                                    CosError * COS_Nullable out_error);
-
-/**
- * Consume the next token.
- *
- * @param tokenizer The tokenizer.
- *
- * @return The next token.
- */
-CosToken
-cos_tokenizer_next_token(CosTokenizer *tokenizer);
 
 /**
  * Consume the next token if it matches the given token type.
@@ -119,4 +100,4 @@ cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
-#endif /* LIBCOS_COS_TOKENIZER_H */
+#endif /* LIBCOS_SYNTAX_TOKENIZER_COS_TOKENIZER_H */
