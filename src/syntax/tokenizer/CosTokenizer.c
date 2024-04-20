@@ -12,7 +12,6 @@
 #include "libcos/common/CosRingBuffer.h"
 #include "libcos/common/CosString.h"
 #include "libcos/syntax/CosLimits.h"
-#include "syntax/tokenizer/CosTokenEntry.h"
 
 #include <limits.h>
 #include <stdio.h>

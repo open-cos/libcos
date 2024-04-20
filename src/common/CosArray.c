@@ -46,10 +46,16 @@ cos_apply_func_(void *items,
                 size_t element_size,
                 void (*func)(void *item));
 
+static void
+cos_get_item_(const CosArray *array,
+              size_t index,
+              void *out_item)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
 static bool
 cos_array_insert_items_(CosArray *array,
                         size_t index,
-                        void *items,
+                        const void *items,
                         size_t count,
                         CosError * COS_Nullable error);
 
@@ -155,10 +161,11 @@ cos_array_get_capacity(const CosArray *array)
     return array->capacity;
 }
 
-void *
+bool
 cos_array_get_item(const CosArray *array,
                    size_t index,
-                   CosError * COS_Nullable error)
+                   void *out_item,
+                   CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(array != NULL);
     if (!array) {
@@ -168,7 +175,7 @@ cos_array_get_item(const CosArray *array,
     if (index >= array->count) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
                                            "Index out of bounds"),
-                            error);
+                            out_error);
         return NULL;
     }
 
@@ -180,7 +187,7 @@ cos_array_get_item(const CosArray *array,
 bool
 cos_array_insert_item(CosArray *array,
                       size_t index,
-                      void *item,
+                      const void *item,
                       CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(array != NULL);
@@ -189,12 +196,16 @@ cos_array_insert_item(CosArray *array,
         return false;
     }
 
-    return cos_array_insert_items(array, index, item, 1, error);
+    return cos_array_insert_items(array,
+                                  index,
+                                  item,
+                                  1,
+                                  error);
 }
 
 bool
 cos_array_append_item(CosArray *array,
-                      void *item,
+                      const void *item,
                       CosError * COS_Nullable error)
 {
     COS_PARAMETER_ASSERT(array != NULL);
@@ -214,7 +225,7 @@ cos_array_append_item(CosArray *array,
 bool
 cos_array_insert_items(CosArray *array,
                        size_t index,
-                       void *items,
+                       const void *items,
                        size_t count,
                        CosError * COS_Nullable error)
 {
@@ -233,7 +244,7 @@ cos_array_insert_items(CosArray *array,
 
 bool
 cos_array_append_items(CosArray *array,
-                       void *items,
+                       const void *items,
                        size_t count,
                        CosError * COS_Nullable error)
 {
@@ -260,6 +271,26 @@ cos_array_remove_item(CosArray *array,
 }
 
 bool
+cos_array_remove_last_item(CosArray *array,
+                           CosError * COS_Nullable error)
+{
+    COS_PARAMETER_ASSERT(array != NULL);
+
+    const size_t count = array->count;
+    if (count == 0) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
+                                           "Array is empty"),
+                            error);
+        return false;
+    }
+
+    return cos_array_remove_items_(array,
+                                   count - 1,
+                                   1,
+                                   error);
+}
+
+bool
 cos_array_remove_items(CosArray *array,
                        size_t index,
                        size_t count,
@@ -268,6 +299,51 @@ cos_array_remove_items(CosArray *array,
     COS_PARAMETER_ASSERT(array != NULL);
 
     return cos_array_remove_items_(array, index, count, error);
+}
+
+bool
+cos_array_push_last_item(CosArray *array,
+                         const void *item,
+                         CosError * COS_Nullable error)
+{
+    COS_PARAMETER_ASSERT(array != NULL);
+    COS_PARAMETER_ASSERT(item != NULL);
+    if (!array || !item) {
+        return false;
+    }
+
+    return cos_array_append_item(array,
+                                 item,
+                                 error);
+}
+
+bool
+cos_array_pop_last_item(CosArray *array,
+                        void *out_item,
+                        CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(array != NULL);
+    COS_PARAMETER_ASSERT(out_item != NULL);
+    if (!array || !out_item) {
+        return false;
+    }
+
+    const size_t count = array->count;
+    if (count == 0) {
+        return false;
+    }
+
+    const size_t index = count - 1;
+    if (!cos_array_get_item(array,
+                            index,
+                            out_item,
+                            out_error)) {
+        return false;
+    }
+
+    return cos_array_remove_item(array,
+                                 index,
+                                 out_error);
 }
 
 #pragma mark - Private
@@ -296,10 +372,29 @@ cos_apply_func_(void *items,
     }
 }
 
+static void
+cos_get_item_(const CosArray *array,
+              size_t index,
+              void *out_item)
+{
+    COS_PARAMETER_ASSERT(array != NULL);
+    COS_PARAMETER_ASSERT(out_item != NULL);
+    if (!array || !out_item) {
+        return;
+    }
+
+    const size_t element_size = array->element_size;
+    const unsigned char * const data = array->data;
+
+    memcpy(out_item,
+           data + (index * element_size),
+           element_size);
+}
+
 static bool
 cos_array_insert_items_(CosArray *array,
                         size_t index,
-                        void *items,
+                        const void *items,
                         size_t count,
                         CosError * COS_Nullable error)
 {
@@ -335,12 +430,6 @@ cos_array_insert_items_(CosArray *array,
     const size_t element_size = array->element_size;
     unsigned char * const data = array->data;
 
-    // Retain the new items.
-    CosArrayRetainItemCallback retain_callback = array->callbacks.retain;
-    if (retain_callback) {
-        cos_apply_func_(items, count, element_size, retain_callback);
-    }
-
     // We only need to shift existing items if we're inserting in the middle of the array.
     if (index < current_count) {
         // Shift the items after the insertion point to the end of the insertion range.
@@ -349,11 +438,23 @@ cos_array_insert_items_(CosArray *array,
                 (current_count - index) * element_size);
     }
 
+    void *insertion_dest = data + (index * element_size);
+
     // Copy the new items into the insertion range.
-    memcpy(data + (index * element_size),
+    memcpy(insertion_dest,
            items,
            count * element_size);
     array->count += count;
+
+    // Retain the new items.
+    CosArrayRetainItemCallback retain_callback = array->callbacks.retain;
+    if (retain_callback) {
+        void * const new_items = insertion_dest;
+        cos_apply_func_(new_items,
+                        count,
+                        element_size,
+                        retain_callback);
+    }
 
     return true;
 }
@@ -395,7 +496,10 @@ cos_array_remove_items_(CosArray *array,
     const CosArrayReleaseItemCallback release_callback = array->callbacks.release;
     if (release_callback) {
         void * const items = removal_start;
-        cos_apply_func_(items, count, element_size, release_callback);
+        cos_apply_func_(items,
+                        count,
+                        element_size,
+                        release_callback);
     }
 
     const size_t trailing_item_count = current_count - (index + count);

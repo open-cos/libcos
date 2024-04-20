@@ -27,6 +27,7 @@ typedef struct CosArray CosArray;
 typedef struct CosDict CosDict;
 typedef struct CosList CosList;
 typedef struct CosRingBuffer CosRingBuffer;
+typedef struct CosStack CosStack;
 
 typedef struct CosNumber CosNumber;
 

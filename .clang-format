@@ -43,6 +43,9 @@ AttributeMacros:
   - COS_REALLOCATOR_FUNC
   - COS_DEALLOCATOR_FUNC
   - COS_DEALLOCATOR_FUNC_INDEX
+  - COS_OWNERSHIP_HOLDS
+  - COS_OWNERSHIP_TAKES
+  - COS_OWNERSHIP_RETURNS
 BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBraces: Custom # See BraceWrapping

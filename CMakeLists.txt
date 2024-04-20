@@ -88,8 +88,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
-    src/syntax/tokenizer/CosToken.c
-
+    include/libcos/common/CosStack.h
+    src/common/CosStack.c
 )
 
 target_include_directories(libcos
@@ -148,6 +148,7 @@ target_sources(libcos PRIVATE
     src/syntax/tokenizer/CosTokenizer.c
     src/syntax/tokenizer/CosTokenizer.h
     src/syntax/CosKeywords.c
+    src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosToken.h
     src/syntax/tokenizer/CosTokenEntry.c
     src/syntax/tokenizer/CosTokenEntry.h
@@ -320,7 +321,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -g
         
 #        -fsanitize=address
-#
+
 #        -fsanitize=undefined
 #        -fsanitize=float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,nullability
         

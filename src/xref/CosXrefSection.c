@@ -81,7 +81,14 @@ cos_xref_section_get_subsection(const CosXrefSection *section,
         return NULL;
     }
 
-    return cos_array_get_item(section->subsections, index, out_error);
+    CosXrefSubsection *subsection = NULL;
+    if (!cos_array_get_item(section->subsections,
+                            index,
+                            &subsection,
+                            out_error)) {
+        return NULL;
+    }
+    return subsection;
 }
 
 bool

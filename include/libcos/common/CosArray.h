@@ -63,14 +63,18 @@ cos_array_get_capacity(const CosArray *array);
  *
  * @param array The array.
  * @param index The index of the item to get.
- * @param error On input, a pointer to an error object, or @c NULL.
+ * @param out_item The output item.
+ * @param out_error On input, a pointer to an error object, or @c NULL.
  *
  * @return The item at the given index, or @c NULL if an error occurred.
  */
-void * COS_Nullable
+bool
 cos_array_get_item(const CosArray *array,
                    size_t index,
-                   CosError * COS_Nullable error);
+                   void *out_item,
+                   CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 /** @name Insertion */
 /** @{ **/
@@ -78,24 +82,24 @@ cos_array_get_item(const CosArray *array,
 bool
 cos_array_insert_item(CosArray *array,
                       size_t index,
-                      void *item,
+                      const void *item,
                       CosError * COS_Nullable error);
 
 bool
 cos_array_append_item(CosArray *array,
-                      void *item,
+                      const void *item,
                       CosError * COS_Nullable error);
 
 bool
 cos_array_insert_items(CosArray *array,
                        size_t index,
-                       void *items,
+                       const void *items,
                        size_t count,
                        CosError * COS_Nullable error);
 
 bool
 cos_array_append_items(CosArray *array,
-                       void *items,
+                       const void *items,
                        size_t count,
                        CosError * COS_Nullable error);
 
@@ -110,12 +114,37 @@ cos_array_remove_item(CosArray *array,
                       CosError * COS_Nullable error);
 
 bool
+cos_array_remove_last_item(CosArray *array,
+                           CosError * COS_Nullable error);
+
+bool
 cos_array_remove_items(CosArray *array,
                        size_t index,
                        size_t count,
                        CosError * COS_Nullable error);
 
-/** @} */
+/** @} **/
+
+/** @{ **/
+/**
+ * @name Push and Pop Convenience Functions
+ */
+
+bool
+cos_array_push_last_item(CosArray *array,
+                         const void *item,
+                         CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_READ_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
+bool
+cos_array_pop_last_item(CosArray *array,
+                        void *out_item,
+                        CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
+/** @} **/
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -97,9 +97,14 @@ cos_array_obj_get_at(const CosArrayObj *array_obj,
         return NULL;
     }
 
-    return cos_array_get_item(array_obj->value,
-                              index,
-                              out_error);
+    CosObj *obj = NULL;
+    if (!cos_array_get_item(array_obj->value,
+                            index,
+                            &obj,
+                            out_error)) {
+        return NULL;
+    }
+    return obj;
 }
 
 bool
