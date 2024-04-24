@@ -89,7 +89,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_library(libcos SHARED
     src/dummy.c
     include/libcos/common/CosStack.h
-    src/common/CosStack.c
+    include/libcos/common/CosBasicStack.h
+    src/common/CosBasicStack.c
+    include/libcos/common/CosStack.inl
 )
 
 target_include_directories(libcos
