@@ -57,8 +57,7 @@ cos_string_alloc_with_str(const char *str)
 CosString * COS_Nullable
 cos_string_alloc_with_strn(const char *str, size_t n)
     COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT
-    COS_ATTR_ACCESS_READONLY_SIZE(1, 2);
+    COS_WARN_UNUSED_RESULT COS_ATTR_ACCESS_READ_ONLY_SIZE(1, 2);
 
 /**
  * Frees a string.
@@ -147,7 +146,7 @@ cos_string_append_str(CosString *string, const char *str)
 
 bool
 cos_string_append_strn(CosString *string, const char *str, size_t n)
-    COS_ATTR_ACCESS_READONLY_SIZE(2, 3);
+    COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3);
 
 /**
  * Appends the given character to the string.
@@ -228,7 +227,7 @@ cos_string_ref_from_str(const char *str)
  */
 CosStringRef
 cos_string_ref_make(const char *str, size_t n)
-    COS_ATTR_ACCESS_READONLY_SIZE(1, 2);
+    COS_ATTR_ACCESS_READ_ONLY_SIZE(1, 2);
 
 /**
  * Compares two string references for equality.

@@ -36,6 +36,12 @@
 #define COS_HAS_BUILTIN(x) 0
 #endif
 
+#if defined(__has_feature)
+#define COS_HAS_FEATURE(x) __has_feature(x)
+#else
+#define COS_HAS_FEATURE(x) 0
+#endif
+
 #if defined(__has_extension)
 #define COS_HAS_EXTENSION(x) __has_extension(x)
 #else
@@ -96,6 +102,17 @@
 #define COS_NORETURN __attribute__((noreturn))
 #else
 #define COS_NORETURN
+#endif
+
+/**
+ * @def COS_ANALYZER_NORETURN
+ *
+ * @brief Marks a function as not returning for the static analyzer.
+ */
+#if COS_HAS_FEATURE(attribute_analyzer_noreturn)
+#define COS_ANALYZER_NORETURN __attribute__((analyzer_noreturn))
+#else
+#define COS_ANALYZER_NORETURN
 #endif
 
 /**
@@ -206,20 +223,23 @@
 #endif
 
 #if COS_HAS_ATTRIBUTE(ownership_takes)
-#define COS_ATTR_OWNERSHIP_TAKES(module, ptr_index) __attribute__((ownership_takes(module, ptr_index)))
+#define COS_ATTR_OWNERSHIP_TAKES(module, ...) __attribute__((ownership_takes(module, __VA_ARGS__)))
 #else
-#define COS_ATTR_OWNERSHIP_TAKES(module, ptr_index)
+#define COS_ATTR_OWNERSHIP_TAKES(module, ...)
 #endif
 
 #define COS_MALLOC_OWNERSHIP_RETURNS COS_ATTR_OWNERSHIP_RETURNS(malloc)
 #define COS_MALLOC_OWNERSHIP_RETURNS_SIZE(size_index) COS_ATTR_OWNERSHIP_RETURNS_SIZE(malloc, size_index)
 #define COS_MALLOC_OWNERSHIP_HOLDS(ptr_index) COS_ATTR_OWNERSHIP_HOLDS(malloc, ptr_index)
-#define COS_MALLOC_OWNERSHIP_TAKES(ptr_index) COS_ATTR_OWNERSHIP_TAKES(malloc, ptr_index)
+#define COS_MALLOC_OWNERSHIP_TAKES(...) COS_ATTR_OWNERSHIP_TAKES(malloc, __VA_ARGS__)
 
 /**
  * @brief Marks a function as returning ownership of a pointer.
  */
-#define COS_OWNERSHIP_RETURNS COS_MALLOC_OWNERSHIP_RETURNS COS_WARN_UNUSED_RESULT
+#define COS_OWNERSHIP_RETURNS    \
+    COS_MALLOC_OWNERSHIP_RETURNS \
+    COS_ATTR_MALLOC \
+    COS_WARN_UNUSED_RESULT
 
 /**
  * @brief Marks a function as holding ownership of a pointer.
@@ -227,9 +247,9 @@
 #define COS_OWNERSHIP_HOLDS(ptr_index) COS_MALLOC_OWNERSHIP_HOLDS(ptr_index)
 
 /**
- * @brief Marks a function as taking ownership of a pointer.
+ * @brief Marks a function as taking ownership of a pointer or pointers.
  */
-#define COS_OWNERSHIP_TAKES(ptr_index) COS_MALLOC_OWNERSHIP_TAKES(ptr_index)
+#define COS_OWNERSHIP_TAKES(...) COS_MALLOC_OWNERSHIP_TAKES(__VA_ARGS__)
 
 /**
  * Pointer access mode attributes.
@@ -248,7 +268,7 @@
 #define COS_ATTR_ACCESS_WRITE_ONLY(ref_index) COS_ATTR_ACCESS(write_only, ref_index)
 #define COS_ATTR_ACCESS_NONE(ref_index) COS_ATTR_ACCESS(none, ref_index)
 
-#define COS_ATTR_ACCESS_READONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_only, ref_index, size_index)
+#define COS_ATTR_ACCESS_READ_ONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_only, ref_index, size_index)
 #define COS_ATTR_ACCESS_READ_WRITE_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_write, ref_index, size_index)
 #define COS_ATTR_ACCESS_WRITE_ONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(write_only, ref_index, size_index)
 
@@ -277,7 +297,7 @@
 #define COS_ALLOCATOR_FUNC       \
     COS_ATTR_MALLOC              \
     COS_MALLOC_OWNERSHIP_RETURNS \
-        COS_WARN_UNUSED_RESULT
+    COS_WARN_UNUSED_RESULT
 
 /**
  * @brief Marks a function as an allocator that returns a pointer to memory of the specified size.

@@ -70,7 +70,7 @@ cos_fatal_assertion_failure_(const char *condition,
                              const char * COS_Nullable message,
                              ...)
     COS_FORMAT_PRINTF(5, 6)
-    COS_NORETURN;
+    COS_ANALYZER_NORETURN;
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

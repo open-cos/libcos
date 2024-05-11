@@ -115,13 +115,55 @@ mainxx(COS_ATTR_UNUSED int argc,
                 printf("Dictionary End\n");
             } break;
 
-            case CosToken_Type_Keyword: {
-                CosKeywordType value = CosKeywordType_Unknown;
-                if (cos_token_value_get_keyword(token->value,
-                                                &value)) {
-                    printf("Keyword: %s\n",
-                           cos_keyword_type_to_string(value));
-                }
+            case CosToken_Type_True: {
+                printf("True\n");
+            } break;
+            case CosToken_Type_False: {
+                printf("False\n");
+            } break;
+
+            case CosToken_Type_Null: {
+                printf("Null\n");
+            } break;
+
+            case CosToken_Type_R: {
+                printf("R\n");
+            } break;
+
+            case CosToken_Type_Obj: {
+                printf("Obj\n");
+            } break;
+
+            case CosToken_Type_EndObj: {
+                printf("EndObj\n");
+            } break;
+
+            case CosToken_Type_Stream: {
+                printf("Stream\n");
+            } break;
+
+            case CosToken_Type_EndStream: {
+                printf("EndStream\n");
+            } break;
+
+            case CosToken_Type_XRef: {
+                printf("XRef\n");
+            } break;
+
+            case CosToken_Type_N: {
+                printf("N\n");
+            } break;
+
+            case CosToken_Type_F: {
+                printf("F\n");
+            } break;
+
+            case CosToken_Type_Trailer: {
+                printf("Trailer\n");
+            } break;
+
+            case CosToken_Type_StartXRef: {
+                printf("StartXRef\n");
             } break;
 
             case CosToken_Type_EOF: {

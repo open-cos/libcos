@@ -19,7 +19,6 @@ struct CosTokenValue {
         CosTokenValue_Type_RealNumber,
         CosTokenValue_Type_String,
         CosTokenValue_Type_Data,
-        CosTokenValue_Type_Keyword,
     } type;
 
     union {
@@ -28,7 +27,6 @@ struct CosTokenValue {
         double real_number;
         CosString *string;
         CosData *data;
-        CosKeywordType keyword;
     } value;
 };
 
@@ -71,7 +69,6 @@ cos_token_value_reset(CosTokenValue *token_value)
         case CosTokenValue_Type_IntegerNumber:
         case CosTokenValue_Type_LongIntegerNumber:
         case CosTokenValue_Type_RealNumber:
-        case CosTokenValue_Type_Keyword:
             break;
 
         case CosTokenValue_Type_String: {
@@ -168,22 +165,6 @@ cos_token_value_get_real_number(const CosTokenValue *token_value,
     return true;
 }
 
-bool
-cos_token_value_get_keyword(const CosTokenValue *token_value,
-                            CosKeywordType *result)
-{
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
-    if (!token_value || token_value->type != CosTokenValue_Type_Keyword) {
-        return false;
-    }
-
-    if (result) {
-        *result = token_value->value.keyword;
-    }
-    return true;
-}
-
 #pragma mark - Setters
 
 void
@@ -261,21 +242,6 @@ cos_token_value_set_real_number(CosTokenValue *token_value,
 
     token_value->type = CosTokenValue_Type_RealNumber;
     token_value->value.real_number = value;
-}
-
-void
-cos_token_value_set_keyword(CosTokenValue *token_value,
-                            CosKeywordType value)
-{
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    if (!token_value) {
-        return;
-    }
-
-    cos_token_value_reset(token_value);
-
-    token_value->type = CosTokenValue_Type_Keyword;
-    token_value->value.keyword = value;
 }
 
 bool

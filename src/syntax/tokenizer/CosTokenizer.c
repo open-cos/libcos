@@ -132,6 +132,9 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer,
                           CosString *string,
                           CosError *error);
 
+static CosToken_Type
+cos_keyword_token_type_from_string_(CosStringRef string);
+
 #pragma mark - Public
 
 CosTokenizer *
@@ -199,7 +202,7 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     while (cos_ring_buffer_get_count(tokenizer->peeked_tokens) > 0) {
         CosToken *token = NULL;
         if (cos_ring_buffer_pop_front(tokenizer->peeked_tokens,
-                                      &token)) {
+                                      (void *)&token)) {
             cos_token_destroy(token);
         }
     }
@@ -208,7 +211,7 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     while (cos_ring_buffer_get_count(tokenizer->free_tokens) > 0) {
         CosToken *token = NULL;
         if (cos_ring_buffer_pop_front(tokenizer->free_tokens,
-                                      &token)) {
+                                      (void *)&token)) {
             cos_token_destroy(token);
         }
     }
@@ -246,7 +249,7 @@ cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
 
     // Check if we already have a token in the buffer.
     if (cos_ring_buffer_get_first_item(tokenizer->peeked_tokens,
-                                       &token)) {
+                                       (void *)&token)) {
         COS_ASSERT(token != NULL, "Expected a token");
         if (!token) {
             goto failure;
@@ -261,7 +264,7 @@ cos_tokenizer_peek_next_token(CosTokenizer *tokenizer,
         }
 
         cos_ring_buffer_push_back(tokenizer->peeked_tokens,
-                                  &token,
+                                  (void *)&token,
                                   out_error);
     }
     return token;
@@ -281,7 +284,7 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
 
     // Check if we already have a token in the buffer.
     if (cos_ring_buffer_pop_front(tokenizer->peeked_tokens,
-                                  &token)) {
+                                  (void *)&token)) {
         COS_ASSERT(token != NULL, "Expected a token");
         if (!token) {
             goto failure;
@@ -324,7 +327,7 @@ cos_acquire_token_(CosTokenizer *tokenizer)
 
     // Check if we have an available token.
     if (cos_ring_buffer_pop_front(tokenizer->free_tokens,
-                                  &token)) {
+                                  (void *)&token)) {
         COS_ASSERT(token != NULL, "Expected a token");
         return token;
     }
@@ -346,7 +349,7 @@ cos_release_token_(CosTokenizer *tokenizer,
     cos_token_reset(token);
 
     if (!cos_ring_buffer_push_back(tokenizer->free_tokens,
-                                   &token,
+                                   (void *)&token,
                                    NULL)) {
         // Error: out of memory.
         cos_token_destroy(token);
@@ -385,7 +388,7 @@ cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
         // We have at least 2 peeked tokens.
         if (!cos_ring_buffer_get_item(tokenizer->peeked_tokens,
                                       1,
-                                      &token,
+                                      (void *)&token,
                                       NULL)) {
             goto failure;
         }
@@ -404,7 +407,7 @@ cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
         }
 
         cos_ring_buffer_push_back(tokenizer->peeked_tokens,
-                                  &token,
+                                  (void *)&token,
                                   NULL);
     }
 
@@ -436,6 +439,24 @@ cos_consume_next_token_(CosTokenizer *tokenizer)
     }
 }
 
+CosToken *
+cos_tokenizer_match_next_token(CosTokenizer *tokenizer,
+                               CosToken_Type type,
+                               CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_PARAMETER_ASSERT(type != CosToken_Type_Unknown);
+
+    const CosToken * const peeked_token = cos_tokenizer_peek_next_token(tokenizer,
+                                                                        NULL);
+    if (!peeked_token || cos_token_get_type(peeked_token) != type) {
+        return NULL;
+    }
+
+    return cos_tokenizer_get_next_token(tokenizer,
+                                        out_error);
+}
+
 bool
 cos_tokenizer_match_token(CosTokenizer *tokenizer,
                           CosToken_Type type)
@@ -460,22 +481,30 @@ cos_tokenizer_match_token(CosTokenizer *tokenizer,
 
 bool
 cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
-                            CosKeywordType keyword_type)
+                            CosToken_Type keyword_type)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(keyword_type != CosKeywordType_Unknown);
+    COS_PARAMETER_ASSERT(keyword_type == CosToken_Type_True ||
+                         keyword_type == CosToken_Type_False ||
+                         keyword_type == CosToken_Type_Null ||
+                         keyword_type == CosToken_Type_R ||
+                         keyword_type == CosToken_Type_Obj ||
+                         keyword_type == CosToken_Type_EndObj ||
+                         keyword_type == CosToken_Type_Stream ||
+                         keyword_type == CosToken_Type_EndStream ||
+                         keyword_type == CosToken_Type_XRef ||
+                         keyword_type == CosToken_Type_N ||
+                         keyword_type == CosToken_Type_F ||
+                         keyword_type == CosToken_Type_Trailer ||
+                         keyword_type == CosToken_Type_StartXRef);
 
-    const CosToken *peeked_token = cos_tokenizer_peek_next_token(tokenizer,
-                                                                 NULL);
+    const CosToken * const peeked_token = cos_tokenizer_peek_next_token(tokenizer,
+                                                                        NULL);
     if (!peeked_token) {
         return false;
     }
 
-    CosKeywordType token_keyword_type = CosKeywordType_Unknown;
-    if (peeked_token->type == CosToken_Type_Keyword &&
-        cos_token_value_get_keyword(peeked_token->value,
-                                    &token_keyword_type) &&
-        token_keyword_type == keyword_type) {
+    if (peeked_token->type == keyword_type) {
         // Consume the token.
         cos_consume_next_token_(tokenizer);
 
@@ -648,12 +677,10 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             CosError error;
             if (cos_tokenizer_read_token_(tokenizer, string, &error)) {
                 // This might be a keyword.
-                const CosKeywordType keyword_type = cos_keyword_type_from_string(cos_string_get_ref(string));
-                if (keyword_type != CosKeywordType_Unknown) {
+                const CosToken_Type keyword_type = cos_keyword_token_type_from_string_(cos_string_get_ref(string));
+                if (keyword_type != CosToken_Type_Unknown) {
                     // This is a keyword.
-                    token->type = CosToken_Type_Keyword;
-                    cos_token_value_set_keyword(token->value,
-                                                keyword_type);
+                    token->type = keyword_type;
                 }
                 else {
                     // Error: unrecognized token.
@@ -1279,6 +1306,78 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
     }
 
     return true;
+}
+
+static CosToken_Type
+cos_keyword_token_type_from_string_(CosStringRef string)
+{
+    // The longest keywords are 9 characters long.
+    if (string.length == 0 || string.length > 9) {
+        return CosToken_Type_Unknown;
+    }
+
+    switch (string.data[0]) {
+        case 't': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("true")) == 0) {
+                return CosToken_Type_True;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("trailer")) == 0) {
+                return CosToken_Type_Trailer;
+            }
+        } break;
+        case 'f': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("f")) == 0) {
+                return CosToken_Type_F;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("false")) == 0) {
+                return CosToken_Type_False;
+            }
+        } break;
+        case 'n': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("n")) == 0) {
+                return CosToken_Type_N;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("null")) == 0) {
+                return CosToken_Type_Null;
+            }
+        } break;
+        case 'R': {
+            if (string.length == 1) {
+                return CosToken_Type_R;
+            }
+        } break;
+        case 'o': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("obj")) == 0) {
+                return CosToken_Type_Obj;
+            }
+        } break;
+        case 'e': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("endobj")) == 0) {
+                return CosToken_Type_EndObj;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("endstream")) == 0) {
+                return CosToken_Type_EndStream;
+            }
+        } break;
+        case 's': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("stream")) == 0) {
+                return CosToken_Type_Stream;
+            }
+            else if (cos_string_ref_cmp(string, cos_string_ref_const("startxref")) == 0) {
+                return CosToken_Type_StartXRef;
+            }
+        } break;
+        case 'x': {
+            if (cos_string_ref_cmp(string, cos_string_ref_const("xref")) == 0) {
+                return CosToken_Type_XRef;
+            }
+        } break;
+
+        default:
+            break;
+    }
+
+    return CosToken_Type_Unknown;
 }
 
 COS_ASSUME_NONNULL_END

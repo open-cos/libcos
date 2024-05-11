@@ -38,7 +38,7 @@ struct CosString {
 
 static bool
 cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
-    COS_ATTR_ACCESS_READONLY_SIZE(2, 3);
+    COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3);
 
 static bool
 cos_string_ensure_capacity_(CosString *string, size_t required_capacity);

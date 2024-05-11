@@ -5,11 +5,10 @@
 #ifndef LIBCOS_COS_TOKEN_VALUE_H
 #define LIBCOS_COS_TOKEN_VALUE_H
 
-#include "libcos/common/CosData.h"
-#include "libcos/common/CosDefines.h"
-#include "libcos/common/CosString.h"
-#include "libcos/common/CosTypes.h"
-#include "libcos/syntax/CosKeywords.h"
+#include <libcos/common/CosData.h>
+#include <libcos/common/CosDefines.h>
+#include <libcos/common/CosString.h>
+#include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
 
@@ -105,18 +104,6 @@ bool
 cos_token_value_get_real_number(const CosTokenValue *token_value,
                                 double *result);
 
-/**
- * @brief Gets the keyword value of a token value.
- *
- * @param token_value The token value.
- * @param result A pointer to the variable in which to store the keyword.
- *
- * @return @c true if the token value is a keyword, @c false otherwise.
- */
-bool
-cos_token_value_get_keyword(const CosTokenValue *token_value,
-                            CosKeywordType *result);
-
 #pragma mark - Setters
 
 /**
@@ -168,16 +155,6 @@ cos_token_value_set_long_integer_number(CosTokenValue *token_value,
 void
 cos_token_value_set_real_number(CosTokenValue *token_value,
                                 double value);
-
-/**
- * @brief Sets the keyword value of a token value.
- *
- * @param token_value The token value.
- * @param value The keyword value.
- */
-void
-cos_token_value_set_keyword(CosTokenValue *token_value,
-                            CosKeywordType value);
 
 #pragma mark - Ownership transfer
 

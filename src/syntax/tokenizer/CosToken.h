@@ -30,7 +30,24 @@ typedef enum CosToken_Type {
     CosToken_Type_DictionaryStart,
     CosToken_Type_DictionaryEnd,
 
-    CosToken_Type_Keyword,
+    //    CosToken_Type_Keyword,
+
+    CosToken_Type_True,
+    CosToken_Type_False,
+    CosToken_Type_Null,
+    CosToken_Type_R,
+    CosToken_Type_Obj,
+    CosToken_Type_EndObj,
+    CosToken_Type_Stream,
+    CosToken_Type_EndStream,
+
+    CosToken_Type_XRef,
+
+    CosToken_Type_N,
+    CosToken_Type_F,
+
+    CosToken_Type_Trailer,
+    CosToken_Type_StartXRef,
 
     CosToken_Type_EOF,
 } CosToken_Type;
@@ -75,6 +92,34 @@ cos_token_create(void)
  */
 void
 cos_token_reset(CosToken *token);
+
+/**
+ * @brief Gets the type of a token.
+ *
+ * @param token The token.
+ *
+ * @return The type of the token.
+ */
+CosToken_Type
+cos_token_get_type(const CosToken *token);
+
+CosTokenValue * COS_Nullable
+cos_token_get_value(const CosToken *token);
+
+bool
+cos_token_get_integer_value(const CosToken *token,
+                            int *out_value)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+CosData * COS_Nullable
+cos_token_move_data_value(CosToken *token)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_READ_WRITE(1);
+
+CosString * COS_Nullable
+cos_token_move_string_value(CosToken *token)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_READ_WRITE(1);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
