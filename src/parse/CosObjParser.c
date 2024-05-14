@@ -60,13 +60,8 @@ typedef enum CosObjParserFlags {
 
 } COS_ATTR_FLAG_ENUM CosObjParserFlags;
 
-typedef struct CosObjParserState {
-    unsigned int integer_count;
-} CosObjParserState;
-
 typedef struct CosObjParserContext {
     CosObjParserFlags flags;
-    CosObjParserState state;
 } CosObjParserContext;
 
 struct CosObjParser {
@@ -74,7 +69,6 @@ struct CosObjParser {
     CosTokenizer *tokenizer;
 
     CosRingBuffer *objects;
-    CosRingBuffer *integers_;
 
     CosToken * COS_Nullable next_token;
 
@@ -130,6 +124,9 @@ cos_obj_parser_push_object_(CosObjParser *parser,
 
 static CosObj * COS_Nullable
 cos_obj_parser_pop_object_(CosObjParser *parser);
+
+static bool
+cos_has_next_token_(CosObjParser *parser);
 
 static const CosToken * COS_Nullable
 cos_peek_next_token_(CosObjParser *parser,
@@ -191,7 +188,6 @@ cos_obj_parser_init_(CosObjParser * const self,
         return false;
     }
 
-    CosRingBuffer *integers = NULL;
     CosRingBuffer *objects = NULL;
 
     CosTokenizer * const tokenizer = cos_tokenizer_alloc(input_stream);
@@ -201,12 +197,6 @@ cos_obj_parser_init_(CosObjParser * const self,
 
     self->doc = document;
     self->tokenizer = tokenizer;
-
-    integers = cos_ring_buffer_create(sizeof(unsigned int),
-                                      2);
-    if (!integers) {
-        goto failure;
-    }
 
     objects = cos_ring_buffer_create(sizeof(CosObj *),
                                      3);
@@ -222,7 +212,6 @@ cos_obj_parser_init_(CosObjParser * const self,
         self->diagnostic_handler = cos_diagnostic_handler_get_default();
     }
 
-    self->integers_ = integers;
     self->objects = objects;
 
     return true;
@@ -230,9 +219,6 @@ cos_obj_parser_init_(CosObjParser * const self,
 failure:
     if (tokenizer) {
         cos_tokenizer_free(tokenizer);
-    }
-    if (integers) {
-        cos_ring_buffer_destroy(integers);
     }
     if (objects) {
         cos_ring_buffer_destroy(objects);
@@ -253,7 +239,6 @@ cos_obj_parser_destroy(CosObjParser *parser)
     }
     cos_tokenizer_free(parser->tokenizer);
 
-    cos_ring_buffer_destroy(parser->integers_);
     cos_ring_buffer_destroy(parser->objects);
 
     free(parser);
@@ -629,18 +614,15 @@ cos_handle_array_(CosObjParser *parser,
     }
 
     bool element_success = false;
-    while (cos_tokenizer_has_next_token(parser->tokenizer) &&
-           // Check for array end.
-           !cos_tokenizer_match_token(parser->tokenizer,
-                                      CosToken_Type_ArrayEnd)) {
+    while (cos_has_next_token_(parser)) {
         // Parse the next array element.
         element_success = cos_handle_array_element_(parser,
                                                     context,
                                                     array,
                                                     out_error);
-        if (COS_UNLIKELY(!element_success)) {
+        if (!element_success) {
             // Or, skip element and continue parsing?
-            goto failure;
+            break;
         }
     }
 
@@ -668,6 +650,15 @@ cos_handle_array_element_(CosObjParser *parser,
     COS_PARAMETER_ASSERT(context != NULL);
     COS_PARAMETER_ASSERT(array != NULL);
     if (COS_UNLIKELY(!parser || !context || !array)) {
+        return false;
+    }
+
+    CosToken * const token = cos_match_next_token_(parser,
+                                                   CosToken_Type_ArrayEnd,
+                                                   out_error);
+    if (token) {
+        cos_tokenizer_release_token(parser->tokenizer,
+                                    token);
         return false;
     }
 
@@ -724,18 +715,14 @@ cos_handle_dict_(CosObjParser *parser,
     }
 
     bool entry_success = false;
-
-    while (cos_tokenizer_has_next_token(parser->tokenizer) &&
-           // Check for dictionary end.
-           !cos_tokenizer_match_token(parser->tokenizer,
-                                      CosToken_Type_DictionaryEnd)) {
+    while (cos_has_next_token_(parser)) {
         entry_success = cos_handle_dict_entry_(parser,
                                                context,
                                                new_dict,
                                                out_error);
-        if (COS_UNLIKELY(!entry_success)) {
+        if (!entry_success) {
             // Or, skip entry and continue parsing?
-            goto failure;
+            break;
         }
     }
 
@@ -763,6 +750,15 @@ cos_handle_dict_entry_(CosObjParser *parser,
     COS_PARAMETER_ASSERT(context != NULL);
     COS_PARAMETER_ASSERT(dict != NULL);
     if (COS_UNLIKELY(!parser || !context || !dict)) {
+        return false;
+    }
+
+    CosToken * const token = cos_match_next_token_(parser,
+                                                   CosToken_Type_DictionaryEnd,
+                                                   out_error);
+    if (token) {
+        cos_tokenizer_release_token(parser->tokenizer,
+                                    token);
         return false;
     }
 
@@ -985,6 +981,17 @@ cos_handle_indirect_def_(CosObjParser *parser,
         goto failure;
     }
 
+    CosToken * const endobj_token = cos_match_next_token_(parser,
+                                                          CosToken_Type_EndObj,
+                                                          out_error);
+    if (endobj_token) {
+        cos_tokenizer_release_token(parser->tokenizer,
+                                    endobj_token);
+    }
+    else {
+        printf("Expected endobj token\n");
+    }
+
     return (CosObj *)cos_indirect_obj_alloc(obj_id,
                                             obj);
 
@@ -1078,21 +1085,24 @@ cos_handle_real_(CosObjParser *parser,
 {
     COS_PARAMETER_ASSERT(parser != NULL);
     COS_PARAMETER_ASSERT(token != NULL && token->type == CosToken_Type_Real);
-    if (!parser || !token) {
+    if (COS_UNLIKELY(!parser || !token)) {
         return NULL;
     }
 
     double real_value = 0.0;
-    if (cos_token_value_get_real_number(token->value,
-                                        &real_value)) {
-        return (CosObj *)cos_real_obj_alloc(real_value);
-    }
-    else {
+    if (!cos_token_value_get_real_number(token->value,
+                                         &real_value)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid real token"),
                             error);
-        return NULL;
+        goto failure;
     }
+
+    CosRealObj * const real_obj = cos_real_obj_alloc(real_value);
+    return (CosObj *)real_obj;
+
+failure:
+    return NULL;
 }
 
 // NOLINTEND(misc-no-recursion)
@@ -1107,7 +1117,7 @@ cos_obj_parser_push_object_(CosObjParser *parser,
     }
 
     cos_ring_buffer_push_back(parser->objects,
-                              &object,
+                              (void *)&object,
                               NULL);
 }
 
@@ -1120,8 +1130,23 @@ cos_obj_parser_pop_object_(CosObjParser *parser)
     }
 
     CosObj *obj = NULL;
-    cos_ring_buffer_pop_front(parser->objects, &obj);
+    cos_ring_buffer_pop_front(parser->objects, (void *)&obj);
     return obj;
+}
+
+static bool
+cos_has_next_token_(CosObjParser *parser)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    if (!parser) {
+        return false;
+    }
+
+    if (parser->next_token) {
+        return true;
+    }
+
+    return cos_tokenizer_has_next_token(parser->tokenizer);
 }
 
 static const CosToken *
