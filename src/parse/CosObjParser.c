@@ -25,6 +25,7 @@
 #include <libcos/objects/CosObj.h>
 #include <libcos/objects/CosRealObj.h>
 #include <libcos/objects/CosReferenceObj.h>
+#include <libcos/objects/CosStreamObj.h>
 #include <libcos/objects/CosStringObj.h>
 
 #include <stdlib.h>
@@ -144,6 +145,12 @@ cos_match_next_token_(CosObjParser *parser,
                       CosToken_Type type,
                       CosError * COS_Nullable out_error)
     COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
+static bool
+cos_matches_next_token_(CosObjParser *parser,
+                        CosToken_Type type,
+                        CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 CosObjParser *
@@ -339,6 +346,12 @@ cos_handle_dict_entry_(CosObjParser *parser,
                        const CosObjParserContext *context,
                        CosDict *dict,
                        CosError * COS_Nullable out_error);
+
+static CosObj * COS_Nullable
+cos_handle_stream_(CosObjParser *parser,
+                   const CosObjParserContext *context,
+                   CosDictObj *dict_obj,
+                   CosError * COS_Nullable out_error);
 
 static CosObj * COS_Nullable
 cos_handle_bool_(CosObjParser *parser,
@@ -731,6 +744,16 @@ cos_handle_dict_(CosObjParser *parser,
         goto failure;
     }
 
+    // Check if the next token denotes the beginning of a stream object's data.
+    if (cos_matches_next_token_(parser,
+                                CosToken_Type_Stream,
+                                out_error)) {
+        return cos_handle_stream_(parser,
+                                  context,
+                                  dict_obj,
+                                  out_error);
+    }
+
     return (CosObj *)dict_obj;
 
 failure:
@@ -806,6 +829,40 @@ failure:
         cos_obj_free(value);
     }
     return false;
+}
+
+static CosObj *
+cos_handle_stream_(CosObjParser *parser,
+                   const CosObjParserContext *context,
+                   CosDictObj *dict_obj,
+                   CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_PARAMETER_ASSERT(context != NULL);
+    COS_PARAMETER_ASSERT(dict_obj != NULL);
+    if (COS_UNLIKELY(!parser || !context || !dict_obj)) {
+        return NULL;
+    }
+
+    // ISO 32000-1:2008, Section 7.3.8 Stream Objects
+    // "The stream dictionary shall be a direct object, not an indirect object."
+    // "The stream dictionary shall contain the Length entry."
+    // "The Length entry shall be a direct object."
+    // "The value of the Length entry shall be the number of bytes from the beginning of the line
+    // following the keyword stream to the last byte just before the keyword endstream."
+    // "The keyword stream that follows the stream dictionary shall be followed by an end-of-line marker."
+    // "The keyword endstream shall be preceded by an end-of-line marker."
+
+    CosStreamObj *stream_obj = cos_stream_obj_create(dict_obj,
+                                                     NULL);
+    if (!stream_obj) {
+        goto failure;
+    }
+
+    return (CosObj *)stream_obj;
+
+failure:
+    return NULL;
 }
 
 static CosObj *
@@ -992,8 +1049,9 @@ cos_handle_indirect_def_(CosObjParser *parser,
         printf("Expected endobj token\n");
     }
 
-    return (CosObj *)cos_indirect_obj_alloc(obj_id,
-                                            obj);
+    CosIndirectObj * const indirect_obj = cos_indirect_obj_alloc(obj_id,
+                                                                 obj);
+    return (CosObj *)indirect_obj;
 
 failure:
     return NULL;
@@ -1210,6 +1268,28 @@ cos_match_next_token_(CosObjParser *parser,
     return cos_tokenizer_match_next_token(parser->tokenizer,
                                           type,
                                           error);
+}
+
+static bool
+cos_matches_next_token_(CosObjParser *parser,
+                        CosToken_Type type,
+                        CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(parser != NULL);
+    if (COS_UNLIKELY(!parser)) {
+        return false;
+    }
+
+    CosToken * const token = cos_match_next_token_(parser,
+                                                   type,
+                                                   out_error);
+    if (!token) {
+        return false;
+    }
+
+    cos_tokenizer_release_token(parser->tokenizer,
+                                token);
+    return true;
 }
 
 COS_ASSUME_NONNULL_END
