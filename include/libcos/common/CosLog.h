@@ -19,7 +19,7 @@ typedef enum CosLogLevel {
     CosLogLevel_Error,
     CosLogLevel_Warning,
     CosLogLevel_Info,
-    CosLogLevel_Debug,
+    CosLogLevel_Trace,
 } CosLogLevel;
 
 typedef enum CosLogMessageLevel {
@@ -27,12 +27,16 @@ typedef enum CosLogMessageLevel {
     CosLogMessageLevel_Error = CosLogLevel_Error,
     CosLogMessageLevel_Warning = CosLogLevel_Warning,
     CosLogMessageLevel_Info = CosLogLevel_Info,
-    CosLogMessageLevel_Debug = CosLogLevel_Debug,
+    CosLogMessageLevel_Trace = CosLogLevel_Trace,
 } CosLogMessageLevel;
 
 typedef void (*CosLogFunc)(CosLogContext *log_context,
                            CosLogMessageLevel message_level,
                            const char *message);
+
+void
+cos_log_context_destroy(CosLogContext *log_context)
+    COS_DEALLOCATOR_FUNC;
 
 /**
  * @brief Allocates a new log context.
@@ -44,14 +48,11 @@ typedef void (*CosLogFunc)(CosLogContext *log_context,
  * @return A new log context, or @c NULL if allocation failed.
  */
 CosLogContext * COS_Nullable
-cos_log_context_make(CosLogLevel level,
-                     CosLogFunc log_func,
-                     void * COS_Nullable user_data)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
-void
-cos_log_context_free(CosLogContext *log_context);
+cos_log_context_create(CosLogLevel level,
+                       CosLogFunc log_func,
+                       void * COS_Nullable user_data)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_log_context_destroy);
 
 void
 cos_log(CosLogContext *log_context,

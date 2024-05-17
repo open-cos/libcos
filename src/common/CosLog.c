@@ -31,9 +31,9 @@ struct CosLogContext {
 };
 
 CosLogContext *
-cos_log_context_make(CosLogLevel level,
-                     CosLogFunc log_func,
-                     void * COS_Nullable user_data)
+cos_log_context_create(CosLogLevel level,
+                       CosLogFunc log_func,
+                       void * COS_Nullable user_data)
 {
     COS_PARAMETER_ASSERT(log_func != NULL);
     if (!log_func) {
@@ -53,12 +53,27 @@ cos_log_context_make(CosLogLevel level,
 }
 
 void
+cos_log_context_destroy(CosLogContext *log_context)
+{
+    COS_PARAMETER_ASSERT(log_context != NULL);
+    if (!log_context) {
+        return;
+    }
+
+    free(log_context);
+}
+
+void
 cos_log(CosLogContext *log_context,
         CosLogMessageLevel message_level,
         const char *format,
         ...)
 {
     COS_PARAMETER_ASSERT(log_context != NULL);
+    COS_PARAMETER_ASSERT(format != NULL);
+    if (COS_UNLIKELY(!log_context || !format)) {
+        return;
+    }
 
     va_list args;
     va_start(args, format);
@@ -73,7 +88,8 @@ cos_logv(CosLogContext *log_context,
          va_list args)
 {
     COS_PARAMETER_ASSERT(log_context != NULL);
-    if (!log_context || !log_context->log_func) {
+    COS_PARAMETER_ASSERT(format != NULL);
+    if (COS_UNLIKELY(!log_context || !format || !log_context->log_func)) {
         return;
     }
 
@@ -92,5 +108,6 @@ cos_logv(CosLogContext *log_context,
 
     free(message);
 }
+
 
 COS_ASSUME_NONNULL_END
