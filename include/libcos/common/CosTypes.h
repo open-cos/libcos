@@ -67,6 +67,7 @@ typedef struct CosXrefFreeEntry CosXrefFreeEntry;
 
 typedef struct CosXrefTableParser CosXrefTableParser;
 
+typedef struct CosStream CosStream;
 typedef struct CosInputStream CosInputStream;
 typedef struct CosInputStreamFunctions CosInputStreamFunctions;
 typedef struct CosFileInputStream CosFileInputStream;
