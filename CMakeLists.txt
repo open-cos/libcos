@@ -96,6 +96,8 @@ add_library(libcos SHARED
     src/io/CosStream.c
     src/io/CosFileStream.c
     include/libcos/io/CosStreams.h
+    src/io/CosMemoryStream.c
+    include/libcos/io/CosMemoryStream.h
 )
 
 target_include_directories(libcos
@@ -310,7 +312,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Wint-conversion
         -Wstrict-prototypes
         -Wno-declaration-after-statement
-        -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension
+        -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension -Wno-unsafe-buffer-usage
         -Wno-gcc-compat
         -Werror=implicit-int -Werror=implicit-function-declaration
         -Werror=enum-conversion

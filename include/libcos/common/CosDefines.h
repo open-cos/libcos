@@ -238,8 +238,8 @@
  */
 #define COS_OWNERSHIP_RETURNS    \
     COS_MALLOC_OWNERSHIP_RETURNS \
-    COS_ATTR_MALLOC \
-    COS_WARN_UNUSED_RESULT
+    COS_ATTR_MALLOC              \
+        COS_WARN_UNUSED_RESULT
 
 /**
  * @brief Marks a function as holding ownership of a pointer.
@@ -348,8 +348,10 @@
  * @param size_index The index of the size argument.
  */
 #define COS_REALLOCATOR_FUNC(ptr_index, size_index) \
+    COS_ATTR_ALLOC_SIZE(size_index)                 \
     COS_DEALLOCATOR_FUNC_INDEX(ptr_index)           \
-    COS_ALLOCATOR_FUNC_SIZE(size_index)
+    COS_MALLOC_OWNERSHIP_RETURNS_SIZE(size_index)   \
+    COS_WARN_UNUSED_RESULT
 
 /**
  * Precondition.

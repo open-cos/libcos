@@ -16,6 +16,7 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 typedef signed long long CosStreamOffset;
+#define COS_STREAM_OFFSET_MAX LLONG_MAX
 
 /**
  * @brief The types of a stream offset adjustment.
