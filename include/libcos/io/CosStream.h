@@ -22,17 +22,17 @@ typedef signed long long CosStreamOffset;
  */
 typedef enum CosStreamOffsetWhence {
     /**
-     * @brief Set the stream's offset to @p offset.
+     * @brief Set the stream's offset to @p offset .
      */
     CosStreamOffsetWhence_Set = 0,
 
     /**
-     * @brief Set the stream's offset to the current offset plus @p offset.
+     * @brief Set the stream's offset to the current offset plus @p offset .
      */
     CosStreamOffsetWhence_Current = 1,
 
     /**
-     * @brief Set the stream's offset to the end of the stream plus @p offset.
+     * @brief Set the stream's offset to the end of the stream plus @p offset .
      */
     CosStreamOffsetWhence_End = 2,
 

@@ -94,6 +94,8 @@ add_library(libcos SHARED
     include/libcos/common/CosStack.inl
     include/libcos/io/CosStream.h
     src/io/CosStream.c
+    src/io/CosFileStream.c
+    include/libcos/io/CosStreams.h
 )
 
 target_include_directories(libcos

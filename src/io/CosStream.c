@@ -13,8 +13,8 @@
 COS_ASSUME_NONNULL_BEGIN
 
 struct CosStream {
-    CosStreamFunctions *functions;
     void *context;
+    CosStreamFunctions *functions;
 };
 
 CosStream *
