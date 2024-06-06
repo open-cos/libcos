@@ -95,9 +95,9 @@ add_library(libcos SHARED
     include/libcos/io/CosStream.h
     src/io/CosStream.c
     src/io/CosFileStream.c
-    include/libcos/io/CosStreams.h
     src/io/CosMemoryStream.c
     include/libcos/io/CosMemoryStream.h
+    include/libcos/io/CosFileStream.h
 )
 
 target_include_directories(libcos
@@ -328,16 +328,16 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         
         -g
         
-#        -fsanitize=address
-
-#        -fsanitize=undefined
-#        -fsanitize=float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,nullability
+        #        -fsanitize=address
+        
+        #        -fsanitize=undefined
+        #        -fsanitize=float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,nullability
         
         -fno-omit-frame-pointer
         -fno-optimize-sibling-calls
     )
     add_flags(COS_LINKER_FLAGS
-#        -fsanitize=address,undefined
+        #        -fsanitize=address,undefined
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS

@@ -2,10 +2,11 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#include "libcos/io/CosFileStream.h"
+
 #include "common/Assert.h"
 
 #include <libcos/common/CosError.h>
-#include <libcos/io/CosStreams.h>
 
 #include <errno.h>
 #include <stdio.h>
