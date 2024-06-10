@@ -239,7 +239,7 @@
 #define COS_OWNERSHIP_RETURNS    \
     COS_MALLOC_OWNERSHIP_RETURNS \
     COS_ATTR_MALLOC              \
-        COS_WARN_UNUSED_RESULT
+    COS_WARN_UNUSED_RESULT
 
 /**
  * @brief Marks a function as holding ownership of a pointer.
@@ -271,6 +271,12 @@
 #define COS_ATTR_ACCESS_READ_ONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_only, ref_index, size_index)
 #define COS_ATTR_ACCESS_READ_WRITE_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(read_write, ref_index, size_index)
 #define COS_ATTR_ACCESS_WRITE_ONLY_SIZE(ref_index, size_index) COS_ATTR_ACCESS_SIZE(write_only, ref_index, size_index)
+
+#if COS_HAS_ATTRIBUTE(null_terminated_string_arg)
+#define COS_ATTR_NULL_TERMINATED_STRING_ARG(arg_index) __attribute__((null_terminated_string_arg(arg_index)))
+#else
+#define COS_ATTR_NULL_TERMINATED_STRING_ARG(arg_index)
+#endif
 
 #if COS_HAS_ATTRIBUTE(fallthrough)
 #define COS_ATTR_FALLTHROUGH __attribute__((fallthrough))

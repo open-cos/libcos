@@ -29,6 +29,8 @@ AttributeMacros:
   - COS_ATTR_ACCESS_READ_ONLY_SIZE
   - COS_ATTR_ACCESS_WRITE_ONLY_SIZE
   - COS_ATTR_ACCESS_READ_WRITE_SIZE
+  - COS_ATTR_NULL_TERMINATED_STRING_ARG
+  - COS_ATTR_MALLOC
   - COS_FORMAT_PRINTF
   - COS_DEALLOC_FUNC
   - COS_WARN_UNUSED_RESULT
@@ -71,7 +73,7 @@ ColumnLimit: 0
 CompactNamespaces: false
 ContinuationIndentWidth: 4
 IndentCaseLabels: true
-IndentPPDirectives: None
+IndentPPDirectives: BeforeHash
 IndentWidth: 4
 KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1

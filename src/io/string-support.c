@@ -14,9 +14,22 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+void
+cos_strlcpy(char *dest,
+            size_t dest_size,
+            const char *src)
+{
+    COS_PARAMETER_ASSERT(dest != NULL);
+    COS_PARAMETER_ASSERT(src != NULL);
+
+    strlcpy(dest, src, dest_size);
+}
+
 char *
 cos_asprintf(const char *fmt, ...)
 {
+    COS_PARAMETER_ASSERT(fmt != NULL);
+
     va_list args;
     va_start(args, fmt);
     char * const result = cos_vasprintf(fmt, args);

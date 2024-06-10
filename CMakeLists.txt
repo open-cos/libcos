@@ -82,6 +82,10 @@ if (COS_BUILD_FOR_FUZZING)
 
 endif ()
 
+include(Portability)
+
+check_strerror()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -98,6 +102,9 @@ add_library(libcos SHARED
     src/io/CosMemoryStream.c
     include/libcos/io/CosMemoryStream.h
     include/libcos/io/CosFileStream.h
+    src/common/_CosInternalDefines.h
+    src/common/cos-strerror.c
+    src/common/cos-strerror.h
 )
 
 target_include_directories(libcos
