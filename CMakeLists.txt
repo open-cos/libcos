@@ -85,6 +85,10 @@ endif ()
 include(Portability)
 
 check_strerror()
+check_strlcpy()
+
+list(APPEND COS_COMPILE_DEFINITIONS
+    COS_HAVE_STRLCPY=${HAVE_STRLCPY})
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -92,19 +96,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
-    include/libcos/common/CosStack.h
-    include/libcos/common/CosBasicStack.h
-    src/common/CosBasicStack.c
-    include/libcos/common/CosStack.inl
-    include/libcos/io/CosStream.h
-    src/io/CosStream.c
-    src/io/CosFileStream.c
-    src/io/CosMemoryStream.c
-    include/libcos/io/CosMemoryStream.h
-    include/libcos/io/CosFileStream.h
-    src/common/_CosInternalDefines.h
-    src/common/cos-strerror.c
-    src/common/cos-strerror.h
 )
 
 target_include_directories(libcos
@@ -119,6 +110,7 @@ target_sources(libcos PRIVATE
     src/common/CharacterSet.c
     src/common/CharacterSet.h
     src/common/CosArray.c
+    src/common/CosBasicStack.c
     src/common/CosData.c
     src/common/CosDataRef.c
     src/common/CosDiagnostic.c
@@ -133,6 +125,9 @@ target_sources(libcos PRIVATE
     src/common/CosTypedArray.h
     src/common/CosUtils.c
     src/common/CosUtils.h
+    src/common/_CosInternalDefines.h
+    src/common/cos-strerror.c
+    src/common/cos-strerror.h
     src/common/memory/CosAllocator.c
     src/common/memory/CosMemory.c
     src/common/memory/CosRefCounter.c
@@ -140,10 +135,13 @@ target_sources(libcos PRIVATE
     src/io/CosBufferedInputStream.c
     src/io/CosBufferedInputStream.h
     src/io/CosFileInputStream.c
+    src/io/CosFileStream.c
     src/io/CosInputStream.c
     src/io/CosInputStreamReader.c
     src/io/CosInputStreamReader.h
     src/io/CosMemoryInputStream.c
+    src/io/CosMemoryStream.c
+    src/io/CosStream.c
     src/io/string-support.c
     src/objects/CosArrayObj.c
     src/objects/CosBoolObj.c
@@ -160,8 +158,6 @@ target_sources(libcos PRIVATE
     src/objects/CosStringObj.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
-    src/syntax/tokenizer/CosTokenizer.c
-    src/syntax/tokenizer/CosTokenizer.h
     src/syntax/CosKeywords.c
     src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosToken.h
@@ -169,6 +165,8 @@ target_sources(libcos PRIVATE
     src/syntax/tokenizer/CosTokenEntry.h
     src/syntax/tokenizer/CosTokenValue.c
     src/syntax/tokenizer/CosTokenValue.h
+    src/syntax/tokenizer/CosTokenizer.c
+    src/syntax/tokenizer/CosTokenizer.h
     src/xref/CosXrefEntry.c
     src/xref/CosXrefSection.c
     src/xref/CosXrefSubsection.c
@@ -183,6 +181,7 @@ target_sources(libcos PUBLIC
     include/libcos/CosDoc.h
     include/libcos/CosObjID.h
     include/libcos/common/CosArray.h
+    include/libcos/common/CosBasicStack.h
     include/libcos/common/CosData.h
     include/libcos/common/CosDataRef.h
     include/libcos/common/CosDefines.h
@@ -195,12 +194,17 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosMacros.h
     include/libcos/common/CosRingBuffer.h
     include/libcos/common/CosScanner.h
+    include/libcos/common/CosStack.h
+    include/libcos/common/CosStack.inl
     include/libcos/common/CosString.h
     include/libcos/common/CosTypes.h
     include/libcos/common/memory/CosAllocator.h
     include/libcos/common/memory/CosMemory.h
     include/libcos/io/CosFileInputStream.h
+    include/libcos/io/CosFileStream.h
     include/libcos/io/CosInputStream.h
+    include/libcos/io/CosMemoryStream.h
+    include/libcos/io/CosStream.h
     include/libcos/io/string-support.h
     include/libcos/objects/CosArrayObj.h
     include/libcos/objects/CosBoolObj.h

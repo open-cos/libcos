@@ -19,8 +19,10 @@ COS_ASSUME_NONNULL_BEGIN
  * @param dest The destination buffer.
  * @param dest_size The size of the @p dest buffer.
  * @param src The nul-terminated source string.
+ *
+ * @return The number of characters copied, excluding the nul-terminator.
  */
-void
+size_t
 cos_strlcpy(char *dest,
             size_t dest_size,
             const char *src)

@@ -14,7 +14,7 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-void
+size_t
 cos_strlcpy(char *dest,
             size_t dest_size,
             const char *src)
@@ -22,7 +22,24 @@ cos_strlcpy(char *dest,
     COS_PARAMETER_ASSERT(dest != NULL);
     COS_PARAMETER_ASSERT(src != NULL);
 
-    strlcpy(dest, src, dest_size);
+    if (COS_UNLIKELY(dest_size == 0)) {
+        return 0;
+    }
+
+#if COS_HAVE_STRLCPY
+    return strlcpy(dest, src, dest_size);
+#else
+    const size_t src_len = strlen(src);
+    const size_t copy_len = (src_len < dest_size) ? src_len : dest_size - 1;
+
+    memcpy(dest,
+           src,
+           copy_len);
+
+    dest[copy_len] = '\0';
+
+    return copy_len;
+#endif
 }
 
 char *

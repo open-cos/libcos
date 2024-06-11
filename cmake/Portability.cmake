@@ -1,6 +1,7 @@
 
 include(CMakePushCheckState)
 include(CheckFunctionExists)
+include(CheckSymbolExists)
 
 macro(check_strerror)
     message(CHECK_START "Checking for POSIX strerror_r()")
@@ -15,6 +16,21 @@ macro(check_strerror)
     cmake_pop_check_state()
     
     if (HAVE_POSIX_STRERROR_R)
+        message(CHECK_PASS "found")
+    else ()
+        message(CHECK_FAIL "not found")
+    endif ()
+endmacro()
+
+macro(check_strlcpy)
+    message(CHECK_START "Checking for strlcpy()")
+    
+    cmake_push_check_state(RESET)
+    set(CMAKE_REQUIRED_QUIET ON)
+    check_symbol_exists(strlcpy "string.h" HAVE_STRLCPY)
+    cmake_pop_check_state()
+    
+    if (HAVE_STRLCPY)
         message(CHECK_PASS "found")
     else ()
         message(CHECK_FAIL "not found")
