@@ -107,14 +107,22 @@ UseTab: Never
 SeparateDefinitionBlocks: Always
 ---
 Language: Cpp
-SeparateDefinitionBlocks: Always
+SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^"[[:alnum:].]+"'
+  # The config.h header.
+  - Regex: '"config\.h"'
+    Priority: 0
+    SortPriority: 1
+  # Project-local includes.
+  - Regex: '^"libcos/'
     Priority: 4
-  - Regex: '^<[[:alnum:].]+>'
+  # Local includes.
+  - Regex: '^"'
     Priority: 3
-  - Regex: '^<.*>'
-    Priority: 2
-  - Regex: '.*'
-    Priority: 1
+  # System includes with one slash.
+  - Regex: '^<.+/[^/]+>$'
+    Priority: 5
+  # System includes with no slashes.
+  - Regex: '^<'
+    Priority: 6
