@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
+
 COS_ASSUME_NONNULL_BEGIN
 
 size_t

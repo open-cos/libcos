@@ -1,0 +1,10 @@
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
+
+#ifndef LIBCOS_CONFIG_H
+#define LIBCOS_CONFIG_H
+
+#define COS_HAVE_STRLCPY @HAVE_STRLCPY@
+
+#endif /* LIBCOS_CONFIG_H */

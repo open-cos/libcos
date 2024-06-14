@@ -87,8 +87,10 @@ include(Portability)
 check_strerror()
 check_strlcpy()
 
-list(APPEND COS_COMPILE_DEFINITIONS
-    COS_HAVE_STRLCPY=${HAVE_STRLCPY})
+configure_file(src/config.h.in
+    config.h
+    @ONLY
+)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -100,7 +102,7 @@ add_library(libcos SHARED
 
 target_include_directories(libcos
     PUBLIC include/
-    PRIVATE src/
+    PRIVATE src/ ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 target_sources(libcos PRIVATE
