@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define COS_STRING_DEFAULT_CAPACITY 32
+
 COS_ASSUME_NONNULL_BEGIN
 
 struct CosString {
@@ -137,7 +139,7 @@ cos_string_init_capacity(CosString *string, size_t capacity_hint)
 
     size_t capacity = capacity_hint;
     if (capacity == 0) {
-        capacity = 32;
+        capacity = COS_STRING_DEFAULT_CAPACITY;
     }
 
     char * const data = malloc(capacity * sizeof(char));
