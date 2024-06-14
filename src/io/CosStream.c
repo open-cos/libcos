@@ -15,7 +15,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosStream {
     void *context;
-    CosStreamFunctions *functions;
+    CosStreamFunctions functions;
 };
 
 CosStream *
@@ -32,7 +32,7 @@ cos_stream_create(CosStreamFunctions *functions,
         return NULL;
     }
 
-    stream->functions = functions;
+    stream->functions = *functions;
     stream->context = context;
 
     return stream;
@@ -46,8 +46,8 @@ cos_stream_close(CosStream *stream)
         return;
     }
 
-    if (stream->functions->close_func) {
-        stream->functions->close_func(stream->context);
+    if (stream->functions.close_func) {
+        stream->functions.close_func(stream->context);
     }
 
     free(stream);
@@ -56,7 +56,7 @@ cos_stream_close(CosStream *stream)
 bool
 cos_stream_is_valid(const CosStream *stream)
 {
-    return (stream != NULL && stream->functions != NULL);
+    return (stream != NULL);
 }
 
 size_t
@@ -71,18 +71,17 @@ cos_stream_read(CosStream *stream,
         return 0;
     }
 
-    const CosStreamFunctions * const functions = stream->functions;
-    if (!functions->read_func) {
+    if (!stream->functions.read_func) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "Stream does not support reading"),
                             out_error);
         return 0;
     }
 
-    return functions->read_func(stream->context,
-                                buffer,
-                                count,
-                                out_error);
+    return stream->functions.read_func(stream->context,
+                                       buffer,
+                                       count,
+                                       out_error);
 }
 
 size_t
@@ -97,18 +96,17 @@ cos_stream_write(CosStream *stream,
         return 0;
     }
 
-    const CosStreamFunctions * const functions = stream->functions;
-    if (!functions->write_func) {
+    if (!stream->functions.write_func) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "Stream does not support writing"),
                             out_error);
         return 0;
     }
 
-    return functions->write_func(stream->context,
-                                 buffer,
-                                 count,
-                                 out_error);
+    return stream->functions.write_func(stream->context,
+                                        buffer,
+                                        count,
+                                        out_error);
 }
 
 bool
@@ -122,18 +120,17 @@ cos_stream_seek(CosStream *stream,
         return false;
     }
 
-    const CosStreamFunctions * const functions = stream->functions;
-    if (!functions->seek_func) {
+    if (!stream->functions.seek_func) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "Stream does not support seeking"),
                             out_error);
         return false;
     }
 
-    return functions->seek_func(stream->context,
-                                offset,
-                                whence,
-                                out_error);
+    return stream->functions.seek_func(stream->context,
+                                       offset,
+                                       whence,
+                                       out_error);
 }
 
 CosStreamOffset
@@ -145,16 +142,15 @@ cos_stream_tell(CosStream *stream,
         return 0;
     }
 
-    const CosStreamFunctions * const functions = stream->functions;
-    if (!functions->tell_func) {
+    if (!stream->functions.tell_func) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "Stream does not support telling"),
                             out_error);
         return 0;
     }
 
-    return functions->tell_func(stream->context,
-                                out_error);
+    return stream->functions.tell_func(stream->context,
+                                       out_error);
 }
 
 COS_ASSUME_NONNULL_END

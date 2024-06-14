@@ -7,13 +7,14 @@
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
-#include <libcos/io/CosInputStream.h>
+
+#include <stdbool.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 CosInputStreamReader * COS_Nullable
-cos_input_stream_reader_alloc(CosInputStream *input_stream)
+cos_input_stream_reader_alloc(CosStream *input_stream)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 

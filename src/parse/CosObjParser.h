@@ -8,7 +8,6 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
-#include <libcos/io/CosInputStream.h>
 
 #include <stdbool.h>
 
@@ -34,7 +33,7 @@ cos_obj_parser_destroy(CosObjParser *parser)
  */
 CosObjParser * COS_Nullable
 cos_obj_parser_create(CosDoc *document,
-                      CosInputStream *input_stream)
+                      CosStream *input_stream)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_parser_destroy);
 

@@ -59,7 +59,7 @@ cos_dict_obj_get_count(const CosDictObj *dict_obj);
 bool
 cos_dict_obj_get_value(const CosDictObj *dict_obj,
                        CosStringRef key,
-                       CosObj * COS_Nullable *out_value,
+                       CosObj * COS_Nullable * COS_Nonnull out_value,
                        CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);

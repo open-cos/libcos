@@ -179,7 +179,9 @@ cos_array_get_item(const CosArray *array,
         return NULL;
     }
 
-    return (array->data + (index * array->element_size));
+    cos_get_item_(array, index, out_item);
+
+    return true;
 }
 
 #pragma mark Insertion

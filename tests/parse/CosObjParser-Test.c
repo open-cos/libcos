@@ -2,13 +2,11 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "libcos/CosDoc.h"
-#include "libcos/io/CosFileInputStream.h"
-#include "libcos/objects/CosObj.h"
-#include "libcos/syntax/CosKeywords.h"
 #include "parse/CosObjParser.h"
 
-#include <libcos/io/CosInputStream.h>
+#include <libcos/CosDoc.h>
+#include <libcos/io/CosFileStream.h>
+#include <libcos/objects/CosObj.h>
 
 #include <stdlib.h>
 
@@ -20,10 +18,8 @@ main(COS_ATTR_UNUSED int argc,
 {
     // Get the current working directory.
 
-
-    CosInputStream * const input_stream = (CosInputStream * const)cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                                                             "r",
-                                                                                             NULL);
+    CosStream * const input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                                            "r");
     if (!input_stream) {
         goto failure;
     }
@@ -53,11 +49,14 @@ main(COS_ATTR_UNUSED int argc,
 
     cos_obj_parser_destroy(parser);
     cos_doc_destroy(doc);
-    cos_input_stream_close(input_stream);
+    cos_stream_close(input_stream);
 
     return EXIT_SUCCESS;
 
 failure:
+    if (input_stream) {
+        cos_stream_close(input_stream);
+    }
     return EXIT_FAILURE;
 }
 

@@ -2,12 +2,13 @@
 // Created by david on 17/12/23.
 //
 
+#include "syntax/tokenizer/CosTokenizer.h"
+
 #include "libcos/common/CosError.h"
 #include "libcos/io/CosFileInputStream.h"
 #include "libcos/syntax/CosKeywords.h"
-#include "syntax/tokenizer/CosTokenizer.h"
 
-#include <libcos/io/CosInputStream.h>
+#include <libcos/io/CosFileStream.h>
 
 #include <stdlib.h>
 
@@ -22,9 +23,8 @@ mainxx(COS_ATTR_UNUSED int argc,
 {
     // Get the current working directory.
 
-    CosInputStream * const input_stream = (CosInputStream *)cos_file_input_stream_open("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                                                       "r",
-                                                                                       NULL);
+    CosStream * const input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                                            "r");
     if (!input_stream) {
         goto failure;
     }
@@ -175,7 +175,7 @@ mainxx(COS_ATTR_UNUSED int argc,
     }
 
     cos_tokenizer_free(tokenizer);
-    cos_input_stream_close(input_stream);
+    cos_stream_close(input_stream);
 
     return EXIT_SUCCESS;
 

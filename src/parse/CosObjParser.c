@@ -79,7 +79,7 @@ struct CosObjParser {
 static bool
 cos_obj_parser_init_(CosObjParser *self,
                      CosDoc *document,
-                     CosInputStream *input_stream);
+                     CosStream *input_stream);
 
 static CosObj * COS_Nullable
 cos_next_object_(CosObjParser *parser,
@@ -155,7 +155,7 @@ cos_matches_next_token_(CosObjParser *parser,
 
 CosObjParser *
 cos_obj_parser_create(CosDoc *document,
-                      CosInputStream *input_stream)
+                      CosStream *input_stream)
 {
     COS_PARAMETER_ASSERT(document != NULL);
     COS_PARAMETER_ASSERT(input_stream != NULL);
@@ -186,7 +186,7 @@ failure:
 static bool
 cos_obj_parser_init_(CosObjParser * const self,
                      CosDoc *document,
-                     CosInputStream *input_stream)
+                     CosStream *input_stream)
 {
     COS_PARAMETER_ASSERT(self != NULL);
     COS_PARAMETER_ASSERT(document != NULL);

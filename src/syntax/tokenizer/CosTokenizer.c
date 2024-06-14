@@ -139,7 +139,7 @@ cos_keyword_token_type_from_string_(CosStringRef string);
 #pragma mark - Public
 
 CosTokenizer *
-cos_tokenizer_alloc(CosInputStream *input_stream)
+cos_tokenizer_alloc(CosStream *input_stream)
 {
     COS_PARAMETER_ASSERT(input_stream != NULL);
 

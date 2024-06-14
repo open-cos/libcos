@@ -23,7 +23,7 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     COS_DEALLOCATOR_FUNC;
 
 CosTokenizer * COS_Nullable
-cos_tokenizer_alloc(CosInputStream *input_stream)
+cos_tokenizer_alloc(CosStream *input_stream)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_free);
 
