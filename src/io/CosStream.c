@@ -5,7 +5,8 @@
 #include "libcos/io/CosStream.h"
 
 #include "common/Assert.h"
-#include "common/CosError.h"
+
+#include <libcos/common/CosError.h>
 
 #include <stddef.h>
 #include <stdlib.h>

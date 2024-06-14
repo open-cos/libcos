@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "io/CosInputStreamReader.h"
+
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosNumber.h"
 #include "libcos/common/CosRingBuffer.h"
