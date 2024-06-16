@@ -1,25 +1,27 @@
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
+
 //
 // Created by david on 17/12/23.
 //
 
 #include "syntax/tokenizer/CosTokenizer.h"
 
-#include "libcos/common/CosError.h"
-#include "libcos/io/CosFileInputStream.h"
-#include "libcos/syntax/CosKeywords.h"
-
+#include <libcos/common/CosError.h>
 #include <libcos/io/CosFileStream.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
 extern int
-mainxx(int argc, char * COS_Nonnull argv[]);
+tokenizer(int argc, char * COS_Nonnull argv[]);
 
 int
-mainxx(COS_ATTR_UNUSED int argc,
-       COS_ATTR_UNUSED char * COS_Nonnull argv[])
+tokenizer(COS_ATTR_UNUSED int argc,
+          COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.
 

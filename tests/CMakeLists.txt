@@ -1,24 +1,46 @@
 
-enable_testing()
 
-add_executable(libcos-tests
-    libcos++/ObjectTest.cpp
-    parse/CosTokenizer-Test.c
-    parse/CosObjParser-Test.c
+set(LIBCOS_TESTS
+    ObjectTest.cpp
+    tokenizer.c
+    parser.c
 )
 
-target_include_directories(libcos-tests
+create_test_sourcelist(LIBCOS_TEST_SOURCES
+    # The name of the generated test-driver source file.
+    libcos-test.c
+    # The list of test source files to be added to the test-driver executable.
+    ${LIBCOS_TESTS}
+)
+
+add_executable(libcos-test
+    ${LIBCOS_TEST_SOURCES}
+)
+
+foreach (TEST_SOURCE ${LIBCOS_TESTS})
+    get_filename_component(TEST_NAME
+        ${TEST_SOURCE}
+        # File name without directory and extension.
+        NAME_WE
+    )
+    add_test(NAME ${TEST_NAME}
+        # Command to run the test - the name of the test is passed as an argument.
+        COMMAND libcos-test ${TEST_NAME}
+    )
+endforeach ()
+
+target_include_directories(libcos-test
     # Find a better way to do this?
     PUBLIC ../include/
     PRIVATE ../src/
 )
 
-target_compile_options(libcos-tests PRIVATE
+target_compile_options(libcos-test PRIVATE
     ${COS_C_FLAGS_WARNINGS}
     ${COS_CXX_FLAGS_WARNINGS}
 )
 
-target_link_libraries(libcos-tests
+target_link_libraries(libcos-test
     PUBLIC libcos libcos++
 )
 

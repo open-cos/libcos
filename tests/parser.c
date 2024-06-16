@@ -12,9 +12,13 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+extern int
+parser(int argc,
+       char * COS_Nonnull argv[]);
+
 int
-main(COS_ATTR_UNUSED int argc,
-     COS_ATTR_UNUSED char * COS_Nonnull argv[])
+parser(COS_ATTR_UNUSED int argc,
+       COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.
 

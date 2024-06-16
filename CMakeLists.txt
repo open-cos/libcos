@@ -87,6 +87,8 @@ include(Portability)
 check_strerror()
 check_strlcpy()
 
+# Fill in the config file template.
+# The output file is placed in the CMAKE_CURRENT_BINARY_DIR directory.
 configure_file(src/config.h.in
     config.h
     @ONLY
@@ -422,6 +424,7 @@ target_link_libraries(libcos++ INTERFACE
     libcos cbind
 )
 
+enable_testing()
 add_subdirectory(tests)
 
 if (COS_BUILD_DOCUMENTATION)

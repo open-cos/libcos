@@ -10,7 +10,9 @@ namespace tests {
 
 class StreamObjTest {
 public:
-    static void testCreate() {
+    static void
+    testCreate()
+    {
         opencos::Doc doc;
 
         doc.getImpl();
@@ -24,3 +26,14 @@ public:
 } // namespace tests
 } // namespace opencos
 
+extern "C" int
+ObjectTest(int argc,
+           char **argv);
+
+int
+ObjectTest(int /*argc*/,
+           char ** /*argv*/)
+{
+    opencos::tests::StreamObjTest::testCreate();
+    return 0;
+}
