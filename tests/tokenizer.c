@@ -17,10 +17,10 @@
 COS_ASSUME_NONNULL_BEGIN
 
 extern int
-tokenizer(int argc, char * COS_Nonnull argv[]);
+TEST_NAME(int argc, char * COS_Nonnull argv[]);
 
 int
-tokenizer(COS_ATTR_UNUSED int argc,
+TEST_NAME(COS_ATTR_UNUSED int argc,
           COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.

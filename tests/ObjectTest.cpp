@@ -27,12 +27,12 @@ public:
 } // namespace opencos
 
 extern "C" int
-ObjectTest(int argc,
-           char **argv);
+TEST_NAME(int argc,
+          char **argv);
 
 int
-ObjectTest(int /*argc*/,
-           char ** /*argv*/)
+TEST_NAME(int /*argc*/,
+          char ** /*argv*/)
 {
     opencos::tests::StreamObjTest::testCreate();
     return 0;

@@ -296,6 +296,8 @@ if (NOT MSVC)
     endif ()
 endif ()
 
+# C warning flags.
+
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     list(APPEND COS_C_FLAGS_WARNINGS
         -Wall -Wextra
@@ -358,6 +360,8 @@ elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
         /W4 /WX)
 endif ()
+
+# C++ warning flags.
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     list(APPEND COS_CXX_FLAGS_WARNINGS

@@ -23,6 +23,13 @@ foreach (TEST_SOURCE ${LIBCOS_TESTS})
         # File name without directory and extension.
         NAME_WE
     )
+    
+    set_property(SOURCE ${TEST_SOURCE}
+        PROPERTY COMPILE_DEFINITIONS
+        # Define the test name.
+        TEST_NAME=${TEST_NAME}
+    )
+    
     add_test(NAME ${TEST_NAME}
         # Command to run the test - the name of the test is passed as an argument.
         COMMAND libcos-test ${TEST_NAME}
