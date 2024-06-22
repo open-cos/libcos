@@ -3,6 +3,7 @@
  */
 
 #include "libcos/io/string-support.h"
+#include "config.h"
 
 #include "common/Assert.h"
 
@@ -11,8 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "config.h"
 
 COS_ASSUME_NONNULL_BEGIN
 

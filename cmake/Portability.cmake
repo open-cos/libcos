@@ -12,12 +12,15 @@ macro(check_strerror)
         -U_GNU_SOURCE
         -D_POSIX_C_SOURCE=200112L
     )
-    check_function_exists(strerror_r HAVE_POSIX_STRERROR_R)
+    check_symbol_exists(strerror_r "string.h" HAVE_POSIX_STRERROR_R)
     cmake_pop_check_state()
     
     if (HAVE_POSIX_STRERROR_R)
         message(CHECK_PASS "found")
     else ()
+        # Ensure that the variable is defined, even if the check failed.
+        set(HAVE_POSIX_STRERROR_R 0)
+        
         message(CHECK_FAIL "not found")
     endif ()
 endmacro()
@@ -33,6 +36,9 @@ macro(check_strlcpy)
     if (HAVE_STRLCPY)
         message(CHECK_PASS "found")
     else ()
+        # Ensure that the variable is defined, even if the check failed.
+        set(HAVE_STRLCPY 0)
+        
         message(CHECK_FAIL "not found")
     endif ()
 endmacro()
