@@ -7,6 +7,8 @@
 
 #include <libcos/common/CosDefines.h>
 
+#include <stdlib.h>
+
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 

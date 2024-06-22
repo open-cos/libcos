@@ -47,6 +47,11 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+static inline char * COS_Nullable
+cos_strerror_r_(int errnum)
+    COS_OWNERSHIP_RETURNS
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(free);
+
 #if COS_HAS_GNU_STRERROR_R
 
 static inline int
@@ -107,8 +112,6 @@ cos_strerror_r_func_(int errnum,
 
 static inline char * COS_Nullable
 cos_strerror_r_(int errnum)
-    COS_OWNERSHIP_RETURNS
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(free)
 {
     char *buffer = NULL;
     size_t buffer_size = COS_STRERROR_BUFFER_LENGTH;
