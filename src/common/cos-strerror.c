@@ -108,6 +108,26 @@ cos_strerror_r_func_(int errnum,
     return strerror_result;
 }
 
+#else
+
+static inline int
+cos_strerror_r_func_(int errnum,
+                     char *buffer,
+                     size_t buffer_size)
+{
+    // The strerror() function is thread-safe.
+    const char * const strerror_result = strerror(errnum);
+    if (!strerror_result) {
+        return errno;
+    }
+
+    cos_strlcpy(buffer,
+                buffer_size,
+                strerror_result);
+
+    return 0;
+}
+
 #endif
 
 static inline char * COS_Nullable
