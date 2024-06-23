@@ -358,7 +358,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
-        /W4 /WX)
+        /W4 /Wall)
 endif ()
 
 # C++ warning flags.
@@ -376,7 +376,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     )
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_CXX_FLAGS_WARNINGS
-        /W4 /WX)
+        /W4 /Wall)
 endif ()
 
 target_compile_definitions(libcos PRIVATE
