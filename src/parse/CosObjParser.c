@@ -14,7 +14,6 @@
 #include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosRingBuffer.h>
-#include <libcos/io/CosInputStream.h>
 #include <libcos/objects/CosArrayObj.h>
 #include <libcos/objects/CosBoolObj.h>
 #include <libcos/objects/CosDictObj.h>
@@ -28,6 +27,7 @@
 #include <libcos/objects/CosStreamObj.h>
 #include <libcos/objects/CosStringObj.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -758,7 +758,7 @@ cos_handle_dict_(CosObjParser *parser,
 
 failure:
     if (new_dict) {
-        cos_dict_free(new_dict);
+        cos_dict_destroy(new_dict);
     }
     return NULL;
 }

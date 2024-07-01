@@ -6,11 +6,12 @@
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
+#include "io/CosStream.h"
+
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosMacros.h"
 #include "libcos/common/CosScanner.h"
 
-#include <libcos/io/CosInputStream.h>
 #include <libcos/xref/CosXrefEntry.h>
 #include <libcos/xref/CosXrefSection.h>
 #include <libcos/xref/CosXrefSubsection.h>
@@ -30,7 +31,7 @@ typedef struct CosXrefEntryItem {
 } CosXrefEntryItem;
 
 struct CosXrefTableParser {
-    CosInputStream *input_stream;
+    CosStream *input_stream;
 
     CosScanner *scanner;
 
@@ -174,9 +175,10 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
 
     unsigned char bytes[COS_XREF_TABLE_ENTRY_SIZE] = {0};
 
-    const size_t num_bytes_read = cos_input_stream_read(parser->input_stream,
-                                                        bytes,
-                                                        sizeof(bytes));
+    const size_t num_bytes_read = cos_stream_read(parser->input_stream,
+                                                  bytes,
+                                                  sizeof(bytes),
+                                                  error);
     if (num_bytes_read != sizeof(bytes)) {
         return false;
     }

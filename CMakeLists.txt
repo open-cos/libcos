@@ -136,14 +136,9 @@ target_sources(libcos PRIVATE
     src/common/memory/CosMemory.c
     src/common/memory/CosRefCounter.c
     src/common/memory/CosRefCounter.h
-    src/io/CosBufferedInputStream.c
-    src/io/CosBufferedInputStream.h
-    src/io/CosFileInputStream.c
     src/io/CosFileStream.c
-    src/io/CosInputStream.c
     src/io/CosInputStreamReader.c
     src/io/CosInputStreamReader.h
-    src/io/CosMemoryInputStream.c
     src/io/CosMemoryStream.c
     src/io/CosStream.c
     src/io/string-support.c
@@ -204,9 +199,7 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosTypes.h
     include/libcos/common/memory/CosAllocator.h
     include/libcos/common/memory/CosMemory.h
-    include/libcos/io/CosFileInputStream.h
     include/libcos/io/CosFileStream.h
-    include/libcos/io/CosInputStream.h
     include/libcos/io/CosMemoryStream.h
     include/libcos/io/CosStream.h
     include/libcos/io/string-support.h
@@ -329,7 +322,12 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Wint-conversion
         -Wstrict-prototypes
         -Wno-declaration-after-statement
-        -Wno-padded -Wno-unused-parameter -Wno-unused-variable -Wno-nullability-extension -Wno-unsafe-buffer-usage
+        -Wno-padded
+        -Wno-unused-parameter
+        -Wno-unused-variable
+        -Wno-nullability-extension
+        -Wno-unsafe-buffer-usage
+        -Wno-switch-default
         -Wno-gcc-compat
         -Werror=implicit-int -Werror=implicit-function-declaration
         -Werror=enum-conversion
