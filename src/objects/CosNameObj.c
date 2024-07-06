@@ -5,6 +5,7 @@
 #include "libcos/objects/CosNameObj.h"
 
 #include "common/Assert.h"
+
 #include "libcos/common/CosString.h"
 #include "libcos/objects/CosObj.h"
 
@@ -79,6 +80,31 @@ cos_name_obj_set_value(CosNameObj *name_obj,
     cos_string_free(name_obj->value);
 
     name_obj->value = value;
+}
+
+size_t
+cos_name_obj_get_hash(const CosNameObj *name_obj)
+{
+    COS_PARAMETER_ASSERT(name_obj != NULL);
+    if (!name_obj) {
+        return 0;
+    }
+
+    return cos_string_get_hash(name_obj->value);
+}
+
+bool
+cos_name_obj_equal(const CosNameObj *name_obj1,
+                   const CosNameObj *name_obj2)
+{
+    COS_PARAMETER_ASSERT(name_obj1 != NULL);
+    COS_PARAMETER_ASSERT(name_obj2 != NULL);
+    if (!name_obj1 || !name_obj2) {
+        return false;
+    }
+
+    return cos_string_ref_cmp(cos_string_get_ref(name_obj1->value),
+                              cos_string_get_ref(name_obj2->value)) == 0;
 }
 
 void

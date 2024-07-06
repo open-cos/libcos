@@ -19,13 +19,14 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+void
+cos_name_obj_free(CosNameObj *name_obj)
+    COS_DEALLOCATOR_FUNC;
+
 CosNameObj * COS_Nullable
 cos_name_obj_alloc(CosString *value)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
-void
-cos_name_obj_free(CosNameObj *name_obj);
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_name_obj_free);
 
 const CosString * COS_Nullable
 cos_name_obj_get_value(const CosNameObj *name_obj);
@@ -33,6 +34,28 @@ cos_name_obj_get_value(const CosNameObj *name_obj);
 void
 cos_name_obj_set_value(CosNameObj *name_obj,
                        CosString *value);
+
+/**
+ * @brief Returns the hash value of the name object.
+ *
+ * @param name_obj The name object.
+ *
+ * @return The hash value of the name object.
+ */
+size_t
+cos_name_obj_get_hash(const CosNameObj *name_obj);
+
+/**
+ * @brief Returns whether two name objects are equal.
+ *
+ * @param name_obj1 The first name object.
+ * @param name_obj2 The second name object.
+ *
+ * @return @c true if the name objects are equal, otherwise @c false .
+ */
+bool
+cos_name_obj_equal(const CosNameObj *name_obj1,
+                   const CosNameObj *name_obj2);
 
 void
 cos_name_obj_print_desc(const CosNameObj *name_obj);

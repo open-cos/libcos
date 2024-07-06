@@ -5,6 +5,7 @@
 #include "libcos/objects/CosStreamObj.h"
 
 #include "common/Assert.h"
+
 #include "libcos/common/CosError.h"
 
 #include <libcos/common/CosData.h>
@@ -109,10 +110,10 @@ cos_stream_obj_get_decoded_length_hint(const CosStreamObj *stream_obj,
     }
 
     CosObj *length_obj = NULL;
-    if (!cos_dict_obj_get_value(stream_obj->dict_obj,
-                                cos_string_ref_const("DL"),
-                                &length_obj,
-                                out_error)) {
+    if (!cos_dict_obj_get_value_with_string(stream_obj->dict_obj,
+                                            "DL",
+                                            &length_obj,
+                                            out_error)) {
         return false;
     }
     else if (!cos_obj_is_integer(length_obj)) {

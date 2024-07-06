@@ -720,7 +720,7 @@ cos_handle_dict_(CosObjParser *parser,
 
     CosDict *new_dict = NULL;
 
-    new_dict = cos_dict_alloc(&cos_dict_obj_key_callbacks,
+    new_dict = cos_dict_create(&cos_dict_obj_key_callbacks,
                               &cos_dict_obj_value_callbacks,
                               0);
     if (!new_dict) {

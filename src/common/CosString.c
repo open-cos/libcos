@@ -8,6 +8,7 @@
 
 #include <libcos/io/string-support.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -290,6 +291,65 @@ cos_string_push_back(CosString *string, char c)
     }
 
     return cos_string_append_strn_impl_(string, &c, 1);
+}
+
+#if SIZE_MAX == UINT32_MAX
+#define COS_SIZE_IS_32_BIT 1
+#else
+#define COS_SIZE_IS_32_BIT 0
+#endif
+
+#if COS_SIZE_IS_32_BIT
+
+#define COS_STRING_HASH_SEED_32 2166136261U
+#define COS_STRING_HASH_FACTOR_32 16777619
+
+static uint32_t
+hash_string_32_(const char *key,
+                size_t length)
+{
+    uint32_t hash = COS_STRING_HASH_SEED_32;
+    for (size_t i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= COS_STRING_HASH_FACTOR_32;
+    }
+    return hash;
+}
+
+#else
+
+#define COS_STRING_HASH_SEED_64 14695981039346656037ULL
+#define COS_STRING_HASH_FACTOR_64 1099511628211ULL
+
+static uint64_t
+hash_string_64_(const char *key,
+                size_t length)
+{
+    uint64_t hash = COS_STRING_HASH_SEED_64;
+    for (size_t i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= COS_STRING_HASH_FACTOR_64;
+    }
+    return hash;
+}
+
+#endif
+
+size_t
+cos_string_get_hash(const CosString *string)
+{
+    COS_PARAMETER_ASSERT(string != NULL);
+
+    if (!string) {
+        return 0;
+    }
+
+    // Use the appropriate hash function based on the size of size_t.
+#if COS_SIZE_IS_32_BIT
+    return hash_string_32_(string->data, string->length);
+#else
+    return hash_string_64_(string->data, string->length);
+#endif
 }
 
 static bool

@@ -5,7 +5,7 @@
 #include "libcos/common/CosArray.h"
 
 #include "common/Assert.h"
-#include "common/CosUtils.h"
+#include "common/CosContainerUtils.h"
 
 #include <libcos/common/CosError.h>
 
@@ -22,23 +22,6 @@ struct CosArray {
 
     CosArrayCallbacks callbacks;
 };
-
-/**
- * @brief Rounds up the capacity to the next power of 2.
- *
- * @param capacity The capacity to be rounded.
- *
- * @return The rounded capacity.
- */
-static size_t
-cos_round_capacity_(size_t capacity)
-{
-    if (capacity < 4) {
-        return 4;
-    }
-    // Round up to the next power of 2.
-    return cos_next_pow2l(capacity + 1);
-}
 
 static void
 cos_apply_func_(void *items,
@@ -89,7 +72,7 @@ cos_array_create(size_t element_size,
         goto failure;
     }
 
-    const size_t capacity = cos_round_capacity_(capacity_hint);
+    const size_t capacity = cos_container_round_capacity_(capacity_hint);
 
     data = calloc(capacity, element_size);
     if (!data) {
@@ -534,7 +517,7 @@ cos_array_resize_(CosArray *array,
         return true;
     }
 
-    const size_t new_capacity = cos_round_capacity_(required_capacity);
+    const size_t new_capacity = cos_container_round_capacity_(required_capacity);
 
     unsigned char * const new_data = realloc(array->data,
                                              new_capacity * array->element_size);

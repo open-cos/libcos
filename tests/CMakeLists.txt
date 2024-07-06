@@ -1,9 +1,29 @@
 
+macro(get_test_name TEST_NAME TEST_SOURCE)
+    get_filename_component(TEST_DIRNAME
+        ${TEST_SOURCE}
+        # Directory of the test source file.
+        DIRECTORY
+    )
+    
+    get_filename_component(TEST_BASENAME
+        ${TEST_SOURCE}
+        # File name without directory and last extension.
+        NAME_WLE
+    )
+    
+    if (TEST_DIRNAME)
+        set(TEST_NAME "${TEST_DIRNAME}/${TEST_BASENAME}")
+    else ()
+        set(TEST_NAME "${TEST_BASENAME}")
+    endif ()
+endmacro()
 
 set(LIBCOS_TESTS
     ObjectTest.cpp
     tokenizer.c
     parser.c
+    unit/test-dict.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
@@ -18,16 +38,15 @@ add_executable(libcos-test
 )
 
 foreach (TEST_SOURCE ${LIBCOS_TESTS})
-    get_filename_component(TEST_NAME
-        ${TEST_SOURCE}
-        # File name without directory and extension.
-        NAME_WE
-    )
+    
+    get_test_name(TEST_NAME ${TEST_SOURCE})
+    
+    string(MAKE_C_IDENTIFIER ${TEST_NAME} TEST_FUNCTION_NAME)
     
     set_property(SOURCE ${TEST_SOURCE}
         PROPERTY COMPILE_DEFINITIONS
         # Define the test name.
-        TEST_NAME=${TEST_NAME}
+        TEST_NAME=${TEST_FUNCTION_NAME}
     )
     
     add_test(NAME ${TEST_NAME}

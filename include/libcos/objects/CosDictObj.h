@@ -5,6 +5,8 @@
 #ifndef LIBCOS_COS_DICT_OBJ_H
 #define LIBCOS_COS_DICT_OBJ_H
 
+#include "common/CosDict.h"
+
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosString.h>
 #include <libcos/common/CosTypes.h>
@@ -58,9 +60,27 @@ cos_dict_obj_get_count(const CosDictObj *dict_obj);
  */
 bool
 cos_dict_obj_get_value(const CosDictObj *dict_obj,
-                       CosStringRef key,
+                       CosNameObj *key,
                        CosObj * COS_Nullable * COS_Nonnull out_value,
                        CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
+
+/**
+ * @brief Gets the object value for a given key in a dictionary object.
+ *
+ * @param dict_obj The dictionary object.
+ * @param key The key, as a nul-terminated string.
+ * @param out_value The output parameter for the object value.
+ * @param out_error The error information.
+ *
+ * @return @c true if the object value was found, otherwise @c false.
+ */
+bool
+cos_dict_obj_get_value_with_string(const CosDictObj *dict_obj,
+                                   const char *key,
+                                   CosObj * COS_Nullable * COS_Nonnull out_value,
+                                   CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
 
@@ -69,6 +89,9 @@ cos_dict_obj_set(CosDictObj *dict_obj,
                  CosNameObj *key,
                  CosObj *value,
                  CosError * COS_Nullable error);
+
+extern const CosDictKeyCallbacks cos_dict_obj_key_callbacks;
+extern const CosDictValueCallbacks cos_dict_obj_value_callbacks;
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

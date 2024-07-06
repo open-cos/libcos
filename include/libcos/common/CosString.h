@@ -159,6 +159,21 @@ cos_string_append_strn(CosString *string, const char *str, size_t n)
 bool
 cos_string_push_back(CosString *string, char c);
 
+/** @{ **/
+
+/**
+ * @brief Returns the hash value of the string.
+ *
+ * @param string The string.
+ *
+ * @return The hash value of the string.
+ */
+size_t
+cos_string_get_hash(const CosString *string)
+    COS_ATTR_ACCESS_READ_ONLY(1);
+
+/** @} */
+
 #pragma mark String Reference
 
 /**
