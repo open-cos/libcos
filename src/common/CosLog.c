@@ -5,8 +5,10 @@
 #include "libcos/common/CosLog.h"
 
 #include "common/Assert.h"
+
 #include "libcos/io/string-support.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -29,6 +31,23 @@ struct CosLogContext {
      */
     void * COS_Nullable user_data;
 };
+
+static void
+cos_log_func_stderr_(CosLogContext *log_context,
+                     CosLogMessageLevel message_level,
+                     const char *message);
+
+static CosLogContext default_log_context = {
+    .level = CosLogLevel_Info,
+    .log_func = &cos_log_func_stderr_,
+    .user_data = NULL,
+};
+
+CosLogContext *
+cos_log_context_get_default(void)
+{
+    return &default_log_context;
+}
 
 CosLogContext *
 cos_log_context_create(CosLogLevel level,
@@ -61,6 +80,29 @@ cos_log_context_destroy(CosLogContext *log_context)
     }
 
     free(log_context);
+}
+
+CosLogLevel
+cos_log_context_get_level(const CosLogContext *log_context)
+{
+    COS_PARAMETER_ASSERT(log_context != NULL);
+    if (!log_context) {
+        return CosLogLevel_None;
+    }
+
+    return log_context->level;
+}
+
+void
+cos_log_context_set_level(CosLogContext *log_context,
+                          CosLogLevel level)
+{
+    COS_PARAMETER_ASSERT(log_context != NULL);
+    if (!log_context) {
+        return;
+    }
+
+    log_context->level = level;
 }
 
 void
@@ -109,5 +151,44 @@ cos_logv(CosLogContext *log_context,
     free(message);
 }
 
+static void
+cos_log_func_stderr_(CosLogContext *log_context,
+                     CosLogMessageLevel message_level,
+                     const char *message)
+{
+    COS_PARAMETER_ASSERT(log_context != NULL);
+    COS_PARAMETER_ASSERT(message != NULL);
+    if (COS_UNLIKELY(!log_context || !message)) {
+        return;
+    }
+
+    // Get the string representation of the message level.
+    const char *level_str = NULL;
+    switch (message_level) {
+        case CosLogMessageLevel_Fatal:
+            level_str = "FATAL";
+            break;
+        case CosLogMessageLevel_Error:
+            level_str = "ERROR";
+            break;
+        case CosLogMessageLevel_Warning:
+            level_str = "WARNING";
+            break;
+        case CosLogMessageLevel_Info:
+            level_str = "INFO";
+            break;
+        case CosLogMessageLevel_Trace:
+            level_str = "TRACE";
+            break;
+    }
+    if (COS_UNLIKELY(!level_str)) {
+        level_str = "UNKNOWN";
+    }
+
+    (void)fprintf(stderr,
+                  "[%s] %s\n",
+                  level_str,
+                  message);
+}
 
 COS_ASSUME_NONNULL_END

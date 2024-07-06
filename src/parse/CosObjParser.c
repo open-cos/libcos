@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 #include "common/CosDict.h"
+#include "common/CosNumber.h"
 #include "syntax/tokenizer/CosToken.h"
 #include "syntax/tokenizer/CosTokenizer.h"
 
@@ -13,6 +14,7 @@
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/common/CosError.h>
+#include <libcos/common/CosLog.h>
 #include <libcos/common/CosRingBuffer.h>
 #include <libcos/objects/CosArrayObj.h>
 #include <libcos/objects/CosBoolObj.h>
@@ -67,6 +69,7 @@ typedef struct CosObjParserContext {
 
 struct CosObjParser {
     CosDoc *doc;
+    CosStream *input_stream;
     CosTokenizer *tokenizer;
 
     CosRingBuffer *objects;
@@ -203,6 +206,7 @@ cos_obj_parser_init_(CosObjParser * const self,
     }
 
     self->doc = document;
+    self->input_stream = input_stream;
     self->tokenizer = tokenizer;
 
     objects = cos_ring_buffer_create(sizeof(CosObj *),
@@ -721,8 +725,8 @@ cos_handle_dict_(CosObjParser *parser,
     CosDict *new_dict = NULL;
 
     new_dict = cos_dict_create(&cos_dict_obj_key_callbacks,
-                              &cos_dict_obj_value_callbacks,
-                              0);
+                               &cos_dict_obj_value_callbacks,
+                               0);
     if (!new_dict) {
         goto failure;
     }
@@ -813,8 +817,8 @@ cos_handle_dict_entry_(CosObjParser *parser,
     }
 
     if (!cos_dict_set(dict,
-                      (void *)&key,
-                      (void *)&value,
+                      (void *)key,
+                      (void *)value,
                       out_error)) {
         goto failure;
     }
@@ -844,14 +848,35 @@ cos_handle_stream_(CosObjParser *parser,
         return NULL;
     }
 
+    COS_LOG_TRACE(cos_log_context_get_default(),
+                  "Parsing stream object.");
+
     // ISO 32000-1:2008, Section 7.3.8 Stream Objects
     // "The stream dictionary shall be a direct object, not an indirect object."
     // "The stream dictionary shall contain the Length entry."
-    // "The Length entry shall be a direct object."
     // "The value of the Length entry shall be the number of bytes from the beginning of the line
     // following the keyword stream to the last byte just before the keyword endstream."
     // "The keyword stream that follows the stream dictionary shall be followed by an end-of-line marker."
     // "The keyword endstream shall be preceded by an end-of-line marker."
+
+    int stream_length = -1;
+
+    CosObj *length_obj = NULL;
+    if (cos_dict_obj_get_value_with_string(dict_obj,
+                                           "Length",
+                                           &length_obj,
+                                           NULL)) {
+        if (cos_obj_is_integer(length_obj)) {
+            CosIntObj * const int_obj = (CosIntObj *)length_obj;
+
+            stream_length = cos_int_obj_get_value(int_obj);
+        }
+        else {
+            // Error: The Length entry is not an integer.
+        }
+    }
+
+    printf("Stream length: %d\n", stream_length);
 
     CosStreamObj *stream_obj = cos_stream_obj_create(dict_obj,
                                                      NULL);
@@ -859,9 +884,13 @@ cos_handle_stream_(CosObjParser *parser,
         goto failure;
     }
 
+    COS_LOG_TRACE(cos_log_context_get_default(),
+                  "Stream object parsed successfully.");
+
     return (CosObj *)stream_obj;
 
 failure:
+
     return NULL;
 }
 

@@ -26,7 +26,7 @@ cos_dict_obj_key_hash_(void *key)
     COS_PARAM_ASSERT_INTERNAL(key != NULL);
 
     // The key is a pointer to a name object (pointer).
-    CosNameObj * const name_obj = *(CosNameObj **)key;
+    CosNameObj * const name_obj = (CosNameObj *)key;
     COS_ASSERT(name_obj != NULL, "Expected a name object");
 
     return cos_name_obj_get_hash(name_obj);
@@ -39,8 +39,8 @@ cos_dict_obj_keys_equal_(void *key1,
     COS_PARAM_ASSERT_INTERNAL(key1 != NULL);
     COS_PARAM_ASSERT_INTERNAL(key2 != NULL);
 
-    CosNameObj * const name_obj1 = *(CosNameObj **)key1;
-    CosNameObj * const name_obj2 = *(CosNameObj **)key2;
+    CosNameObj * const name_obj1 = (CosNameObj *)key1;
+    CosNameObj * const name_obj2 = (CosNameObj *)key2;
     COS_ASSERT(name_obj1 != NULL, "Expected a first name object");
     COS_ASSERT(name_obj2 != NULL, "Expected a second name object");
 

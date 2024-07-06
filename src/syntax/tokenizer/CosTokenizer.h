@@ -27,6 +27,9 @@ cos_tokenizer_alloc(CosStream *input_stream)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_free);
 
+void
+cos_tokenizer_reset(CosTokenizer *tokenizer);
+
 /**
  * Checks if there is a next token or if the end of the input stream has been reached.
  *
@@ -108,6 +111,10 @@ cos_tokenizer_match_token(CosTokenizer *tokenizer,
 bool
 cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
                             CosToken_Type keyword_type);
+
+size_t
+cos_tokenizer_skip_characters(CosTokenizer *tokenizer,
+                              size_t count);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

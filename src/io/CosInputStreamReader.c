@@ -1,6 +1,6 @@
-//
-// Created by david on 02/12/23.
-//
+/*
+ * Copyright (c) 2024 OpenCOS.
+ */
 
 #include "CosInputStreamReader.h"
 
@@ -36,7 +36,7 @@ static bool
 cos_input_stream_reader_backup_(CosInputStreamReader *input_stream_reader);
 
 CosInputStreamReader *
-cos_input_stream_reader_alloc(CosStream *input_stream)
+cos_input_stream_reader_create(CosStream *input_stream)
 {
     CosInputStreamReader *reader = NULL;
     unsigned char *buffer = NULL;
@@ -76,8 +76,9 @@ failure:
 }
 
 void
-cos_input_stream_reader_free(CosInputStreamReader *input_stream_reader)
+cos_input_stream_reader_destroy(CosInputStreamReader *input_stream_reader)
 {
+    COS_PARAMETER_ASSERT(input_stream_reader != NULL);
     if (!input_stream_reader) {
         return;
     }
@@ -85,6 +86,19 @@ cos_input_stream_reader_free(CosInputStreamReader *input_stream_reader)
     free(input_stream_reader->buffer);
 
     free(input_stream_reader);
+}
+
+void
+cos_input_stream_reader_reset(CosInputStreamReader *input_stream_reader)
+{
+    COS_PARAMETER_ASSERT(input_stream_reader != NULL);
+    if (COS_UNLIKELY(!input_stream_reader)) {
+        return;
+    }
+
+    input_stream_reader->buffer_position = input_stream_reader->buffer_size;
+    input_stream_reader->is_eof = false;
+    input_stream_reader->eof_position = 0;
 }
 
 bool

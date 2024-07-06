@@ -344,16 +344,18 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         
         -g
         
-        #        -fsanitize=address
+        -fsanitize=address
         
-        #        -fsanitize=undefined
-        #        -fsanitize=float-divide-by-zero,unsigned-integer-overflow,implicit-conversion,local-bounds,nullability
+        -fsanitize=undefined
+        -fsanitize=float-divide-by-zero,implicit-conversion,local-bounds,nullability
+        #-fsanitize=unsigned-integer-overflow
         
         -fno-omit-frame-pointer
         -fno-optimize-sibling-calls
     )
     add_flags(COS_LINKER_FLAGS
-        #        -fsanitize=address,undefined
+        -fsanitize=address
+        -fsanitize=undefined
     )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
@@ -388,6 +390,12 @@ target_compile_options(libcos PRIVATE
 target_link_options(libcos PUBLIC
     ${COS_LINKER_FLAGS}
 )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set_target_properties(libcos PROPERTIES
+        LINK_WHAT_YOU_USE TRUE
+    )
+endif ()
 
 target_compile_definitions(cbind INTERFACE
     ${COS_COMPILE_DEFINITIONS}

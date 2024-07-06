@@ -96,8 +96,8 @@ cos_vasprintf(const char *format,
         return NULL;
     }
 
-    COS_ASSERT(((size_t)num_written) == buffer_size,
-               "The number of characters written (%d) should be equal to the buffer size (%zu)",
+    COS_ASSERT(((size_t)num_written) == buffer_size - 1,
+               "The number of characters written (%d) should be equal to the buffer size (%zu) minus one",
                num_written,
                buffer_size);
 

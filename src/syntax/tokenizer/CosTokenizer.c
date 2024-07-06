@@ -154,7 +154,7 @@ cos_tokenizer_alloc(CosStream *input_stream)
         goto failure;
     }
 
-    input_stream_reader = cos_input_stream_reader_alloc(input_stream);
+    input_stream_reader = cos_input_stream_reader_create(input_stream);
     if (!input_stream_reader) {
         goto failure;
     }
@@ -181,7 +181,7 @@ failure:
         free(tokenizer);
     }
     if (input_stream_reader) {
-        cos_input_stream_reader_free(input_stream_reader);
+        cos_input_stream_reader_destroy(input_stream_reader);
     }
     if (peeked_tokens) {
         cos_ring_buffer_destroy(peeked_tokens);
@@ -218,9 +218,29 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     }
     cos_ring_buffer_destroy(tokenizer->free_tokens);
 
-    cos_input_stream_reader_free(tokenizer->input_stream_reader);
+    cos_input_stream_reader_destroy(tokenizer->input_stream_reader);
 
     free(tokenizer);
+}
+
+void
+cos_tokenizer_reset(CosTokenizer *tokenizer)
+{
+    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    if (COS_UNLIKELY(!tokenizer)) {
+        return;
+    }
+
+    cos_input_stream_reader_reset(tokenizer->input_stream_reader);
+
+    // Clear all the peeked tokens.
+    while (cos_ring_buffer_get_count(tokenizer->peeked_tokens) > 0) {
+        CosToken *token = NULL;
+        if (cos_ring_buffer_pop_front(tokenizer->peeked_tokens,
+                                      (void *)&token)) {
+            cos_release_token_(tokenizer, token);
+        }
+    }
 }
 
 bool

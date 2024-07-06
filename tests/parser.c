@@ -2,6 +2,7 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#include "common/CosLog.h"
 #include "parse/CosObjParser.h"
 
 #include <libcos/CosDoc.h>
@@ -21,6 +22,9 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
           COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.
+
+    cos_log_context_set_level(cos_log_context_get_default(),
+                              CosLogLevel_Trace);
 
     CosStream * const input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
                                                             "r");
