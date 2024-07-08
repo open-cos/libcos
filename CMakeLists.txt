@@ -138,8 +138,8 @@ target_sources(libcos PRIVATE
     src/common/memory/CosRefCounter.c
     src/common/memory/CosRefCounter.h
     src/io/CosFileStream.c
-    src/io/CosInputStreamReader.c
-    src/io/CosInputStreamReader.h
+    src/io/CosStreamReader.c
+    src/io/CosStreamReader.h
     src/io/CosMemoryStream.c
     src/io/CosStream.c
     src/io/string-support.c

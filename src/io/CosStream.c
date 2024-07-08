@@ -19,11 +19,17 @@ struct CosStream {
 };
 
 CosStream *
-cos_stream_create(CosStreamFunctions *functions,
+cos_stream_create(const CosStreamFunctions *functions,
                   void *context)
 {
     COS_PARAMETER_ASSERT(functions != NULL);
     if (COS_UNLIKELY(!functions)) {
+        return NULL;
+    }
+
+    // Ensure that the stream functions are valid.
+    if (!functions->eof_func ||
+        !functions->close_func) {
         return NULL;
     }
 
@@ -151,6 +157,25 @@ cos_stream_tell(CosStream *stream,
 
     return stream->functions.tell_func(stream->context,
                                        out_error);
+}
+
+bool
+cos_stream_is_at_end(CosStream *stream,
+                     CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(stream != NULL);
+    if (COS_UNLIKELY(!stream)) {
+        return true;
+    }
+
+    if (!stream->functions.eof_func) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
+                                           "Stream does not support checking for end"),
+                            out_error);
+        return true;
+    }
+
+    return stream->functions.eof_func(stream->context);
 }
 
 COS_ASSUME_NONNULL_END

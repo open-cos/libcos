@@ -6,7 +6,7 @@
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
-#include "io/CosInputStreamReader.h"
+#include "io/CosStreamReader.h"
 
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosNumber.h"
@@ -23,7 +23,7 @@ COS_ASSUME_NONNULL_BEGIN
 #define COS_TOKENIZER_MAX_PEEKED_TOKENS 2
 
 struct CosTokenizer {
-    CosInputStreamReader *input_stream_reader;
+    CosStreamReader *stream_reader;
 
     CosRingBuffer *peeked_tokens;
     CosRingBuffer *free_tokens;
@@ -144,7 +144,7 @@ cos_tokenizer_alloc(CosStream *input_stream)
     COS_PARAMETER_ASSERT(input_stream != NULL);
 
     CosTokenizer *tokenizer = NULL;
-    CosInputStreamReader *input_stream_reader = NULL;
+    CosStreamReader *stream_reader = NULL;
 
     CosRingBuffer *peeked_tokens = NULL;
     CosRingBuffer *free_tokens = NULL;
@@ -154,8 +154,8 @@ cos_tokenizer_alloc(CosStream *input_stream)
         goto failure;
     }
 
-    input_stream_reader = cos_input_stream_reader_create(input_stream);
-    if (!input_stream_reader) {
+    stream_reader = cos_stream_reader_create(input_stream);
+    if (!stream_reader) {
         goto failure;
     }
 
@@ -170,7 +170,7 @@ cos_tokenizer_alloc(CosStream *input_stream)
         goto failure;
     }
 
-    tokenizer->input_stream_reader = input_stream_reader;
+    tokenizer->stream_reader = stream_reader;
     tokenizer->peeked_tokens = peeked_tokens;
     tokenizer->free_tokens = free_tokens;
 
@@ -180,8 +180,8 @@ failure:
     if (tokenizer) {
         free(tokenizer);
     }
-    if (input_stream_reader) {
-        cos_input_stream_reader_destroy(input_stream_reader);
+    if (stream_reader) {
+        cos_stream_reader_destroy(stream_reader);
     }
     if (peeked_tokens) {
         cos_ring_buffer_destroy(peeked_tokens);
@@ -218,7 +218,7 @@ cos_tokenizer_free(CosTokenizer *tokenizer)
     }
     cos_ring_buffer_destroy(tokenizer->free_tokens);
 
-    cos_input_stream_reader_destroy(tokenizer->input_stream_reader);
+    cos_stream_reader_destroy(tokenizer->stream_reader);
 
     free(tokenizer);
 }
@@ -231,7 +231,7 @@ cos_tokenizer_reset(CosTokenizer *tokenizer)
         return;
     }
 
-    cos_input_stream_reader_reset(tokenizer->input_stream_reader);
+    cos_stream_reader_reset(tokenizer->stream_reader);
 
     // Clear all the peeked tokens.
     while (cos_ring_buffer_get_count(tokenizer->peeked_tokens) > 0) {
@@ -552,7 +552,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
 
-    const int c = cos_input_stream_reader_getc(tokenizer->input_stream_reader);
+    const int c = cos_stream_reader_getc(tokenizer->stream_reader);
     switch (c) {
         case EOF: {
             token->type = CosToken_Type_EOF;
@@ -660,7 +660,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         case CosCharacterSet_PlusSign:
         case CosCharacterSet_HyphenMinus: {
             // We know that this is a number (integer or real).
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
 
             CosNumber number_value = {0};
             CosError error;
@@ -686,7 +686,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         } break;
 
         default: {
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
 
             // This could be a keyword or an unknown token.
             CosString *string = cos_string_alloc(0);
@@ -738,7 +738,7 @@ cos_tokenizer_get_next_char_(CosTokenizer *tokenizer)
         return EOF;
     }
 
-    return cos_input_stream_reader_getc(tokenizer->input_stream_reader);
+    return cos_stream_reader_getc(tokenizer->stream_reader);
 }
 
 static inline int
@@ -749,7 +749,7 @@ cos_tokenizer_peek_next_char_(CosTokenizer *tokenizer)
         return EOF;
     }
 
-    return cos_input_stream_reader_peek(tokenizer->input_stream_reader);
+    return cos_stream_reader_peek(tokenizer->stream_reader);
 }
 
 static bool
@@ -884,7 +884,7 @@ cos_tokenizer_read_name_(CosTokenizer *tokenizer,
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_whitespace(c) || cos_is_delimiter(c)) {
             // This is the end of the name.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
             return true;
         }
         else if (c == CosCharacterSet_NumberSign) {
@@ -1055,7 +1055,7 @@ cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, un
         case CosCharacterSet_DigitSeven: {
             // Octal escape sequence.
             // Put the octal digit back and read the octal escape sequence.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
 
             const int escaped_value = cos_tokenizer_read_octal_escape_sequence_(tokenizer);
             if (result) {
@@ -1077,7 +1077,7 @@ cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, un
         default: {
             // Unknown escape sequence character.
             // Ignore the reverse solidus and put the character back.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
             return false;
         }
     }
@@ -1106,7 +1106,7 @@ cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer)
         else {
             // This is the end of the octal escape sequence.
             COS_ASSERT(i > 0, "Expected at least one octal digit.");
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
             break;
         }
     }
@@ -1221,7 +1221,7 @@ cos_read_number_(CosTokenizer *tokenizer,
         }
         else {
             // This is the end of the number.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
             break;
         }
     }
@@ -1268,7 +1268,7 @@ cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
         }
         else {
             // This is not a whitespace character.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
             break;
         }
     }
@@ -1280,7 +1280,7 @@ cos_tokenizer_skip_character_(CosTokenizer *tokenizer,
 {
     const int c = cos_tokenizer_get_next_char_(tokenizer);
     if (c != EOF && c != character) {
-        cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+        cos_stream_reader_ungetc(tokenizer->stream_reader);
     }
 }
 
@@ -1313,7 +1313,7 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_whitespace(c) || cos_is_delimiter(c)) {
             // This is the end of the token.
-            cos_input_stream_reader_ungetc(tokenizer->input_stream_reader);
+            cos_stream_reader_ungetc(tokenizer->stream_reader);
             return true;
         }
 

@@ -83,6 +83,17 @@ typedef struct CosStreamFunctions {
         COS_ATTR_ACCESS_WRITE_ONLY(2);
 
     /**
+     * @brief Returns whether the stream is at the end.
+     *
+     * @param context The context of the stream.
+     * @param out_error The error information.
+     *
+     * @return @c true if the stream is at the end, @c false otherwise.
+     */
+    bool (*eof_func)(void *context)
+        COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+    /**
      * @brief Closes the stream.
      *
      * @param context The context of the stream.
@@ -96,7 +107,7 @@ cos_stream_close(CosStream *stream)
     COS_DEALLOCATOR_FUNC;
 
 CosStream * COS_Nullable
-cos_stream_create(CosStreamFunctions *functions,
+cos_stream_create(const CosStreamFunctions *functions,
                   void *context)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
@@ -130,6 +141,11 @@ cos_stream_seek(CosStream *stream,
 CosStreamOffset
 cos_stream_tell(CosStream *stream,
                 CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+bool
+cos_stream_is_at_end(CosStream *stream,
+                     CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 COS_ASSUME_NONNULL_END

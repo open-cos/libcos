@@ -69,7 +69,7 @@ typedef struct CosXrefTableParser CosXrefTableParser;
 
 typedef struct CosStream CosStream;
 
-typedef struct CosInputStreamReader CosInputStreamReader;
+typedef struct CosStreamReader CosStreamReader;
 
 typedef struct CosDiagnostic CosDiagnostic;
 typedef struct CosDiagnosticHandler CosDiagnosticHandler;

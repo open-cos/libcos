@@ -47,6 +47,9 @@ static CosStreamOffset
 cos_memory_stream_tell_(void *context,
                         CosError * COS_Nullable out_error);
 
+static bool
+cos_memory_stream_eof_(void *context);
+
 static void
 cos_memory_stream_close_(void *context);
 
@@ -65,6 +68,7 @@ cos_memory_stream_create(void *buffer,
         .write_func = &cos_memory_stream_write_,
         .seek_func = &cos_memory_stream_seek_,
         .tell_func = &cos_memory_stream_tell_,
+        .eof_func = &cos_memory_stream_eof_,
         .close_func = &cos_memory_stream_close_,
     };
 
@@ -108,6 +112,7 @@ cos_memory_stream_create_readonly(const void *buffer,
         .write_func = NULL,
         .seek_func = &cos_memory_stream_seek_,
         .tell_func = &cos_memory_stream_tell_,
+        .eof_func = &cos_memory_stream_eof_,
         .close_func = &cos_memory_stream_close_,
     };
 
@@ -279,6 +284,16 @@ cos_memory_stream_close_(void *context)
     }
 
     free(memory_stream_context);
+}
+
+static bool
+cos_memory_stream_eof_(void *context)
+{
+    COS_PARAMETER_ASSERT(context != NULL);
+
+    CosMemoryStreamContext * const memory_stream_context = (CosMemoryStreamContext *)context;
+
+    return memory_stream_context->position >= memory_stream_context->size;
 }
 
 COS_ASSUME_NONNULL_END

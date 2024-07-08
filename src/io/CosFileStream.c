@@ -8,7 +8,6 @@
 
 #include <libcos/common/CosError.h>
 
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -36,6 +35,9 @@ static CosStreamOffset
 cos_file_stream_tell_(void *context,
                       CosError * COS_Nullable out_error);
 
+static bool
+cos_file_stream_eof_(void *context);
+
 static void
 cos_file_stream_close_(void *context);
 
@@ -59,6 +61,7 @@ cos_file_stream_create(const char *path,
         .write_func = &cos_file_stream_write_,
         .seek_func = &cos_file_stream_seek_,
         .tell_func = &cos_file_stream_tell_,
+        .eof_func = &cos_file_stream_eof_,
         .close_func = &cos_file_stream_close_,
     };
 
@@ -188,6 +191,17 @@ cos_file_stream_tell_(void *context,
     }
 
     return offset;
+}
+
+static bool
+cos_file_stream_eof_(void *context)
+{
+    COS_PARAMETER_ASSERT(context != NULL);
+
+    FILE * const file = context;
+
+    const bool is_eof = feof(file) != 0;
+    return is_eof;
 }
 
 static void
