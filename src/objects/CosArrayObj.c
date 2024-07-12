@@ -5,6 +5,7 @@
 #include "libcos/objects/CosArrayObj.h"
 
 #include "common/Assert.h"
+
 #include "libcos/objects/CosObj.h"
 
 #include <libcos/common/CosArray.h>
@@ -43,7 +44,7 @@ cos_array_obj_alloc(CosArray * COS_Nullable array)
     array_obj->type = CosObjType_Array;
 
     if (array) {
-        array_obj->value = (CosArray *)array;
+        array_obj->value = COS_nonnull_cast(array);
     }
     else {
         CosArray * const new_array = cos_array_create(sizeof(CosObj *),
@@ -100,7 +101,7 @@ cos_array_obj_get_at(const CosArrayObj *array_obj,
     CosObj *obj = NULL;
     if (!cos_array_get_item(array_obj->value,
                             index,
-                            &obj,
+                            (void *)&obj,
                             out_error)) {
         return NULL;
     }
@@ -121,7 +122,7 @@ cos_array_obj_insert(CosArrayObj *array_obj,
 
     return cos_array_insert_item(array_obj->value,
                                  index,
-                                 &obj,
+                                 (void *)&obj,
                                  error);
 }
 
@@ -137,7 +138,7 @@ cos_array_obj_append(CosArrayObj *array_obj,
     }
 
     return cos_array_append_item(array_obj->value,
-                                 &obj,
+                                 (void *)&obj,
                                  error);
 }
 
