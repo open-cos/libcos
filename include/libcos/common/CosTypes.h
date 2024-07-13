@@ -44,6 +44,8 @@ typedef struct CosDoc CosDoc;
 
 typedef struct CosObjID CosObjID;
 
+typedef struct CosObjNode CosObjNode;
+
 typedef struct CosObj CosObj;
 typedef struct CosBoolObj CosBoolObj;
 typedef struct CosIntObj CosIntObj;

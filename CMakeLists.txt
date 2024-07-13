@@ -156,6 +156,7 @@ target_sources(libcos PRIVATE
     src/objects/CosReferenceObj.c
     src/objects/CosStreamObj.c
     src/objects/CosStringObj.c
+    src/objects/nodes/CosObjNode.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
     src/syntax/CosKeywords.c
@@ -217,6 +218,7 @@ target_sources(libcos PUBLIC
     include/libcos/objects/CosReferenceObj.h
     include/libcos/objects/CosStreamObj.h
     include/libcos/objects/CosStringObj.h
+    include/libcos/objects/nodes/CosObjNode.h
     include/libcos/syntax/CosKeywords.h
     include/libcos/syntax/CosLimits.h
     include/libcos/xref/CosXrefEntry.h

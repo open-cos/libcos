@@ -40,8 +40,6 @@ cos_assertion_failure_(const char *condition,
         fputs(".", stderr);
     }
     fputs("\n", stderr);
-
-    abort();
 }
 
 void
