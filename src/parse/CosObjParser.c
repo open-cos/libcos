@@ -277,9 +277,8 @@ cos_obj_parser_peek_object(CosObjParser *parser,
     }
 
     // If there are objects in the queue, return the first one.
-    CosObj *peeked_obj = NULL;
-    if (cos_ring_buffer_get_first_item(parser->objects,
-                                       (void *)&peeked_obj)) {
+    CosObj * const peeked_obj = cos_obj_parser_pop_object_(parser);
+    if (peeked_obj) {
         return peeked_obj;
     }
 

@@ -95,15 +95,6 @@ cos_tokenizer_match_token(CosTokenizer *tokenizer,
                           CosToken_Type type)
     COS_PRECONDITION(type != CosToken_Type_Unknown);
 
-/**
- * Consume the next token if it matches the given keyword type.
- *
- * @param tokenizer The tokenizer.
- * @param keyword_type The keyword type to match.
- *
- * @return @c true if the next token matches the given keyword type, otherwise @c false.
- */
-
 size_t
 cos_tokenizer_skip_characters(CosTokenizer *tokenizer,
                               size_t count);

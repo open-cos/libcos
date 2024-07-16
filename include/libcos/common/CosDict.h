@@ -38,17 +38,11 @@ cos_dict_destroy(CosDict *dict)
     COS_DEALLOCATOR_FUNC;
 
 CosDict * COS_Nullable
-cos_dict_create(const CosDictKeyCallbacks * COS_Nullable key_callbacks,
-                const CosDictValueCallbacks * COS_Nullable value_callbacks,
+cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
+                const CosDictValueCallbacks *value_callbacks,
                 size_t capacity_hint)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_dict_destroy);
-
-const CosDictKeyCallbacks * COS_Nullable
-cos_dict_get_key_callbacks(const CosDict *dict);
-
-const CosDictValueCallbacks * COS_Nullable
-cos_dict_get_value_callbacks(const CosDict *dict);
 
 size_t
 cos_dict_get_count(const CosDict *dict);

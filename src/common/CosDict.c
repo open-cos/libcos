@@ -23,8 +23,8 @@ struct CosDict {
 
     size_t count;
 
-    CosDictKeyCallbacks *key_callbacks;
-    CosDictValueCallbacks *value_callbacks;
+    CosDictKeyCallbacks key_callbacks;
+    CosDictValueCallbacks value_callbacks;
 };
 
 COS_STATIC_INLINE
@@ -44,10 +44,16 @@ cos_dict_find_entry_(const CosDict *dict,
                      size_t hash);
 
 CosDict *
-cos_dict_create(const CosDictKeyCallbacks * COS_Nullable key_callbacks,
-                const CosDictValueCallbacks * COS_Nullable value_callbacks,
+cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
+                const CosDictValueCallbacks *value_callbacks,
                 size_t capacity_hint)
 {
+    COS_PARAMETER_ASSERT(key_callbacks != NULL);
+    COS_PARAMETER_ASSERT(value_callbacks != NULL);
+    if (COS_UNLIKELY(!key_callbacks || !value_callbacks)) {
+        return NULL;
+    }
+
     CosDict *dict = NULL;
     CosDictEntry *entries = NULL;
 
@@ -56,27 +62,8 @@ cos_dict_create(const CosDictKeyCallbacks * COS_Nullable key_callbacks,
         goto failure;
     }
 
-    if (key_callbacks) {
-        dict->key_callbacks = malloc(sizeof(CosDictKeyCallbacks));
-        if (!dict->key_callbacks) {
-            goto failure;
-        }
-
-        memcpy(dict->key_callbacks,
-               key_callbacks,
-               sizeof(CosDictKeyCallbacks));
-    }
-
-    if (value_callbacks) {
-        dict->value_callbacks = malloc(sizeof(CosDictValueCallbacks));
-        if (!dict->value_callbacks) {
-            goto failure;
-        }
-
-        memcpy(dict->value_callbacks,
-               value_callbacks,
-               sizeof(CosDictValueCallbacks));
-    }
+    dict->key_callbacks = *key_callbacks;
+    dict->value_callbacks = *value_callbacks;
 
     const size_t capacity = cos_container_round_capacity_(capacity_hint);
 
@@ -86,7 +73,7 @@ cos_dict_create(const CosDictKeyCallbacks * COS_Nullable key_callbacks,
     }
 
     dict->entries = entries;
-    dict->capacity = capacity_hint;
+    dict->capacity = capacity;
 
     return dict;
 
@@ -107,34 +94,9 @@ cos_dict_destroy(CosDict *dict)
         return;
     }
 
-    free(dict->key_callbacks);
-    free(dict->value_callbacks);
-
     free(dict->entries);
 
     free(dict);
-}
-
-const CosDictKeyCallbacks *
-cos_dict_get_key_callbacks(const CosDict *dict)
-{
-    COS_PARAMETER_ASSERT(dict != NULL);
-    if (!dict) {
-        return NULL;
-    }
-
-    return dict->key_callbacks;
-}
-
-const CosDictValueCallbacks *
-cos_dict_get_value_callbacks(const CosDict *dict)
-{
-    COS_PARAMETER_ASSERT(dict != NULL);
-    if (!dict) {
-        return NULL;
-    }
-
-    return dict->value_callbacks;
 }
 
 size_t
@@ -206,11 +168,11 @@ cos_dict_set(CosDict *dict,
         dict->count++;
     }
 
-    const CosDictReleaseCallback retain_key = dict->key_callbacks->retain;
+    const CosDictReleaseCallback retain_key = dict->key_callbacks.retain;
     if (retain_key) {
         retain_key(key);
     }
-    const CosDictRetainCallback retain_value = dict->value_callbacks->retain;
+    const CosDictRetainCallback retain_value = dict->value_callbacks.retain;
     if (retain_value) {
         retain_value(value);
     }
@@ -281,7 +243,7 @@ cos_dict_find_entry_(const CosDict *dict,
     COS_PARAM_ASSERT_INTERNAL(key != NULL);
 
     const size_t capacity = dict->capacity;
-    const CosDictEqualValuesCallback key_equal = dict->key_callbacks->equal;
+    const CosDictEqualValuesCallback key_equal = dict->key_callbacks.equal;
 
     size_t index = hash % capacity;
     while (true) {
@@ -304,8 +266,8 @@ cos_dict_hash_(const CosDict *dict,
     COS_PARAM_ASSERT_INTERNAL(dict != NULL);
     COS_PARAM_ASSERT_INTERNAL(key != NULL);
 
-    if (dict->key_callbacks->hash) {
-        return dict->key_callbacks->hash(key);
+    if (dict->key_callbacks.hash) {
+        return dict->key_callbacks.hash(key);
     }
 
     return (size_t)key;
