@@ -76,7 +76,7 @@ cos_scanner_is_at_end(const CosScanner *scanner);
 void
 cos_scanner_reset(CosScanner *scanner);
 
-#pragma mark - Reading
+// MARK: - Reading
 
 /**
  * @brief Reads a character from the input.

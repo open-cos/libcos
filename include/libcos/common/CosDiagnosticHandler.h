@@ -44,7 +44,7 @@ cos_diagnose(CosDiagnosticHandler *handler,
              CosDiagnosticType type,
              const char *message);
 
-#pragma mark - Diagnostic logger
+// MARK: - Diagnostic logger
 
 CosDiagnosticHandler * COS_Nullable
 cos_diagnostic_handler_alloc_logger(CosLogContext *log_context)

@@ -18,7 +18,7 @@ cos_data_resize_(CosData *data,
                  size_t required_capacity,
                  CosError * COS_Nullable error);
 
-#pragma mark - Public
+// MARK: - Public
 
 CosData * COS_Nullable
 cos_data_alloc(size_t capacity_hint)
@@ -192,7 +192,7 @@ cos_data_push_back(CosData *data,
     return cos_data_append(data, &byte, 1, error);
 }
 
-#pragma mark Data reference
+// MARK: Data reference
 
 CosDataRef
 cos_data_get_ref(const CosData *data)
@@ -205,7 +205,7 @@ cos_data_get_ref(const CosData *data)
     return cos_data_ref_make(data->bytes, data->size);
 }
 
-#pragma mark - Private
+// MARK: - Private
 
 static bool
 cos_data_resize_(CosData *data,

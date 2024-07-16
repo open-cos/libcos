@@ -31,7 +31,7 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
         goto failure;
     }
 
-    CosTokenizer * const tokenizer = cos_tokenizer_alloc(input_stream);
+    CosTokenizer * const tokenizer = cos_tokenizer_create(input_stream);
     if (!tokenizer) {
         goto failure;
     }
@@ -176,7 +176,7 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
         cos_tokenizer_release_token(tokenizer, token);
     }
 
-    cos_tokenizer_free(tokenizer);
+    cos_tokenizer_destroy(tokenizer);
     cos_stream_close(input_stream);
 
     return EXIT_SUCCESS;

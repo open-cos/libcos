@@ -19,7 +19,7 @@ cos_int_obj_alloc(int value)
 void
 cos_int_obj_free(CosIntObj *int_obj);
 
-#pragma mark - Value accessors
+// MARK: - Value accessors
 
 int
 cos_int_obj_get_value(const CosIntObj *int_obj);

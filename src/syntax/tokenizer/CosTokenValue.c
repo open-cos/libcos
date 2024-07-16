@@ -83,7 +83,7 @@ cos_token_value_reset(CosTokenValue *token_value)
     token_value->type = CosTokenValue_Type_None;
 }
 
-#pragma mark - Getters
+// MARK: - Getters
 
 bool
 cos_token_value_get_string(const CosTokenValue *token_value,
@@ -165,7 +165,7 @@ cos_token_value_get_real_number(const CosTokenValue *token_value,
     return true;
 }
 
-#pragma mark - Setters
+// MARK: - Setters
 
 void
 cos_token_value_set_string(CosTokenValue *token_value,

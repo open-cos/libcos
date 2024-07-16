@@ -19,13 +19,13 @@ COS_ASSUME_NONNULL_BEGIN
  * @param tokenizer The tokenizer.
  */
 void
-cos_tokenizer_free(CosTokenizer *tokenizer)
+cos_tokenizer_destroy(CosTokenizer *tokenizer)
     COS_DEALLOCATOR_FUNC;
 
 CosTokenizer * COS_Nullable
-cos_tokenizer_alloc(CosStream *input_stream)
+cos_tokenizer_create(CosStream *input_stream)
     COS_ALLOCATOR_FUNC
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_free);
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_destroy);
 
 void
 cos_tokenizer_reset(CosTokenizer *tokenizer);
@@ -66,11 +66,6 @@ cos_tokenizer_release_token(CosTokenizer *tokenizer,
  *
  * @return @c true if the second next token was successfully peeked, otherwise @c false.
  */
-bool
-cos_tokenizer_peek_next_next_token(CosTokenizer *tokenizer,
-                                   CosToken *out_token,
-                                   const CosTokenValue * COS_Nullable * COS_Nullable out_token_value,
-                                   CosError * COS_Nullable out_error);
 
 /**
  * Returns the next token if it matches the given token type.
@@ -108,9 +103,6 @@ cos_tokenizer_match_token(CosTokenizer *tokenizer,
  *
  * @return @c true if the next token matches the given keyword type, otherwise @c false.
  */
-bool
-cos_tokenizer_match_keyword(CosTokenizer *tokenizer,
-                            CosToken_Type keyword_type);
 
 size_t
 cos_tokenizer_skip_characters(CosTokenizer *tokenizer,

@@ -78,7 +78,7 @@ cos_doc_get_object(CosDoc *doc,
     return NULL;
 }
 
-#pragma mark - Diagnostics
+// MARK: - Diagnostics
 
 CosDiagnosticHandler *
 cos_doc_get_diagnostic_handler(const CosDoc *doc)

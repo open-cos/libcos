@@ -16,7 +16,7 @@
  */
 #define COS_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
-#pragma mark - Macro implementations
+// MARK: - Macro implementations
 
 #define COS_PASTE_IMPL_(a, b) a##b
 

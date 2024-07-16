@@ -91,7 +91,7 @@ cos_reference_obj_get_type(CosReferenceObj *reference_obj)
     return (CosObjValueType)cos_obj_get_type(direct_obj);
 }
 
-#pragma mark - Private
+// MARK: - Private
 
 static void
 cos_reference_obj_resolve_value_(CosReferenceObj *reference_obj)

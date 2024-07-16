@@ -42,7 +42,7 @@ cos_token_value_alloc(void)
 void
 cos_token_value_reset(CosTokenValue *token_value);
 
-#pragma mark - Getters
+// MARK: - Getters
 
 /**
  * @brief Gets the string value of a token value.
@@ -104,7 +104,7 @@ bool
 cos_token_value_get_real_number(const CosTokenValue *token_value,
                                 double *result);
 
-#pragma mark - Setters
+// MARK: - Setters
 
 /**
  * @brief Sets the string value of a token value.
@@ -156,7 +156,7 @@ void
 cos_token_value_set_real_number(CosTokenValue *token_value,
                                 double value);
 
-#pragma mark - Ownership transfer
+// MARK: - Ownership transfer
 
 /**
  * @brief Transfers ownership of the value's string to the caller.

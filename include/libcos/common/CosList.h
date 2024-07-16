@@ -32,7 +32,7 @@ cos_list_alloc(void)
 void
 cos_list_free(CosList *list);
 
-#pragma mark - Accessors
+// MARK: - Accessors
 
 /**
  * @brief Gets the number of items in a list.
@@ -79,7 +79,7 @@ cos_list_get_at(const CosList *list,
                 size_t index,
                 CosError * COS_Nullable error);
 
-#pragma mark - Operations
+// MARK: - Operations
 
 /**
  * @brief Prepends an item to a list.

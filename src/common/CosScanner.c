@@ -95,7 +95,7 @@ cos_scanner_reset(CosScanner *scanner)
     scanner->position = 0;
 }
 
-#pragma mark - Reading
+// MARK: - Reading
 
 bool
 cos_scanner_read_char(CosScanner *scanner,

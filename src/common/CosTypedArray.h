@@ -14,7 +14,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 #define COS_TYPED_ARRAY_DECLARE(T, name) COS_TYPED_ARRAY_DECLARE_IMPL_(T, COS_TYPED_ARRAY_NAME_(name))
 
-#pragma mark - Implementation
+// MARK: - Implementation
 
 #define COS_TYPED_ARRAY_NAME_(name) COS_PASTE(COS_PASTE(CosTyped, name), Array)
 

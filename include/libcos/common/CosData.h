@@ -142,7 +142,7 @@ cos_data_push_back(CosData *data,
                    unsigned char byte,
                    CosError * COS_Nullable error);
 
-#pragma mark - Data reference
+// MARK: - Data reference
 
 /**
  * @brief Returns a constant reference to the data object.

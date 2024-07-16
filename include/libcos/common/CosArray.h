@@ -36,7 +36,7 @@ cos_array_create(size_t element_size,
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_array_destroy);
 
-#pragma mark - Accessors
+// MARK: - Accessors
 
 /**
  * @brief Gets the number of items in an array.

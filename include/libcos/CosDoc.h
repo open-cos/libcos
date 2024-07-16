@@ -32,7 +32,7 @@ cos_doc_get_object(CosDoc *doc,
                    CosObjID id,
                    CosError * COS_Nullable error);
 
-#pragma mark - Diagnostics
+// MARK: - Diagnostics
 
 /**
  * @brief Gets the document's diagnostic handler.

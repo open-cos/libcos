@@ -69,7 +69,7 @@ cos_string_alloc_with_strn(const char *str, size_t n)
 void
 cos_string_free(CosString *string);
 
-#pragma mark Initialization
+// MARK: Initialization
 
 /**
  * Initializes a string with the default capacity.
@@ -174,7 +174,7 @@ cos_string_get_hash(const CosString *string)
 
 /** @} */
 
-#pragma mark String Reference
+// MARK: String Reference
 
 /**
  * A reference to a read-only nul-terminated character array.

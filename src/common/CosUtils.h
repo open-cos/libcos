@@ -10,7 +10,7 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-#pragma mark - Math
+// MARK: - Math
 
 /**
  * @brief Returns the next power of 2 greater than or equal to @p x.
@@ -45,7 +45,7 @@ unsigned long long
 cos_next_pow2ll(unsigned long long x)
     COS_ATTR_PURE;
 
-#pragma mark - Bit Operations
+// MARK: - Bit Operations
 
 /**
  * @brief Returns the index of the last set bit.

@@ -123,7 +123,7 @@ cos_diagnose(CosDiagnosticHandler *handler,
     cos_emit_diagnostic(handler, &diagnostic);
 }
 
-#pragma mark - Diagnostic logger
+// MARK: - Diagnostic logger
 
 static void
 cos_diagnostic_handler_log_(CosDiagnosticHandler *handler,

@@ -52,7 +52,7 @@ static bool
 cos_array_resize_(CosArray *array,
                   size_t required_capacity);
 
-#pragma mark - Public
+// MARK: - Public
 
 CosArray *
 cos_array_create(size_t element_size,
@@ -120,7 +120,7 @@ cos_array_destroy(CosArray *array)
     free(array);
 }
 
-#pragma mark - Accessors
+// MARK: - Accessors
 
 size_t
 cos_array_get_count(const CosArray *array)
@@ -167,7 +167,7 @@ cos_array_get_item(const CosArray *array,
     return true;
 }
 
-#pragma mark Insertion
+// MARK: Insertion
 
 bool
 cos_array_insert_item(CosArray *array,
@@ -243,7 +243,7 @@ cos_array_append_items(CosArray *array,
     return cos_array_insert_items_(array, array->count, items, count, error);
 }
 
-#pragma mark Removal
+// MARK: Removal
 
 bool
 cos_array_remove_item(CosArray *array,
@@ -331,7 +331,7 @@ cos_array_pop_last_item(CosArray *array,
                                  out_error);
 }
 
-#pragma mark - Private
+// MARK: - Private
 
 static void
 cos_apply_func_(void *items,

@@ -19,7 +19,7 @@ cos_real_obj_alloc(double value)
 void
 cos_real_obj_free(CosRealObj *real_obj);
 
-#pragma mark - Value accessors
+// MARK: - Value accessors
 
 double
 cos_real_obj_get_value(const CosRealObj *real_obj);

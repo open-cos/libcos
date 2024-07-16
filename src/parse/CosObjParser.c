@@ -200,7 +200,7 @@ cos_obj_parser_init_(CosObjParser * const self,
 
     CosRingBuffer *objects = NULL;
 
-    CosTokenizer * const tokenizer = cos_tokenizer_alloc(input_stream);
+    CosTokenizer * const tokenizer = cos_tokenizer_create(input_stream);
     if (!tokenizer) {
         goto failure;
     }
@@ -229,7 +229,7 @@ cos_obj_parser_init_(CosObjParser * const self,
 
 failure:
     if (tokenizer) {
-        cos_tokenizer_free(tokenizer);
+        cos_tokenizer_destroy(tokenizer);
     }
     if (objects) {
         cos_ring_buffer_destroy(objects);
@@ -248,7 +248,7 @@ cos_obj_parser_destroy(CosObjParser *parser)
         cos_tokenizer_release_token(parser->tokenizer,
                                     COS_nonnull_cast(parser->next_token));
     }
-    cos_tokenizer_free(parser->tokenizer);
+    cos_tokenizer_destroy(parser->tokenizer);
 
     cos_ring_buffer_destroy(parser->objects);
 
@@ -325,7 +325,7 @@ cos_obj_parser_next_object(CosObjParser *parser,
                             error);
 }
 
-#pragma mark - Implementation
+// MARK: - Implementation
 
 // NOLINTBEGIN(misc-no-recursion)
 

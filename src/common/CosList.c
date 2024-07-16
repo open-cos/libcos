@@ -35,7 +35,7 @@ struct CosList {
     size_t count;
 };
 
-#pragma mark - Public
+// MARK: - Public
 
 CosList *
 cos_list_alloc(void)
@@ -62,7 +62,7 @@ cos_list_free(CosList *list)
     free(list);
 }
 
-#pragma mark Accessors
+// MARK: Accessors
 
 size_t
 cos_list_get_count(const CosList *list)
@@ -139,7 +139,7 @@ cos_list_get_at(const CosList *list,
     return node->value;
 }
 
-#pragma mark Operations
+// MARK: Operations
 
 bool
 cos_list_prepend(CosList *list,
@@ -458,7 +458,7 @@ cos_list_pop_first(CosList *list)
     return value;
 }
 
-#pragma mark - Private
+// MARK: - Private
 
 static CosListNode *
 cos_list_node_alloc_(void *value)
