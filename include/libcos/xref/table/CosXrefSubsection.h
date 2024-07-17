@@ -17,14 +17,15 @@ struct CosXrefSubsection {
     CosXrefEntry *entries;
 };
 
-CosXrefSubsection * COS_Nullable
-cos_xref_subsection_alloc(unsigned int first_object_number,
-                          unsigned int entry_count)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
 void
-cos_xref_subsection_free(CosXrefSubsection *subsection);
+cos_xref_subsection_destroy(CosXrefSubsection *subsection)
+    COS_DEALLOCATOR_FUNC;
+
+CosXrefSubsection * COS_Nullable
+cos_xref_subsection_create(unsigned int first_object_number,
+                           unsigned int entry_count)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_xref_subsection_destroy);
 
 void
 cos_xref_subsection_init(CosXrefSubsection *subsection,

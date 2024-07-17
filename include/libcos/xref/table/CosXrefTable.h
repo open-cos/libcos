@@ -11,13 +11,14 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosXrefTable * COS_Nullable
-cos_xref_table_alloc(void)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
 void
-cos_xref_table_free(CosXrefTable *table);
+cos_xref_table_destroy(CosXrefTable *table)
+    COS_DEALLOCATOR_FUNC;
+
+CosXrefTable * COS_Nullable
+cos_xref_table_create(void)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_xref_table_destroy);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

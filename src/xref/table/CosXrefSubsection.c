@@ -2,18 +2,18 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "libcos/xref/CosXrefSubsection.h"
+#include "libcos/xref/table/CosXrefSubsection.h"
 
 #include "common/Assert.h"
 
-#include <libcos/xref/CosXrefEntry.h>
+#include "libcos/xref/table/CosXrefEntry.h"
 
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
 CosXrefSubsection *
-cos_xref_subsection_alloc(unsigned int first_object_number,
+cos_xref_subsection_create(unsigned int first_object_number,
                           unsigned int entry_count)
 {
     CosXrefSubsection *subsection = NULL;
@@ -40,7 +40,7 @@ failure:
 }
 
 void
-cos_xref_subsection_free(CosXrefSubsection *subsection)
+cos_xref_subsection_destroy(CosXrefSubsection *subsection)
 {
     if (!subsection) {
         return;

@@ -2,11 +2,11 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "libcos/xref/CosXrefSection.h"
+#include "libcos/xref/table/CosXrefSection.h"
 
 #include "common/Assert.h"
 
-#include <libcos/common/CosArray.h>
+#include "libcos/common/CosArray.h"
 
 #include <stdlib.h>
 
@@ -17,20 +17,20 @@ struct CosXrefSection {
 };
 
 CosXrefSection *
-cos_xref_section_alloc(void)
+cos_xref_section_create(void)
 {
     CosXrefSection *section = NULL;
     CosArray *subsections = NULL;
 
     section = calloc(1, sizeof(CosXrefSection));
-    if (!section) {
+    if (COS_UNLIKELY(!section)) {
         goto failure;
     }
 
     subsections = cos_array_create(sizeof(CosXrefSubsection *),
                                    NULL,
                                    0);
-    if (!subsections) {
+    if (COS_UNLIKELY(!subsections)) {
         goto failure;
     }
 
@@ -49,9 +49,10 @@ failure:
 }
 
 void
-cos_xref_section_free(CosXrefSection *section)
+cos_xref_section_destroy(CosXrefSection *section)
 {
-    if (!section) {
+    COS_PARAMETER_ASSERT(section != NULL);
+    if (COS_UNLIKELY(!section)) {
         return;
     }
 

@@ -15,21 +15,22 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 /**
+ * @brief Frees a cross-reference section.
+ * @param section The cross-reference section to free.
+ */
+void
+cos_xref_section_destroy(CosXrefSection *section)
+    COS_DEALLOCATOR_FUNC;
+
+/**
  * @brief Allocates a new cross-reference section.
  *
  * @return A new cross-reference section, or @c NULL if an error occurred.
  */
 CosXrefSection * COS_Nullable
-cos_xref_section_alloc(void)
-    COS_ATTR_MALLOC
-    COS_WARN_UNUSED_RESULT;
-
-/**
- * @brief Frees a cross-reference section.
- * @param section The cross-reference section to free.
- */
-void
-cos_xref_section_free(CosXrefSection *section);
+cos_xref_section_create(void)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_xref_section_destroy);
 
 /**
  * @brief Gets the number of subsections in a cross-reference section.

@@ -2,7 +2,7 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "libcos/xref/CosXrefEntry.h"
+#include "libcos/xref/table/CosXrefEntry.h"
 
 #include "common/Assert.h"
 

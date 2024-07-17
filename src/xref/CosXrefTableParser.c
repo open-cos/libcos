@@ -11,11 +11,10 @@
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosMacros.h"
 #include "libcos/common/CosScanner.h"
-
-#include <libcos/xref/CosXrefEntry.h>
-#include <libcos/xref/CosXrefSection.h>
-#include <libcos/xref/CosXrefSubsection.h>
-#include <libcos/xref/CosXrefTable.h>
+#include "libcos/xref/table/CosXrefEntry.h"
+#include "libcos/xref/table/CosXrefSection.h"
+#include "libcos/xref/table/CosXrefSubsection.h"
+#include "libcos/xref/table/CosXrefTable.h"
 
 #include <stdlib.h>
 
@@ -92,7 +91,7 @@ cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
         return NULL;
     }
 
-    CosXrefSection *section = cos_xref_section_alloc();
+    CosXrefSection *section = cos_xref_section_create();
     if (!section) {
         return NULL;
     }
@@ -106,7 +105,7 @@ cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
 
 failure:
     if (section) {
-        cos_xref_section_free(section);
+        cos_xref_section_destroy(section);
     }
     return NULL;
 }
@@ -129,8 +128,8 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser)
     }
 
     // Create a new subsection and read the entries.
-    CosXrefSubsection *subsection = cos_xref_subsection_alloc(first_object_number,
-                                                              entry_count);
+    CosXrefSubsection *subsection = cos_xref_subsection_create(first_object_number,
+                                                               entry_count);
     if (!subsection) {
         return NULL;
     }
