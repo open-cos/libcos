@@ -40,4 +40,19 @@ cos_xref_entry_init_free(CosXrefEntry *entry,
     entry->value.free.gen_number = gen_number;
 }
 
+void
+cos_xref_entry_init_compressed(CosXrefEntry *entry,
+                               unsigned int obj_stream_number,
+                               unsigned int obj_stream_index)
+{
+    COS_PARAMETER_ASSERT(entry != NULL);
+    if (!entry) {
+        return;
+    }
+
+    entry->type = CosXrefEntryType_Compressed;
+    entry->value.compressed.obj_stream_number = obj_stream_number;
+    entry->value.compressed.obj_stream_index = obj_stream_index;
+}
+
 COS_ASSUME_NONNULL_END

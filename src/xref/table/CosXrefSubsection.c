@@ -12,21 +12,27 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
+struct CosXrefSubsection {
+    unsigned int first_object_number;
+    unsigned int entry_count;
+    CosXrefEntry *entries;
+};
+
 CosXrefSubsection *
 cos_xref_subsection_create(unsigned int first_object_number,
-                          unsigned int entry_count)
+                           unsigned int entry_count)
 {
     CosXrefSubsection *subsection = NULL;
 
     subsection = calloc(1, sizeof(CosXrefSubsection));
-    if (!subsection) {
-        return NULL;
+    if (COS_UNLIKELY(!subsection)) {
+        goto failure;
     }
 
     subsection->first_object_number = first_object_number;
     subsection->entry_count = entry_count;
     subsection->entries = calloc(entry_count, sizeof(CosXrefEntry));
-    if (!subsection->entries) {
+    if (COS_UNLIKELY(!subsection->entries)) {
         goto failure;
     }
 
@@ -42,26 +48,13 @@ failure:
 void
 cos_xref_subsection_destroy(CosXrefSubsection *subsection)
 {
-    if (!subsection) {
+    COS_PARAMETER_ASSERT(subsection != NULL);
+    if (COS_UNLIKELY(!subsection)) {
         return;
     }
 
     free(subsection->entries);
     free(subsection);
-}
-
-void
-cos_xref_subsection_init(CosXrefSubsection *subsection,
-                         unsigned int first_object_number,
-                         unsigned int entry_count)
-{
-    COS_PARAMETER_ASSERT(subsection != NULL);
-    if (!subsection) {
-        return;
-    }
-
-    subsection->first_object_number = first_object_number;
-    subsection->entry_count = entry_count;
 }
 
 COS_ASSUME_NONNULL_END
