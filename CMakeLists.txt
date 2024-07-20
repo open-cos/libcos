@@ -100,6 +100,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
+    include/libcos/common/CosBasicTypes.h
 )
 
 target_include_directories(libcos

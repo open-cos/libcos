@@ -14,7 +14,7 @@ COS_ASSUME_NONNULL_BEGIN
 /**
  * @brief A free entry in the cross-reference table.
  */
-typedef struct CosXrefFreeEntry {
+struct CosXrefFreeEntry {
     /**
      * @brief The object number of the next free object.
      */
@@ -24,12 +24,12 @@ typedef struct CosXrefFreeEntry {
      * @brief The generation number of the object.
      */
     unsigned int gen_number;
-} CosXrefFreeEntry;
+};
 
 /**
  * @brief An in-use entry in the cross-reference table.
  */
-typedef struct CosXrefInUseEntry {
+struct CosXrefInUseEntry {
     /**
      * @brief The byte offset of the object in the decoded stream.
      *
@@ -42,7 +42,7 @@ typedef struct CosXrefInUseEntry {
      * @brief The generation number of the object.
      */
     unsigned int gen_number;
-} CosXrefInUseEntry;
+};
 
 /**
  * @brief A compressed cross-reference entry.
@@ -110,14 +110,14 @@ struct CosXrefEntry {
 };
 
 void
-cos_xref_entry_init_in_use(CosXrefEntry *entry,
-                           unsigned int byte_offset,
-                           unsigned int gen_number);
-
-void
 cos_xref_entry_init_free(CosXrefEntry *entry,
                          unsigned int next_free_obj_number,
                          unsigned int gen_number);
+
+void
+cos_xref_entry_init_in_use(CosXrefEntry *entry,
+                           unsigned int byte_offset,
+                           unsigned int gen_number);
 
 void
 cos_xref_entry_init_compressed(CosXrefEntry *entry,
