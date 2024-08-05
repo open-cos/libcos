@@ -90,8 +90,7 @@ typedef struct CosStreamFunctions {
      *
      * @return @c true if the stream is at the end, @c false otherwise.
      */
-    bool (*eof_func)(void *context)
-        COS_ATTR_ACCESS_WRITE_ONLY(2);
+    bool (*eof_func)(void *context);
 
     /**
      * @brief Closes the stream.
