@@ -5,6 +5,8 @@
 #ifndef LIBCOS_XREF_COS_XREF_TABLE_H
 #define LIBCOS_XREF_COS_XREF_TABLE_H
 
+#include "common/CosBasicTypes.h"
+
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
@@ -29,6 +31,11 @@ CosXrefSection * COS_Nullable
 cos_xref_table_get_section(const CosXrefTable *table,
                            size_t index,
                            CosError * COS_Nullable out_error);
+
+CosXrefEntry * COS_Nullable
+cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
+                                      CosObjNumber object_number,
+                                      CosError * COS_Nullable out_error);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

@@ -129,7 +129,8 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser)
 
     // Create a new subsection and read the entries.
     CosXrefSubsection *subsection = cos_xref_subsection_create(first_object_number,
-                                                               entry_count);
+                                                               entry_count,
+                                                               NULL);
     if (!subsection) {
         return NULL;
     }
@@ -137,10 +138,10 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser)
     CosError error = {0};
 
     for (size_t i = 0; i < entry_count; i++) {
-//        CosXrefEntry * const entry = &(subsection->entries[i]);
-//
-//        if (!cos_xref_table_parser_read_entry_(parser, entry, &error)) {
-//        }
+        //        CosXrefEntry * const entry = &(subsection->entries[i]);
+        //
+        //        if (!cos_xref_table_parser_read_entry_(parser, entry, &error)) {
+        //        }
     }
 
     return subsection;

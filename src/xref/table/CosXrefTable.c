@@ -75,4 +75,19 @@ cos_xref_table_get_section(const CosXrefTable *table,
     return section;
 }
 
+CosXrefEntry *
+cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
+                                      CosObjNumber object_number,
+                                      CosError * COS_Nullable out_error)
+{
+    COS_PARAMETER_ASSERT(table != NULL);
+    if (COS_UNLIKELY(!table)) {
+        return NULL;
+    }
+
+
+
+    return NULL;
+}
+
 COS_ASSUME_NONNULL_END
