@@ -33,7 +33,7 @@ cos_xref_subsection_get_first_object_number(const CosXrefSubsection *subsection)
 size_t
 cos_xref_subsection_get_entry_count(const CosXrefSubsection *subsection);
 
-CosXrefEntry * COS_Nullable
+const CosXrefEntry * COS_Nullable
 cos_xref_subsection_get_entry(const CosXrefSubsection *subsection,
                               size_t index,
                               CosError * COS_Nullable out_error);

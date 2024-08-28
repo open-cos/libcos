@@ -96,7 +96,7 @@ cos_xref_subsection_get_entry_count(const CosXrefSubsection *subsection)
     return subsection->entry_count;
 }
 
-CosXrefEntry *
+const CosXrefEntry *
 cos_xref_subsection_get_entry(const CosXrefSubsection *subsection,
                               size_t index,
                               CosError * COS_Nullable out_error)
