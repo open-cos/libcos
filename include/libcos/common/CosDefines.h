@@ -14,7 +14,7 @@
 #endif
 
 /**
- * @def COS_INLINE
+ * @def COS_STATIC_INLINE
  *
  * @brief Marks a function as inline.
  */
@@ -250,6 +250,15 @@
  * @brief Marks a function as taking ownership of a pointer or pointers.
  */
 #define COS_OWNERSHIP_TAKES(...) COS_MALLOC_OWNERSHIP_TAKES(__VA_ARGS__)
+
+/**
+ * @brief Specifies the function that releases ownership of a pointer.
+ *
+ * @param deallocator The deallocator function.
+ *
+ * @note The deallocator function must be declared before it can be referenced by this macro.
+ */
+#define COS_OWNERSHIP_RELEASED_BY(deallocator) COS_ATTR_MALLOC_DEALLOC(deallocator)
 
 /**
  * Pointer access mode attributes.
