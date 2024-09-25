@@ -79,7 +79,7 @@ cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
 
 failure:
     if (dict) {
-        cos_dict_destroy(dict);
+        free(dict);
     }
     if (entries) {
         free(entries);
