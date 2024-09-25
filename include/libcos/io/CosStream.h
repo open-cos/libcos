@@ -78,8 +78,8 @@ typedef struct CosStreamFunctions {
      *
      * @return The current offset of the stream, or @c -1 if an error occurred.
      */
-    CosStreamOffset (* COS_Nullable tell_func)(void *context,
-                                               CosError * COS_Nullable out_error)
+    CosStreamOffset (*tell_func)(void *context,
+                                 CosError * COS_Nullable out_error)
         COS_ATTR_ACCESS_WRITE_ONLY(2);
 
     /**
