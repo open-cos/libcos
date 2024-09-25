@@ -16,7 +16,13 @@
     COS_ASSERT_(condition, #condition, "invalid parameter")
 
 #define COS_PARAM_ASSERT_INTERNAL(condition) \
-    COS_ASSERT_FATAL_(condition, #condition, "invalid internal parameter")
+    COS_ASSERT_FATAL_(condition, #condition, "invalid parameter")
+
+#define COS_API_PARAM_CHECK(condition) \
+    COS_ASSERT_(condition, #condition, "invalid parameter")
+
+#define COS_IMPL_PARAM_CHECK(condition) \
+    COS_ASSERT_FATAL_(condition, #condition, "invalid parameter")
 
 #else
 

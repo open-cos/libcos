@@ -61,8 +61,8 @@ CosStream *
 cos_file_stream_create(const char *path,
                        const char *mode)
 {
-    COS_PARAMETER_ASSERT(path != NULL);
-    COS_PARAMETER_ASSERT(mode != NULL);
+    COS_API_PARAM_CHECK(path != NULL);
+    COS_API_PARAM_CHECK(mode != NULL);
     if (COS_UNLIKELY(!path || !mode)) {
         return NULL;
     }
@@ -113,7 +113,7 @@ failure:
 static bool
 cos_file_stream_is_valid_(const CosFileStreamContext *context)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
 
     return (context->file != NULL);
 }
@@ -124,9 +124,9 @@ cos_file_stream_read_(void *context,
                       size_t size,
                       CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
-    COS_PARAMETER_ASSERT(buffer != NULL);
-    COS_PARAMETER_ASSERT(size > 0);
+    COS_IMPL_PARAM_CHECK(context != NULL);
+    COS_IMPL_PARAM_CHECK(buffer != NULL);
+    COS_IMPL_PARAM_CHECK(size > 0);
 
     CosFileStreamContext * const file_context = context;
     COS_ASSERT(cos_file_stream_is_valid_(file_context),
@@ -154,9 +154,9 @@ cos_file_stream_write_(void *context,
                        size_t size,
                        CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
-    COS_PARAMETER_ASSERT(buffer != NULL);
-    COS_PARAMETER_ASSERT(size > 0);
+    COS_IMPL_PARAM_CHECK(context != NULL);
+    COS_IMPL_PARAM_CHECK(buffer != NULL);
+    COS_IMPL_PARAM_CHECK(size > 0);
 
     CosFileStreamContext * const file_context = context;
     COS_ASSERT(cos_file_stream_is_valid_(file_context),
@@ -184,7 +184,7 @@ cos_file_stream_seek_(void *context,
                       CosStreamOffsetWhence whence,
                       CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
 
     CosFileStreamContext * const file_context = context;
     COS_ASSERT(cos_file_stream_is_valid_(file_context),
@@ -221,7 +221,7 @@ static CosStreamOffset
 cos_file_stream_tell_(void *context,
                       CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
 
     CosFileStreamContext * const file_context = context;
     COS_ASSERT(cos_file_stream_is_valid_(file_context),
@@ -242,7 +242,7 @@ cos_file_stream_tell_(void *context,
 static bool
 cos_file_stream_eof_(void *context)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
 
     CosFileStreamContext * const file_context = context;
     COS_ASSERT(cos_file_stream_is_valid_(file_context),
@@ -255,7 +255,7 @@ cos_file_stream_eof_(void *context)
 static void
 cos_file_stream_close_(void *context)
 {
-    COS_PARAMETER_ASSERT(context != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
 
     CosFileStreamContext * const file_context = context;
     COS_ASSERT(cos_file_stream_is_valid_(file_context),
