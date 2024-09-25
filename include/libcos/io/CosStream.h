@@ -130,6 +130,26 @@ cos_stream_write(CosStream *stream,
     COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
 
+/**
+ * @brief Returns whether the stream can seek.
+ *
+ * @param stream The stream.
+ *
+ * @return @c true if the stream can seek, @c false otherwise.
+ */
+bool
+cos_stream_can_seek(const CosStream *stream);
+
+/**
+ * @brief Adjusts the stream's offset.
+ *
+ * @param stream The stream.
+ * @param offset The offset adjustment.
+ * @param whence The type of adjustment.
+ * @param out_error The error information.
+ *
+ * @return @c true if the adjustment was successful, @c false otherwise.
+ */
 bool
 cos_stream_seek(CosStream *stream,
                 CosStreamOffset offset,
@@ -137,9 +157,17 @@ cos_stream_seek(CosStream *stream,
                 CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
 
+/**
+ * @brief Returns the current offset of the stream from the beginning.
+ *
+ * @param stream The stream.
+ * @param out_error The error information.
+ *
+ * @return The current position of the stream, or @c -1 if an error occurred.
+ */
 CosStreamOffset
-cos_stream_tell(CosStream *stream,
-                CosError * COS_Nullable out_error)
+cos_stream_get_position(CosStream *stream,
+                        CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 bool

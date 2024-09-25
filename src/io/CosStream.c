@@ -116,6 +116,17 @@ cos_stream_write(CosStream *stream,
 }
 
 bool
+cos_stream_can_seek(const CosStream *stream)
+{
+    COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
+    if (COS_UNLIKELY(!cos_stream_is_valid(stream))) {
+        return false;
+    }
+
+    return (stream->functions.seek_func != NULL);
+}
+
+bool
 cos_stream_seek(CosStream *stream,
                 CosStreamOffset offset,
                 CosStreamOffsetWhence whence,
@@ -140,19 +151,19 @@ cos_stream_seek(CosStream *stream,
 }
 
 CosStreamOffset
-cos_stream_tell(CosStream *stream,
-                CosError * COS_Nullable out_error)
+cos_stream_get_position(CosStream *stream,
+                        CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
     if (COS_UNLIKELY(!cos_stream_is_valid(stream))) {
-        return 0;
+        return -1;
     }
 
     if (!stream->functions.tell_func) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "Stream does not support telling"),
                             out_error);
-        return 0;
+        return -1;
     }
 
     return stream->functions.tell_func(stream->context,
