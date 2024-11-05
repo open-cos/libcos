@@ -114,6 +114,9 @@ cos_stream_create(const CosStreamFunctions *functions,
 bool
 cos_stream_is_valid(const CosStream *stream);
 
+bool
+cos_stream_can_read(const CosStream *stream);
+
 size_t
 cos_stream_read(CosStream *stream,
                 void *buffer,
@@ -121,6 +124,9 @@ cos_stream_read(CosStream *stream,
                 CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY_SIZE(2, 3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
+
+bool
+cos_stream_can_write(const CosStream *stream);
 
 size_t
 cos_stream_write(CosStream *stream,

@@ -74,6 +74,7 @@ struct CosObjParser {
 
     CosRingBuffer *objects;
 
+    CosToken * COS_Nullable previous_token;
     CosToken * COS_Nullable next_token;
 
     CosDiagnosticHandler *diagnostic_handler;

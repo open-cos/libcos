@@ -22,4 +22,6 @@
 
 #define COS_STRINGIFY_IMPL_(x) #x
 
+#define COS_MIN(a, b) ((a) < (b) ? (a) : (b))
+
 #endif /* LIBCOS_COS_MACROS_H */

@@ -41,13 +41,10 @@ cos_stream_reader_backup_(CosStreamReader *stream_reader);
 CosStreamReader *
 cos_stream_reader_create(CosStream *input_stream)
 {
+    COS_API_PARAM_CHECK(input_stream != NULL);
+
     CosStreamReader *reader = NULL;
     unsigned char *buffer = NULL;
-
-    COS_PARAMETER_ASSERT(input_stream != NULL);
-    if (!input_stream) {
-        goto failure;
-    }
 
     reader = malloc(sizeof(CosStreamReader));
     if (!reader) {
@@ -84,8 +81,8 @@ failure:
 void
 cos_stream_reader_destroy(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
-    if (!stream_reader) {
+    COS_API_PARAM_CHECK(stream_reader != NULL);
+    if (COS_UNLIKELY(!stream_reader)) {
         return;
     }
 
@@ -97,7 +94,7 @@ cos_stream_reader_destroy(CosStreamReader *stream_reader)
 void
 cos_stream_reader_reset(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_API_PARAM_CHECK(stream_reader != NULL);
     if (COS_UNLIKELY(!stream_reader)) {
         return;
     }
@@ -113,7 +110,7 @@ cos_stream_reader_reset(CosStreamReader *stream_reader)
 bool
 cos_stream_reader_is_at_end(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_API_PARAM_CHECK(stream_reader != NULL);
 
     return cos_stream_reader_get_current_(stream_reader) == EOF;
 }
@@ -121,7 +118,7 @@ cos_stream_reader_is_at_end(CosStreamReader *stream_reader)
 int
 cos_stream_reader_getc(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_API_PARAM_CHECK(stream_reader != NULL);
 
     int result = cos_stream_reader_get_current_(stream_reader);
     cos_stream_reader_advance_(stream_reader);
@@ -131,7 +128,7 @@ cos_stream_reader_getc(CosStreamReader *stream_reader)
 int
 cos_stream_reader_peek(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_API_PARAM_CHECK(stream_reader != NULL);
 
     return cos_stream_reader_get_current_(stream_reader);
 }
@@ -139,7 +136,7 @@ cos_stream_reader_peek(CosStreamReader *stream_reader)
 bool
 cos_stream_reader_ungetc(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_API_PARAM_CHECK(stream_reader != NULL);
 
     return cos_stream_reader_backup_(stream_reader);
 }
@@ -147,7 +144,7 @@ cos_stream_reader_ungetc(CosStreamReader *stream_reader)
 static int
 cos_stream_reader_get_current_(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_IMPL_PARAM_CHECK(stream_reader != NULL);
 
     if (COS_LIKELY(stream_reader->buffer_position < stream_reader->buffer_end)) {
         return stream_reader->buffer[stream_reader->buffer_position];
@@ -187,8 +184,8 @@ cos_stream_reader_get_current_(CosStreamReader *stream_reader)
 static void
 cos_stream_reader_advance_(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
-    if (!stream_reader) {
+    COS_IMPL_PARAM_CHECK(stream_reader != NULL);
+    if (COS_UNLIKELY(!stream_reader)) {
         return;
     }
 
@@ -198,7 +195,7 @@ cos_stream_reader_advance_(CosStreamReader *stream_reader)
 static bool
 cos_stream_reader_backup_(CosStreamReader *stream_reader)
 {
-    COS_PARAMETER_ASSERT(stream_reader != NULL);
+    COS_IMPL_PARAM_CHECK(stream_reader != NULL);
 
     if (COS_LIKELY(stream_reader->buffer_position > stream_reader->buffer_start)) {
         stream_reader->buffer_position--;

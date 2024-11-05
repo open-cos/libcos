@@ -140,7 +140,6 @@ target_sources(libcos PRIVATE
     src/common/memory/CosRefCounter.h
     src/io/CosFileStream.c
     src/io/CosStreamReader.c
-    src/io/CosStreamReader.h
     src/io/CosMemoryStream.c
     src/io/CosStream.c
     src/io/string-support.c
@@ -205,6 +204,7 @@ target_sources(libcos PUBLIC
     include/libcos/io/CosFileStream.h
     include/libcos/io/CosMemoryStream.h
     include/libcos/io/CosStream.h
+    include/libcos/io/CosStreamReader.h
     include/libcos/io/string-support.h
     include/libcos/objects/CosArrayObj.h
     include/libcos/objects/CosBoolObj.h
@@ -356,6 +356,17 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -fno-omit-frame-pointer
         -fno-optimize-sibling-calls
     )
+
+    # The following flags are only supported by Clang 19.1.0 and later:
+    # -Xclang -fexperimental-bounds-safety
+    # -fexperimental-late-parse-attributes
+    if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 19.1)
+        list(APPEND COS_C_FLAGS_WARNINGS
+            -Xclang -fexperimental-bounds-safety
+            -fexperimental-late-parse-attributes
+        )
+    endif ()
+    
     add_flags(COS_LINKER_FLAGS
         -fsanitize=address
         -fsanitize=undefined
