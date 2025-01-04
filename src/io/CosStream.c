@@ -15,7 +15,7 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-#define COS_STREAM_BUFFER_SIZE 1024
+#define COS_STREAM_BUFFER_CAPACITY 1024
 
 typedef enum CosStreamBufferMode {
     CosStreamBufferMode_Read = 0,
@@ -33,6 +33,21 @@ struct CosStream {
     CosStreamFunctions functions;
 
     /**
+     * @brief The base offset of the stream.
+     *
+     * This offset is used to calculate the stream's position in the underlying data.
+     */
+    CosStreamOffset base_offset;
+
+    /**
+     * @brief The position of the stream in the underlying data.
+     *
+     * This position does not take the buffered data into account and will be updated when the buffer
+     * is flushed or filled.
+     */
+    CosStreamOffset physical_position;
+
+    /**
      * @brief The buffered data.
      *
      * The buffer stores data read from or written to the stream. The buffer is used to reduce the
@@ -41,9 +56,9 @@ struct CosStream {
     unsigned char *buffer;
 
     /**
-     * @brief The size of the stream's buffer.
+     * @brief The capacity of the stream's buffer.
      */
-    size_t buffer_size;
+    size_t buffer_capacity;
 
     /**
      * @brief The current position in the buffer.
@@ -54,6 +69,8 @@ struct CosStream {
 
     /**
      * @brief The length of valid data in the buffer.
+     *
+     * @invariant buffer_length <= buffer_capacity
      */
     size_t buffer_length;
 
@@ -98,9 +115,9 @@ cos_stream_create(const CosStreamFunctions *functions,
         goto failure;
     }
 
-    const size_t buffer_size = COS_STREAM_BUFFER_SIZE;
+    const size_t buffer_capacity = COS_STREAM_BUFFER_CAPACITY;
 
-    buffer = malloc(buffer_size);
+    buffer = malloc(buffer_capacity);
     if (COS_UNLIKELY(!buffer)) {
         goto failure;
     }
@@ -108,8 +125,11 @@ cos_stream_create(const CosStreamFunctions *functions,
     stream->functions = *functions;
     stream->context = context;
 
+    stream->base_offset = 0;
+    stream->physical_position = 0;
+
     stream->buffer = buffer;
-    stream->buffer_size = buffer_size;
+    stream->buffer_capacity = buffer_capacity;
 
     stream->buffer_position = 0;
     stream->buffer_length = 0;
@@ -244,10 +264,13 @@ cos_stream_write(CosStream *stream,
         return 0;
     }
 
-    return stream->functions.write_func(stream->context,
-                                        buffer,
-                                        count,
-                                        out_error);
+    // Skip doing any work if we don't need to write any data.
+    if (COS_UNLIKELY(count == 0)) {
+        return 0;
+    }
+
+    COS_ASSERT(false, "Not implemented");
+    return 0;
 }
 
 bool
@@ -279,10 +302,68 @@ cos_stream_seek(CosStream *stream,
         return false;
     }
 
+    const CosStreamOffset current_position = cos_stream_get_position(stream, out_error);
+    if (current_position == -1) {
+        return false;
+    }
 
+    CosStreamOffset absolute_offset = 0;
+
+    // Convert a relative offset to an absolute offset.
+    switch (whence) {
+        case CosStreamOffsetWhence_Set: {
+            absolute_offset = offset;
+        } break;
+
+        case CosStreamOffsetWhence_Current: {
+            if (offset == 0) {
+                // Nothing to do.
+                return true;
+            }
+
+            // TODO: Check for overflow.
+            absolute_offset = current_position + offset;
+        } break;
+
+        case CosStreamOffsetWhence_End: {
+            COS_ASSERT(false, "Not implemented");
+            return false;
+        }
+    }
+
+    // Ensure that the offset is valid.
+    if (absolute_offset < 0) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
+                                           "Seek offset is negative"),
+                            out_error);
+        return false;
+    }
+
+    // Determine the stream buffer's current (absolute) position.
+    const size_t remaining_buffer_length = stream->buffer_length - stream->buffer_position;
+    const CosStreamOffset buffer_start_position = current_position - (CosStreamOffset)remaining_buffer_length;
+
+    // Seek within the buffer if possible.
+    if (absolute_offset >= buffer_start_position &&
+        absolute_offset < buffer_start_position + (CosStreamOffset)stream->buffer_length) {
+        // The offset is within the buffer.
+        const CosStreamOffset adjustment = absolute_offset - buffer_start_position;
+        stream->buffer_position += (size_t)adjustment;
+        return true;
+    }
+
+    // We actually need to seek in the stream.
+    // Since we are seeking in the underlying stream, we need to adjust for the
+    // base offset.
+    // TODO: Check for overflow.
+    const CosStreamOffset underlying_stream_offset = offset + stream->base_offset;
+
+    // Reset the buffer before seeking.
+    stream->buffer_position = 0;
+    stream->buffer_length = 0;
 
     return stream->functions.seek_func(stream->context,
-                                       offset,
+                                       underlying_stream_offset,
                                        whence,
                                        out_error);
 }
@@ -296,15 +377,18 @@ cos_stream_get_position(CosStream *stream,
         return -1;
     }
 
-    if (!stream->functions.tell_func) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
-                                           "Stream does not support telling"),
-                            out_error);
-        return -1;
+    size_t position = (size_t)stream->base_offset;
+
+    const size_t buffered_data_length = stream->buffer_length - stream->buffer_position;
+
+    if (stream->buffer_mode == CosStreamBufferMode_Read) {
+        position += (size_t)stream->physical_position - buffered_data_length;
+    }
+    else {
+        position += (size_t)stream->physical_position + buffered_data_length;
     }
 
-    return stream->functions.tell_func(stream->context,
-                                       out_error);
+    return (CosStreamOffset)position;
 }
 
 bool
@@ -355,6 +439,8 @@ cos_stream_fill_read_buffer_(CosStream *stream,
                                                           remaining_count,
                                                           out_error);
 
+    // The physical position will have advanced by the number of bytes read.
+    stream->physical_position += read_count;
     stream->buffer_length += read_count;
 
     return read_count;
