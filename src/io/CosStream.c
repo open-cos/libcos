@@ -15,7 +15,13 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-#define COS_STREAM_BUFFER_CAPACITY 1024
+enum {
+    COS_STREAM_BUFFER_CAPACITY = 1024
+};
+
+typedef enum CosStreamFlags {
+    CosStreamFlag_EOF = 1 << 0,
+} CosStreamFlags;
 
 typedef enum CosStreamBufferMode {
     CosStreamBufferMode_Read = 0,
@@ -46,6 +52,8 @@ struct CosStream {
      * is flushed or filled.
      */
     CosStreamOffset physical_position;
+
+    CosStreamFlags flags;
 
     /**
      * @brief The buffered data.
@@ -82,9 +90,8 @@ struct CosStream {
 
 // Static function prototypes.
 
-static size_t
+static bool
 cos_stream_fill_read_buffer_(CosStream *stream,
-                             size_t count,
                              CosError * COS_Nullable out_error);
 
 static size_t
@@ -210,23 +217,24 @@ cos_stream_read(CosStream *stream,
     size_t remaining_count = count;
 
     while (total_bytes_read < count) {
-        // If there is data in the buffer, read from it first.
-        const size_t read_count = cos_stream_read_from_buffer_(stream,
-                                                               ((unsigned char *)buffer) + total_bytes_read,
-                                                               remaining_count);
-        total_bytes_read += read_count;
-        remaining_count -= read_count;
+        if (stream->buffer_length > 0) {
+            // If there is data in the buffer, read from it first.
+            const size_t read_count = cos_stream_read_from_buffer_(stream,
+                                                                   ((unsigned char *)buffer) + total_bytes_read,
+                                                                   remaining_count);
+            total_bytes_read += read_count;
+            remaining_count -= read_count;
 
-        // If we have read all the data we need, return.
-        if (remaining_count == 0) {
-            break;
+            // If we have read all the data we need, return.
+            if (remaining_count == 0) {
+                break;
+            }
         }
 
         // Re-fill the buffer with more data.
-        const size_t filled_count = cos_stream_fill_read_buffer_(stream,
-                                                                 remaining_count,
-                                                                 out_error);
-        if (filled_count == 0) {
+        if (!cos_stream_fill_read_buffer_(stream,
+                                          out_error)) {
+            // No more data to read.
             break;
         }
     }
@@ -400,6 +408,11 @@ cos_stream_is_at_end(CosStream *stream,
         return true;
     }
 
+    // Check if EOF has already been detected.
+    if ((stream->flags & CosStreamFlag_EOF) != 0) {
+        return true;
+    }
+
     if (!stream->functions.eof_func) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "Stream does not support checking for end"),
@@ -407,43 +420,45 @@ cos_stream_is_at_end(CosStream *stream,
         return true;
     }
 
-    return stream->functions.eof_func(stream->context);
+    const bool is_eof = stream->functions.eof_func(stream->context);
+    if (is_eof) {
+        stream->flags |= CosStreamFlag_EOF;
+    }
+    return is_eof;
 }
 
 // Static functions.
 
-static size_t
+static bool
 cos_stream_fill_read_buffer_(CosStream *stream,
-                             size_t count,
                              CosError * COS_Nullable out_error)
 {
     COS_PARAM_ASSERT_INTERNAL(stream != NULL);
 
-    // Check if we have enough data in the buffer.
-    if (stream->buffer_position + count <= stream->buffer_length) {
-        return count;
-    }
+    const size_t read_count = stream->buffer_capacity;
+    CosError read_error = CosErrorNone;
 
-    // If we don't have enough data in the buffer, we need to read more.
-    const size_t remaining_count = count - (stream->buffer_length - stream->buffer_position);
-
-    // Shift the remaining data to the beginning of the buffer.
-    memmove(stream->buffer,
-            stream->buffer + stream->buffer_position,
-            stream->buffer_length - stream->buffer_position);
-
+    const size_t actual_read_count = stream->functions.read_func(stream->context,
+                                                                 stream->buffer,
+                                                                 read_count,
+                                                                 &read_error);
+    // Always update the buffer, even if an error occurred.
+    stream->buffer_length = actual_read_count;
     stream->buffer_position = 0;
 
-    const size_t read_count = stream->functions.read_func(stream->context,
-                                                          stream->buffer + stream->buffer_length - stream->buffer_position,
-                                                          remaining_count,
-                                                          out_error);
-
     // The physical position will have advanced by the number of bytes read.
-    stream->physical_position += read_count;
-    stream->buffer_length += read_count;
+    // TODO: Check for overflow.
+    stream->physical_position += (CosStreamOffset)actual_read_count;
 
-    return read_count;
+    if (actual_read_count == 0) {
+        // Check if we are at the end of the stream.
+        if (cos_stream_is_at_end(stream, NULL)) {
+            stream->flags |= CosStreamFlag_EOF;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 static size_t
@@ -455,11 +470,10 @@ cos_stream_read_from_buffer_(CosStream *stream,
     COS_PARAM_ASSERT_INTERNAL(output_buffer != NULL);
 
     // Check that we have data available in the buffer.
-    if (stream->buffer_position >= stream->buffer_length) {
+    const size_t buffered_byte_count = stream->buffer_length - stream->buffer_position;
+    if (buffered_byte_count == 0) {
         return 0;
     }
-
-    const size_t buffered_byte_count = stream->buffer_length - stream->buffer_position;
 
     const size_t read_byte_count = COS_MIN(count, buffered_byte_count);
 

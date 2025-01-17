@@ -5,13 +5,11 @@
 #ifndef LIBCOS_COS_TOKEN_H
 #define LIBCOS_COS_TOKEN_H
 
-#include <libcos/common/CosData.h>
 #include <libcos/common/CosDefines.h>
-#include <libcos/common/CosString.h>
+#include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
-
-#include "CosTokenValue.h"
+#include <stddef.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -57,6 +55,16 @@ struct CosToken {
      * @brief The type of the token.
      */
     CosToken_Type type;
+
+    /**
+     * @brief The offset of the token in the input stream.
+     */
+    size_t offset;
+
+    /**
+     * @brief The length of the token in bytes.
+     */
+    size_t length;
 
     /**
      * @brief The value of the token.

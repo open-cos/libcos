@@ -6,6 +6,7 @@
 // Created by david on 17/12/23.
 //
 
+#include "syntax/tokenizer/CosTokenValue.h"
 #include "syntax/tokenizer/CosTokenizer.h"
 
 #include <libcos/common/CosError.h>

@@ -5,18 +5,15 @@
 #ifndef LIBCOS_IO_COS_STREAM_H
 #define LIBCOS_IO_COS_STREAM_H
 
+#include <libcos/common/CosBasicTypes.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
-
-typedef signed long long CosStreamOffset;
-#define COS_STREAM_OFFSET_MAX LLONG_MAX
 
 /**
  * @brief The types of a stream offset adjustment.

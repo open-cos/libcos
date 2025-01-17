@@ -4,6 +4,7 @@
 
 #include "syntax/tokenizer/CosToken.h"
 
+#include "CosTokenValue.h"
 #include "common/Assert.h"
 
 #include <stdlib.h>
@@ -27,6 +28,8 @@ cos_token_create(void)
     }
 
     token->type = CosToken_Type_Unknown;
+    token->offset = 0;
+    token->length = 0;
     token->value = value;
 
     return token;
@@ -61,6 +64,8 @@ cos_token_reset(CosToken *token)
     }
 
     token->type = CosToken_Type_Unknown;
+    token->offset = 0;
+    token->length = 0;
     cos_token_value_reset(token->value);
 }
 

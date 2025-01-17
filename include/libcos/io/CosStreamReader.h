@@ -5,6 +5,7 @@
 #ifndef LIBCOS_IO_COS_STREAM_READER_H
 #define LIBCOS_IO_COS_STREAM_READER_H
 
+#include <libcos/common/CosBasicTypes.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
@@ -32,6 +33,16 @@ cos_stream_reader_create(CosStream *input_stream)
  */
 void
 cos_stream_reader_reset(CosStreamReader *stream_reader);
+
+/**
+ * @brief Returns the current position of the stream reader.
+ *
+ * @param stream_reader The stream reader.
+ *
+ * @return The current position of the stream reader.
+ */
+CosStreamOffset
+cos_stream_reader_get_position(CosStreamReader *stream_reader);
 
 /**
  * @brief Returns whether the stream reader is at the end of the input stream.

@@ -26,7 +26,8 @@ cos_name_obj_free(CosNameObj *name_obj)
 CosNameObj * COS_Nullable
 cos_name_obj_alloc(CosString *value)
     COS_ALLOCATOR_FUNC
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_name_obj_free);
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_name_obj_free)
+    COS_OWNERSHIP_HOLDS(1);
 
 const CosString * COS_Nullable
 cos_name_obj_get_value(const CosNameObj *name_obj);

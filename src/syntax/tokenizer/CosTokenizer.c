@@ -4,10 +4,12 @@
 
 #include "CosTokenizer.h"
 
+#include "CosTokenValue.h"
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "io/CosStreamReader.h"
 
+#include "libcos/common/CosData.h"
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosNumber.h"
 #include "libcos/common/CosRingBuffer.h"
@@ -461,6 +463,14 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
 
+    const CosStreamOffset token_start_position = cos_stream_reader_get_position(tokenizer->stream_reader);
+    if (token_start_position < 0) {
+        // Error: invalid stream position.
+        goto failure;
+    }
+
+    token->offset = (size_t)token_start_position;
+
     const int c = cos_stream_reader_getc(tokenizer->stream_reader);
     switch (c) {
         case EOF: {
@@ -629,6 +639,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             }
         } break;
     }
+
+    // Set the length of the token.
+    const CosStreamOffset token_end_position = cos_stream_reader_get_position(tokenizer->stream_reader);
+    COS_ASSERT(token_end_position >= 0, "Invalid stream position");
+
+    token->length = (size_t)(token_end_position - token_start_position);
 
     return token;
 

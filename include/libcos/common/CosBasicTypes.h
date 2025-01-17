@@ -7,10 +7,18 @@
 
 #include <libcos/common/CosDefines.h>
 
+#include <limits.h>
 #include <stdint.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
+
+/**
+ * @brief A byte offset within a stream.
+ */
+typedef signed long long CosStreamOffset;
+
+#define COS_STREAM_OFFSET_MAX LLONG_MAX
 
 /**
  * @brief The object number of an indirect object.

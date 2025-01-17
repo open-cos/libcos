@@ -13,7 +13,9 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-#define COS_STREAM_READER_BUFFER_SIZE 1024
+enum {
+    COS_STREAM_READER_BUFFER_SIZE = 1024
+};
 
 struct CosStreamReader {
     CosStream *input_stream;
@@ -21,7 +23,6 @@ struct CosStreamReader {
     unsigned char *buffer COS_ATTR_NONSTRING;
     size_t buffer_capacity;
 
-    size_t buffer_start;
     size_t buffer_end;
     size_t buffer_position;
 
@@ -61,9 +62,8 @@ cos_stream_reader_create(CosStream *input_stream)
     reader->buffer = buffer;
     reader->buffer_capacity = COS_STREAM_READER_BUFFER_SIZE;
 
-    reader->buffer_start = 0;
     reader->buffer_end = 0;
-    reader->buffer_position = reader->buffer_start;
+    reader->buffer_position = 0;
 
     reader->is_eof = false;
     reader->eof_position = 0;
@@ -99,12 +99,24 @@ cos_stream_reader_reset(CosStreamReader *stream_reader)
         return;
     }
 
-    stream_reader->buffer_start = 0;
     stream_reader->buffer_end = 0;
-    stream_reader->buffer_position = stream_reader->buffer_start;
+    stream_reader->buffer_position = 0;
 
     stream_reader->is_eof = false;
     stream_reader->eof_position = 0;
+}
+
+CosStreamOffset
+cos_stream_reader_get_position(CosStreamReader *stream_reader)
+{
+    COS_API_PARAM_CHECK(stream_reader != NULL);
+
+    const CosStreamOffset stream_offset = cos_stream_get_position(stream_reader->input_stream,
+                                                                  NULL);
+
+    const CosStreamOffset buffer_offset = (CosStreamOffset)(stream_reader->buffer_end - stream_reader->buffer_position);
+
+    return stream_offset - buffer_offset;
 }
 
 bool
@@ -162,7 +174,6 @@ cos_stream_reader_get_current_(CosStreamReader *stream_reader)
                                                          stream_reader->buffer,
                                                          read_count,
                                                          NULL);
-        stream_reader->buffer_start = 0;
         stream_reader->buffer_end = actual_read_count;
         stream_reader->buffer_position = 0;
 
@@ -197,7 +208,7 @@ cos_stream_reader_backup_(CosStreamReader *stream_reader)
 {
     COS_IMPL_PARAM_CHECK(stream_reader != NULL);
 
-    if (COS_LIKELY(stream_reader->buffer_position > stream_reader->buffer_start)) {
+    if (COS_LIKELY(stream_reader->buffer_position > 0)) {
         stream_reader->buffer_position--;
         return true;
     }
