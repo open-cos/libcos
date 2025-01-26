@@ -69,28 +69,6 @@ cos_token_reset(CosToken *token)
     cos_token_value_reset(token->value);
 }
 
-CosToken_Type
-cos_token_get_type(const CosToken *token)
-{
-    COS_PARAMETER_ASSERT(token != NULL);
-    if (!token) {
-        return CosToken_Type_Unknown;
-    }
-
-    return token->type;
-}
-
-CosTokenValue *
-cos_token_get_value(const CosToken *token)
-{
-    COS_PARAMETER_ASSERT(token != NULL);
-    if (!token) {
-        return NULL;
-    }
-
-    return token->value;
-}
-
 bool
 cos_token_get_integer_value(const CosToken *token,
                             int *out_value)

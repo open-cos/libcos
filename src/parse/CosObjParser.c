@@ -19,7 +19,6 @@
 #include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosLog.h>
-#include <libcos/common/CosRingBuffer.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/objects/CosArrayObj.h>
 #include <libcos/objects/CosBoolObj.h>
@@ -90,10 +89,10 @@ struct CosObjParser {
     CosStream *input_stream;
     CosTokenizer *tokenizer;
 
-    CosRingBuffer *objects;
-
     CosToken * COS_Nullable token_buffer[COS_OBJ_PARSER_TOKEN_BUFFER_SIZE];
     size_t token_count;
+
+    CosObj * COS_Nullable peeked_obj;
 
     CosDiagnosticHandler *diagnostic_handler;
 };
@@ -132,13 +131,6 @@ static CosObj * COS_Nullable
 cos_handle_real_(CosObjParser *parser,
                  const CosObjParserContext *context,
                  CosError * COS_Nullable error);
-
-static void
-cos_obj_parser_push_object_(CosObjParser *parser,
-                            CosObj *object);
-
-static CosObj * COS_Nullable
-cos_obj_parser_pop_object_(CosObjParser *parser);
 
 /**
  * @brief Gets the parser's current token.
@@ -233,8 +225,6 @@ cos_obj_parser_init_(CosObjParser * const self,
         return false;
     }
 
-    CosRingBuffer *objects = NULL;
-
     CosTokenizer * const tokenizer = cos_tokenizer_create(input_stream);
     if (!tokenizer) {
         goto failure;
@@ -244,12 +234,6 @@ cos_obj_parser_init_(CosObjParser * const self,
     self->input_stream = input_stream;
     self->tokenizer = tokenizer;
 
-    objects = cos_ring_buffer_create(sizeof(CosObj *),
-                                     3);
-    if (!objects) {
-        goto failure;
-    }
-
     CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
     if (diagnostic_handler) {
         self->diagnostic_handler = diagnostic_handler;
@@ -258,16 +242,11 @@ cos_obj_parser_init_(CosObjParser * const self,
         self->diagnostic_handler = cos_diagnostic_handler_get_default();
     }
 
-    self->objects = objects;
-
     return true;
 
 failure:
     if (tokenizer) {
         cos_tokenizer_destroy(tokenizer);
-    }
-    if (objects) {
-        cos_ring_buffer_destroy(objects);
     }
     return false;
 }
@@ -280,8 +259,6 @@ cos_obj_parser_destroy(CosObjParser *parser)
     }
 
     cos_tokenizer_destroy(parser->tokenizer);
-
-    cos_ring_buffer_destroy(parser->objects);
 
     free(parser);
 }
@@ -308,9 +285,8 @@ cos_obj_parser_peek_object(CosObjParser *parser,
     }
 
     // If there are objects in the queue, return the first one.
-    CosObj * const peeked_obj = cos_obj_parser_pop_object_(parser);
-    if (peeked_obj) {
-        return peeked_obj;
+    if (parser->peeked_obj) {
+        return parser->peeked_obj;
     }
 
     const CosObjParserContext context = {
@@ -327,7 +303,8 @@ cos_obj_parser_peek_object(CosObjParser *parser,
         return NULL;
     }
 
-    cos_obj_parser_push_object_(parser, obj);
+    parser->peeked_obj = obj;
+
     return obj;
 }
 
@@ -340,10 +317,10 @@ cos_obj_parser_next_object(CosObjParser *parser,
         return NULL;
     }
 
-    CosObj *popped_obj = NULL;
-    if (cos_ring_buffer_pop_front(parser->objects,
-                                  (void *)&popped_obj)) {
-        return popped_obj;
+    if (parser->peeked_obj) {
+        CosObj * const obj = parser->peeked_obj;
+        parser->peeked_obj = NULL;
+        return obj;
     }
 
     const CosObjParserContext context = {
@@ -494,7 +471,9 @@ cos_next_object_(CosObjParser *parser,
             break;
         case CosToken_Type_EndStream:
             break;
-        case CosToken_Type_XRef:
+        case CosToken_Type_XRef: {
+            printf("XRef\n");
+        }
             break;
         case CosToken_Type_N:
             break;
@@ -878,11 +857,11 @@ cos_handle_stream_(CosObjParser *parser,
     printf("Stream length: %d\n", stream_length);
 
     // Need to get the offset from the token.
-//    const CosStreamOffset stream_position = cos_stream_get_position(parser->input_stream,
-//                                                                    out_error);
-//    if (stream_position < 0) {
-//        goto failure;
-//    }
+    //    const CosStreamOffset stream_position = cos_stream_get_position(parser->input_stream,
+    //                                                                    out_error);
+    //    if (stream_position < 0) {
+    //        goto failure;
+    //    }
 
     // TODO: Check for overflow.
     CosStreamOffset stream_end_position = stream_start + stream_length;
@@ -896,20 +875,17 @@ cos_handle_stream_(CosObjParser *parser,
     }
 
     cos_tokenizer_reset(parser->tokenizer);
-    //    // Reset the parser's next token.
-    //    if (parser->next_token) {
-    //        cos_tokenizer_release_token(parser->tokenizer,
-    //                                    COS_nonnull_cast(parser->next_token));
-    //        parser->next_token = NULL;
-    //    }
 
     // Skip the endstream keyword.
-    if (!cos_matches_next_token_(parser,
-                                 CosToken_Type_EndStream,
-                                 out_error)) {
-        goto failure;
+    if (cos_matches_next_token_(parser,
+                                CosToken_Type_EndStream,
+                                out_error)) {
+        cos_parser_advance_(parser);
     }
-    cos_parser_advance_(parser);
+    else {
+        // Error: Expected an endstream token.
+        printf("Expected an endstream token.\n");
+    }
 
     CosStreamObj *stream_obj = cos_stream_obj_create(dict_obj,
                                                      NULL);
@@ -1243,33 +1219,6 @@ failure:
 }
 
 // NOLINTEND(misc-no-recursion)
-
-static void
-cos_obj_parser_push_object_(CosObjParser *parser,
-                            CosObj *object)
-{
-    COS_PARAMETER_ASSERT(parser != NULL);
-    if (!parser || !object) {
-        return;
-    }
-
-    cos_ring_buffer_push_back(parser->objects,
-                              (void *)&object,
-                              NULL);
-}
-
-static CosObj *
-cos_obj_parser_pop_object_(CosObjParser *parser)
-{
-    COS_PARAMETER_ASSERT(parser != NULL);
-    if (!parser) {
-        return NULL;
-    }
-
-    CosObj *obj = NULL;
-    cos_ring_buffer_pop_front(parser->objects, (void *)&obj);
-    return obj;
-}
 
 static CosToken * COS_Nullable
 cos_current_token_(CosObjParser *parser)

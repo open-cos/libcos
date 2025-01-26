@@ -101,19 +101,6 @@ cos_token_create(void)
 void
 cos_token_reset(CosToken *token);
 
-/**
- * @brief Gets the type of a token.
- *
- * @param token The token.
- *
- * @return The type of the token.
- */
-CosToken_Type
-cos_token_get_type(const CosToken *token);
-
-CosTokenValue * COS_Nullable
-cos_token_get_value(const CosToken *token);
-
 bool
 cos_token_get_integer_value(const CosToken *token,
                             int *out_value)

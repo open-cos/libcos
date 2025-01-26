@@ -364,16 +364,23 @@ cos_stream_seek(CosStream *stream,
     // Since we are seeking in the underlying stream, we need to adjust for the
     // base offset.
     // TODO: Check for overflow.
-    const CosStreamOffset underlying_stream_offset = offset + stream->base_offset;
+    const CosStreamOffset underlying_stream_offset = absolute_offset + stream->base_offset;
 
     // Reset the buffer before seeking.
     stream->buffer_position = 0;
     stream->buffer_length = 0;
 
-    return stream->functions.seek_func(stream->context,
-                                       underlying_stream_offset,
-                                       whence,
-                                       out_error);
+    if (!stream->functions.seek_func(stream->context,
+                                     underlying_stream_offset,
+                                     CosStreamOffsetWhence_Set,
+                                     out_error)) {
+        return false;
+    }
+
+    // Update the physical position.
+    stream->physical_position = underlying_stream_offset;
+
+    return true;
 }
 
 CosStreamOffset

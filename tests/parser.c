@@ -21,18 +21,21 @@ int
 TEST_NAME(COS_ATTR_UNUSED int argc,
           COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
+    CosDoc *doc = NULL;
+    CosStream *input_stream = NULL;
+
     // Get the current working directory.
 
     cos_log_context_set_level(cos_log_context_get_default(),
                               CosLogLevel_Trace);
 
-    CosStream * const input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                            "r");
+    input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                          "r");
     if (!input_stream) {
         goto failure;
     }
 
-    CosDoc * const doc = cos_doc_create(NULL);
+    doc = cos_doc_create(NULL);
     if (!doc) {
         goto failure;
     }
@@ -62,6 +65,9 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
     return EXIT_SUCCESS;
 
 failure:
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
     if (input_stream) {
         cos_stream_close(input_stream);
     }

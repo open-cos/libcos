@@ -25,23 +25,25 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
           COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
     // Get the current working directory.
+    CosStream *input_stream = NULL;
+    CosTokenizer *tokenizer = NULL;
 
-    CosStream * const input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
-                                                            "r");
+    input_stream = cos_file_stream_create("/home/david/Projects/C/libcos/tests/data/Hello-world.pdf",
+                                          "r");
     if (!input_stream) {
         goto failure;
     }
 
-    CosTokenizer * const tokenizer = cos_tokenizer_create(input_stream);
+    tokenizer = cos_tokenizer_create(input_stream);
     if (!tokenizer) {
         goto failure;
     }
 
-    while (cos_tokenizer_has_next_token(tokenizer)) {
+    bool eof = false;
+    do {
         CosError error = {0};
         CosToken *token = cos_tokenizer_get_next_token(tokenizer,
                                                        &error);
-
         if (!token) {
             goto failure;
         }
@@ -171,19 +173,29 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
 
             case CosToken_Type_EOF: {
                 printf("EOF\n");
+                eof = true;
             } break;
         }
 
-        cos_tokenizer_release_token(tokenizer, token);
-    }
+        cos_token_destroy(token);
+    } while (!eof);
 
-    cos_tokenizer_destroy(tokenizer);
-    cos_stream_close(input_stream);
-
-    return EXIT_SUCCESS;
+    int result = EXIT_SUCCESS;
+    goto cleanup;
 
 failure:
-    return EXIT_FAILURE;
+    printf("Failed to parse the input stream\n");
+    result = EXIT_FAILURE;
+
+cleanup:
+    if (tokenizer) {
+        cos_tokenizer_destroy(tokenizer);
+    }
+    if (input_stream) {
+        cos_stream_close(input_stream);
+    }
+
+    return result;
 }
 
 COS_ASSUME_NONNULL_END
