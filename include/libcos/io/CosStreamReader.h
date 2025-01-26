@@ -45,16 +45,6 @@ CosStreamOffset
 cos_stream_reader_get_position(CosStreamReader *stream_reader);
 
 /**
- * @brief Returns whether the stream reader is at the end of the input stream.
- *
- * @param stream_reader The stream reader.
- *
- * @return @c true if the stream reader is at the end of the input stream, @c false otherwise.
- */
-bool
-cos_stream_reader_is_at_end(CosStreamReader *stream_reader);
-
-/**
  * @brief Reads a character from the stream.
  *
  * This function reads a character from the stream and advances the stream reader's position.

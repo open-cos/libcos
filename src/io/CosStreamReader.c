@@ -14,7 +14,7 @@
 COS_ASSUME_NONNULL_BEGIN
 
 enum {
-    COS_STREAM_READER_BUFFER_SIZE = 1024
+    COS_STREAM_READER_BUFFER_SIZE = 256
 };
 
 struct CosStreamReader {
@@ -117,14 +117,6 @@ cos_stream_reader_get_position(CosStreamReader *stream_reader)
     const CosStreamOffset buffer_offset = (CosStreamOffset)(stream_reader->buffer_end - stream_reader->buffer_position);
 
     return stream_offset - buffer_offset;
-}
-
-bool
-cos_stream_reader_is_at_end(CosStreamReader *stream_reader)
-{
-    COS_API_PARAM_CHECK(stream_reader != NULL);
-
-    return cos_stream_reader_get_current_(stream_reader) == EOF;
 }
 
 int
