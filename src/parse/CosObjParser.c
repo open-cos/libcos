@@ -258,6 +258,19 @@ cos_obj_parser_destroy(CosObjParser *parser)
         return;
     }
 
+    if (parser->peeked_obj) {
+        cos_obj_free(COS_nonnull_cast(parser->peeked_obj));
+    }
+
+    // Release all the buffered tokens.
+    for (size_t i = 0; i < parser->token_count; i++) {
+        CosToken * const token = parser->token_buffer[i];
+        if (token) {
+            cos_token_reset(token);
+            cos_token_destroy(token);
+        }
+    }
+
     cos_tokenizer_destroy(parser->tokenizer);
 
     free(parser);
@@ -600,7 +613,7 @@ cos_handle_array_(CosObjParser *parser,
     cos_parser_advance_(parser);
 
     array = cos_array_create(sizeof(CosObj *),
-                             NULL,
+                             &cos_array_obj_callbacks,
                              0);
     if (!array) {
         goto failure;
@@ -1271,6 +1284,12 @@ cos_parser_advance_(CosObjParser *parser)
     if (parser->token_count == 0) {
         return;
     }
+
+    // Release the current token.
+    CosToken *current_token = parser->token_buffer[0];
+    COS_ASSERT(current_token != NULL, "Expected a token");
+    cos_token_reset(current_token);
+    cos_token_destroy(current_token);
 
     const size_t token_buffer_size = COS_ARRAY_SIZE(parser->token_buffer);
 

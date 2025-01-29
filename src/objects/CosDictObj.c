@@ -32,6 +32,17 @@ cos_dict_obj_key_hash_(void *key)
     return cos_name_obj_get_hash(name_obj);
 }
 
+static void
+cos_dict_obj_key_value_release_(void *key)
+{
+    COS_IMPL_PARAM_CHECK(key != NULL);
+
+    CosObj * const obj = (CosObj *)key;
+    COS_ASSERT(obj != NULL, "Expected an object");
+
+    cos_obj_free(obj);
+}
+
 static bool
 cos_dict_obj_keys_equal_(void *key1,
                          void *key2)
@@ -55,13 +66,13 @@ cos_dict_obj_keys_equal_(void *key1,
 const CosDictKeyCallbacks cos_dict_obj_key_callbacks = {
     .hash = &cos_dict_obj_key_hash_,
     .retain = NULL,
-    .release = NULL,
+    .release = &cos_dict_obj_key_value_release_,
     .equal = &cos_dict_obj_keys_equal_,
 };
 
 const CosDictValueCallbacks cos_dict_obj_value_callbacks = {
     .retain = NULL,
-    .release = NULL,
+    .release = &cos_dict_obj_key_value_release_,
     .equal = NULL,
 };
 

@@ -90,8 +90,23 @@ failure:
 void
 cos_dict_destroy(CosDict *dict)
 {
+    COS_API_PARAM_CHECK(dict != NULL);
     if (!dict) {
         return;
+    }
+
+    const CosDictReleaseCallback release_key = dict->key_callbacks.release;
+    const CosDictReleaseCallback release_value = dict->value_callbacks.release;
+
+    for (size_t i = 0; i < dict->capacity; i++) {
+        CosDictEntry * const entry = &dict->entries[i];
+
+        if (entry->key && release_key) {
+            release_key(COS_nonnull_cast(entry->key));
+        }
+        if (entry->value && release_value) {
+            release_value(COS_nonnull_cast(entry->value));
+        }
     }
 
     free(dict->entries);
