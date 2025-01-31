@@ -574,7 +574,7 @@ cos_handle_integer_(CosObjParser *parser,
 
     // Get the integer value of the token.
     int int_value = 0;
-    if (!cos_token_value_get_integer_number(token->value,
+    if (!cos_token_value_get_integer_number(&token->value,
                                             &int_value)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid integer token"),
@@ -1214,7 +1214,7 @@ cos_handle_real_(CosObjParser *parser,
     }
 
     double real_value = 0.0;
-    if (!cos_token_value_get_real_number(token->value,
+    if (!cos_token_value_get_real_number(&token->value,
                                          &real_value)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid real token"),

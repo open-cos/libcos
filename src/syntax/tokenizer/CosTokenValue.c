@@ -4,57 +4,12 @@
 
 #include "CosTokenValue.h"
 
+#include "CosToken.h"
 #include "common/Assert.h"
 
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
-
-struct CosTokenValue {
-    enum {
-        CosTokenValue_Type_None = 0,
-
-        CosTokenValue_Type_IntegerNumber,
-        CosTokenValue_Type_LongIntegerNumber,
-        CosTokenValue_Type_RealNumber,
-        CosTokenValue_Type_String,
-        CosTokenValue_Type_Data,
-    } type;
-
-    union {
-        int integer_number;
-        long long long_integer_number;
-        double real_number;
-        CosString *string;
-        CosData *data;
-    } value;
-};
-
-CosTokenValue *
-cos_token_value_alloc(void)
-{
-    CosTokenValue *token_value = calloc(1, sizeof(CosTokenValue));
-    if (!token_value) {
-        return NULL;
-    }
-
-    token_value->type = CosTokenValue_Type_None;
-
-    return token_value;
-}
-
-void
-cos_token_value_free(CosTokenValue *token_value)
-{
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    if (!token_value) {
-        return;
-    }
-
-    cos_token_value_reset(token_value);
-
-    free(token_value);
-}
 
 void
 cos_token_value_reset(CosTokenValue *token_value)

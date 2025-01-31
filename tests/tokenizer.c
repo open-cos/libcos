@@ -50,9 +50,8 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
 
         switch (token->type) {
             case CosToken_Type_Unknown: {
-                const CosString *string = NULL;
-                if (cos_token_value_get_string(token->value,
-                                               &string)) {
+                if (token->value.type == CosTokenValue_Type_String) {
+                    CosString * const string = token->value.value.string;
                     printf("Unknown: %s\n",
                            cos_string_get_data(string));
                 }
@@ -62,18 +61,16 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
             } break;
 
             case CosToken_Type_Literal_String: {
-                const CosData *data = NULL;
-                if (cos_token_value_get_data(token->value,
-                                             &data)) {
+                if (token->value.type == CosTokenValue_Type_Data) {
+                    const CosData * const data = token->value.value.data;
                     printf("Literal String: %.*s\n",
                            (int)data->size,
                            data->bytes);
                 }
             } break;
             case CosToken_Type_Hex_String: {
-                const CosData *data = NULL;
-                if (cos_token_value_get_data(token->value,
-                                             &data)) {
+                if (token->value.type == CosTokenValue_Type_Data) {
+                    const CosData * const data = token->value.value.data;
                     printf("Hex String: %.*s\n",
                            (int)data->size,
                            data->bytes);
@@ -81,26 +78,23 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
             } break;
 
             case CosToken_Type_Name: {
-                const CosString *string = NULL;
-                if (cos_token_value_get_string(token->value,
-                                               &string)) {
+                if (token->value.type == CosTokenValue_Type_String) {
+                    const CosString * const string = token->value.value.string;
                     printf("Name: %s\n",
                            cos_string_get_data(string));
                 }
             } break;
 
             case CosToken_Type_Integer: {
-                int value = 0;
-                if (cos_token_value_get_integer_number(token->value,
-                                                       &value)) {
+                if (token->value.type == CosTokenValue_Type_IntegerNumber) {
+                    const int value = token->value.value.integer_number;
                     printf("Integer: %d\n",
                            value);
                 }
             } break;
             case CosToken_Type_Real: {
-                double value = 0.0;
-                if (cos_token_value_get_real_number(token->value,
-                                                    &value)) {
+                if (token->value.type == CosTokenValue_Type_RealNumber) {
+                    const double value = token->value.value.real_number;
                     printf("Real: %f\n",
                            value);
                 }

@@ -15,31 +15,22 @@ CosToken *
 cos_token_create(void)
 {
     CosToken *token = NULL;
-    CosTokenValue *value = NULL;
 
     token = calloc(1, sizeof(CosToken));
     if (!token) {
         goto failure;
     }
 
-    value = cos_token_value_alloc();
-    if (!value) {
-        goto failure;
-    }
-
     token->type = CosToken_Type_Unknown;
     token->offset = 0;
     token->length = 0;
-    token->value = value;
+    token->value = (CosTokenValue){0};
 
     return token;
 
 failure:
     if (token) {
         free(token);
-    }
-    if (value) {
-        cos_token_value_free(value);
     }
     return NULL;
 }
@@ -51,7 +42,6 @@ cos_token_destroy(CosToken *token)
         return;
     }
 
-    cos_token_value_free(token->value);
     free(token);
 }
 
@@ -66,7 +56,7 @@ cos_token_reset(CosToken *token)
     token->type = CosToken_Type_Unknown;
     token->offset = 0;
     token->length = 0;
-    cos_token_value_reset(token->value);
+    cos_token_value_reset(&token->value);
 }
 
 bool
@@ -79,7 +69,7 @@ cos_token_get_integer_value(const CosToken *token,
         return false;
     }
 
-    return cos_token_value_get_integer_number(token->value,
+    return cos_token_value_get_integer_number(&token->value,
                                               out_value);
 }
 
@@ -92,7 +82,7 @@ cos_token_move_data_value(CosToken *token)
     }
 
     CosData *data = NULL;
-    cos_token_value_take_data(token->value,
+    cos_token_value_take_data(&token->value,
                               &data);
     return data;
 }
@@ -106,7 +96,7 @@ cos_token_move_string_value(CosToken *token)
     }
 
     CosString *string = NULL;
-    cos_token_value_take_string(token->value,
+    cos_token_value_take_string(&token->value,
                                 &string);
     return string;
 }

@@ -16,25 +16,6 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief Frees a token value.
- *
- * @param token_value The token value.
- */
-void
-cos_token_value_free(CosTokenValue *token_value)
-    COS_DEALLOCATOR_FUNC;
-
-/**
- * @brief Allocates a new token value.
- *
- * @return The new token value, or @c NULL if allocation failed.
- */
-CosTokenValue * COS_Nullable
-cos_token_value_alloc(void)
-    COS_ALLOCATOR_FUNC
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_token_value_free);
-
-/**
  * @brief Frees the resources used by a token value and resets its fields.
  *
  * @param token_value The token value.

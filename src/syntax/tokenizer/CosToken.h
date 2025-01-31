@@ -50,6 +50,26 @@ typedef enum CosToken_Type {
     CosToken_Type_EOF,
 } CosToken_Type;
 
+struct CosTokenValue {
+    enum {
+        CosTokenValue_Type_None = 0,
+
+        CosTokenValue_Type_IntegerNumber,
+        CosTokenValue_Type_LongIntegerNumber,
+        CosTokenValue_Type_RealNumber,
+        CosTokenValue_Type_String,
+        CosTokenValue_Type_Data,
+    } type;
+
+    union {
+        int integer_number;
+        long long long_integer_number;
+        double real_number;
+        CosString *string;
+        CosData *data;
+    } value;
+};
+
 struct CosToken {
     /**
      * @brief The type of the token.
@@ -71,7 +91,7 @@ struct CosToken {
      *
      * This is only valid for certain token types.
      */
-    CosTokenValue *value;
+    CosTokenValue value;
 };
 
 /**

@@ -272,7 +272,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             CosError error;
             if (cos_tokenizer_read_name_(tokenizer, string, &error)) {
                 token->type = CosToken_Type_Name;
-                cos_token_value_set_string(token->value, string);
+                cos_token_value_set_string(&token->value, string);
             }
             else {
                 // Error: invalid name.
@@ -294,7 +294,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
             if (cos_tokenizer_read_literal_string_(tokenizer, data)) {
                 token->type = CosToken_Type_Literal_String;
-                cos_token_value_set_data(token->value, data);
+                cos_token_value_set_data(&token->value, data);
             }
             else {
                 // Error: invalid literal string.
@@ -320,7 +320,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 CosError error;
                 if (cos_tokenizer_read_hex_string_(tokenizer, data, &error)) {
                     token->type = CosToken_Type_Hex_String;
-                    cos_token_value_set_data(token->value, data);
+                    cos_token_value_set_data(&token->value, data);
                 }
                 else {
                     // Error: invalid hex string.
@@ -364,12 +364,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 // This is a number.
                 if (number_value.type == CosNumberType_Integer) {
                     token->type = CosToken_Type_Integer;
-                    cos_token_value_set_integer_number(token->value,
+                    cos_token_value_set_integer_number(&token->value,
                                                        number_value.value.integer);
                 }
                 else {
                     token->type = CosToken_Type_Real;
-                    cos_token_value_set_real_number(token->value,
+                    cos_token_value_set_real_number(&token->value,
                                                     number_value.value.real);
                 }
             }
