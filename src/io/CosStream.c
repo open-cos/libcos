@@ -347,16 +347,15 @@ cos_stream_seek(CosStream *stream,
         return false;
     }
 
-    // Determine the stream buffer's current (absolute) position.
-    const size_t remaining_buffer_length = stream->buffer_length - stream->buffer_position;
-    const CosStreamOffset buffer_start_position = current_position - (CosStreamOffset)remaining_buffer_length;
+    // Determine the stream buffer's start (absolute) position.
+    const CosStreamOffset buffer_start_position = stream->physical_position - (CosStreamOffset)stream->buffer_length;
 
     // Seek within the buffer if possible.
     if (absolute_offset >= buffer_start_position &&
         absolute_offset < buffer_start_position + (CosStreamOffset)stream->buffer_length) {
         // The offset is within the buffer.
-        const CosStreamOffset adjustment = absolute_offset - buffer_start_position;
-        stream->buffer_position += (size_t)adjustment;
+        const CosStreamOffset buffer_relative_position = absolute_offset - buffer_start_position;
+        stream->buffer_position = (size_t)buffer_relative_position;
         return true;
     }
 
