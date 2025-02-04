@@ -1,7 +1,7 @@
 
 include(Common)
 
-option(SANITIZE_ADDRESS "Enable address sanitizer" ON)
+option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(SANITIZE_MEMORY "Enable memory sanitizer" OFF)
 option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
 option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
@@ -146,6 +146,11 @@ cmake_dependent_option(UBSAN_TRAP
     "SANITIZE_UNDEFINED" OFF
 )
 
+if (UBSAN_TRAP)
+    message(DEBUG "Adding trap (UBSAN)")
+    add_flags(UBSAN_FLAGS -fsanitize-trap)
+endif ()
+
 include(CheckCompilerFlag)
 include(CheckLinkerFlag)
 
@@ -179,7 +184,7 @@ function(enable_sanitizer TARGET SANITIZER VAR)
         
         target_compile_definitions(${TARGET} PRIVATE SANITIZE_${SANITIZER_UPPER})
         target_compile_options(${TARGET} PRIVATE ${SANITIZER_FLAG})
-        target_link_libraries(${TARGET} PRIVATE ${SANITIZER_FLAG})
+        target_link_options(${TARGET} INTERFACE ${SANITIZER_FLAG})
     else ()
         message(WARNING "${SANITIZER} sanitizer is not supported by the compiler")
     endif ()
@@ -208,7 +213,16 @@ endif ()
 
 # Add all enabled sanitizers to target.
 function(add_sanitizers TARGET)
-    if (SANITIZE_MEMORY AND HAS_MEMORY_SANITIZER)
-        add_sanitizer(${TARGET} MSAN)
+    if (SANITIZE_ADDRESS)
+        enable_address_sanitizer(${TARGET} HAS_ADDRESS_SANITIZER)
+    endif ()
+    if (SANITIZE_MEMORY)
+        enable_memory_sanitizer(${TARGET} HAS_MEMORY_SANITIZER)
+    endif ()
+    if (SANITIZE_THREAD)
+        enable_thread_sanitizer(${TARGET} HAS_THREAD_SANITIZER)
+    endif ()
+    if (SANITIZE_UNDEFINED)
+        enable_undefined_sanitizer(${TARGET} HAS_UNDEFINED_SANITIZER)
     endif ()
 endfunction()
