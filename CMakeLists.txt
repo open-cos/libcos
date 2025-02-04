@@ -162,8 +162,6 @@ target_sources(libcos PRIVATE
     src/syntax/CosKeywords.c
     src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosToken.h
-    src/syntax/tokenizer/CosTokenEntry.c
-    src/syntax/tokenizer/CosTokenEntry.h
     src/syntax/tokenizer/CosTokenValue.c
     src/syntax/tokenizer/CosTokenValue.h
     src/syntax/tokenizer/CosTokenizer.c
@@ -343,15 +341,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         #-Werror=incompatible-function-pointer-types
         -Werror=nullability
         
-        #        -g -O1 -fsanitize=address -fno-omit-frame-pointer
-        
         -g
-        
-        -fsanitize=address
-        
-        -fsanitize=undefined
-        -fsanitize=float-divide-by-zero,implicit-conversion,local-bounds,nullability
-        #-fsanitize=unsigned-integer-overflow
         
         -fno-omit-frame-pointer
         -fno-optimize-sibling-calls
@@ -367,10 +357,6 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         )
     endif ()
     
-    add_flags(COS_LINKER_FLAGS
-        -fsanitize=address
-        -fsanitize=undefined
-    )
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
         /W4 /Wall)
@@ -449,6 +435,7 @@ target_link_libraries(libcos++ INTERFACE
     libcos cbind
 )
 
+include(CTest)
 enable_testing()
 add_subdirectory(tests)
 
