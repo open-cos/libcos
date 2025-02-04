@@ -95,25 +95,6 @@ struct CosToken {
 };
 
 /**
- * @brief Destroys a token.
- *
- * @param token The token.
- */
-void
-cos_token_destroy(CosToken *token)
-    COS_DEALLOCATOR_FUNC;
-
-/**
- * @brief Creates a new token.
- *
- * @return The token, or @c NULL if an error occurred.
- */
-CosToken * COS_Nullable
-cos_token_create(void)
-    COS_ALLOCATOR_FUNC
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_token_destroy);
-
-/**
  * @brief Resets a token to its initial state.
  *
  * @param token The token.

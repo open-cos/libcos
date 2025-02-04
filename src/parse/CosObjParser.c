@@ -89,7 +89,7 @@ struct CosObjParser {
     CosStream *input_stream;
     CosTokenizer *tokenizer;
 
-    CosToken * COS_Nullable token_buffer[COS_OBJ_PARSER_TOKEN_BUFFER_SIZE];
+    CosToken token_buffer[COS_OBJ_PARSER_TOKEN_BUFFER_SIZE];
     size_t token_count;
 
     CosObj * COS_Nullable peeked_obj;
@@ -264,11 +264,8 @@ cos_obj_parser_destroy(CosObjParser *parser)
 
     // Release all the buffered tokens.
     for (size_t i = 0; i < parser->token_count; i++) {
-        CosToken * const token = parser->token_buffer[i];
-        if (token) {
-            cos_token_reset(token);
-            cos_token_destroy(token);
-        }
+        CosToken * const token = &(parser->token_buffer[i]);
+        cos_token_reset(token);
     }
 
     cos_tokenizer_destroy(parser->tokenizer);
@@ -484,9 +481,7 @@ cos_next_object_(CosObjParser *parser,
             break;
         case CosToken_Type_EndStream:
             break;
-        case CosToken_Type_XRef: {
-            printf("XRef\n");
-        }
+        case CosToken_Type_XRef:
             break;
         case CosToken_Type_N:
             break;
@@ -981,16 +976,16 @@ cos_handle_indirect_ref_(CosObjParser *parser,
         goto failure;
     }
 
-    COS_ASSERT(parser->token_buffer[0] != NULL && parser->token_buffer[0]->type == CosToken_Type_Integer,
+    COS_ASSERT(parser->token_buffer[0].type == CosToken_Type_Integer,
                "Expected an object-number integer token");
-    COS_ASSERT(parser->token_buffer[1] != NULL && parser->token_buffer[1]->type == CosToken_Type_Integer,
+    COS_ASSERT(parser->token_buffer[1].type == CosToken_Type_Integer,
                "Expected a generation-number integer token");
-    COS_ASSERT(parser->token_buffer[2] != NULL && parser->token_buffer[2]->type == CosToken_Type_R,
+    COS_ASSERT(parser->token_buffer[2].type == CosToken_Type_R,
                "Expected an 'R' keyword token");
 
     // TODO: Validate the indirect reference tokens and whitespace.
-    const CosToken * const obj_num_token = parser->token_buffer[0];
-    const CosToken * const gen_num_token = parser->token_buffer[1];
+    const CosToken * const obj_num_token = &parser->token_buffer[0];
+    const CosToken * const gen_num_token = &parser->token_buffer[1];
 
     int obj_num = 0;
     int gen_num = 0;
@@ -1043,15 +1038,15 @@ cos_handle_indirect_def_(CosObjParser *parser,
         goto failure;
     }
 
-    COS_ASSERT(parser->token_buffer[0] != NULL && parser->token_buffer[0]->type == CosToken_Type_Integer,
+    COS_ASSERT(parser->token_buffer[0].type == CosToken_Type_Integer,
                "Expected an object-number integer token");
-    COS_ASSERT(parser->token_buffer[1] != NULL && parser->token_buffer[1]->type == CosToken_Type_Integer,
+    COS_ASSERT(parser->token_buffer[1].type == CosToken_Type_Integer,
                "Expected a generation-number integer token");
-    COS_ASSERT(parser->token_buffer[2] != NULL && parser->token_buffer[2]->type == CosToken_Type_Obj,
+    COS_ASSERT(parser->token_buffer[2].type == CosToken_Type_Obj,
                "Expected an 'obj' keyword token");
 
-    CosToken * const obj_num_token = parser->token_buffer[0];
-    CosToken * const gen_num_token = parser->token_buffer[1];
+    CosToken * const obj_num_token = &parser->token_buffer[0];
+    CosToken * const gen_num_token = &parser->token_buffer[1];
 
     // ISO 19005-1:2005(E), Section 6.1.8 Indirect objects (PDF/A-1a, PDF/A-1b)
     // "The object number and generation number shall be separated by a single white-space character."
@@ -1118,6 +1113,11 @@ cos_handle_indirect_def_(CosObjParser *parser,
     if (!indirect_obj) {
         goto failure;
     }
+
+    COS_LOG_TRACE(cos_log_context_get_default(),
+                  "Parsed indirect object definition: %u %u",
+                  obj_id.obj_number,
+                  obj_id.gen_number);
 
     return (CosObj *)indirect_obj;
 
@@ -1256,22 +1256,26 @@ cos_peek_next_token_(CosObjParser *parser,
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
 
+    if (lookahead >= COS_ARRAY_SIZE(parser->token_buffer)) {
+        return NULL;
+    }
+
     // Fill up the buffer up to the requested lookahead index.
     for (unsigned int i = 0; i <= lookahead; i++) {
-        if (!parser->token_buffer[i]) {
-            CosToken *token = cos_tokenizer_get_next_token(parser->tokenizer,
-                                                           NULL);
-            if (!token) {
+        if (i >= parser->token_count) {
+            CosToken *token = &(parser->token_buffer[i]);
+
+            if (!cos_tokenizer_get_next_token(parser->tokenizer,
+                                              token,
+                                              NULL)) {
                 return NULL;
             }
-
-            parser->token_buffer[i] = token;
 
             parser->token_count++;
         }
     }
 
-    CosToken * const peeked_token = parser->token_buffer[lookahead];
+    CosToken * const peeked_token = &parser->token_buffer[lookahead];
     COS_ASSERT(peeked_token != NULL, "Expected a token");
     return peeked_token;
 }
@@ -1286,20 +1290,20 @@ cos_parser_advance_(CosObjParser *parser)
     }
 
     // Release the current token.
-    CosToken *current_token = parser->token_buffer[0];
-    COS_ASSERT(current_token != NULL, "Expected a token");
+    CosToken *current_token = &(parser->token_buffer[0]);
     cos_token_reset(current_token);
-    cos_token_destroy(current_token);
 
     const size_t token_buffer_size = COS_ARRAY_SIZE(parser->token_buffer);
 
     // "Pop" the first token by moving the rest of the buffer left with memmove.
     memmove(&parser->token_buffer[0],
             &parser->token_buffer[1],
-            sizeof(CosToken *) * (token_buffer_size - 1));
+            sizeof(parser->token_buffer[0]) * (token_buffer_size - 1));
 
     // Zero out the last token after the shift.
-    parser->token_buffer[token_buffer_size - 1] = NULL;
+    memset(&(parser->token_buffer[token_buffer_size - 1]),
+           0,
+           sizeof(CosToken));
 
     // Decrement the token count.
     parser->token_count--;

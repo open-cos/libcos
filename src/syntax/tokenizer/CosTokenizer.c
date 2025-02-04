@@ -27,20 +27,12 @@ struct CosTokenizer {
     bool strict;
 };
 
-static CosToken * COS_Nullable
-cos_acquire_token_(CosTokenizer *tokenizer)
-    COS_OWNERSHIP_RETURNS;
-
-static void
-cos_release_token_(CosTokenizer *tokenizer,
-                   CosToken *token)
-    COS_OWNERSHIP_TAKES(2);
-
-static CosToken * COS_Nullable
+static bool
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
+                               CosToken *token,
                                CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_RETURNS
-    COS_ATTR_ACCESS_WRITE_ONLY(2);
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 static inline int
 cos_tokenizer_get_next_char_(CosTokenizer *tokenizer);
@@ -181,61 +173,36 @@ cos_tokenizer_reset(CosTokenizer *tokenizer)
     cos_stream_reader_reset(tokenizer->stream_reader);
 }
 
-CosToken *
+bool
 cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
+                             CosToken *out_token,
                              CosError * COS_Nullable out_error)
 {
     COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    CosToken * const token = cos_tokenizer_read_next_token_(tokenizer,
-                                                            out_error);
-    if (!token) {
-        goto failure;
+    COS_PARAMETER_ASSERT(out_token != NULL);
+    if (COS_UNLIKELY(!tokenizer || !out_token)) {
+        return false;
     }
 
-    return token;
+    CosToken token = {0};
 
-failure:
-    return NULL;
-}
-
-static CosToken *
-cos_acquire_token_(CosTokenizer *tokenizer)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-
-    // Allocate a new token.
-    return cos_token_create();
-}
-
-static void
-cos_release_token_(CosTokenizer *tokenizer,
-                   CosToken *token)
-{
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(token != NULL);
-    if (!tokenizer || !token) {
-        return;
+    if (!cos_tokenizer_read_next_token_(tokenizer,
+                                        &token,
+                                        out_error)) {
+        return false;
     }
+    *out_token = token;
 
-    cos_token_reset(token);
-
-    cos_token_destroy(token);
+    return true;
 }
 
-static CosToken *
+static bool
 cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
+                               CosToken *token,
                                CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    if (!tokenizer) {
-        return NULL;
-    }
-
-    CosToken * const token = cos_acquire_token_(tokenizer);
-    if (!token) {
-        goto failure;
-    }
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(token != NULL);
 
     // Skip over ignorable whitespace characters and comments.
     cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
@@ -423,12 +390,9 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
 
     token->length = (size_t)(token_end_position - token_start_position);
 
-    return token;
+    return true;
 
 failure:
-    if (token) {
-        cos_release_token_(tokenizer, token);
-    }
     return NULL;
 }
 

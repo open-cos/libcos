@@ -2,10 +2,6 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-//
-// Created by david on 17/12/23.
-//
-
 #include "syntax/tokenizer/CosTokenValue.h"
 #include "syntax/tokenizer/CosTokenizer.h"
 
@@ -41,17 +37,18 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
 
     bool eof = false;
     do {
+        CosToken token = {0};
         CosError error = {0};
-        CosToken *token = cos_tokenizer_get_next_token(tokenizer,
-                                                       &error);
-        if (!token) {
+        if (!cos_tokenizer_get_next_token(tokenizer,
+                                          &token,
+                                          &error)) {
             goto failure;
         }
 
-        switch (token->type) {
+        switch (token.type) {
             case CosToken_Type_Unknown: {
-                if (token->value.type == CosTokenValue_Type_String) {
-                    CosString * const string = token->value.value.string;
+                if (token.value.type == CosTokenValue_Type_String) {
+                    CosString * const string = token.value.value.string;
                     printf("Unknown: %s\n",
                            cos_string_get_data(string));
                 }
@@ -61,16 +58,16 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
             } break;
 
             case CosToken_Type_Literal_String: {
-                if (token->value.type == CosTokenValue_Type_Data) {
-                    const CosData * const data = token->value.value.data;
+                if (token.value.type == CosTokenValue_Type_Data) {
+                    const CosData * const data = token.value.value.data;
                     printf("Literal String: %.*s\n",
                            (int)data->size,
                            data->bytes);
                 }
             } break;
             case CosToken_Type_Hex_String: {
-                if (token->value.type == CosTokenValue_Type_Data) {
-                    const CosData * const data = token->value.value.data;
+                if (token.value.type == CosTokenValue_Type_Data) {
+                    const CosData * const data = token.value.value.data;
                     printf("Hex String: %.*s\n",
                            (int)data->size,
                            data->bytes);
@@ -78,23 +75,23 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
             } break;
 
             case CosToken_Type_Name: {
-                if (token->value.type == CosTokenValue_Type_String) {
-                    const CosString * const string = token->value.value.string;
+                if (token.value.type == CosTokenValue_Type_String) {
+                    const CosString * const string = token.value.value.string;
                     printf("Name: %s\n",
                            cos_string_get_data(string));
                 }
             } break;
 
             case CosToken_Type_Integer: {
-                if (token->value.type == CosTokenValue_Type_IntegerNumber) {
-                    const int value = token->value.value.integer_number;
+                if (token.value.type == CosTokenValue_Type_IntegerNumber) {
+                    const int value = token.value.value.integer_number;
                     printf("Integer: %d\n",
                            value);
                 }
             } break;
             case CosToken_Type_Real: {
-                if (token->value.type == CosTokenValue_Type_RealNumber) {
-                    const double value = token->value.value.real_number;
+                if (token.value.type == CosTokenValue_Type_RealNumber) {
+                    const double value = token.value.value.real_number;
                     printf("Real: %f\n",
                            value);
                 }
@@ -171,7 +168,7 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
             } break;
         }
 
-        cos_token_destroy(token);
+        cos_token_reset(&token);
     } while (!eof);
 
     int result = EXIT_SUCCESS;

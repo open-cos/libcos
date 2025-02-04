@@ -11,40 +11,6 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-CosToken *
-cos_token_create(void)
-{
-    CosToken *token = NULL;
-
-    token = calloc(1, sizeof(CosToken));
-    if (!token) {
-        goto failure;
-    }
-
-    token->type = CosToken_Type_Unknown;
-    token->offset = 0;
-    token->length = 0;
-    token->value = (CosTokenValue){0};
-
-    return token;
-
-failure:
-    if (token) {
-        free(token);
-    }
-    return NULL;
-}
-
-void
-cos_token_destroy(CosToken *token)
-{
-    if (!token) {
-        return;
-    }
-
-    free(token);
-}
-
 void
 cos_token_reset(CosToken *token)
 {

@@ -30,12 +30,12 @@ cos_tokenizer_create(CosStream *input_stream)
 void
 cos_tokenizer_reset(CosTokenizer *tokenizer);
 
-CosToken * COS_Nullable
+bool
 cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
+                             CosToken *out_token,
                              CosError * COS_Nullable out_error)
-    //    COS_WARN_UNUSED_RESULT
-    COS_OWNERSHIP_RETURNS
-    COS_ATTR_ACCESS_WRITE_ONLY(2);
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
