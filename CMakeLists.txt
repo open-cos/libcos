@@ -435,7 +435,6 @@ target_link_libraries(libcos++ INTERFACE
     libcos cbind
 )
 
-include(CTest)
 enable_testing()
 add_subdirectory(tests)
 
