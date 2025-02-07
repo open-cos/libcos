@@ -6,4 +6,7 @@
 
 COS_ATTR_UNUSED
 static void
-foo(void);
+foo(void)
+{
+    // Do nothing.
+}
