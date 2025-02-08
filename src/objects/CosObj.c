@@ -121,7 +121,7 @@ cos_obj_is_direct(const CosObj *obj)
         case CosObjType_Reference:
             return false;
     }
-    COS_ASSERT(false, "Invalid obj type: %d", obj->type);
+    COS_ASSERT(false, "Invalid obj type: %d", (int)obj->type);
 
     return false;
 }
@@ -151,7 +151,7 @@ cos_obj_is_indirect(const CosObj *obj)
         case CosObjType_Reference:
             return true;
     }
-    COS_ASSERT(false, "Invalid obj type: %d", obj->type);
+    COS_ASSERT(false, "Invalid obj type: %d", (int)obj->type);
 
     return false;
 }
@@ -214,7 +214,7 @@ cos_obj_get_value_type(CosObj *obj)
             return cos_reference_obj_get_type((CosReferenceObj *)obj);
         }
     }
-    COS_ASSERT(false, "Invalid obj type: %d", obj->type);
+    COS_ASSERT(false, "Invalid obj type: %d", (int)obj->type);
 
     return CosObjValueType_Unknown;
 }

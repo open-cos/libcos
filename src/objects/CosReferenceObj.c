@@ -127,7 +127,7 @@ cos_reference_obj_print_desc(const CosReferenceObj *reference_obj)
         return;
     }
 
-    printf("Indirect reference: %d %d\n",
+    printf("Indirect reference: %u %u\n",
            reference_obj->id.obj_number,
            reference_obj->id.gen_number);
 }

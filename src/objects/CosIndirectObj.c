@@ -110,7 +110,9 @@ cos_indirect_obj_print_desc(const CosIndirectObj *indirect_obj)
         return;
     }
 
-    printf("Indirect object: %d %d\n", indirect_obj->id.obj_number, indirect_obj->id.gen_number);
+    printf("Indirect object: %u %u\n",
+           indirect_obj->id.obj_number,
+           indirect_obj->id.gen_number);
 
     const CosObj * const direct_obj = indirect_obj->value;
     if (!direct_obj) {
