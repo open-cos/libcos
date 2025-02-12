@@ -11,6 +11,18 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+typedef struct CosMemoryStreamContext {
+    union {
+        const unsigned char *read;
+        unsigned char *write;
+    } buffer;
+
+    size_t size;
+    size_t position;
+    bool free_buffer;
+
+} CosMemoryStreamContext;
+
 CosStream * COS_Nullable
 cos_memory_stream_create(void *buffer,
                          size_t size,

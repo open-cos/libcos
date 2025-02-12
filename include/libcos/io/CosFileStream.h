@@ -8,8 +8,22 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/io/CosStream.h>
 
+#include <stdio.h>
+
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
+
+typedef struct CosFileStreamContext {
+    /**
+     * The file pointer.
+     */
+    FILE *file;
+
+    /**
+     * Whether the file pointer is owned by the stream.
+     */
+    bool file_owner;
+} CosFileStreamContext;
 
 CosStream * COS_Nullable
 cos_file_stream_create(const char *path,

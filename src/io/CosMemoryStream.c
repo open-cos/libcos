@@ -13,18 +13,6 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosMemoryStreamContext {
-    union {
-        const unsigned char *read;
-        unsigned char *write;
-    } buffer;
-
-    size_t size;
-    size_t position;
-    bool free_buffer;
-
-} CosMemoryStreamContext;
-
 static size_t
 cos_memory_stream_read_(void *context,
                         void *buffer,

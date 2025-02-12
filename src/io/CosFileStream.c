@@ -8,23 +8,10 @@
 
 #include <libcos/common/CosError.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 COS_ASSUME_NONNULL_BEGIN
-
-typedef struct CosFileStreamContext {
-    /**
-     * The file pointer.
-     */
-    FILE *file;
-
-    /**
-     * Whether the file pointer is owned by the stream.
-     */
-    bool file_owner;
-} CosFileStreamContext;
 
 static bool
 cos_file_stream_is_valid_(const CosFileStreamContext *context);
