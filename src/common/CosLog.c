@@ -33,13 +33,13 @@ struct CosLogContext {
 };
 
 static void
-cos_log_func_stderr_(CosLogContext *log_context,
+cos_log_func_stdout_(CosLogContext *log_context,
                      CosLogMessageLevel message_level,
                      const char *message);
 
 static CosLogContext default_log_context = {
     .level = CosLogLevel_Info,
-    .log_func = &cos_log_func_stderr_,
+    .log_func = &cos_log_func_stdout_,
     .user_data = NULL,
 };
 
@@ -152,7 +152,7 @@ cos_logv(CosLogContext *log_context,
 }
 
 static void
-cos_log_func_stderr_(CosLogContext *log_context,
+cos_log_func_stdout_(CosLogContext *log_context,
                      CosLogMessageLevel message_level,
                      const char *message)
 {
@@ -185,7 +185,7 @@ cos_log_func_stderr_(CosLogContext *log_context,
         level_str = "UNKNOWN";
     }
 
-    (void)fprintf(stderr,
+    (void)fprintf(stdout,
                   "[%s] %s\n",
                   level_str,
                   message);
