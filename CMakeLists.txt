@@ -101,6 +101,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_library(libcos SHARED
     src/dummy.c
     include/libcos/common/CosBasicTypes.h
+    src/filters/CosFilter.c
+    src/filters/CosFilter.h
 )
 
 target_include_directories(libcos
@@ -346,7 +348,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -fno-omit-frame-pointer
         -fno-optimize-sibling-calls
     )
-
+    
     # The following flags are only supported by Clang 19.1.0 and later:
     # -Xclang -fexperimental-bounds-safety
     # -fexperimental-late-parse-attributes
@@ -356,7 +358,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -fexperimental-late-parse-attributes
         )
     endif ()
-    
+
 elseif (C_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_C_FLAGS_WARNINGS
         /W4 /Wall)
