@@ -36,7 +36,6 @@ cos_stream_create(const CosStreamFunctions *functions,
     }
 
     CosStream *stream = NULL;
-    unsigned char *buffer = NULL;
 
     // Ensure that the stream functions are valid.
     if (!functions->eof_func ||
@@ -49,6 +48,29 @@ cos_stream_create(const CosStreamFunctions *functions,
         goto failure;
     }
 
+    cos_stream_init(stream, functions);
+
+    return stream;
+
+failure:
+    if (stream) {
+        free(stream);
+    }
+    return NULL;
+}
+
+void
+cos_stream_init(CosStream *stream,
+                const CosStreamFunctions *functions)
+{
+    COS_API_PARAM_CHECK(stream != NULL);
+    COS_API_PARAM_CHECK(functions != NULL);
+    if (COS_UNLIKELY(!stream || !functions)) {
+        return;
+    }
+
+    unsigned char *buffer = NULL;
+
     const size_t buffer_capacity = COS_STREAM_BUFFER_CAPACITY;
 
     buffer = malloc(buffer_capacity);
@@ -57,7 +79,6 @@ cos_stream_create(const CosStreamFunctions *functions,
     }
 
     stream->functions = *functions;
-    stream->context = context;
 
     stream->base_offset = 0;
     stream->physical_position = 0;
@@ -70,16 +91,10 @@ cos_stream_create(const CosStreamFunctions *functions,
 
     stream->buffer_mode = CosStreamBufferMode_Read;
 
-    return stream;
-
 failure:
-    if (stream) {
-        free(stream);
-    }
     if (buffer) {
         free(buffer);
     }
-    return NULL;
 }
 
 void
@@ -91,7 +106,7 @@ cos_stream_close(CosStream *stream)
     }
 
     if (stream->functions.close_func) {
-        stream->functions.close_func(stream->context);
+        stream->functions.close_func(stream);
     }
 
     free(stream->buffer);
@@ -296,7 +311,7 @@ cos_stream_seek(CosStream *stream,
     stream->buffer_position = 0;
     stream->buffer_length = 0;
 
-    if (!stream->functions.seek_func(stream->context,
+    if (!stream->functions.seek_func(stream,
                                      underlying_stream_offset,
                                      CosStreamOffsetWhence_Set,
                                      out_error)) {
@@ -353,7 +368,7 @@ cos_stream_is_at_end(CosStream *stream,
         return true;
     }
 
-    const bool is_eof = stream->functions.eof_func(stream->context);
+    const bool is_eof = stream->functions.eof_func(stream);
     if (is_eof) {
         stream->flags |= CosStreamFlag_EOF;
     }
@@ -371,7 +386,7 @@ cos_stream_fill_read_buffer_(CosStream *stream,
     const size_t read_count = stream->buffer_capacity;
     CosError read_error = CosErrorNone;
 
-    const size_t actual_read_count = stream->functions.read_func(stream->context,
+    const size_t actual_read_count = stream->functions.read_func(stream,
                                                                  stream->buffer,
                                                                  read_count,
                                                                  &read_error);

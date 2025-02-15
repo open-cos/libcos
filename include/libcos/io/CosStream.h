@@ -36,15 +36,38 @@ typedef enum CosStreamOffsetWhence {
 
 } CosStreamOffsetWhence;
 
+/**
+ * @brief The functions implemented by a stream.
+ */
 typedef struct CosStreamFunctions {
-    size_t (* COS_Nullable read_func)(void *context,
+    /**
+     * @brief Reads data from the stream.
+     *
+     * @param stream The stream.
+     * @param buffer The output buffer to read into.
+     * @param count The maximum number of bytes to read.
+     * @param out_error The error information.
+     *
+     * @return The number of bytes read, or @c 0 if an error occurred.
+     */
+    size_t (* COS_Nullable read_func)(CosStream *stream,
                                       void *buffer,
                                       size_t count,
                                       CosError * COS_Nullable out_error)
         COS_ATTR_ACCESS_WRITE_ONLY_SIZE(2, 3)
         COS_ATTR_ACCESS_WRITE_ONLY(4);
 
-    size_t (* COS_Nullable write_func)(void *context,
+    /**
+     * @brief Writes data to the stream.
+     *
+     * @param stream The stream.
+     * @param buffer The input buffer to be written.
+     * @param count The maximum number of bytes to write and the size of @p buffer .
+     * @param out_error The error information.
+     *
+     * @return The number of bytes written, or @c 0 if an error occurred.
+     */
+    size_t (* COS_Nullable write_func)(CosStream *stream,
                                        const void *buffer,
                                        size_t count,
                                        CosError * COS_Nullable out_error)
@@ -54,14 +77,14 @@ typedef struct CosStreamFunctions {
     /**
      * @brief Adjusts the stream's offset.
      *
-     * @param context The context of the stream.
+     * @param stream The stream.
      * @param offset The offset adjustment.
      * @param whence The type of adjustment.
      * @param out_error The error information.
      *
      * @return @c true if the adjustment was successful, @c false otherwise.
      */
-    bool (* COS_Nullable seek_func)(void *context,
+    bool (* COS_Nullable seek_func)(CosStream *stream,
                                     CosStreamOffset offset,
                                     CosStreamOffsetWhence whence,
                                     CosError * COS_Nullable out_error)
@@ -70,34 +93,33 @@ typedef struct CosStreamFunctions {
     /**
      * @brief Returns the current offset of the stream.
      *
-     * @param context The context of the stream.
+     * @param stream The stream.
      * @param out_error The error information.
      *
      * @return The current offset of the stream, or @c -1 if an error occurred.
      */
-    CosStreamOffset (*tell_func)(void *context,
+    CosStreamOffset (*tell_func)(CosStream *stream,
                                  CosError * COS_Nullable out_error)
         COS_ATTR_ACCESS_WRITE_ONLY(2);
 
     /**
      * @brief Returns whether the stream is at the end.
      *
-     * @param context The context of the stream.
+     * @param stream The stream.
      * @param out_error The error information.
      *
      * @return @c true if the stream is at the end, @c false otherwise.
      */
-    bool (*eof_func)(void *context);
+    bool (*eof_func)(CosStream *stream);
 
     /**
      * @brief Closes the stream.
      *
-     * @param context The context of the stream.
+     * @param stream The stream.
      */
-    void (*close_func)(void *context);
+    void (*close_func)(CosStream *stream);
 
 } CosStreamFunctions;
-
 
 enum {
     COS_STREAM_BUFFER_CAPACITY = 1024
@@ -119,7 +141,6 @@ typedef enum CosStreamBufferMode {
  * functions.
  */
 struct CosStream {
-    void *context;
     CosStreamFunctions functions;
 
     /**
@@ -182,12 +203,38 @@ cos_stream_create(const CosStreamFunctions *functions,
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
+/**
+ * @brief Initializes a stream.
+ * @param stream The stream to be initialized.
+ * @param functions The functions to be used by the stream.
+ */
+void
+cos_stream_init(CosStream *stream,
+                const CosStreamFunctions *functions);
+
 bool
 cos_stream_is_valid(const CosStream *stream);
 
+/**
+ * @brief Returns whether the stream can read.
+ *
+ * @param stream The stream.
+ *
+ * @return @c true if the stream can read, @c false otherwise.
+ */
 bool
 cos_stream_can_read(const CosStream *stream);
 
+/**
+ * @brief Reads data from the stream.
+ *
+ * @param stream The stream.
+ * @param buffer The output buffer to read into.
+ * @param count The maximum number of bytes to read and the size of @p buffer .
+ * @param out_error The error information.
+ *
+ * @return The number of bytes read, or @c 0 if an error occurred.
+ */
 size_t
 cos_stream_read(CosStream *stream,
                 void *buffer,
@@ -196,9 +243,26 @@ cos_stream_read(CosStream *stream,
     COS_ATTR_ACCESS_WRITE_ONLY_SIZE(2, 3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
 
+/**
+ * @brief Returns whether the stream can write.
+ *
+ * @param stream The stream.
+ *
+ * @return @c true if the stream can write, @c false otherwise.
+ */
 bool
 cos_stream_can_write(const CosStream *stream);
 
+/**
+ * @brief Writes data to the stream.
+ *
+ * @param stream The stream.
+ * @param buffer The input buffer to be written.
+ * @param count The maximum number of bytes to write and the size of @p buffer .
+ * @param out_error The error information.
+ *
+ * @return The number of bytes written, or @c 0 if an error occurred.
+ */
 size_t
 cos_stream_write(CosStream *stream,
                  const void *buffer,
