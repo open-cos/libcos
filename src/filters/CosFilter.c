@@ -2,7 +2,7 @@
  * Copyright (c) 2025 OpenCOS.
  */
 
-#include "CosFilter.h"
+#include "libcos/filters/CosFilter.h"
 
 #include "common/Assert.h"
 

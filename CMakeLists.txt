@@ -100,9 +100,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
-    include/libcos/common/CosBasicTypes.h
-    src/filters/CosFilter.c
-    src/filters/CosFilter.h
 )
 
 target_include_directories(libcos
@@ -140,6 +137,7 @@ target_sources(libcos PRIVATE
     src/common/memory/CosMemory.c
     src/common/memory/CosRefCounter.c
     src/common/memory/CosRefCounter.h
+    src/filters/CosFilter.c
     src/io/CosFileStream.c
     src/io/CosStreamReader.c
     src/io/CosMemoryStream.c
@@ -182,6 +180,7 @@ target_sources(libcos PUBLIC
     include/libcos/CosDoc.h
     include/libcos/CosObjID.h
     include/libcos/common/CosArray.h
+    include/libcos/common/CosBasicTypes.h
     include/libcos/common/CosBasicStack.h
     include/libcos/common/CosData.h
     include/libcos/common/CosDataRef.h
@@ -201,6 +200,7 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosTypes.h
     include/libcos/common/memory/CosAllocator.h
     include/libcos/common/memory/CosMemory.h
+    include/libcos/filters/CosFilter.h
     include/libcos/io/CosFileStream.h
     include/libcos/io/CosMemoryStream.h
     include/libcos/io/CosStream.h
