@@ -82,6 +82,7 @@ cos_xref_table_parser_free(CosXrefTableParser *parser)
     free(parser);
 }
 
+COS_ATTR_UNUSED
 static CosXrefSection *
 cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
                                      CosError * COS_Nullable out_error)
@@ -135,7 +136,7 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser)
         return NULL;
     }
 
-    CosError error = {0};
+    //    CosError error = {0};
 
     for (size_t i = 0; i < entry_count; i++) {
         //        CosXrefEntry * const entry = &(subsection->entries[i]);
@@ -162,6 +163,7 @@ cos_xref_table_parser_read_subsection_header_(CosXrefTableParser *parser,
     return false;
 }
 
+COS_ATTR_UNUSED
 static bool
 cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
                                   CosXrefEntry *entry,
@@ -208,13 +210,13 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
     switch (entry_keyword) {
         case 'n': {
             cos_xref_entry_init_in_use(entry,
-                                       items[0].number,
-                                       items[1].number);
+                                       (unsigned int)items[0].number,
+                                       (unsigned int)items[1].number);
         } break;
         case 'f': {
             cos_xref_entry_init_free(entry,
-                                     items[0].number,
-                                     items[1].number);
+                                     (unsigned int)items[0].number,
+                                     (unsigned int)items[1].number);
         } break;
 
         default: {
