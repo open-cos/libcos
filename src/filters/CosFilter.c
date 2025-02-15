@@ -9,6 +9,22 @@
 COS_ASSUME_NONNULL_BEGIN
 
 void
+cos_filter_init(CosFilter *filter,
+                const CosStreamFunctions *functions)
+{
+    COS_API_PARAM_CHECK(filter != NULL);
+    COS_API_PARAM_CHECK(functions != NULL);
+    if (COS_UNLIKELY(!filter || !functions)) {
+        return;
+    }
+
+    cos_stream_init((CosStream *)filter,
+                    functions);
+    
+    filter->source = NULL;
+}
+
+void
 cos_filter_attach_source(CosFilter *filter,
                          CosStream *source)
 {

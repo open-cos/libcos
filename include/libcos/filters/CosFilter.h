@@ -18,6 +18,16 @@ struct CosFilter {
 };
 
 /**
+ * @brief Initializes a filter.
+ *
+ * @param filter The filter to be initialized.
+ * @param functions The stream functions.
+ */
+void
+cos_filter_init(CosFilter *filter,
+                const CosStreamFunctions *functions);
+
+/**
  * @brief Attaches a source stream to a filter.
  *
  * @param filter The filter.

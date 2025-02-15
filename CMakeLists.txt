@@ -100,6 +100,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
+    include/libcos/filters/CosASCII85Filter.h
+    src/filters/CosASCII85Filter.c
 )
 
 target_include_directories(libcos
