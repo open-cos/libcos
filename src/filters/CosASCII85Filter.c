@@ -32,12 +32,33 @@ cos_ascii85_filter_close_(CosStream *stream);
 
 // Public functions
 
-void
+CosASCII85Filter *
+cos_ascii85_filter_create(void)
+{
+    CosASCII85Filter * const ascii_85_filter = calloc(1, sizeof(CosASCII85Filter));
+    if (COS_UNLIKELY(!ascii_85_filter)) {
+        goto failure;
+    }
+
+    if (COS_UNLIKELY(!cos_ascii85_filter_init(ascii_85_filter))) {
+        goto failure;
+    }
+
+    return ascii_85_filter;
+
+failure:
+    if (ascii_85_filter) {
+        free(ascii_85_filter);
+    }
+    return NULL;
+}
+
+bool
 cos_ascii85_filter_init(CosASCII85Filter *ascii_85_filter)
 {
     COS_API_PARAM_CHECK(ascii_85_filter != NULL);
     if (COS_UNLIKELY(!ascii_85_filter)) {
-        return;
+        return false;
     }
 
     cos_filter_init(&(ascii_85_filter->base),
@@ -48,12 +69,13 @@ cos_ascii85_filter_init(CosASCII85Filter *ascii_85_filter)
                     });
 
     CosASCII85FilterContext *context = calloc(1, sizeof(CosASCII85FilterContext));
-    if (context == NULL) {
-        // TODO: We need to let the caller know that the initialization failed.
-        return;
+    if (!context) {
+        return false;
     }
 
     ascii_85_filter->context = context;
+
+    return true;
 }
 
 // Function implementations
