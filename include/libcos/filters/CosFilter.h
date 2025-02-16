@@ -28,6 +28,14 @@ cos_filter_init(CosFilter *filter,
                 const CosStreamFunctions *functions);
 
 /**
+ * @brief Deinitializes a filter.
+ *
+ * @param filter The filter.
+ */
+void
+cos_filter_deinit(CosFilter *filter);
+
+/**
  * @brief Attaches a source stream to a filter.
  *
  * @param filter The filter.

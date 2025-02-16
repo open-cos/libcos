@@ -214,11 +214,14 @@ cos_ascii85_filter_write_(CosStream *stream,
 static void
 cos_ascii85_filter_close_(CosStream *stream)
 {
+    COS_IMPL_PARAM_CHECK(stream != NULL);
+
     CosASCII85Filter * const ascii_85_filter = (CosASCII85Filter *)stream;
 
     free(ascii_85_filter->context);
 
-    // TODO: Call the base class's close function?
+    // Deinitialize the base filter.
+    cos_filter_deinit(&(ascii_85_filter->base));
 }
 
 static void

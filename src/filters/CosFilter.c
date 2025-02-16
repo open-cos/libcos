@@ -25,6 +25,20 @@ cos_filter_init(CosFilter *filter,
 }
 
 void
+cos_filter_deinit(CosFilter *filter)
+{
+    COS_API_PARAM_CHECK(filter != NULL);
+    if (COS_UNLIKELY(!filter)) {
+        return;
+    }
+
+    CosStream *source = filter->source;
+    if (source) {
+        cos_stream_close(source);
+    }
+}
+
+void
 cos_filter_attach_source(CosFilter *filter,
                          CosStream *source)
 {
