@@ -91,6 +91,8 @@ cos_stream_init(CosStream *stream,
 
     stream->buffer_mode = CosStreamBufferMode_Read;
 
+    return;
+
 failure:
     if (buffer) {
         free(buffer);
