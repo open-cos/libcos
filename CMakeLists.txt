@@ -100,8 +100,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
-    include/libcos/filters/CosASCII85Filter.h
-    src/filters/CosASCII85Filter.c
 )
 
 target_include_directories(libcos
@@ -139,6 +137,8 @@ target_sources(libcos PRIVATE
     src/common/memory/CosMemory.c
     src/common/memory/CosRefCounter.c
     src/common/memory/CosRefCounter.h
+    src/filters/CosASCII85Filter.c
+    src/filters/CosASCIIHexFilter.c
     src/filters/CosFilter.c
     src/io/CosFileStream.c
     src/io/CosStreamReader.c
@@ -202,6 +202,8 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosTypes.h
     include/libcos/common/memory/CosAllocator.h
     include/libcos/common/memory/CosMemory.h
+    include/libcos/filters/CosASCII85Filter.h
+    include/libcos/filters/CosASCIIHexFilter.h
     include/libcos/filters/CosFilter.h
     include/libcos/io/CosFileStream.h
     include/libcos/io/CosMemoryStream.h
