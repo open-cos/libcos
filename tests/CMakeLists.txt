@@ -24,6 +24,7 @@ set(LIBCOS_TESTS
     tokenizer.c
     parser.c
     filters/ascii85.c
+    filters/ascii-hex.c
     unit/test-dict.c
 )
 
@@ -36,6 +37,7 @@ create_test_sourcelist(LIBCOS_TEST_SOURCES
 
 add_executable(libcos-test
     ${LIBCOS_TEST_SOURCES}
+    CosTest.h
 )
 
 foreach (TEST_SOURCE ${LIBCOS_TESTS})
@@ -57,9 +59,8 @@ foreach (TEST_SOURCE ${LIBCOS_TESTS})
 endforeach ()
 
 target_include_directories(libcos-test
-    # Find a better way to do this?
-    PUBLIC ../include/
-    PRIVATE ../src/
+    PUBLIC ${PROJECT_SOURCE_DIR}/include/
+    PRIVATE ${PROJECT_SOURCE_DIR}/src/ ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_compile_options(libcos-test PRIVATE

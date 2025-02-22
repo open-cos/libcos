@@ -48,6 +48,9 @@ AttributeMacros:
   - COS_OWNERSHIP_HOLDS
   - COS_OWNERSHIP_TAKES
   - COS_OWNERSHIP_RETURNS
+StatementMacros:
+  - COS_TEST_SUCCESS
+  - COS_TEST_FAILURE
 BinPackArguments: false
 BinPackParameters: false
 BreakBeforeBraces: Custom # See BraceWrapping
