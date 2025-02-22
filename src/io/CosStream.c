@@ -15,8 +15,7 @@
 COS_ASSUME_NONNULL_BEGIN
 
 CosStream *
-cos_stream_create(const CosStreamFunctions *functions,
-                  void *context)
+cos_stream_create(const CosStreamFunctions *functions)
 {
     COS_PARAMETER_ASSERT(functions != NULL);
     if (COS_UNLIKELY(!functions)) {

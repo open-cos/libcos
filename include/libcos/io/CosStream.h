@@ -142,8 +142,7 @@ cos_stream_close(CosStream *stream)
     COS_DEALLOCATOR_FUNC;
 
 CosStream * COS_Nullable
-cos_stream_create(const CosStreamFunctions *functions,
-                  void *context)
+cos_stream_create(const CosStreamFunctions *functions)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
