@@ -113,6 +113,8 @@ cos_memory_stream_read_(CosStream *stream,
            source,
            read_count);
 
+    memory_stream->position += read_count;
+
     return read_count;
 }
 
