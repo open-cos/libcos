@@ -48,6 +48,12 @@
 #define COS_HAS_EXTENSION(x) 0
 #endif
 
+#if defined(__has_include)
+#define COS_HAS_INCLUDE(x) __has_include(x)
+#else
+#define COS_HAS_INCLUDE(x) 0
+#endif
+
 #if defined(__GNUC__) && !defined(__clang__)
 
 #define COS_GCC_VERSION_AT_LEAST(major, minor, patchlevel) \

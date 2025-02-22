@@ -181,6 +181,7 @@ target_sources(libcos PUBLIC
     FILES
     include/libcos/CosDoc.h
     include/libcos/CosObjID.h
+    include/libcos/common/CosAPI.h
     include/libcos/common/CosArray.h
     include/libcos/common/CosBasicTypes.h
     include/libcos/common/CosBasicStack.h
