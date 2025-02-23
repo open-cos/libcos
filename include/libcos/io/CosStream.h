@@ -5,6 +5,7 @@
 #ifndef LIBCOS_IO_COS_STREAM_H
 #define LIBCOS_IO_COS_STREAM_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosBasicTypes.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
@@ -51,7 +52,7 @@ typedef struct CosStreamFunctions {
      * @return The number of bytes read, or @c 0 if an error occurred.
      */
     size_t (* COS_Nullable read_func)(CosStream *stream,
-                                      void *buffer,
+                                      COS_PARAM_SPEC(out, nonnull, sized_by(count)) void *buffer,
                                       size_t count,
                                       CosError * COS_Nullable out_error)
         COS_ATTR_ACCESS_WRITE_ONLY_SIZE(2, 3)
@@ -68,7 +69,7 @@ typedef struct CosStreamFunctions {
      * @return The number of bytes written, or @c 0 if an error occurred.
      */
     size_t (* COS_Nullable write_func)(CosStream *stream,
-                                       const void *buffer,
+                                       COS_PARAM_SPEC(in, nonnull, sized_by(count)) const void *buffer,
                                        size_t count,
                                        CosError * COS_Nullable out_error)
         COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3)
@@ -148,6 +149,7 @@ cos_stream_create(const CosStreamFunctions *functions)
 
 /**
  * @brief Initializes a stream.
+ *
  * @param stream The stream to be initialized.
  * @param functions The functions to be used by the stream.
  */
@@ -180,7 +182,7 @@ cos_stream_can_read(const CosStream *stream);
  */
 size_t
 cos_stream_read(CosStream *stream,
-                void *buffer,
+                COS_PARAM_SPEC(out, nonnull, sized_by(count)) void *buffer,
                 size_t count,
                 CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY_SIZE(2, 3)
@@ -208,7 +210,7 @@ cos_stream_can_write(const CosStream *stream);
  */
 size_t
 cos_stream_write(CosStream *stream,
-                 const void *buffer,
+                 COS_PARAM_SPEC(in, nonnull, sized_by(count)) const void *buffer,
                  size_t count,
                  CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3)
