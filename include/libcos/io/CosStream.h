@@ -142,11 +142,6 @@ void
 cos_stream_close(CosStream *stream)
     COS_DEALLOCATOR_FUNC;
 
-CosStream * COS_Nullable
-cos_stream_create(const CosStreamFunctions *functions)
-    COS_ALLOCATOR_FUNC
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
-
 /**
  * @brief Initializes a stream.
  *
@@ -156,9 +151,6 @@ cos_stream_create(const CosStreamFunctions *functions)
 void
 cos_stream_init(CosStream *stream,
                 const CosStreamFunctions *functions);
-
-bool
-cos_stream_is_valid(const CosStream *stream);
 
 /**
  * @brief Returns whether the stream can read.

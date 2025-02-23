@@ -14,38 +14,6 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-CosStream *
-cos_stream_create(const CosStreamFunctions *functions)
-{
-    COS_PARAMETER_ASSERT(functions != NULL);
-    if (COS_UNLIKELY(!functions)) {
-        return NULL;
-    }
-
-    CosStream *stream = NULL;
-
-    // Ensure that the stream functions are valid.
-    if (!functions->eof_func ||
-        !functions->close_func) {
-        return NULL;
-    }
-
-    stream = calloc(1, sizeof(CosStream));
-    if (COS_UNLIKELY(!stream)) {
-        goto failure;
-    }
-
-    cos_stream_init(stream, functions);
-
-    return stream;
-
-failure:
-    if (stream) {
-        free(stream);
-    }
-    return NULL;
-}
-
 void
 cos_stream_init(CosStream *stream,
                 const CosStreamFunctions *functions)
@@ -62,8 +30,8 @@ cos_stream_init(CosStream *stream,
 void
 cos_stream_close(CosStream *stream)
 {
-    COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
-    if (COS_UNLIKELY(!cos_stream_is_valid(stream))) {
+    COS_PARAMETER_ASSERT(stream != NULL);
+    if (COS_UNLIKELY(!stream)) {
         return;
     }
 
@@ -72,12 +40,6 @@ cos_stream_close(CosStream *stream)
     }
 
     free(stream);
-}
-
-bool
-cos_stream_is_valid(const CosStream *stream)
-{
-    return (stream != NULL);
 }
 
 bool
@@ -97,9 +59,9 @@ cos_stream_read(CosStream *stream,
                 size_t count,
                 CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
+    COS_PARAMETER_ASSERT(stream != NULL);
     COS_PARAMETER_ASSERT(buffer != NULL);
-    if (COS_UNLIKELY(!cos_stream_is_valid(stream) || !buffer)) {
+    if (COS_UNLIKELY(!stream || !buffer)) {
         return 0;
     }
 
@@ -138,9 +100,9 @@ cos_stream_write(CosStream *stream,
                  size_t count,
                  CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
+    COS_PARAMETER_ASSERT(stream != NULL);
     COS_PARAMETER_ASSERT(buffer != NULL);
-    if (COS_UNLIKELY(!cos_stream_is_valid(stream) || !buffer)) {
+    if (COS_UNLIKELY(!stream || !buffer)) {
         return 0;
     }
 
@@ -179,8 +141,8 @@ cos_stream_seek(CosStream *stream,
                 CosStreamOffsetWhence whence,
                 CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
-    if (COS_UNLIKELY(!cos_stream_is_valid(stream))) {
+    COS_PARAMETER_ASSERT(stream != NULL);
+    if (COS_UNLIKELY(!stream)) {
         return false;
     }
 
@@ -201,8 +163,8 @@ CosStreamOffset
 cos_stream_get_position(CosStream *stream,
                         CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(cos_stream_is_valid(stream));
-    if (COS_UNLIKELY(!cos_stream_is_valid(stream))) {
+    COS_PARAMETER_ASSERT(stream != NULL);
+    if (COS_UNLIKELY(!stream)) {
         return -1;
     }
 
