@@ -14,14 +14,29 @@
 COS_ASSUME_NONNULL_BEGIN
 
 enum CosRunLengthConstants {
-    COS_RUN_LENGTH_MAX_RUN_LENGTH = 128,
-
+    /**
+     * @brief The end-of-data marker.
+     */
     COS_RUN_LENGTH_EOD = 128,
 };
 
+/**
+ * @brief The type of a run.
+ */
 typedef enum CosRunLength_RunType {
+    /**
+     * @brief No run type.
+     */
     CosRunLength_RunType_None = 0,
+
+    /**
+     * @brief A literal run, where bytes are copied as-is.
+     */
     CosRunLength_RunType_Literal,
+
+    /**
+     * @brief A copy run, where a byte is repeated.
+     */
     CosRunLength_RunType_Copy,
 } CosRunLength_RunType;
 
@@ -218,6 +233,8 @@ cos_run_length_filter_close_(CosStream *stream)
 
     cos_filter_deinit(&(run_length_filter->base));
 }
+
+// Private function implementations
 
 static size_t
 cos_run_length_fill_decode_buffer_(CosRunLengthFilter *run_length_filter,
