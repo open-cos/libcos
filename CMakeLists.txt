@@ -116,7 +116,6 @@ target_sources(libcos PRIVATE
     src/common/CharacterSet.c
     src/common/CharacterSet.h
     src/common/CosArray.c
-    src/common/CosBasicStack.c
     src/common/CosContainerUtils.h
     src/common/CosData.c
     src/common/CosDataRef.c
@@ -124,7 +123,6 @@ target_sources(libcos PRIVATE
     src/common/CosDiagnosticHandler.c
     src/common/CosDict.c
     src/common/CosError.c
-    src/common/CosList.c
     src/common/CosLog.c
     src/common/CosRingBuffer.c
     src/common/CosScanner.c
@@ -186,7 +184,6 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosAPI.h
     include/libcos/common/CosArray.h
     include/libcos/common/CosBasicTypes.h
-    include/libcos/common/CosBasicStack.h
     include/libcos/common/CosData.h
     include/libcos/common/CosDataRef.h
     include/libcos/common/CosDefines.h
@@ -194,13 +191,10 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosDiagnosticHandler.h
     include/libcos/common/CosDict.h
     include/libcos/common/CosError.h
-    include/libcos/common/CosList.h
     include/libcos/common/CosLog.h
     include/libcos/common/CosMacros.h
     include/libcos/common/CosRingBuffer.h
     include/libcos/common/CosScanner.h
-    include/libcos/common/CosStack.h
-    include/libcos/common/CosStack.inl
     include/libcos/common/CosString.h
     include/libcos/common/CosTypes.h
     include/libcos/common/memory/CosAllocator.h
