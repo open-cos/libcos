@@ -36,6 +36,18 @@ static int name(TestFixture *fixture) \
 
 // clang-format on
 
+#define TEST_RUN(test, fixture)       \
+    do {                              \
+        if (!setup(fixture)) {        \
+            return EXIT_FAILURE;      \
+        }                             \
+        int result = test(fixture);   \
+        teardown(fixture);            \
+        if (result != EXIT_SUCCESS) { \
+            return result;            \
+        }                             \
+    } while (0)
+
 #define TEST_SUCCESS()          \
     test_result = EXIT_SUCCESS; \
     goto test_epilogue;         \

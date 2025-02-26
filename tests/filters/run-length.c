@@ -100,18 +100,6 @@ TEST_CASE_BEGIN(run_length_hello_world_decode)
 
 TEST_CASE_END
 
-#define TEST_RUN(test, fixture)       \
-    do {                              \
-        if (!setup(fixture)) {        \
-            return EXIT_FAILURE;      \
-        }                             \
-        int result = test(fixture);   \
-        teardown(fixture);            \
-        if (result != EXIT_SUCCESS) { \
-            return result;            \
-        }                             \
-    } while (0)
-
 TEST_MAIN()
 {
     TestFixture fixture = {0};
