@@ -25,6 +25,7 @@ set(LIBCOS_TESTS
     parser.c
     filters/ascii85.c
     filters/ascii-hex.c
+    filters/run-length.c
     unit/test-dict.c
 )
 

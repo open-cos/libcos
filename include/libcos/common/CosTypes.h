@@ -73,6 +73,7 @@ typedef struct CosStream CosStream;
 typedef struct CosFilter CosFilter;
 typedef struct CosASCII85Filter CosASCII85Filter;
 typedef struct CosASCIIHexFilter CosASCIIHexFilter;
+typedef struct CosRunLengthFilter CosRunLengthFilter;
 
 typedef struct CosStreamReader CosStreamReader;
 

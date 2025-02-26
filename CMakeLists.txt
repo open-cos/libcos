@@ -100,6 +100,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos SHARED
     src/dummy.c
+    include/libcos/filters/CosRunLengthFilter.h
+    src/filters/CosRunLengthFilter.c
 )
 
 target_include_directories(libcos
