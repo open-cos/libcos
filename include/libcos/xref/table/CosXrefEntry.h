@@ -62,6 +62,9 @@ typedef struct CosXrefCompressedEntry {
     unsigned int obj_stream_index;
 } CosXrefCompressedEntry;
 
+/**
+ * @brief The type of a cross-reference table entry.
+ */
 typedef enum CosXrefEntryType {
     /**
      * @brief A free entry.
