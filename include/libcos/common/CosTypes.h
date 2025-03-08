@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2025 OpenCOS.
+ */
+
 //
 // Created by david on 12/07/23.
 //
@@ -79,6 +83,8 @@ typedef struct CosStreamReader CosStreamReader;
 
 typedef struct CosDiagnostic CosDiagnostic;
 typedef struct CosDiagnosticHandler CosDiagnosticHandler;
+
+typedef struct CosFileParser CosFileParser;
 
 /**
  * @brief A logging context.

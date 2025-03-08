@@ -21,6 +21,11 @@ cos_doc_create(CosAllocator * COS_Nullable allocator)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_doc_destroy);
 
+bool
+cos_doc_load(CosDoc *doc,
+             CosStream *stream,
+             CosError * COS_Nullable error);
+
 int
 cos_doc_get_version(CosDoc *doc);
 

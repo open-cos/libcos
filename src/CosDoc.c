@@ -5,9 +5,10 @@
 #include "libcos/CosDoc.h"
 
 #include "common/Assert.h"
-#include "libcos/common/memory/CosAllocator.h"
 
+#include <libcos/common/memory/CosAllocator.h>
 #include <libcos/common/memory/CosMemory.h>
+#include <libcos/parse/CosFileParser.h>
 
 #include <string.h>
 
@@ -17,6 +18,7 @@ struct CosDoc {
     int version;
 
     CosAllocator *allocator;
+    CosFileParser * COS_Nullable parser;
     CosObj * COS_Nullable root;
 
     CosDiagnosticHandler * COS_Nullable diagnostic_handler;
@@ -47,7 +49,46 @@ cos_doc_destroy(CosDoc *doc)
         return;
     }
 
+    CosFileParser * const parser = doc->parser;
+    if (parser) {
+        cos_file_parser_destroy(parser);
+    }
+
     cos_free(doc->allocator, doc);
+}
+
+bool
+cos_doc_load(CosDoc *doc,
+             CosStream *stream,
+             CosError * COS_Nullable error)
+{
+    COS_API_PARAM_CHECK(doc != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
+    if (COS_UNLIKELY(!doc || !stream)) {
+        return false;
+    }
+
+    CosFileParser *parser = doc->parser;
+
+    if (!parser) {
+        parser = cos_file_parser_create(doc,
+                                        stream);
+        if (!parser) {
+            goto failure;
+        }
+
+        doc->parser = parser;
+    }
+
+    if (!cos_file_parser_parse(parser,
+                               error)) {
+        goto failure;
+    }
+
+    return true;
+
+failure:
+    return false;
 }
 
 int

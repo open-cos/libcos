@@ -102,6 +102,8 @@ add_library(libcos SHARED
     src/dummy.c
     include/libcos/filters/CosRunLengthFilter.h
     src/filters/CosRunLengthFilter.c
+    include/libcos/parse/CosFileParser.h
+    src/parse/CosFileParser.c
 )
 
 target_include_directories(libcos
