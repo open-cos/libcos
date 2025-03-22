@@ -28,7 +28,13 @@ cos_container_round_capacity_(size_t capacity)
         return 4;
     }
     // Round up to the next power of 2.
-    return cos_next_pow2l(capacity + 1);
+#if SIZE_MAX == UINT32_MAX
+	return cos_next_pow2l(capacity + 1);
+#elif SIZE_MAX == UINT64_MAX
+	return cos_next_pow2ll(capacity + 1);
+#else
+	return cos_next_pow2(capacity + 1);
+#endif
 }
 
 COS_DECLS_END

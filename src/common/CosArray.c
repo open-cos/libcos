@@ -152,14 +152,14 @@ cos_array_get_item(const CosArray *array,
 {
     COS_PARAMETER_ASSERT(array != NULL);
     if (!array) {
-        return NULL;
+        return false;
     }
 
     if (index >= array->count) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
                                            "Index out of bounds"),
                             out_error);
-        return NULL;
+        return false;
     }
 
     cos_get_item_(array, index, out_item);

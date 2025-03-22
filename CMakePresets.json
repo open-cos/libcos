@@ -30,7 +30,7 @@
             "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "enableMicrosoftCodeAnalysis": false,
+                    "enableMicrosoftCodeAnalysis": true,
                     "disableExternalAnalysis": true,
                     "enableClangTidyCodeAnalysis": true
                 }

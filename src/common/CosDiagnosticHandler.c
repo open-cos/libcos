@@ -142,6 +142,7 @@ cos_diagnostic_handler_log_(CosDiagnosticHandler *handler,
 
     CosLogMessageLevel message_level;
     switch (diagnostic->type) {
+        default:
         case CosDiagnosticLevel_Warning:
             message_level = CosLogMessageLevel_Warning;
             break;
