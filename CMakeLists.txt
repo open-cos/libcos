@@ -294,6 +294,10 @@ if (NOT MSVC)
             _FORTIFY_SOURCE=2
         )
     endif ()
+else ()
+        list(APPEND COS_COMPILE_DEFINITIONS
+            _CRT_SECURE_NO_WARNINGS
+        )
 endif ()
 
 # C warning flags.

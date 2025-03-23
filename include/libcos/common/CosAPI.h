@@ -54,7 +54,7 @@
 
 #else
 
-    #define COS_NO_OP_(x)
+    #define COS_NO_OP_
 
     #define COS_ATTR_in_nonnull_counted_by(x) COS_NO_OP_
     #define COS_ATTR_in_nullable_counted_by(x) COS_NO_OP_
@@ -74,7 +74,7 @@
     COS_PARAM_SPEC_IMPL_(direction, nullability, type, _NONE)
 
 #define COS_PARAM_SPEC_IMPL_(direction, nullability, type, ...) \
-    COS_SPEC_GET_NAME_(direction, nullability, type)(__VA_ARGS__)
+    COS_SPEC_GET_NAME_(direction, nullability, type)
 
 #define COS_SPEC_GET_NAME_(direction, nullability, type) \
     COS_SPEC_GET_NAME_IMPL_(direction, nullability, type)
