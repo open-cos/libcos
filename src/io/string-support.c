@@ -43,6 +43,74 @@ cos_strlcpy(char *dest,
 #endif
 }
 
+const char * COS_Nullable
+cos_strnrchr(const char *str,
+             size_t count,
+             int character)
+{
+    COS_API_PARAM_CHECK(str != NULL);
+    if (COS_UNLIKELY(!str || count == 0)) {
+        return NULL;
+    }
+
+    const char *p = str + (count - 1);
+    while (p >= str) {
+        if (*p == character) {
+            return p;
+        }
+        p--;
+    }
+
+    return NULL;
+}
+
+const char * COS_Nullable
+cos_strrstr(const char *str,
+            const char *substr)
+{
+    COS_API_PARAM_CHECK(str != NULL);
+    COS_API_PARAM_CHECK(substr != NULL);
+    if (COS_UNLIKELY(!str || !substr)) {
+        return NULL;
+    }
+
+    const size_t str_len = strlen(str);
+
+    return cos_strnrstr(str,
+                        str_len,
+                        substr);
+}
+
+const char * COS_Nullable
+cos_strnrstr(const char *str,
+             size_t count,
+             const char *substr)
+{
+    COS_API_PARAM_CHECK(str != NULL);
+    COS_API_PARAM_CHECK(substr != NULL);
+    if (COS_UNLIKELY(!str || !substr || count == 0)) {
+        return NULL;
+    }
+
+    const size_t substr_len = strlen(substr);
+    if (COS_UNLIKELY(substr_len == 0)) {
+        return NULL;
+    }
+
+    if (COS_UNLIKELY(count < substr_len)) {
+        return NULL;
+    }
+
+    // Walk backwards through the string, starting at the last possible match position.
+    for (const char *p = str + (count - substr_len); p >= str; p--) {
+        if (strncmp(p, substr, substr_len) == 0) {
+            return p;
+        }
+    }
+
+    return NULL;
+}
+
 char *
 cos_asprintf(const char *fmt, ...)
 {

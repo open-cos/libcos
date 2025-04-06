@@ -7,8 +7,10 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "common/CosMacros.h"
+#include "syntax/tokenizer/CosTokenizer.h"
 
 #include "libcos/io/CosStream.h"
+#include "libcos/io/string-support.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +27,27 @@ struct CosFileParser {
      * @brief The input stream.
      */
     CosStream *input_stream;
+
+    CosTokenizer *tokenizer;
+
+    struct {
+        unsigned char data[256];
+
+        /**
+         * @brief The number of valid bytes in the buffer.
+         */
+        size_t count;
+
+        /**
+         * The current position in the buffer.
+         *
+         * @invariant The current position is within the buffer:
+         * <code>
+         * current >= data && current < data + count
+         * </code>
+         */
+        unsigned char *current;
+    } buffer;
 };
 
 typedef struct CosFileHeader CosFileHeader;
@@ -52,6 +75,11 @@ struct CosFileTrailer {
     CosDictObj *trailer_dict;
 
     unsigned int last_xref_offset;
+
+    /**
+     * @brief The previous trailer, or @c NULL if this is the first trailer.
+     */
+    CosFileTrailer * COS_Nullable previous;
 };
 
 static bool
@@ -64,21 +92,44 @@ cos_parse_file_trailer_(CosFileParser *parser,
                         CosFileTrailer *file_trailer,
                         CosError * COS_Nullable error);
 
+static void
+cos_find_last_xref_offset_(CosFileParser *parser,
+                           CosFileTrailer *file_trailer,
+                           CosError *out_error);
+
 CosFileParser *
 cos_file_parser_create(CosDoc *doc,
                        CosStream *input_stream)
 {
     COS_API_PARAM_CHECK(doc != NULL);
 
-    CosFileParser * const parser = calloc(1, sizeof(CosFileParser));
+    CosFileParser *parser = NULL;
+    CosTokenizer *tokenizer = NULL;
+
+    parser = calloc(1, sizeof(CosFileParser));
     if (!parser) {
-        return NULL;
+        goto failure;
+    }
+
+    tokenizer = cos_tokenizer_create(input_stream);
+    if (COS_UNLIKELY(!tokenizer)) {
+        goto failure;
     }
 
     parser->doc = doc;
     parser->input_stream = input_stream;
+    parser->tokenizer = tokenizer;
 
     return parser;
+
+failure:
+    if (parser) {
+        free(parser);
+    }
+    if (tokenizer) {
+        cos_tokenizer_destroy(tokenizer);
+    }
+    return NULL;
 }
 
 void
@@ -106,6 +157,14 @@ cos_file_parser_parse(CosFileParser *parser,
     if (!cos_parse_file_header_(parser,
                                 &file_header,
                                 out_error)) {
+        goto failure;
+    }
+
+    // Parse the file trailer.
+    CosFileTrailer file_trailer = {0};
+    if (!cos_parse_file_trailer_(parser,
+                                 &file_trailer,
+                                 out_error)) {
         goto failure;
     }
 
@@ -141,13 +200,23 @@ cos_parse_file_header_(CosFileParser *parser,
         goto failure;
     }
 
-    unsigned char buffer[10] = {0};
+    unsigned char *buffer = parser->buffer.data;
+
+    // Reset the buffer before reading.
+    parser->buffer.count = 0;
 
     size_t read_count = cos_stream_read(parser->input_stream,
                                         buffer,
-                                        sizeof(buffer) - 1,
+                                        10,
                                         error);
     if (read_count == 0) {
+        goto failure;
+    }
+
+    parser->buffer.count = read_count;
+
+    if (read_count < 7) {
+        // Invalid file header.
         goto failure;
     }
 
@@ -203,49 +272,70 @@ failure:
 }
 
 static bool
-cos_parse_file_trailer(CosFileParser *parser,
-                       CosFileTrailer *file_trailer,
-                       CosError * COS_Nullable error)
+cos_parse_file_trailer_(CosFileParser *parser,
+                        CosFileTrailer *file_trailer,
+                        CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(file_trailer != NULL);
 
     // We want to read the last 256 bytes of the file.
-    unsigned char buffer[256] = {0};
+    unsigned char *buffer = parser->buffer.data;
+    const size_t buffer_size = sizeof(parser->buffer.data);
 
     // Seek to before the end of the file.
     if (!cos_stream_seek(parser->input_stream,
-                         -(CosStreamOffset)sizeof(buffer),
+                         -(CosStreamOffset)buffer_size,
                          CosStreamOffsetWhence_End,
                          error)) {
         goto failure;
     }
 
+    // Reset the buffer before reading.
+    parser->buffer.count = 0;
+
     const size_t read_count = cos_stream_read(parser->input_stream,
                                               buffer,
-                                              sizeof(buffer),
+                                              buffer_size,
                                               error);
     if (read_count == 0) {
         goto failure;
     }
-
-    // Read backwards from the end of the buffer, searching for the "%%EOF" marker.
-    // We can simplify this by searching for the comment start (%) and then checking
-    // the next three characters.
-    for (size_t i = sizeof(buffer) - 1; i > 0; i--) {
-        if (buffer[i] == CosCharacterSet_PercentSign) {
-            if (buffer[i + 1] == CosCharacterSet_PercentSign &&
-                buffer[i + 2] == CosCharacterSet_LatinCapitalLetterE &&
-                buffer[i + 3] == CosCharacterSet_LatinCapitalLetterO &&
-                buffer[i + 4] == CosCharacterSet_LatinCapitalLetterF) {
-                // Found the "%%EOF" marker.
-                break;
-            }
-        }
+    else if (read_count < buffer_size) {
+        // We didn't read the full buffer.
+        goto failure;
     }
+
+    parser->buffer.count = read_count;
+
+    const char *eof_marker = cos_strnrstr((char *)buffer,
+                                          read_count,
+                                          "%%EOF");
+    if (COS_UNLIKELY(!eof_marker)) {
+        // Invalid file trailer.
+        goto failure;
+    }
+
+    parser->buffer.current = buffer + (eof_marker - (char *)buffer);
+
+    cos_find_last_xref_offset_(parser,
+                               file_trailer,
+                               error);
+
+    return true;
 
 failure:
     return false;
+}
+
+static void
+cos_find_last_xref_offset_(CosFileParser *parser,
+                           CosFileTrailer *file_trailer,
+                           CosError *out_error)
+{
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(file_trailer != NULL);
+    COS_IMPL_PARAM_CHECK(out_error != NULL);
 }
 
 COS_ASSUME_NONNULL_END

@@ -9,10 +9,13 @@
 
 - Adobe looks in the first 1024 bytes of a file for the "%PDF-" header
 - Adobe looks in the last 1024 bytes of a file for the "%%EOF" marker
+- Adobe accepts a file header of the form "%!PS−Adobe−N.n PDF−M.m"
+- 
+- PDF 1.7, Appendix H.3, Implementation Note 19:
+  - "When creating or saving PDF files, Acrobat 6.0 limits the number of objects in individual object streams to 100 for linearized files and 200 for non-linearized files"
 
 - Adobe ignores the generation number on compressed (xref) objects
-- Acrobat limits the number of objects in object streams to 100-200 objects
-- 
+
 - Empty (indirect) objects are silently ignored by Adobe and treated as null?
 
 - Adobe Distiller 8 and Acrobat 8 produce and accept name objects longer than 127 bytes

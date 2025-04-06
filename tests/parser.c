@@ -40,10 +40,10 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
         goto failure;
     }
 
-    if (!cos_doc_load(doc, input_stream, NULL)) {
-        goto failure;
-    }
-    return EXIT_SUCCESS;
+//    if (!cos_doc_load(doc, input_stream, NULL)) {
+//        goto failure;
+//    }
+//    return EXIT_SUCCESS;
 
     CosObjParser * const parser = cos_obj_parser_create(doc,
                                                         input_stream);

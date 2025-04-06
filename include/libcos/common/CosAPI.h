@@ -32,6 +32,9 @@
     #define COS_ATTR_in_nonnull_sized_by(x) __sized_by(x)
     #define COS_ATTR_in_nullable_sized_by(x) __sized_by_or_null(x)
 
+    #define COS_ATTR_in_nonnull_null_terminated __null_terminated
+    #define COS_ATTR_in_nullable_null_terminated __null_terminated /* _or_null */
+
     #define COS_ATTR_out_nonnull_counted_by(x) __counted_by(x)
     #define COS_ATTR_out_nullable_counted_by(x) __counted_by_or_null(x)
 
@@ -45,6 +48,9 @@
 
     #define COS_ATTR_in_nonnull_sized_by(x) _In_reads_bytes_(x)
     #define COS_ATTR_in_nullable_sized_by(x) _In_reads_bytes_opt_(x)
+
+    #define COS_ATTR_in_nonnull_null_terminated _In_z_
+    #define COS_ATTR_in_nullable_null_terminated _In_opt_z_
 
     #define COS_ATTR_out_nonnull_counted_by(x) _Out_writes_(x)
     #define COS_ATTR_out_nullable_counted_by(x) _Out_writes_opt_(x)
@@ -61,6 +67,9 @@
 
     #define COS_ATTR_in_nonnull_sized_by(x) COS_NO_OP_
     #define COS_ATTR_in_nullable_sized_by(x) COS_NO_OP_
+
+    #define COS_ATTR_in_nonnull_null_terminated COS_NO_OP_
+    #define COS_ATTR_in_nullable_null_terminated COS_NO_OP_
 
     #define COS_ATTR_out_nonnull_counted_by(x) COS_NO_OP_
     #define COS_ATTR_out_nullable_counted_by(x) COS_NO_OP_
