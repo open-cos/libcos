@@ -113,6 +113,9 @@ cos_stream_reader_get_position(CosStreamReader *stream_reader)
 
     const CosStreamOffset stream_offset = cos_stream_get_position(stream_reader->input_stream,
                                                                   NULL);
+    if (stream_offset == -1) {
+        return -1;
+    }
 
     const CosStreamOffset buffer_offset = (CosStreamOffset)(stream_reader->buffer_end - stream_reader->buffer_position);
 
