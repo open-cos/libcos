@@ -2,6 +2,16 @@
     "version": 3,
     "configurePresets": [
         {
+            "name": "MinGW-w64-x86_64",
+            "description": "Target Windows (64-bit) with the MinGW-w64 development environment.",
+            "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-x86_64.cmake"
+        },
+        {
+            "name": "MinGW-w64-i686",
+            "description": "Target Windows (32-bit) with the MinGW-w64 development environment.",
+            "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-i686.cmake"
+        },
+        {
             "name": "windows-base",
             "description": "Target Windows with the Visual Studio development environment.",
             "hidden": true,
