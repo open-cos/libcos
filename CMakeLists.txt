@@ -98,7 +98,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_library(libcos SHARED
+add_library(libcos
     src/dummy.c
     include/libcos/filters/CosRunLengthFilter.h
     src/filters/CosRunLengthFilter.c
@@ -293,9 +293,9 @@ if (NOT MSVC)
         )
     endif ()
 else ()
-        list(APPEND COS_COMPILE_DEFINITIONS
-            _CRT_SECURE_NO_WARNINGS
-        )
+    list(APPEND COS_COMPILE_DEFINITIONS
+        _CRT_SECURE_NO_WARNINGS
+    )
 endif ()
 
 # C warning flags.
@@ -335,7 +335,6 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Wno-unused-parameter
         -Wno-unused-variable
         -Wno-nullability-extension
-        -Wno-unsafe-buffer-usage
         -Wno-switch-default
         -Wno-gcc-compat
         -Werror=implicit-int -Werror=implicit-function-declaration
@@ -344,7 +343,6 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Werror=missing-declarations -Werror=missing-variable-declarations
         -Werror=incompatible-pointer-types -Werror=missing-prototypes -Werror=return-type
         -Werror=undefined-internal
-        -Werror=incompatible-function-pointer-types-strict
         #-Werror=incompatible-function-pointer-types
         -Werror=nullability
         
@@ -354,6 +352,13 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -fno-optimize-sibling-calls
     )
     
+    # Clang 16+
+    if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
+        add_flags(COS_C_FLAGS_WARNINGS
+            -Werror=incompatible-function-pointer-types-strict
+        )
+    endif ()
+    
     # The following flags are only supported by Clang 19.1.0 and later:
     # -Xclang -fexperimental-bounds-safety
     # -fexperimental-late-parse-attributes
@@ -361,6 +366,13 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         list(APPEND COS_C_FLAGS_WARNINGS
             -Xclang -fexperimental-bounds-safety
             -fexperimental-late-parse-attributes
+        )
+    endif ()
+    
+    # Disable the "-Wdisabled-macro-expansion" flag for Emscripten.
+    if (EMSCRIPTEN)
+        add_flags(COS_C_FLAGS_WARNINGS
+            -Wno-disabled-macro-expansion
         )
     endif ()
 
@@ -382,6 +394,12 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         -Wno-c++98-compat
         -Wno-c++98-compat-pedantic
     )
+    
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
+        add_flags(COS_CXX_FLAGS_WARNINGS
+            -Wno-unsafe-buffer-usage
+        )
+    endif ()
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     list(APPEND COS_CXX_FLAGS_WARNINGS
         /W4 /Wall)

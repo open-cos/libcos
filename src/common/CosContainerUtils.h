@@ -10,6 +10,7 @@
 #include <libcos/common/CosDefines.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -29,11 +30,11 @@ cos_container_round_capacity_(size_t capacity)
     }
     // Round up to the next power of 2.
 #if SIZE_MAX == UINT32_MAX
-	return cos_next_pow2l(capacity + 1);
+    return cos_next_pow2l(capacity + 1);
 #elif SIZE_MAX == UINT64_MAX
-	return cos_next_pow2ll(capacity + 1);
+    return cos_next_pow2ll(capacity + 1);
 #else
-	return cos_next_pow2(capacity + 1);
+    return cos_next_pow2(capacity + 1);
 #endif
 }
 

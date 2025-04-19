@@ -12,6 +12,17 @@
             "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-i686.cmake"
         },
         {
+            "name": "Emscripten",
+            "description": "Target WebAssembly with the Emscripten development environment.",
+            "toolchainFile": "/usr/share/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+            "generator": "Unix Makefiles",
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
             "name": "windows-base",
             "description": "Target Windows with the Visual Studio development environment.",
             "hidden": true,

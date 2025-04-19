@@ -5,10 +5,10 @@
 #include "libcos/common/CosDiagnosticHandler.h"
 
 #include "common/Assert.h"
+
 #include "libcos/common/CosDiagnostic.h"
 #include "libcos/common/CosLog.h"
 
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -141,8 +141,8 @@ cos_diagnostic_handler_log_(CosDiagnosticHandler *handler,
     }
 
     CosLogMessageLevel message_level;
+
     switch (diagnostic->type) {
-        default:
         case CosDiagnosticLevel_Warning:
             message_level = CosLogMessageLevel_Warning;
             break;
