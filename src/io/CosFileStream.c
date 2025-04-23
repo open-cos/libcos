@@ -2,14 +2,22 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "libcos/io/CosFileStream.h"
+#include "config.h"
 
 #include "common/Assert.h"
+
+#include "libcos/io/CosFileStream.h"
 
 #include <libcos/common/CosError.h>
 
 #include <stdlib.h>
 #include <string.h>
+
+#if COS_HAS_LARGE_FILE_SUPPORT
+    #define cos_fseek fseeko
+#else
+    #define cos_fseek fseek
+#endif
 
 COS_ASSUME_NONNULL_BEGIN
 
@@ -204,9 +212,9 @@ cos_file_stream_seek_(CosStream *stream,
             break;
     }
 
-    const int fseek_result = fseek(file_stream->file,
-                                   offset,
-                                   file_whence);
+    const int fseek_result = cos_fseek(file_stream->file,
+                                       offset,
+                                       file_whence);
     if (COS_UNLIKELY(fseek_result != 0)) {
         //const int fseek_errno = errno;
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_IO,

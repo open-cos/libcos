@@ -86,6 +86,13 @@ include(Portability)
 
 check_strerror()
 check_strlcpy()
+check_large_file_support()
+
+if (HAVE_LARGE_FILE_SUPPORT)
+    add_flags(COS_COMPILE_DEFINITIONS
+        ${LFS_COMPILE_DEFINITIONS}
+    )
+endif ()
 
 # Fill in the config file template.
 # The output file is placed in the CMAKE_CURRENT_BINARY_DIR directory.

@@ -5,6 +5,14 @@
 #ifndef LIBCOS_CONFIG_H
 #define LIBCOS_CONFIG_H
 
+/**
+ * Whether the system has the strlcpy() function.
+ */
 #define COS_HAVE_STRLCPY @HAVE_STRLCPY@
+
+/**
+ * Whether the system has support for large files (ie. 64-bit file offsets).
+ */
+#define COS_HAS_LARGE_FILE_SUPPORT @HAVE_LARGE_FILE_SUPPORT@
 
 #endif /* LIBCOS_CONFIG_H */
