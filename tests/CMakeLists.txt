@@ -64,9 +64,15 @@ target_include_directories(libcos-test
     PRIVATE ${PROJECT_SOURCE_DIR}/src/ ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_compile_definitions(libcos-test PRIVATE
+    ${COS_COMPILE_DEFINITIONS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_COMPILE_DEFINITIONS}>
+)
+
 target_compile_options(libcos-test PRIVATE
-    ${COS_C_FLAGS_WARNINGS}
-    ${COS_CXX_FLAGS_WARNINGS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
 )
 
 target_link_libraries(libcos-test

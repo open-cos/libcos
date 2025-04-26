@@ -308,14 +308,27 @@ endif ()
 # C warning flags.
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    list(APPEND COS_C_FLAGS_WARNINGS
+    add_flags(COS_C_FLAGS_WARNINGS
         -Wall -Wextra
         -Wno-unknown-pragmas
         -Werror=missing-declarations
         -Werror=missing-prototypes
         -Werror=implicit-function-declaration
         -Werror=return-type -Werror=incompatible-pointer-types
-        -fanalyzer
+        
+        -Wformat
+        -Wformat=2
+        
+        -Wconversion
+        -Wsign-conversion
+        
+        -Wtrampolines
+        
+        -Wimplicit-fallthrough
+        
+        -Wbidi-chars=any
+        
+        #        -fanalyzer
     )
     
     if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 3.4)
@@ -335,7 +348,6 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Wall
         -Wextra
         -Weverything
-        -Wint-conversion
         -Wstrict-prototypes
         -Wno-declaration-after-statement
         -Wno-padded
@@ -344,7 +356,17 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Wno-nullability-extension
         -Wno-switch-default
         -Wno-gcc-compat
-        -Werror=implicit-int -Werror=implicit-function-declaration
+        
+        -Wformat
+        -Wformat=2
+        
+        -Werror=implicit
+        -Werror=implicit-int
+        -Werror=implicit-function-declaration
+        -Werror=int-conversion
+        
+        -Werror=format-security
+        
         -Werror=enum-conversion
         -Werror=strict-prototypes
         -Werror=missing-declarations -Werror=missing-variable-declarations
@@ -377,6 +399,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     endif ()
     
     # Disable the "-Wdisabled-macro-expansion" flag for Emscripten.
+    # Emscripten uses macros for the standard IO streams (stdin, stdout, stderr),
+    # which look like recursive macros to the compiler.
     if (EMSCRIPTEN)
         add_flags(COS_C_FLAGS_WARNINGS
             -Wno-disabled-macro-expansion
@@ -391,6 +415,32 @@ endif ()
 # C++ warning flags.
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_flags(COS_CXX_FLAGS_WARNINGS
+        -Wall -Wextra
+        -Wno-unknown-pragmas
+        -Werror=missing-declarations
+        -Werror=return-type
+        
+        -Wformat
+        -Wformat=2
+        
+        -Wconversion
+        -Wsign-conversion
+        
+        -Wtrampolines
+        
+        -Wimplicit-fallthrough
+        
+        -Wbidi-chars=any
+    )
+    
+    # (Debug only) Enable precondition checks for C++ standard library calls.
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_flags(COS_CXX_FLAGS_WARNINGS
+            -D_GLIBCXX_ASSERTIONS
+        )
+    endif ()
+    
     list(APPEND COS_CXX_FLAGS_WARNINGS
     
     )
@@ -414,10 +464,12 @@ endif ()
 
 target_compile_definitions(libcos PRIVATE
     ${COS_COMPILE_DEFINITIONS}
-    ${COS_C_COMPILE_DEFINITIONS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_COMPILE_DEFINITIONS}>
 )
 target_compile_options(libcos PRIVATE
-    ${COS_C_FLAGS_WARNINGS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
 )
 target_link_options(libcos PUBLIC
     ${COS_LINKER_FLAGS}
@@ -431,22 +483,23 @@ endif ()
 
 target_compile_definitions(cbind INTERFACE
     ${COS_COMPILE_DEFINITIONS}
-    ${COS_C_COMPILE_DEFINITIONS}
-    ${COS_CXX_COMPILE_DEFINITIONS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_COMPILE_DEFINITIONS}>
 )
 
 target_compile_options(cbind INTERFACE
-    ${COS_C_FLAGS_WARNINGS}
-    ${COS_CXX_FLAGS_WARNINGS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
 )
 
 target_compile_definitions(libcos++ INTERFACE
     ${COS_COMPILE_DEFINITIONS}
-    ${COS_CXX_COMPILE_DEFINITIONS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_COMPILE_DEFINITIONS}>
 )
 target_compile_options(libcos++ INTERFACE
-    ${COS_C_FLAGS_WARNINGS}
-    ${COS_CXX_FLAGS_WARNINGS}
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
 )
 
 set_target_properties(libcos cbind libcos++ PROPERTIES
