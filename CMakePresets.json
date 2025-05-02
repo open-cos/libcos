@@ -2,17 +2,20 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "MinGW-w64-x86_64",
+            "name": "mingw-w64-x86_64",
+            "displayName": "MinGW-w64 x86_64",
             "description": "Target Windows (64-bit) with the MinGW-w64 development environment.",
             "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-x86_64.cmake"
         },
         {
-            "name": "MinGW-w64-i686",
+            "name": "mingw-w64-i686",
+            "displayName": "MinGW-w64 i686",
             "description": "Target Windows (32-bit) with the MinGW-w64 development environment.",
             "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-i686.cmake"
         },
         {
-            "name": "Emscripten",
+            "name": "emscripten",
+            "displayName": "Emscripten",
             "description": "Target WebAssembly with the Emscripten development environment.",
             "toolchainFile": "/usr/share/emscripten/cmake/Modules/Platform/Emscripten.cmake",
             "generator": "Unix Makefiles",
@@ -40,15 +43,17 @@
             }
         },
         {
-            "name": "x64-debug",
-            "displayName": "x64 Debug",
+            "name": "windows-x64-debug",
+            "displayName": "Windows x64 Debug",
             "description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
             "inherits": "windows-base",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
             },
-            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
             "vendor": {
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
                     "enableMicrosoftCodeAnalysis": true,
@@ -58,29 +63,44 @@
             }
         },
         {
-            "name": "x64-release",
-            "displayName": "x64 Release",
+            "name": "windows-x64-release",
+            "displayName": "Windows x64 Release",
             "description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
-            "inherits": "x64-debug",
-            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+            "inherits": "windows-x64-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         },
         {
-            "name": "x86-debug",
-            "displayName": "x86 Debug",
+            "name": "windows-x86-debug",
+            "displayName": "Windows x86 Debug",
             "description": "Target Windows (32-bit) with the Visual Studio development environment. (Debug)",
             "inherits": "windows-base",
             "architecture": {
                 "value": "x86",
                 "strategy": "external"
             },
-            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
         },
         {
-            "name": "x86-release",
-            "displayName": "x86 Release",
+            "name": "windows-x86-release",
+            "displayName": "Windows x86 Release",
             "description": "Target Windows (32-bit) with the Visual Studio development environment. (RelWithDebInfo)",
-            "inherits": "x86-debug",
-            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+            "inherits": "windows-x86-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "mingw-w64-x86_64-test",
+            "configurePreset": "mingw-w64-x86_64",
+            "output": {
+                "outputOnFailure": true
+            }
         }
     ]
 }

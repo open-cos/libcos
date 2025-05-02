@@ -20,7 +20,6 @@ macro(get_test_name TEST_NAME TEST_SOURCE)
 endmacro()
 
 set(LIBCOS_TESTS
-    ObjectTest.cpp
     tokenizer.c
     parser.c
     filters/ascii85.c

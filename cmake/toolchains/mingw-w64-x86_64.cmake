@@ -5,6 +5,8 @@ set(CMAKE_SYSTEM_NAME Windows)
 # The processor architecture for which we are cross compiling.
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
+set(WIN32 True)
+
 set(TOOLCHAIN_PREFIX x86_64-w64-mingw32)
 
 # cross compilers to use for C, C++
@@ -25,3 +27,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 # Search for .pc files in the target environment.
 set(PKG_CONFIG_EXECUTABLE ${TOOLCHAIN_PREFIX}-pkg-config)
+
+find_program(WINE_EXECUTABLE wine)
+if (WINE_EXECUTABLE)
+    message(VERBOSE "Using Wine for cross-compiling emulator: ${WINE_EXECUTABLE}")
+    
+    set(CMAKE_CROSSCOMPILING_EMULATOR ${WINE_EXECUTABLE})
+endif ()
