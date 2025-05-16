@@ -44,7 +44,18 @@ typedef struct CosDoc CosDoc;
 
 typedef struct CosObjID CosObjID;
 
-typedef struct CosObjNode CosObjNode;
+typedef struct CosNode CosNode;
+typedef struct CosBoolNode CosBoolNode;
+typedef struct CosIntegerNode CosIntegerNode;
+typedef struct CosRealNode CosRealNode;
+typedef struct CosStringNode CosStringNode;
+typedef struct CosNameNode CosNameNode;
+typedef struct CosArrayNode CosArrayNode;
+typedef struct CosDictNode CosDictNode;
+typedef struct CosStreamNode CosStreamNode;
+typedef struct CosIndirectNode CosIndirectNode;
+typedef struct CosReferenceNode CosReferenceNode;
+typedef struct CosNullNode CosNullNode;
 
 typedef struct CosObj CosObj;
 typedef struct CosBoolObj CosBoolObj;

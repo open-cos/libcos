@@ -7,6 +7,22 @@
 
 #include <libcos/common/CosDefines.h>
 
+#if defined(__WIN32__)
+    // Export or import the library functions,
+    // depending on whether we are building or using the library.
+    #if defined(libcos_EXPORTS)
+        #define COS_API __declspec(dllexport)
+    #else
+        #define COS_API __declspec(dllimport)
+    #endif
+#else
+    #if defined(libcos_EXPORTS) && COS_HAS_ATTRIBUTE(visibility)
+        #define COS_API __attribute__((visibility("default")))
+    #else
+        #define COS_API /* nothing */
+    #endif
+#endif
+
 // MARK: - Clang Bounds Safety
 
 #if COS_HAS_FEATURE(bounds_safety)

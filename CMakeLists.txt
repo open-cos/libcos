@@ -107,8 +107,12 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos
     src/dummy.c
-    include/libcos/filters/CosRunLengthFilter.h
-    src/filters/CosRunLengthFilter.c
+    include/libcos/objects/nodes/CosStreamNode.h
+    src/objects/nodes/CosStreamNode.c
+    include/libcos/objects/nodes/CosIntegerNode.h
+    include/libcos/objects/nodes/CosRealNode.h
+    src/objects/nodes/CosIntegerNode.c
+    src/objects/nodes/CosRealNode.c
 )
 
 target_include_directories(libcos
@@ -147,10 +151,11 @@ target_sources(libcos PRIVATE
     src/filters/CosASCII85Filter.c
     src/filters/CosASCIIHexFilter.c
     src/filters/CosFilter.c
+    src/filters/CosRunLengthFilter.c
     src/io/CosFileStream.c
-    src/io/CosStreamReader.c
     src/io/CosMemoryStream.c
     src/io/CosStream.c
+    src/io/CosStreamReader.c
     src/io/string-support.c
     src/objects/CosArrayObj.c
     src/objects/CosBoolObj.c
@@ -165,7 +170,15 @@ target_sources(libcos PRIVATE
     src/objects/CosReferenceObj.c
     src/objects/CosStreamObj.c
     src/objects/CosStringObj.c
-    src/objects/nodes/CosObjNode.c
+    src/objects/nodes/CosArrayNode.c
+    src/objects/nodes/CosBoolNode.c
+    src/objects/nodes/CosDictNode.c
+    src/objects/nodes/CosIndirectNode.c
+    src/objects/nodes/CosNameNode.c
+    src/objects/nodes/CosNode-Private.h
+    src/objects/nodes/CosNode.c
+    src/objects/nodes/CosReferenceNode.c
+    src/objects/nodes/CosStringNode.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
     src/syntax/CosKeywords.c
@@ -175,11 +188,11 @@ target_sources(libcos PRIVATE
     src/syntax/tokenizer/CosTokenValue.h
     src/syntax/tokenizer/CosTokenizer.c
     src/syntax/tokenizer/CosTokenizer.h
+    src/xref/CosXrefTableParser.c
     src/xref/table/CosXrefEntry.c
     src/xref/table/CosXrefSection.c
     src/xref/table/CosXrefSubsection.c
     src/xref/table/CosXrefTable.c
-    src/xref/CosXrefTableParser.c
 )
 
 target_sources(libcos PUBLIC
@@ -209,6 +222,7 @@ target_sources(libcos PUBLIC
     include/libcos/filters/CosASCII85Filter.h
     include/libcos/filters/CosASCIIHexFilter.h
     include/libcos/filters/CosFilter.h
+    include/libcos/filters/CosRunLengthFilter.h
     include/libcos/io/CosFileStream.h
     include/libcos/io/CosMemoryStream.h
     include/libcos/io/CosStream.h
@@ -227,14 +241,21 @@ target_sources(libcos PUBLIC
     include/libcos/objects/CosReferenceObj.h
     include/libcos/objects/CosStreamObj.h
     include/libcos/objects/CosStringObj.h
-    include/libcos/objects/nodes/CosObjNode.h
+    include/libcos/objects/nodes/CosArrayNode.h
+    include/libcos/objects/nodes/CosBoolNode.h
+    include/libcos/objects/nodes/CosDictNode.h
+    include/libcos/objects/nodes/CosIndirectNode.h
+    include/libcos/objects/nodes/CosNameNode.h
+    include/libcos/objects/nodes/CosNode.h
+    include/libcos/objects/nodes/CosReferenceNode.h
+    include/libcos/objects/nodes/CosStringNode.h
     include/libcos/syntax/CosKeywords.h
     include/libcos/syntax/CosLimits.h
+    include/libcos/xref/CosXrefTableParser.h
     include/libcos/xref/table/CosXrefEntry.h
     include/libcos/xref/table/CosXrefSection.h
     include/libcos/xref/table/CosXrefSubsection.h
     include/libcos/xref/table/CosXrefTable.h
-    include/libcos/xref/CosXrefTableParser.h
 )
 
 include(Sanitizers)
