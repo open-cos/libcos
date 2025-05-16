@@ -95,6 +95,8 @@ cos_stream_obj_get_filter_names(const CosStreamObj *stream_obj,
         return NULL;
     }
 
+    (void)out_error;
+
     return NULL;
 }
 

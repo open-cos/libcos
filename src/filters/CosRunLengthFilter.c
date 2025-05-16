@@ -384,6 +384,8 @@ cos_run_length_decode_copy_run_(CosRunLengthFilter *run_length_filter,
     COS_IMPL_PARAM_CHECK(run_length_filter != NULL);
     COS_IMPL_PARAM_CHECK(run_length_filter->context->current_run_type == CosRunLength_RunType_Copy);
 
+    (void)error;
+
     unsigned char *output_buffer = run_length_filter->context->buffer + run_length_filter->context->buffer_length;
 
     const size_t copy_count = COS_MIN(run_length_filter->context->remaining_run_length,

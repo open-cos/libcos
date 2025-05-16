@@ -138,6 +138,8 @@ cos_dict_get(CosDict *dict,
         return false;
     }
 
+    (void)out_error;
+
     const size_t hash = cos_dict_hash_(dict, key);
 
     CosDictEntry * const entry = cos_dict_find_entry_(dict, key, hash);
@@ -162,6 +164,8 @@ cos_dict_set(CosDict *dict,
     if (!dict || !key || !value) {
         return false;
     }
+
+    (void)error;
 
     if (dict->count >= (dict->capacity / 4) * 3) {
         const size_t new_capacity = cos_container_round_capacity_(dict->capacity + 1);

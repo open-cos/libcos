@@ -1321,6 +1321,8 @@ cos_matches_next_token_(CosObjParser *parser,
         return false;
     }
 
+    (void)out_error;
+
     return (token->type == type);
 }
 

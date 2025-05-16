@@ -85,7 +85,8 @@ cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
         return NULL;
     }
 
-
+    (void)object_number;
+    (void)out_error;
 
     return NULL;
 }
