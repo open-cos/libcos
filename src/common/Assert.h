@@ -15,6 +15,8 @@
 #define COS_PARAMETER_ASSERT(condition) \
     COS_ASSERT_(condition, #condition, "invalid parameter")
 
+#pragma clang deprecated(COS_PARAMETER_ASSERT, "Use COS_API_PARAM_CHECK or COS_IMPL_PARAM_CHECK instead")
+
 #define COS_PARAM_ASSERT_INTERNAL(condition) \
     COS_ASSERT_FATAL_(condition, #condition, "invalid parameter")
 
