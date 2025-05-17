@@ -12,6 +12,12 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+COS_API CosNameNode * COS_Nullable
+cos_name_node_create(CosAllocator *allocator,
+                     CosString *value)
+    COS_ALLOCATOR_FUNC
+    COS_OWNERSHIP_HOLDS(2);
+
 /**
  * Returns the value of the name node.
  *

@@ -12,6 +12,11 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+COS_API CosRealNode * COS_Nullable
+cos_real_node_create(CosAllocator *allocator,
+                      double value)
+    COS_ALLOCATOR_FUNC;
+
 /**
  * Returns the value of the real node.
  *
