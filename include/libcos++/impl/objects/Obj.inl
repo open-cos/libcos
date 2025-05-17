@@ -2,6 +2,9 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#ifndef LIBCOSXX_OBJECTS_OBJ_INL
+#define LIBCOSXX_OBJECTS_OBJ_INL
+
 #include <libcos++/objects/Obj.hpp>
 #include <libcos/objects/CosObj.h>
 
@@ -47,3 +50,5 @@ Obj::getImpl() const noexcept
 }
 
 } // namespace opencos
+
+#endif /* LIBCOSXX_OBJECTS_OBJ_INL */

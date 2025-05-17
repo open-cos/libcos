@@ -2,6 +2,9 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#ifndef LIBCOSXX_OBJECTS_NAME_OBJ_INL
+#define LIBCOSXX_OBJECTS_NAME_OBJ_INL
+
 #include "common/CosString.h"
 
 #include <libcos++/objects/NameObj.hpp>
@@ -40,3 +43,5 @@ NameObj::getNameImpl() const
 }
 
 } // namespace opencos
+
+#endif /* LIBCOSXX_OBJECTS_NAME_OBJ_INL */
