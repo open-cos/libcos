@@ -5,7 +5,7 @@
 #ifndef LIBCOSXX_OBJECTS_OBJ_HPP
 #define LIBCOSXX_OBJECTS_OBJ_HPP
 
-#include <cbind/ownership/Ownable.hpp>
+#include <libcos++/ownership/Ownable.hpp>
 #include <libcos/common/CosTypes.h>
 
 #include <memory>
@@ -13,7 +13,7 @@
 namespace opencos {
 
 template <typename T>
-using SharedOwnablePtr = std::shared_ptr<cbind::Ownable<T>>;
+using SharedOwnablePtr = std::shared_ptr<Ownable<T>>;
 
 class Obj {
 public:

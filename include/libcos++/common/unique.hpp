@@ -1,17 +1,15 @@
 /*
- * Copyright (c) 2024 OpenCOS.
+ * Copyright (c) 2024-2025 OpenCOS.
  */
 
-#ifndef LIBCOS_COMMON_UNIQUE_HPP
-#define LIBCOS_COMMON_UNIQUE_HPP
-
-#include <type_traits>
+#ifndef LIBCOSXX_COMMON_UNIQUE_HPP
+#define LIBCOSXX_COMMON_UNIQUE_HPP
 
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 namespace opencos {
-namespace cbind {
 
 namespace detail {
 
@@ -48,7 +46,6 @@ make_unique(Args &&...args)
                                          std::forward<Args>(args)...);
 }
 
-} // namespace cbind
 } // namespace opencos
 
-#endif /* LIBCOS_COMMON_UNIQUE_HPP */
+#endif /* LIBCOSXX_COMMON_UNIQUE_HPP */

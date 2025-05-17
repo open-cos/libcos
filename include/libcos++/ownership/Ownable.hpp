@@ -5,13 +5,12 @@
 #ifndef CBIND_OWNERSHIP_OWNABLE_HPP
 #define CBIND_OWNERSHIP_OWNABLE_HPP
 
-#include <cbind/common/unique.hpp>
+#include <libcos++/common/unique.hpp>
 
 #include <functional>
 #include <memory>
 
 namespace opencos {
-namespace cbind {
 
 template <typename T>
 class Ownable {
@@ -75,7 +74,6 @@ make_ownable(T value, bool owned, Deleter deleter)
     return make_unique<Ownable<T>>(value, owned, deleter);
 }
 
-} // namespace cbind
 } // namespace opencos
 
 #endif /* CBIND_OWNERSHIP_OWNABLE_HPP */

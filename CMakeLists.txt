@@ -296,24 +296,8 @@ target_sources(libcos++ INTERFACE
     include/libcos++/objects/NameObj.hpp
     include/libcos++/objects/Obj.hpp
     include/libcos++/objects/StreamObj.hpp
-)
-
-add_library(cbind INTERFACE
-    include/cbind/common/unique.hpp)
-
-target_sources(cbind INTERFACE
-    FILE_SET HEADERS
-    BASE_DIRS include/cbind
-    FILES
-    include/cbind/ownership/Ownable.hpp
-)
-
-set_target_properties(cbind PROPERTIES
-    FOLDER include/cbind
-)
-
-target_include_directories(cbind INTERFACE
-    include/
+    include/libcos++/common/unique.hpp
+    include/libcos++/ownership/Ownable.hpp
 )
 
 if (NOT MSVC)
@@ -508,17 +492,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     )
 endif ()
 
-target_compile_definitions(cbind INTERFACE
-    ${COS_COMPILE_DEFINITIONS}
-    $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_COMPILE_DEFINITIONS}>
-)
-
-target_compile_options(cbind INTERFACE
-    $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
-)
-
 target_compile_definitions(libcos++ INTERFACE
     ${COS_COMPILE_DEFINITIONS}
     $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
@@ -529,7 +502,7 @@ target_compile_options(libcos++ INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
 )
 
-set_target_properties(libcos cbind libcos++ PROPERTIES
+set_target_properties(libcos libcos++ PROPERTIES
     PREFIX "" # Remove the "lib" prefix from the library name.
     
     VERIFY_INTERFACE_HEADER_SETS TRUE

@@ -26,7 +26,8 @@ Obj::Obj() = default;
 
 Obj::~Obj() = default;
 
-Obj::operator bool() const
+Obj::
+operator bool() const
 {
     return impl_ && (impl_->value() != nullptr);
 }
@@ -38,9 +39,9 @@ Obj::is_name() const noexcept
 }
 
 Obj::Obj(CosObj *impl, bool owner)
-    : impl_(cbind::make_ownable(impl,
-                                owner,
-                                detail::ObjDeleter()))
+    : impl_(make_ownable(impl,
+                         owner,
+                         detail::ObjDeleter()))
 {}
 
 CosObj *
