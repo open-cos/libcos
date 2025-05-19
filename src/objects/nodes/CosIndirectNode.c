@@ -25,7 +25,23 @@ static bool
 cos_indirect_node_init_(CosIndirectNode *node,
                         CosObjID id,
                         CosNode * COS_Nullable value)
-    COS_WARN_UNUSED_RESULT;
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    COS_API_PARAM_CHECK(cos_obj_id_is_valid(id));
+    if (COS_UNLIKELY(!node || !cos_obj_id_is_valid(id))) {
+        return false;
+    }
+
+    if (!cos_node_init_(&node->base,
+                        CosNodeType_Indirect)) {
+        return false;
+    }
+
+    node->id = id;
+    node->value = value;
+
+    return true;
+}
 
 CosIndirectNode *
 cos_indirect_node_create(CosAllocator *allocator,
@@ -79,28 +95,6 @@ cos_indirect_node_get_value(const CosIndirectNode *node)
     }
 
     return node->value;
-}
-
-static bool
-cos_indirect_node_init_(CosIndirectNode *node,
-                        CosObjID id,
-                        CosNode * COS_Nullable value)
-{
-    COS_API_PARAM_CHECK(node != NULL);
-    COS_API_PARAM_CHECK(cos_obj_id_is_valid(id));
-    if (COS_UNLIKELY(!node || !cos_obj_id_is_valid(id))) {
-        return false;
-    }
-
-    if (!cos_node_init(&node->base,
-                       CosNodeType_Indirect)) {
-        return false;
-    }
-
-    node->id = id;
-    node->value = value;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END

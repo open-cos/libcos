@@ -12,8 +12,8 @@
 COS_ASSUME_NONNULL_BEGIN
 
 bool
-cos_node_init(CosNode *node,
-              CosNodeType type)
+cos_node_init_(CosNode *node,
+               CosNodeType type)
 {
     COS_API_PARAM_CHECK(node != NULL);
     if (COS_UNLIKELY(!node)) {

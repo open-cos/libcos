@@ -17,7 +17,6 @@ COS_ASSUME_NONNULL_BEGIN
 typedef enum CosNodeType {
     CosNodeType_Unknown = 0,
 
-    CosNodeType_Document,
     CosNodeType_Array,
     CosNodeType_Dictionary,
     CosNodeType_Stream,
@@ -32,26 +31,13 @@ typedef enum CosNodeType {
 } CosNodeType;
 
 /**
- * Initializes a node.
- *
- * @param node The node to initialize.
- * @param type The type of the node.
- *
- * @return @c true if the node was initialized successfully, @c false otherwise.
- */
-COS_API bool
-cos_node_init(CosNode *node,
-              CosNodeType type)
-    COS_WARN_UNUSED_RESULT;
-
-/**
  * @brief Returns the type of the object node.
  *
  * @param node The object node.
  *
  * @return The type of the object node.
  */
-CosNodeType
+COS_API CosNodeType
 cos_obj_node_get_type(const CosNode *node);
 
 COS_API CosNode * COS_Nullable

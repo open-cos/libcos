@@ -21,7 +21,22 @@ struct CosIntegerNode {
 
 static bool
 cos_integer_node_init_(CosIntegerNode *node,
-                       int value);
+                       int value)
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    if (COS_UNLIKELY(!node)) {
+        return false;
+    }
+
+    if (!cos_node_init_(&node->base,
+                        CosNodeType_Integer)) {
+        return false;
+    }
+
+    node->value = value;
+
+    return true;
+}
 
 CosIntegerNode *
 cos_integer_node_create(CosAllocator *allocator,
@@ -61,25 +76,6 @@ cos_integer_node_get_value(const CosIntegerNode *node)
     }
 
     return node->value;
-}
-
-static bool
-cos_integer_node_init_(CosIntegerNode *node,
-                       int value)
-{
-    COS_API_PARAM_CHECK(node != NULL);
-    if (COS_UNLIKELY(!node)) {
-        return false;
-    }
-
-    if (!cos_node_init(&node->base,
-                       CosNodeType_Integer)) {
-        return false;
-    }
-
-    node->value = value;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END

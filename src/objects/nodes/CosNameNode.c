@@ -26,8 +26,8 @@ cos_name_node_init_(CosNameNode *name_node,
     COS_IMPL_PARAM_CHECK(name_node != NULL);
     COS_IMPL_PARAM_CHECK(value != NULL);
 
-    if (!cos_node_init(&name_node->base,
-                       CosNodeType_Name)) {
+    if (!cos_node_init_(&name_node->base,
+                        CosNodeType_Name)) {
         return false;
     }
 

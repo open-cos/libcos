@@ -22,7 +22,22 @@ struct CosReferenceNode {
 static bool
 cos_reference_node_init_(CosReferenceNode *node,
                          CosObjID id)
-    COS_WARN_UNUSED_RESULT;
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    COS_API_PARAM_CHECK(cos_obj_id_is_valid(id));
+    if (COS_UNLIKELY(!node || cos_obj_id_is_valid(id))) {
+        return false;
+    }
+
+    if (!cos_node_init_(&node->base,
+                        CosNodeType_Reference)) {
+        return false;
+    }
+
+    node->id = id;
+
+    return true;
+}
 
 CosReferenceNode *
 cos_reference_node_create(CosAllocator *allocator,
@@ -63,26 +78,6 @@ cos_reference_node_get_id(const CosReferenceNode *node)
     }
 
     return node->id;
-}
-
-static bool
-cos_reference_node_init_(CosReferenceNode *node,
-                         CosObjID id)
-{
-    COS_API_PARAM_CHECK(node != NULL);
-    COS_API_PARAM_CHECK(cos_obj_id_is_valid(id));
-    if (COS_UNLIKELY(!node || cos_obj_id_is_valid(id))) {
-        return false;
-    }
-
-    if (!cos_node_init(&node->base,
-                       CosNodeType_Reference)) {
-        return false;
-    }
-
-    node->id = id;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END

@@ -20,9 +20,23 @@ struct CosArrayNode {
 };
 
 static bool
-cos_array_node_init(CosArrayNode *array_node,
-                    CosArray *value)
-    COS_WARN_UNUSED_RESULT;
+cos_array_node_init_(CosArrayNode *array_node,
+                     CosArray *value)
+{
+    COS_API_PARAM_CHECK(array_node != NULL);
+    if (COS_UNLIKELY(!array_node)) {
+        return false;
+    }
+
+    if (!cos_node_init_(&array_node->base,
+                        CosNodeType_Array)) {
+        return false;
+    }
+
+    array_node->value = value;
+
+    return true;
+}
 
 CosArrayNode *
 cos_array_node_create(CosAllocator *allocator,
@@ -40,8 +54,8 @@ cos_array_node_create(CosAllocator *allocator,
         goto failure;
     }
 
-    if (!cos_array_node_init(array_node,
-                             value)) {
+    if (!cos_array_node_init_(array_node,
+                              value)) {
         goto failure;
     }
 
@@ -52,25 +66,6 @@ failure:
         cos_allocator_dealloc(allocator, array_node);
     }
     return NULL;
-}
-
-static bool
-cos_array_node_init(CosArrayNode *array_node,
-                    CosArray *value)
-{
-    COS_API_PARAM_CHECK(array_node != NULL);
-    if (COS_UNLIKELY(!array_node)) {
-        return false;
-    }
-
-    if (!cos_node_init(&array_node->base,
-                       CosNodeType_Array)) {
-        return false;
-    }
-
-    array_node->value = value;
-
-    return true;
 }
 
 CosArray *

@@ -19,10 +19,23 @@ struct CosDictNode {
 };
 
 static bool
-cos_dict_node_init(CosDictNode *dict_node,
-                   CosDict *value)
-    COS_WARN_UNUSED_RESULT
-    COS_OWNERSHIP_HOLDS(2);
+cos_dict_node_init_(CosDictNode *dict_node,
+                    CosDict *value)
+{
+    COS_API_PARAM_CHECK(dict_node != NULL);
+    if (COS_UNLIKELY(!dict_node)) {
+        return false;
+    }
+
+    if (!cos_node_init_(&dict_node->base,
+                        CosNodeType_Dictionary)) {
+        return false;
+    }
+
+    dict_node->value = value;
+
+    return true;
+}
 
 CosDict *
 cos_dict_node_get_value(const CosDictNode *dict_node)
@@ -51,8 +64,8 @@ cos_dict_node_create(CosAllocator *allocator,
         goto failure;
     }
 
-    if (!cos_dict_node_init(dict_node,
-                            value)) {
+    if (!cos_dict_node_init_(dict_node,
+                             value)) {
         goto failure;
     }
 
@@ -63,25 +76,6 @@ failure:
         cos_allocator_dealloc(allocator, dict_node);
     }
     return NULL;
-}
-
-static bool
-cos_dict_node_init(CosDictNode *dict_node,
-                   CosDict *value)
-{
-    COS_API_PARAM_CHECK(dict_node != NULL);
-    if (COS_UNLIKELY(!dict_node)) {
-        return false;
-    }
-
-    if (!cos_node_init(&dict_node->base,
-                       CosNodeType_Dictionary)) {
-        return false;
-    }
-
-    dict_node->value = value;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END

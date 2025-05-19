@@ -25,7 +25,22 @@ static bool
 cos_stream_node_init_(CosStreamNode *node,
                       CosDictNode *dict,
                       CosData *data)
-    COS_WARN_UNUSED_RESULT;
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    if (COS_UNLIKELY(!node)) {
+        return false;
+    }
+
+    if (!cos_node_init_(&node->base,
+                        CosNodeType_Stream)) {
+        return false;
+    }
+
+    node->dict = dict;
+    node->data = data;
+
+    return true;
+}
 
 CosStreamNode *
 cos_stream_node_create(CosAllocator *allocator,
@@ -69,27 +84,6 @@ cos_stream_node_get_dict(const CosStreamNode *node)
     }
 
     return node->dict;
-}
-
-static bool
-cos_stream_node_init_(CosStreamNode *node,
-                      CosDictNode *dict,
-                      CosData *data)
-{
-    COS_API_PARAM_CHECK(node != NULL);
-    if (COS_UNLIKELY(!node)) {
-        return false;
-    }
-
-    if (!cos_node_init(&node->base,
-                       CosNodeType_Stream)) {
-        return false;
-    }
-
-    node->dict = dict;
-    node->data = data;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END

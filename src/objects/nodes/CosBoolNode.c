@@ -20,9 +20,23 @@ struct CosBoolNode {
 };
 
 static bool
-cos_bool_node_init(CosBoolNode *bool_node,
-                   bool value)
-    COS_WARN_UNUSED_RESULT;
+cos_bool_node_init_(CosBoolNode *bool_node,
+                    bool value)
+{
+    COS_API_PARAM_CHECK(bool_node != NULL);
+    if (COS_UNLIKELY(!bool_node)) {
+        return false;
+    }
+
+    if (!cos_node_init_(&bool_node->base,
+                        CosNodeType_Boolean)) {
+        return false;
+    }
+
+    bool_node->value = value;
+
+    return true;
+}
 
 CosBoolNode *
 cos_bool_node_create(CosAllocator *allocator,
@@ -39,8 +53,8 @@ cos_bool_node_create(CosAllocator *allocator,
         goto failure;
     }
 
-    if (!cos_bool_node_init(bool_node,
-                            value)) {
+    if (!cos_bool_node_init_(bool_node,
+                             value)) {
         goto failure;
     }
 
@@ -62,25 +76,6 @@ cos_bool_node_get_value(const CosBoolNode *bool_node)
     }
 
     return bool_node->value;
-}
-
-static bool
-cos_bool_node_init(CosBoolNode *bool_node,
-                   bool value)
-{
-    COS_API_PARAM_CHECK(bool_node != NULL);
-    if (COS_UNLIKELY(!bool_node)) {
-        return false;
-    }
-
-    if (!cos_node_init(&bool_node->base,
-                       CosNodeType_Boolean)) {
-        return false;
-    }
-
-    bool_node->value = value;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END

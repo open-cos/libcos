@@ -24,8 +24,8 @@ cos_real_node_init_(CosRealNode *node,
 {
     COS_IMPL_PARAM_CHECK(node != NULL);
 
-    if (!cos_node_init(&node->base,
-                       CosNodeType_Real)) {
+    if (!cos_node_init_(&node->base,
+                        CosNodeType_Real)) {
         return false;
     }
 

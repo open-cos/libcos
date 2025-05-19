@@ -21,7 +21,21 @@ struct CosStringNode {
 static bool
 cos_string_node_init_(CosStringNode *string_node,
                       CosData *value)
-    COS_WARN_UNUSED_RESULT;
+{
+    COS_API_PARAM_CHECK(string_node != NULL);
+    if (COS_UNLIKELY(!string_node)) {
+        return false;
+    }
+
+    if (!cos_node_init_(&string_node->base,
+                        CosNodeType_String)) {
+        return false;
+    }
+
+    string_node->value = value;
+
+    return true;
+}
 
 CosStringNode *
 cos_string_node_create(CosAllocator *allocator,
@@ -62,25 +76,6 @@ cos_string_node_get_value(const CosStringNode *string_node)
     }
 
     return string_node->value;
-}
-
-static bool
-cos_string_node_init_(CosStringNode *string_node,
-                      CosData *value)
-{
-    COS_API_PARAM_CHECK(string_node != NULL);
-    if (COS_UNLIKELY(!string_node)) {
-        return false;
-    }
-
-    if (!cos_node_init(&string_node->base,
-                       CosNodeType_String)) {
-        return false;
-    }
-
-    string_node->value = value;
-
-    return true;
 }
 
 COS_ASSUME_NONNULL_END
