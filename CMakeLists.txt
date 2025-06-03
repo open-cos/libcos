@@ -119,6 +119,8 @@ add_library(libcos
     include/libcos/objects/nodes/CosRealNode.h
     src/objects/nodes/CosIntegerNode.c
     src/objects/nodes/CosRealNode.c
+    include/libcos/objects/nodes/CosNullNode.h
+    src/objects/nodes/CosNullNode.c
 )
 
 target_include_directories(libcos

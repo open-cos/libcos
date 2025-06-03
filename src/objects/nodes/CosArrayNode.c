@@ -6,6 +6,7 @@
 
 #include "CosNode-Private.h"
 #include "common/Assert.h"
+#include "common/CosArray.h"
 
 #include "libcos/common/memory/CosAllocator.h"
 
@@ -16,7 +17,7 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosArrayNode {
     CosNode base;
 
-    CosArray * COS_Nullable value;
+    CosArray *value;
 };
 
 static bool
@@ -77,6 +78,27 @@ cos_array_node_get_value(const CosArrayNode *array_node)
     }
 
     return array_node->value;
+}
+
+CosNode *
+cos_array_node_get_child(CosArrayNode *array_node,
+                         size_t index,
+                         CosError * COS_Nullable out_error)
+{
+    COS_API_PARAM_CHECK(array_node != NULL);
+    if (COS_UNLIKELY(!array_node)) {
+        return NULL;
+    }
+
+    CosNode *child = NULL;
+    if (!cos_array_get_item(array_node->value,
+                            index,
+                            (void *)&child,
+                            out_error)) {
+        return NULL;
+    }
+
+    return child;
 }
 
 COS_ASSUME_NONNULL_END

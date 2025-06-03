@@ -10,6 +10,7 @@
 #include <libcos/common/CosTypes.h>
 
 #include <stdbool.h>
+#include <stddef.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -30,6 +31,13 @@ cos_array_node_create(CosAllocator *allocator,
 COS_API CosArray * COS_Nullable
 cos_array_node_get_value(const CosArrayNode *array_node)
     COS_WARN_UNUSED_RESULT;
+
+COS_API CosNode * COS_Nullable
+cos_array_node_get_child(CosArrayNode *array_node,
+                         size_t index,
+                         CosError * COS_Nullable out_error)
+    COS_WARN_UNUSED_RESULT
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 COS_ASSUME_NONNULL_END
 
