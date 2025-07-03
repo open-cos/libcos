@@ -523,7 +523,7 @@ if (MSVC)
 endif ()
 
 target_link_libraries(libcos++ INTERFACE
-    libcos cbind
+    libcos
 )
 
 enable_testing()
