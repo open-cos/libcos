@@ -187,6 +187,7 @@ target_sources(libcos PRIVATE
     src/objects/nodes/CosNode.c
     src/objects/nodes/CosReferenceNode.c
     src/objects/nodes/CosStringNode.c
+    src/parse/CosBaseParser.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
     src/syntax/CosKeywords.c
@@ -257,6 +258,7 @@ target_sources(libcos PUBLIC
     include/libcos/objects/nodes/CosNode.h
     include/libcos/objects/nodes/CosReferenceNode.h
     include/libcos/objects/nodes/CosStringNode.h
+    include/libcos/parse/CosBaseParser.h
     include/libcos/syntax/CosKeywords.h
     include/libcos/syntax/CosLimits.h
     include/libcos/xref/CosXrefTableParser.h

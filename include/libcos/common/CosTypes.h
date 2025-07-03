@@ -33,6 +33,7 @@ typedef CosBasicStack CosStack;
 typedef struct CosNumber CosNumber;
 
 typedef struct CosScanner CosScanner;
+typedef struct CosBaseParser CosBaseParser;
 
 typedef struct CosToken CosToken;
 typedef struct CosTokenValue CosTokenValue;
