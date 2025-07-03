@@ -400,6 +400,8 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
     if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0)
         add_flags(COS_C_FLAGS_WARNINGS
             -Werror=incompatible-function-pointer-types-strict
+            
+            -Wno-unsafe-buffer-usage
         )
     endif ()
     
