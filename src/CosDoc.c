@@ -5,6 +5,7 @@
 #include "libcos/CosDoc.h"
 
 #include "common/Assert.h"
+
 #include "libcos/common/memory/CosAllocator.h"
 
 #include <libcos/common/memory/CosMemory.h>
@@ -48,6 +49,17 @@ cos_doc_destroy(CosDoc *doc)
     }
 
     cos_free(doc->allocator, doc);
+}
+
+CosAllocator *
+cos_doc_get_allocator(const CosDoc *doc)
+{
+    COS_API_PARAM_CHECK(doc != NULL);
+    if (COS_UNLIKELY(!doc)) {
+        return NULL;
+    }
+
+    return doc->allocator;
 }
 
 int

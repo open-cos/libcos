@@ -5,6 +5,8 @@
 #ifndef LIBCOS_COS_DOC_H
 #define LIBCOS_COS_DOC_H
 
+#include "common/CosAPI.h"
+
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
@@ -20,6 +22,17 @@ CosDoc * COS_Nullable
 cos_doc_create(CosAllocator * COS_Nullable allocator)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_doc_destroy);
+
+/**
+ * Returns the allocator used by the document.
+ *
+ * @param doc The document.
+ *
+ * @return The allocator used by the document, or @c NULL if no allocator is set.
+ */
+COS_API CosAllocator * COS_Nullable
+cos_doc_get_allocator(const CosDoc *doc)
+    COS_WARN_UNUSED_RESULT;
 
 int
 cos_doc_get_version(CosDoc *doc);
