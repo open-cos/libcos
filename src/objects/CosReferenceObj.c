@@ -31,7 +31,7 @@ CosReferenceObj * COS_Nullable
 cos_reference_obj_alloc(CosObjID id,
                         CosDoc *document)
 {
-    COS_PARAMETER_ASSERT(document != NULL);
+    COS_API_PARAM_CHECK(document != NULL);
 
     CosReferenceObj * const reference_obj = calloc(1, sizeof(CosReferenceObj));
     if (!reference_obj) {
@@ -60,7 +60,7 @@ cos_reference_obj_free(CosReferenceObj *reference_obj)
 CosObj *
 cos_reference_obj_get_value(CosReferenceObj *reference_obj)
 {
-    COS_PARAMETER_ASSERT(reference_obj != NULL);
+    COS_API_PARAM_CHECK(reference_obj != NULL);
     if (!reference_obj) {
         return NULL;
     }
@@ -75,7 +75,7 @@ cos_reference_obj_get_value(CosReferenceObj *reference_obj)
 CosObjValueType
 cos_reference_obj_get_type(CosReferenceObj *reference_obj)
 {
-    COS_PARAMETER_ASSERT(reference_obj != NULL);
+    COS_API_PARAM_CHECK(reference_obj != NULL);
     if (!reference_obj) {
         return CosObjValueType_Unknown;
     }
@@ -96,7 +96,7 @@ cos_reference_obj_get_type(CosReferenceObj *reference_obj)
 static void
 cos_reference_obj_resolve_value_(CosReferenceObj *reference_obj)
 {
-    COS_PARAMETER_ASSERT(reference_obj != NULL);
+    COS_IMPL_PARAM_CHECK(reference_obj != NULL);
     if (!reference_obj) {
         return;
     }
@@ -122,7 +122,7 @@ cos_reference_obj_resolve_value_(CosReferenceObj *reference_obj)
 void
 cos_reference_obj_print_desc(const CosReferenceObj *reference_obj)
 {
-    COS_PARAMETER_ASSERT(reference_obj != NULL);
+    COS_API_PARAM_CHECK(reference_obj != NULL);
     if (!reference_obj) {
         return;
     }

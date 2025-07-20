@@ -125,7 +125,7 @@ cos_string_free(CosString *string)
 bool
 cos_string_init(CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
 
     return cos_string_init_capacity(string, 0);
 }
@@ -133,7 +133,7 @@ cos_string_init(CosString *string)
 bool
 cos_string_init_capacity(CosString *string, size_t capacity_hint)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
         return false;
     }
@@ -161,7 +161,7 @@ cos_string_init_capacity(CosString *string, size_t capacity_hint)
 const char *
 cos_string_get_data(const CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
         return NULL;
     }
@@ -172,7 +172,7 @@ cos_string_get_data(const CosString *string)
 size_t
 cos_string_get_length(const CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
         return 0;
     }
@@ -183,7 +183,7 @@ cos_string_get_length(const CosString *string)
 size_t
 cos_string_get_capacity(const CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
         return 0;
     }
@@ -194,7 +194,7 @@ cos_string_get_capacity(const CosString *string)
 CosString *
 cos_string_copy(const CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
         return NULL;
     }
@@ -205,7 +205,7 @@ cos_string_copy(const CosString *string)
 CosStringRef
 cos_string_get_ref(const CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
 
     CosStringRef result = {0};
     if (string) {
@@ -218,7 +218,7 @@ cos_string_get_ref(const CosString *string)
 CosStringRef
 cos_string_ref_from_str(const char *str)
 {
-    COS_PARAMETER_ASSERT(str != NULL);
+    COS_API_PARAM_CHECK(str != NULL);
     if (!str) {
         return cos_string_ref_make("", 0);
     }
@@ -230,7 +230,7 @@ cos_string_ref_from_str(const char *str)
 CosStringRef
 cos_string_ref_make(const char *str, size_t length)
 {
-    COS_PARAMETER_ASSERT(str != NULL);
+    COS_API_PARAM_CHECK(str != NULL);
 
     CosStringRef result = {0};
     if (str) {
@@ -259,8 +259,8 @@ cos_string_ref_cmp(CosStringRef lhs, CosStringRef rhs)
 bool
 cos_string_append_str(CosString *string, const char *str)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
-    COS_PARAMETER_ASSERT(str != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
+    COS_API_PARAM_CHECK(str != NULL);
 
     // Make sure we don't try passing a null pointer to strlen().
     if (!str) {
@@ -274,8 +274,8 @@ cos_string_append_str(CosString *string, const char *str)
 bool
 cos_string_append_strn(CosString *string, const char *str, size_t n)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
-    COS_PARAMETER_ASSERT(str != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
+    COS_API_PARAM_CHECK(str != NULL);
 
     return cos_string_append_strn_impl_(string, str, n);
 }
@@ -283,7 +283,7 @@ cos_string_append_strn(CosString *string, const char *str, size_t n)
 bool
 cos_string_push_back(CosString *string, char c)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
 
     if (c == '\0') {
         // Don't bother appending an extra nul-terminator.
@@ -338,7 +338,7 @@ hash_string_64_(const char *key,
 size_t
 cos_string_get_hash(const CosString *string)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_API_PARAM_CHECK(string != NULL);
 
     if (!string) {
         return 0;
@@ -355,9 +355,9 @@ cos_string_get_hash(const CosString *string)
 static bool
 cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
-    COS_PARAMETER_ASSERT(str != NULL);
-    COS_PARAMETER_ASSERT(n > 0);
+    COS_IMPL_PARAM_CHECK(string != NULL);
+    COS_IMPL_PARAM_CHECK(str != NULL);
+    COS_IMPL_PARAM_CHECK(n > 0);
     if (!string || !str || n == 0) {
         return false;
     }
@@ -388,7 +388,7 @@ cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
 static bool
 cos_string_ensure_capacity_(CosString *string, size_t required_capacity)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_IMPL_PARAM_CHECK(string != NULL);
 
     if (COS_LIKELY(string->capacity >= required_capacity)) {
         // No need to resize.
@@ -406,8 +406,8 @@ cos_string_ensure_capacity_(CosString *string, size_t required_capacity)
 static bool
 cos_string_resize_(CosString *string, size_t new_capacity)
 {
-    COS_PARAMETER_ASSERT(string != NULL);
-    COS_PARAMETER_ASSERT(new_capacity > 0);
+    COS_IMPL_PARAM_CHECK(string != NULL);
+    COS_IMPL_PARAM_CHECK(new_capacity > 0);
     if (!string || new_capacity == 0) {
         return false;
     }

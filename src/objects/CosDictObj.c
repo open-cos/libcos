@@ -123,7 +123,7 @@ cos_dict_obj_destroy(CosDictObj *dict_obj)
 size_t
 cos_dict_obj_get_count(const CosDictObj *dict_obj)
 {
-    COS_PARAMETER_ASSERT(dict_obj != NULL);
+    COS_API_PARAM_CHECK(dict_obj != NULL);
     if (!dict_obj) {
         return 0;
     }
@@ -137,9 +137,9 @@ cos_dict_obj_get_value(const CosDictObj *dict_obj,
                        CosObj * COS_Nullable *out_value,
                        CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(dict_obj != NULL);
-    COS_PARAMETER_ASSERT(key != NULL);
-    COS_PARAMETER_ASSERT(out_value != NULL);
+    COS_API_PARAM_CHECK(dict_obj != NULL);
+    COS_API_PARAM_CHECK(key != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
     if (!dict_obj || !key || !out_value) {
         return false;
     }
@@ -156,9 +156,9 @@ cos_dict_obj_get_value_with_string(const CosDictObj *dict_obj,
                                    CosObj * COS_Nullable *out_value,
                                    CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(dict_obj != NULL);
-    COS_PARAMETER_ASSERT(key != NULL);
-    COS_PARAMETER_ASSERT(out_value != NULL);
+    COS_API_PARAM_CHECK(dict_obj != NULL);
+    COS_API_PARAM_CHECK(key != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
     if (!dict_obj || !key || !out_value) {
         return false;
     }
@@ -201,9 +201,9 @@ cos_dict_obj_set(CosDictObj *dict_obj,
                  CosObj *value,
                  CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(dict_obj != NULL);
-    COS_PARAMETER_ASSERT(key != NULL);
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(dict_obj != NULL);
+    COS_API_PARAM_CHECK(key != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!dict_obj || !key || !value) {
         return false;
     }

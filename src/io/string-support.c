@@ -20,8 +20,8 @@ cos_strlcpy(char *dest,
             size_t dest_size,
             const char *src)
 {
-    COS_PARAMETER_ASSERT(dest != NULL);
-    COS_PARAMETER_ASSERT(src != NULL);
+    COS_API_PARAM_CHECK(dest != NULL);
+    COS_API_PARAM_CHECK(src != NULL);
 
     if (COS_UNLIKELY(dest_size == 0)) {
         return 0;
@@ -46,7 +46,7 @@ cos_strlcpy(char *dest,
 char *
 cos_asprintf(const char *fmt, ...)
 {
-    COS_PARAMETER_ASSERT(fmt != NULL);
+    COS_API_PARAM_CHECK(fmt != NULL);
 
     va_list args;
     va_start(args, fmt);

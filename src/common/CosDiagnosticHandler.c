@@ -24,8 +24,8 @@ static void
 cos_diagnostic_handler_default_log_(CosDiagnosticHandler *handler,
                                     const CosDiagnostic *diagnostic)
 {
-    COS_PARAMETER_ASSERT(handler != NULL);
-    COS_PARAMETER_ASSERT(diagnostic != NULL);
+    COS_IMPL_PARAM_CHECK(handler != NULL);
+    COS_IMPL_PARAM_CHECK(diagnostic != NULL);
     if (!handler || !diagnostic) {
         return;
     }
@@ -82,7 +82,7 @@ cos_diagnostic_handler_get_default(void)
 void *
 cos_diagnostic_handler_get_user_data(const CosDiagnosticHandler *handler)
 {
-    COS_PARAMETER_ASSERT(handler != NULL);
+    COS_API_PARAM_CHECK(handler != NULL);
     if (!handler) {
         return NULL;
     }
@@ -94,8 +94,8 @@ void
 cos_emit_diagnostic(CosDiagnosticHandler *handler,
                     const CosDiagnostic *diagnostic)
 {
-    COS_PARAMETER_ASSERT(handler != NULL);
-    COS_PARAMETER_ASSERT(diagnostic != NULL);
+    COS_API_PARAM_CHECK(handler != NULL);
+    COS_API_PARAM_CHECK(diagnostic != NULL);
     if (!handler || !diagnostic) {
         return;
     }
@@ -110,8 +110,8 @@ cos_diagnose(CosDiagnosticHandler *handler,
              CosDiagnosticType type,
              const char *message)
 {
-    COS_PARAMETER_ASSERT(handler != NULL);
-    COS_PARAMETER_ASSERT(message != NULL);
+    COS_API_PARAM_CHECK(handler != NULL);
+    COS_API_PARAM_CHECK(message != NULL);
     if (!handler || !message) {
         return;
     }
@@ -129,8 +129,8 @@ static void
 cos_diagnostic_handler_log_(CosDiagnosticHandler *handler,
                             const CosDiagnostic *diagnostic)
 {
-    COS_PARAMETER_ASSERT(handler != NULL);
-    COS_PARAMETER_ASSERT(diagnostic != NULL);
+    COS_IMPL_PARAM_CHECK(handler != NULL);
+    COS_IMPL_PARAM_CHECK(diagnostic != NULL);
     if (!handler || !diagnostic) {
         return;
     }

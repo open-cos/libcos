@@ -86,7 +86,7 @@ cos_obj_free(CosObj *obj)
 CosObjType
 cos_obj_get_type(const CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return CosObjType_Unknown;
     }
@@ -97,7 +97,7 @@ cos_obj_get_type(const CosObj *obj)
 bool
 cos_obj_is_direct(const CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -129,7 +129,7 @@ cos_obj_is_direct(const CosObj *obj)
 bool
 cos_obj_is_indirect(const CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -160,7 +160,7 @@ bool
 cos_obj_is_type(const CosObj *obj,
                 CosObjType type)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -171,7 +171,7 @@ cos_obj_is_type(const CosObj *obj,
 CosObjValueType
 cos_obj_get_value_type(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return CosObjValueType_Unknown;
     }
@@ -222,7 +222,7 @@ cos_obj_get_value_type(CosObj *obj)
 bool
 cos_obj_is_boolean(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -233,7 +233,7 @@ cos_obj_is_boolean(CosObj *obj)
 bool
 cos_obj_is_integer(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -244,7 +244,7 @@ cos_obj_is_integer(CosObj *obj)
 bool
 cos_obj_is_real(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -255,7 +255,7 @@ cos_obj_is_real(CosObj *obj)
 bool
 cos_obj_is_string(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -266,7 +266,7 @@ cos_obj_is_string(CosObj *obj)
 bool
 cos_obj_is_name(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -277,7 +277,7 @@ cos_obj_is_name(CosObj *obj)
 bool
 cos_obj_is_array(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -288,7 +288,7 @@ cos_obj_is_array(CosObj *obj)
 bool
 cos_obj_is_dict(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -299,7 +299,7 @@ cos_obj_is_dict(CosObj *obj)
 bool
 cos_obj_is_stream(CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return false;
     }
@@ -316,7 +316,7 @@ COS_LOG(const char *message)
 void
 cos_obj_print_desc(const CosObj *obj)
 {
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!obj) {
         return;
     }

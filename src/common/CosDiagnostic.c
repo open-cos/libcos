@@ -28,7 +28,7 @@ cos_diagnostic_alloc(CosDiagnosticType type,
 void
 cos_diagnostic_free(CosDiagnostic *diagnostic)
 {
-    COS_PARAMETER_ASSERT(diagnostic != NULL);
+    COS_API_PARAM_CHECK(diagnostic != NULL);
 
     free(diagnostic);
 }

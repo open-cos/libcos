@@ -35,7 +35,7 @@ cos_xref_table_create(void)
 void
 cos_xref_table_destroy(CosXrefTable *table)
 {
-    COS_PARAMETER_ASSERT(table != NULL);
+    COS_API_PARAM_CHECK(table != NULL);
     if (COS_UNLIKELY(!table)) {
         return;
     }
@@ -46,7 +46,7 @@ cos_xref_table_destroy(CosXrefTable *table)
 size_t
 cos_xref_table_get_section_count(const CosXrefTable *table)
 {
-    COS_PARAMETER_ASSERT(table != NULL);
+    COS_API_PARAM_CHECK(table != NULL);
     if (COS_UNLIKELY(!table)) {
         return 0;
     }
@@ -59,7 +59,7 @@ cos_xref_table_get_section(const CosXrefTable *table,
                            size_t index,
                            CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(table != NULL);
+    COS_API_PARAM_CHECK(table != NULL);
     if (COS_UNLIKELY(!table)) {
         return NULL;
     }
@@ -80,7 +80,7 @@ cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
                                       CosObjNumber object_number,
                                       CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(table != NULL);
+    COS_API_PARAM_CHECK(table != NULL);
     if (COS_UNLIKELY(!table)) {
         return NULL;
     }

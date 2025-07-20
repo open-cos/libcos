@@ -30,7 +30,7 @@ cos_stream_init(CosStream *stream,
 void
 cos_stream_close(CosStream *stream)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
     if (COS_UNLIKELY(!stream)) {
         return;
     }
@@ -59,8 +59,8 @@ cos_stream_read(CosStream *stream,
                 size_t count,
                 CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
-    COS_PARAMETER_ASSERT(buffer != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
+    COS_API_PARAM_CHECK(buffer != NULL);
     if (COS_UNLIKELY(!stream || !buffer)) {
         return 0;
     }
@@ -100,8 +100,8 @@ cos_stream_write(CosStream *stream,
                  size_t count,
                  CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
-    COS_PARAMETER_ASSERT(buffer != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
+    COS_API_PARAM_CHECK(buffer != NULL);
     if (COS_UNLIKELY(!stream || !buffer)) {
         return 0;
     }
@@ -141,7 +141,7 @@ cos_stream_seek(CosStream *stream,
                 CosStreamOffsetWhence whence,
                 CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
     if (COS_UNLIKELY(!stream)) {
         return false;
     }
@@ -163,7 +163,7 @@ CosStreamOffset
 cos_stream_get_position(CosStream *stream,
                         CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
     if (COS_UNLIKELY(!stream)) {
         return -1;
     }
@@ -182,7 +182,7 @@ bool
 cos_stream_is_at_end(CosStream *stream,
                      CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
     if (COS_UNLIKELY(!stream)) {
         return true;
     }

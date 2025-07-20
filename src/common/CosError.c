@@ -29,7 +29,7 @@ void
 cos_error_propagate(CosError * COS_Nullable destination_error,
                     CosError source_error)
 {
-    COS_PARAMETER_ASSERT(destination_error != NULL);
+    COS_API_PARAM_CHECK(destination_error != NULL);
     if (!destination_error) {
         return;
     }

@@ -14,7 +14,7 @@ COS_ASSUME_NONNULL_BEGIN
 void
 cos_token_value_reset(CosTokenValue *token_value)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
     if (!token_value) {
         return;
     }
@@ -44,8 +44,8 @@ bool
 cos_token_value_get_string(const CosTokenValue *token_value,
                            const CosString * COS_Nullable *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_String) {
         return false;
     }
@@ -60,8 +60,8 @@ bool
 cos_token_value_get_data(const CosTokenValue *token_value,
                          const CosData * COS_Nullable *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_Data) {
         return false;
     }
@@ -76,8 +76,8 @@ bool
 cos_token_value_get_integer_number(const CosTokenValue *token_value,
                                    int *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_IntegerNumber) {
         return false;
     }
@@ -92,8 +92,8 @@ bool
 cos_token_value_get_long_integer_number(const CosTokenValue *token_value,
                                         long long *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_LongIntegerNumber) {
         return false;
     }
@@ -108,8 +108,8 @@ bool
 cos_token_value_get_real_number(const CosTokenValue *token_value,
                                 double *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_RealNumber) {
         return false;
     }
@@ -126,8 +126,8 @@ void
 cos_token_value_set_string(CosTokenValue *token_value,
                            CosString *value)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!token_value) {
         return;
     }
@@ -142,8 +142,8 @@ void
 cos_token_value_set_data(CosTokenValue *token_value,
                          CosData *value)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!token_value) {
         return;
     }
@@ -158,7 +158,7 @@ void
 cos_token_value_set_integer_number(CosTokenValue *token_value,
                                    int value)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
     if (!token_value) {
         return;
     }
@@ -173,7 +173,7 @@ void
 cos_token_value_set_long_integer_number(CosTokenValue *token_value,
                                         long long value)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
     if (!token_value) {
         return;
     }
@@ -188,7 +188,7 @@ void
 cos_token_value_set_real_number(CosTokenValue *token_value,
                                 double value)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
     if (!token_value) {
         return;
     }
@@ -203,8 +203,8 @@ bool
 cos_token_value_take_string(CosTokenValue *token_value,
                             CosString * COS_Nullable *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_String) {
         return false;
     }
@@ -226,8 +226,8 @@ bool
 cos_token_value_take_data(CosTokenValue *token_value,
                           CosData * COS_Nullable *result)
 {
-    COS_PARAMETER_ASSERT(token_value != NULL);
-    COS_PARAMETER_ASSERT(result != NULL);
+    COS_API_PARAM_CHECK(token_value != NULL);
+    COS_API_PARAM_CHECK(result != NULL);
     if (!token_value || token_value->type != CosTokenValue_Type_Data) {
         return false;
     }

@@ -67,7 +67,7 @@ CosData *
 cos_data_copy(const CosData *source,
               CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(source != NULL);
+    COS_API_PARAM_CHECK(source != NULL);
     if (!source) {
         return NULL;
     }
@@ -103,7 +103,7 @@ cos_data_get_range(const CosData *data,
                    size_t length,
                    CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data || length == 0) {
         return cos_data_ref_make(NULL, 0);
     }
@@ -126,7 +126,7 @@ cos_data_reserve(CosData *data,
                  size_t capacity,
                  CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data) {
         return false;
     }
@@ -137,7 +137,7 @@ cos_data_reserve(CosData *data,
 bool
 cos_data_reset(CosData *data)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data) {
         return false;
     }
@@ -153,7 +153,7 @@ cos_data_append(CosData *data,
                 size_t count,
                 CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data) {
         return false;
     }
@@ -184,7 +184,7 @@ cos_data_push_back(CosData *data,
                    unsigned char byte,
                    CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data) {
         return false;
     }
@@ -197,7 +197,7 @@ cos_data_push_back(CosData *data,
 CosDataRef
 cos_data_get_ref(const CosData *data)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data) {
         return (CosDataRef){0};
     }
@@ -212,7 +212,7 @@ cos_data_resize_(CosData *data,
                  size_t required_capacity,
                  CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_IMPL_PARAM_CHECK(data != NULL);
     if (!data) {
         return false;
     }

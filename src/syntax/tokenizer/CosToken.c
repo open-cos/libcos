@@ -14,7 +14,7 @@ COS_ASSUME_NONNULL_BEGIN
 void
 cos_token_reset(CosToken *token)
 {
-    COS_PARAMETER_ASSERT(token != NULL);
+    COS_API_PARAM_CHECK(token != NULL);
     if (!token) {
         return;
     }
@@ -29,8 +29,8 @@ bool
 cos_token_get_integer_value(const CosToken *token,
                             int *out_value)
 {
-    COS_PARAMETER_ASSERT(token != NULL);
-    COS_PARAMETER_ASSERT(out_value != NULL);
+    COS_API_PARAM_CHECK(token != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
     if (!token || !out_value) {
         return false;
     }
@@ -42,7 +42,7 @@ cos_token_get_integer_value(const CosToken *token,
 CosData *
 cos_token_move_data_value(CosToken *token)
 {
-    COS_PARAMETER_ASSERT(token != NULL);
+    COS_API_PARAM_CHECK(token != NULL);
     if (COS_UNLIKELY(!token)) {
         return NULL;
     }
@@ -56,7 +56,7 @@ cos_token_move_data_value(CosToken *token)
 CosString *
 cos_token_move_string_value(CosToken *token)
 {
-    COS_PARAMETER_ASSERT(token != NULL);
+    COS_API_PARAM_CHECK(token != NULL);
     if (COS_UNLIKELY(!token)) {
         return NULL;
     }

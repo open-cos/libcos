@@ -25,7 +25,7 @@ cos_allocator_create(CosAllocator * COS_Nullable allocator,
                      const CosAllocatorCallbacks *callbacks,
                      void * COS_Nullable user_data)
 {
-    COS_PARAMETER_ASSERT(callbacks != NULL);
+    COS_API_PARAM_CHECK(callbacks != NULL);
     if (!callbacks) {
         return NULL;
     }
@@ -82,7 +82,7 @@ void *
 cos_allocator_alloc(CosAllocator *allocator,
                     size_t size)
 {
-    COS_PARAMETER_ASSERT(allocator != NULL);
+    COS_API_PARAM_CHECK(allocator != NULL);
     if (!allocator || !allocator->callbacks.alloc) {
         return NULL;
     }
@@ -96,7 +96,7 @@ cos_allocator_realloc(CosAllocator *allocator,
                       void * COS_Nullable ptr,
                       size_t size)
 {
-    COS_PARAMETER_ASSERT(allocator != NULL);
+    COS_API_PARAM_CHECK(allocator != NULL);
     if (!allocator || !allocator->callbacks.realloc) {
         return NULL;
     }
@@ -110,7 +110,7 @@ void
 cos_allocator_dealloc(CosAllocator *allocator,
                       void * COS_Nullable ptr)
 {
-    COS_PARAMETER_ASSERT(allocator != NULL);
+    COS_API_PARAM_CHECK(allocator != NULL);
     if (!allocator || !allocator->callbacks.dealloc || !ptr) {
         return;
     }

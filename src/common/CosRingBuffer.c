@@ -67,7 +67,7 @@ CosRingBuffer *
 cos_ring_buffer_create(size_t element_size,
                        size_t capacity_hint)
 {
-    COS_PARAMETER_ASSERT(element_size > 0);
+    COS_API_PARAM_CHECK(element_size > 0);
     if (element_size == 0) {
         return NULL;
     }
@@ -110,7 +110,7 @@ cos_ring_buffer_destroy(CosRingBuffer *ring_buffer)
 size_t
 cos_ring_buffer_get_count(const CosRingBuffer *ring_buffer)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
     if (!ring_buffer) {
         return 0;
     }
@@ -121,7 +121,7 @@ cos_ring_buffer_get_count(const CosRingBuffer *ring_buffer)
 size_t
 cos_ring_buffer_get_capacity(const CosRingBuffer *ring_buffer)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
     if (!ring_buffer) {
         return 0;
     }
@@ -135,8 +135,8 @@ cos_ring_buffer_get_item(const CosRingBuffer *ring_buffer,
                          void *out_item,
                          CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(out_item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(out_item != NULL);
     if (!ring_buffer || !out_item) {
         return false;
     }
@@ -158,8 +158,8 @@ bool
 cos_ring_buffer_get_first_item(const CosRingBuffer *ring_buffer,
                                void *out_item)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(out_item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(out_item != NULL);
     if (!ring_buffer || !out_item) {
         return false;
     }
@@ -178,8 +178,8 @@ bool
 cos_ring_buffer_get_last_item(const CosRingBuffer *ring_buffer,
                               void *out_item)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(out_item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(out_item != NULL);
     if (!ring_buffer || !out_item) {
         return false;
     }
@@ -199,8 +199,8 @@ cos_ring_buffer_push_front(CosRingBuffer *ring_buffer,
                            const void *item,
                            CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(item != NULL);
     if (!ring_buffer || !item) {
         return false;
     }
@@ -230,8 +230,8 @@ cos_ring_buffer_push_back(CosRingBuffer *ring_buffer,
                           const void *item,
                           CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(item != NULL);
     if (!ring_buffer || !item) {
         return false;
     }
@@ -255,8 +255,8 @@ bool
 cos_ring_buffer_pop_front(CosRingBuffer *ring_buffer,
                           void *out_item)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(out_item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(out_item != NULL);
     if (!ring_buffer || !out_item) {
         return false;
     }
@@ -281,8 +281,8 @@ bool
 cos_ring_buffer_pop_back(CosRingBuffer *ring_buffer,
                          void *out_item)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(out_item != NULL);
+    COS_API_PARAM_CHECK(ring_buffer != NULL);
+    COS_API_PARAM_CHECK(out_item != NULL);
     if (!ring_buffer || !out_item) {
         return false;
     }
@@ -314,8 +314,8 @@ cos_ring_buffer_get_item_(const CosRingBuffer *ring_buffer,
                           size_t index,
                           void *out_item)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(out_item != NULL);
+    COS_IMPL_PARAM_CHECK(ring_buffer != NULL);
+    COS_IMPL_PARAM_CHECK(out_item != NULL);
 
     const size_t ring_index = (ring_buffer->head + index) % ring_buffer->capacity;
     const size_t item_data_offset = ring_index * ring_buffer->element_size;
@@ -330,8 +330,8 @@ cos_ring_buffer_set_item_(CosRingBuffer *ring_buffer,
                           size_t index,
                           const void *item)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(item != NULL);
+    COS_IMPL_PARAM_CHECK(ring_buffer != NULL);
+    COS_IMPL_PARAM_CHECK(item != NULL);
 
     const size_t ring_index = (ring_buffer->head + index) % ring_buffer->capacity;
     const size_t item_data_offset = ring_index * ring_buffer->element_size;
@@ -346,8 +346,8 @@ cos_ring_buffer_resize_(CosRingBuffer *ring_buffer,
                         size_t required_capacity,
                         CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(ring_buffer != NULL);
-    COS_PARAMETER_ASSERT(required_capacity > 0);
+    COS_IMPL_PARAM_CHECK(ring_buffer != NULL);
+    COS_IMPL_PARAM_CHECK(required_capacity > 0);
     if (!ring_buffer || required_capacity == 0) {
         return false;
     }

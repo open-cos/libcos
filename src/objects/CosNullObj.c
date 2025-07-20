@@ -31,7 +31,7 @@ cos_null_obj_get(void)
 void
 cos_null_obj_print_desc(const CosNullObj *null_obj)
 {
-    COS_PARAMETER_ASSERT(null_obj != NULL);
+    COS_API_PARAM_CHECK(null_obj != NULL);
     if (!null_obj) {
         return;
     }

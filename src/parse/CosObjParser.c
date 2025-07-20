@@ -125,8 +125,8 @@ CosObjParser *
 cos_obj_parser_create(CosDoc *document,
                       CosStream *input_stream)
 {
-    COS_PARAMETER_ASSERT(document != NULL);
-    COS_PARAMETER_ASSERT(input_stream != NULL);
+    COS_API_PARAM_CHECK(document != NULL);
+    COS_API_PARAM_CHECK(input_stream != NULL);
     if (!input_stream) {
         return NULL;
     }
@@ -156,9 +156,9 @@ cos_obj_parser_init_(CosObjParser * const self,
                      CosDoc *document,
                      CosStream *input_stream)
 {
-    COS_PARAMETER_ASSERT(self != NULL);
-    COS_PARAMETER_ASSERT(document != NULL);
-    COS_PARAMETER_ASSERT(input_stream != NULL);
+    COS_IMPL_PARAM_CHECK(self != NULL);
+    COS_IMPL_PARAM_CHECK(document != NULL);
+    COS_IMPL_PARAM_CHECK(input_stream != NULL);
     if (!self || !document || !input_stream) {
         return false;
     }
@@ -185,7 +185,7 @@ cos_obj_parser_destroy(CosObjParser *parser)
 bool
 cos_obj_parser_has_next_object(CosObjParser *parser)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_API_PARAM_CHECK(parser != NULL);
     if (!parser) {
         return false;
     }
@@ -198,7 +198,7 @@ CosObj *
 cos_obj_parser_peek_object(CosObjParser *parser,
                            CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_API_PARAM_CHECK(parser != NULL);
     if (!parser) {
         return NULL;
     }
@@ -231,7 +231,7 @@ CosObj *
 cos_obj_parser_next_object(CosObjParser *parser,
                            CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_API_PARAM_CHECK(parser != NULL);
     if (!parser) {
         return NULL;
     }
@@ -310,7 +310,7 @@ cos_next_object_(CosObjParser *parser,
                  const CosObjParserContext *context,
                  CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_IMPL_PARAM_CHECK(parser != NULL);
     if (COS_UNLIKELY(!parser)) {
         return NULL;
     }

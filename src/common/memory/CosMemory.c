@@ -16,7 +16,7 @@ void *
 cos_alloc(CosAllocator * COS_Nullable allocator,
           size_t size)
 {
-    COS_PARAMETER_ASSERT(size > 0);
+    COS_API_PARAM_CHECK(size > 0);
 
     if (allocator) {
         return cos_allocator_alloc(COS_nonnull_cast(allocator),
@@ -32,7 +32,7 @@ cos_realloc(CosAllocator * COS_Nullable allocator,
             void * COS_Nullable ptr,
             size_t size)
 {
-    COS_PARAMETER_ASSERT(ptr || size > 0);
+    COS_API_PARAM_CHECK(ptr || size > 0);
     if (COS_UNLIKELY(!ptr && size == 0)) {
         return NULL;
     }

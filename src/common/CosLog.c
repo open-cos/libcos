@@ -54,7 +54,7 @@ cos_log_context_create(CosLogLevel level,
                        CosLogFunc log_func,
                        void * COS_Nullable user_data)
 {
-    COS_PARAMETER_ASSERT(log_func != NULL);
+    COS_API_PARAM_CHECK(log_func != NULL);
     if (!log_func) {
         return NULL;
     }
@@ -74,7 +74,7 @@ cos_log_context_create(CosLogLevel level,
 void
 cos_log_context_destroy(CosLogContext *log_context)
 {
-    COS_PARAMETER_ASSERT(log_context != NULL);
+    COS_API_PARAM_CHECK(log_context != NULL);
     if (!log_context) {
         return;
     }
@@ -85,7 +85,7 @@ cos_log_context_destroy(CosLogContext *log_context)
 CosLogLevel
 cos_log_context_get_level(const CosLogContext *log_context)
 {
-    COS_PARAMETER_ASSERT(log_context != NULL);
+    COS_API_PARAM_CHECK(log_context != NULL);
     if (!log_context) {
         return CosLogLevel_None;
     }
@@ -97,7 +97,7 @@ void
 cos_log_context_set_level(CosLogContext *log_context,
                           CosLogLevel level)
 {
-    COS_PARAMETER_ASSERT(log_context != NULL);
+    COS_API_PARAM_CHECK(log_context != NULL);
     if (!log_context) {
         return;
     }
@@ -111,8 +111,8 @@ cos_log(CosLogContext *log_context,
         const char *format,
         ...)
 {
-    COS_PARAMETER_ASSERT(log_context != NULL);
-    COS_PARAMETER_ASSERT(format != NULL);
+    COS_API_PARAM_CHECK(log_context != NULL);
+    COS_API_PARAM_CHECK(format != NULL);
     if (COS_UNLIKELY(!log_context || !format)) {
         return;
     }
@@ -129,8 +129,8 @@ cos_logv(CosLogContext *log_context,
          const char *format,
          va_list args)
 {
-    COS_PARAMETER_ASSERT(log_context != NULL);
-    COS_PARAMETER_ASSERT(format != NULL);
+    COS_API_PARAM_CHECK(log_context != NULL);
+    COS_API_PARAM_CHECK(format != NULL);
     if (COS_UNLIKELY(!log_context || !format || !log_context->log_func)) {
         return;
     }
@@ -156,8 +156,8 @@ cos_log_func_stdout_(CosLogContext *log_context,
                      CosLogMessageLevel message_level,
                      const char *message)
 {
-    COS_PARAMETER_ASSERT(log_context != NULL);
-    COS_PARAMETER_ASSERT(message != NULL);
+    COS_IMPL_PARAM_CHECK(log_context != NULL);
+    COS_IMPL_PARAM_CHECK(message != NULL);
     if (COS_UNLIKELY(!log_context || !message)) {
         return;
     }

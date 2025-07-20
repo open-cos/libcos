@@ -89,7 +89,7 @@ static CosXrefSection *
 cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
                                      CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_IMPL_PARAM_CHECK(parser != NULL);
     if (!parser) {
         return NULL;
     }
@@ -116,7 +116,7 @@ failure:
 static CosXrefSubsection *
 cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
+    COS_IMPL_PARAM_CHECK(parser != NULL);
     if (!parser) {
         return NULL;
     }
@@ -155,9 +155,9 @@ cos_xref_table_parser_read_subsection_header_(CosXrefTableParser *parser,
                                               unsigned int *first_object_number,
                                               unsigned int *entry_count)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
-    COS_PARAMETER_ASSERT(first_object_number != NULL);
-    COS_PARAMETER_ASSERT(entry_count != NULL);
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(first_object_number != NULL);
+    COS_IMPL_PARAM_CHECK(entry_count != NULL);
     if (!parser || !first_object_number || !entry_count) {
         return false;
     }
@@ -171,8 +171,8 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
                                   CosXrefEntry *entry,
                                   CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
-    COS_PARAMETER_ASSERT(entry != NULL);
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(entry != NULL);
     if (!parser || !entry) {
         return false;
     }
@@ -237,8 +237,8 @@ cos_read_entry_item_(CosXrefTableParser *parser,
                      CosXrefEntryItem *item,
                      CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(parser != NULL);
-    COS_PARAMETER_ASSERT(item != NULL);
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(item != NULL);
     if (!parser || !item) {
         return false;
     }

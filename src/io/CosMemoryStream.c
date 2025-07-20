@@ -46,7 +46,7 @@ cos_memory_stream_create(void *buffer,
                          size_t size,
                          bool free_buffer)
 {
-    COS_PARAMETER_ASSERT(buffer != NULL);
+    COS_API_PARAM_CHECK(buffer != NULL);
     if (COS_UNLIKELY(!buffer)) {
         return NULL;
     }
@@ -88,8 +88,8 @@ cos_memory_stream_read_(CosStream *stream,
                         size_t count,
                         COS_ATTR_UNUSED CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
-    COS_PARAMETER_ASSERT(buffer != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
+    COS_API_PARAM_CHECK(buffer != NULL);
     if (count == 0) {
         return 0;
     }
@@ -124,8 +124,8 @@ cos_memory_stream_write_(CosStream *stream,
                          size_t count,
                          COS_ATTR_UNUSED CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
-    COS_PARAMETER_ASSERT(buffer != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
+    COS_API_PARAM_CHECK(buffer != NULL);
 
     if (count == 0) {
         return 0;
@@ -155,7 +155,7 @@ cos_memory_stream_seek_(CosStream *stream,
                         CosStreamOffsetWhence whence,
                         CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_API_PARAM_CHECK(stream != NULL);
 
     CosMemoryStream * const memory_stream = (CosMemoryStream *)stream;
 
@@ -220,7 +220,7 @@ static CosStreamOffset
 cos_memory_stream_tell_(CosStream *stream,
                         COS_ATTR_UNUSED CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_IMPL_PARAM_CHECK(stream != NULL);
 
     CosMemoryStream * const memory_stream = (CosMemoryStream *)stream;
 
@@ -230,7 +230,7 @@ cos_memory_stream_tell_(CosStream *stream,
 static void
 cos_memory_stream_close_(CosStream *stream)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_IMPL_PARAM_CHECK(stream != NULL);
 
     CosMemoryStream * const memory_stream = (CosMemoryStream *)stream;
 
@@ -242,7 +242,7 @@ cos_memory_stream_close_(CosStream *stream)
 static bool
 cos_memory_stream_eof_(CosStream *stream)
 {
-    COS_PARAMETER_ASSERT(stream != NULL);
+    COS_IMPL_PARAM_CHECK(stream != NULL);
 
     CosMemoryStream * const memory_stream = (CosMemoryStream *)stream;
 

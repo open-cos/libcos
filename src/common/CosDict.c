@@ -48,8 +48,8 @@ cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
                 const CosDictValueCallbacks *value_callbacks,
                 size_t capacity_hint)
 {
-    COS_PARAMETER_ASSERT(key_callbacks != NULL);
-    COS_PARAMETER_ASSERT(value_callbacks != NULL);
+    COS_API_PARAM_CHECK(key_callbacks != NULL);
+    COS_API_PARAM_CHECK(value_callbacks != NULL);
     if (COS_UNLIKELY(!key_callbacks || !value_callbacks)) {
         return NULL;
     }
@@ -117,7 +117,7 @@ cos_dict_destroy(CosDict *dict)
 size_t
 cos_dict_get_count(const CosDict *dict)
 {
-    COS_PARAMETER_ASSERT(dict != NULL);
+    COS_API_PARAM_CHECK(dict != NULL);
     if (!dict) {
         return 0;
     }
@@ -131,9 +131,9 @@ cos_dict_get(CosDict *dict,
              void * COS_Nullable * COS_Nonnull out_value,
              CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(dict != NULL);
-    COS_PARAMETER_ASSERT(key != NULL);
-    COS_PARAMETER_ASSERT(out_value != NULL);
+    COS_API_PARAM_CHECK(dict != NULL);
+    COS_API_PARAM_CHECK(key != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
     if (COS_UNLIKELY(!dict || !key || !out_value)) {
         return false;
     }
@@ -158,9 +158,9 @@ cos_dict_set(CosDict *dict,
              void *value,
              CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(dict != NULL);
-    COS_PARAMETER_ASSERT(key != NULL);
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(dict != NULL);
+    COS_API_PARAM_CHECK(key != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!dict || !key || !value) {
         return false;
     }

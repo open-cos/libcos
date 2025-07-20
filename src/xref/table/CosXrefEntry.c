@@ -15,7 +15,7 @@ cos_xref_entry_init_in_use(CosXrefEntry *entry,
                            unsigned int byte_offset,
                            unsigned int gen_number)
 {
-    COS_PARAMETER_ASSERT(entry != NULL);
+    COS_API_PARAM_CHECK(entry != NULL);
     if (!entry) {
         return;
     }
@@ -30,7 +30,7 @@ cos_xref_entry_init_free(CosXrefEntry *entry,
                          unsigned int next_free_obj_number,
                          unsigned int gen_number)
 {
-    COS_PARAMETER_ASSERT(entry != NULL);
+    COS_API_PARAM_CHECK(entry != NULL);
     if (!entry) {
         return;
     }
@@ -45,7 +45,7 @@ cos_xref_entry_init_compressed(CosXrefEntry *entry,
                                unsigned int obj_stream_number,
                                unsigned int obj_stream_index)
 {
-    COS_PARAMETER_ASSERT(entry != NULL);
+    COS_API_PARAM_CHECK(entry != NULL);
     if (!entry) {
         return;
     }

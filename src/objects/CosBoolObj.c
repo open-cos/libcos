@@ -47,7 +47,7 @@ cos_bool_obj_free(CosBoolObj *bool_obj)
 bool
 cos_bool_obj_get_value(const CosBoolObj *bool_obj)
 {
-    COS_PARAMETER_ASSERT(bool_obj != NULL);
+    COS_API_PARAM_CHECK(bool_obj != NULL);
     if (!bool_obj) {
         return false;
     }
@@ -59,7 +59,7 @@ void
 cos_bool_obj_set_value(CosBoolObj *bool_obj,
                        bool value)
 {
-    COS_PARAMETER_ASSERT(bool_obj != NULL);
+    COS_API_PARAM_CHECK(bool_obj != NULL);
     if (!bool_obj) {
         return;
     }
@@ -70,7 +70,7 @@ cos_bool_obj_set_value(CosBoolObj *bool_obj,
 void
 cos_bool_obj_print_desc(const CosBoolObj *bool_obj)
 {
-    COS_PARAMETER_ASSERT(bool_obj != NULL);
+    COS_API_PARAM_CHECK(bool_obj != NULL);
     if (!bool_obj) {
         return;
     }

@@ -52,7 +52,7 @@ cos_scanner_set_input(CosScanner *scanner,
                       const char * COS_Nullable buffer,
                       size_t buffer_size)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
     if (!scanner) {
         return;
     }
@@ -65,7 +65,7 @@ cos_scanner_set_input(CosScanner *scanner,
 size_t
 cos_scanner_get_position(const CosScanner *scanner)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
     if (!scanner) {
         return 0;
     }
@@ -76,7 +76,7 @@ cos_scanner_get_position(const CosScanner *scanner)
 bool
 cos_scanner_is_at_end(const CosScanner *scanner)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
     if (!scanner) {
         return true;
     }
@@ -87,7 +87,7 @@ cos_scanner_is_at_end(const CosScanner *scanner)
 void
 cos_scanner_reset(CosScanner *scanner)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
     if (!scanner) {
         return;
     }
@@ -101,8 +101,8 @@ bool
 cos_scanner_read_char(CosScanner *scanner,
                       char *out_char)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
-    COS_PARAMETER_ASSERT(out_char != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
+    COS_API_PARAM_CHECK(out_char != NULL);
     if (!scanner || !out_char) {
         return false;
     }
@@ -120,7 +120,7 @@ bool
 cos_scanner_match_char(CosScanner *scanner,
                        char expected_char)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
     if (!scanner) {
         return false;
     }
@@ -144,8 +144,8 @@ cos_scanner_read_unsigned(CosScanner *scanner,
                           unsigned long *out_value,
                           CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
-    COS_PARAMETER_ASSERT(out_value != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
     if (!scanner || !out_value) {
         return 0;
     }
@@ -206,7 +206,7 @@ failure:
 size_t
 cos_scanner_skip_whitespace(CosScanner *scanner)
 {
-    COS_PARAMETER_ASSERT(scanner != NULL);
+    COS_API_PARAM_CHECK(scanner != NULL);
     if (!scanner) {
         return 0;
     }

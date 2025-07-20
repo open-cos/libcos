@@ -56,7 +56,7 @@ cos_stream_obj_destroy(CosStreamObj *stream_obj)
 CosDictObj *
 cos_stream_obj_get_dict(const CosStreamObj *stream_obj)
 {
-    COS_PARAMETER_ASSERT(stream_obj != NULL);
+    COS_API_PARAM_CHECK(stream_obj != NULL);
     if (!stream_obj) {
         return NULL;
     }
@@ -67,7 +67,7 @@ cos_stream_obj_get_dict(const CosStreamObj *stream_obj)
 CosData *
 cos_stream_obj_get_data(const CosStreamObj *stream_obj)
 {
-    COS_PARAMETER_ASSERT(stream_obj != NULL);
+    COS_API_PARAM_CHECK(stream_obj != NULL);
     if (!stream_obj) {
         return NULL;
     }
@@ -78,7 +78,7 @@ cos_stream_obj_get_data(const CosStreamObj *stream_obj)
 size_t
 cos_stream_obj_get_length(const CosStreamObj *stream_obj)
 {
-    COS_PARAMETER_ASSERT(stream_obj != NULL);
+    COS_API_PARAM_CHECK(stream_obj != NULL);
     if (!stream_obj) {
         return 0;
     }
@@ -90,7 +90,7 @@ CosArrayObj *
 cos_stream_obj_get_filter_names(const CosStreamObj *stream_obj,
                                 CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream_obj != NULL);
+    COS_API_PARAM_CHECK(stream_obj != NULL);
     if (!stream_obj) {
         return NULL;
     }
@@ -105,8 +105,8 @@ cos_stream_obj_get_decoded_length_hint(const CosStreamObj *stream_obj,
                                        size_t *out_length_hint,
                                        CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(stream_obj != NULL);
-    COS_PARAMETER_ASSERT(out_length_hint != NULL);
+    COS_API_PARAM_CHECK(stream_obj != NULL);
+    COS_API_PARAM_CHECK(out_length_hint != NULL);
     if (!stream_obj || !out_length_hint) {
         return false;
     }

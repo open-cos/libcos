@@ -65,7 +65,7 @@ failure:
 void
 cos_xref_subsection_destroy(CosXrefSubsection *subsection)
 {
-    COS_PARAMETER_ASSERT(subsection != NULL);
+    COS_API_PARAM_CHECK(subsection != NULL);
     if (COS_UNLIKELY(!subsection)) {
         return;
     }
@@ -77,7 +77,7 @@ cos_xref_subsection_destroy(CosXrefSubsection *subsection)
 CosObjNumber
 cos_xref_subsection_get_first_object_number(const CosXrefSubsection *subsection)
 {
-    COS_PARAMETER_ASSERT(subsection != NULL);
+    COS_API_PARAM_CHECK(subsection != NULL);
     if (COS_UNLIKELY(!subsection)) {
         return 0;
     }
@@ -88,7 +88,7 @@ cos_xref_subsection_get_first_object_number(const CosXrefSubsection *subsection)
 size_t
 cos_xref_subsection_get_entry_count(const CosXrefSubsection *subsection)
 {
-    COS_PARAMETER_ASSERT(subsection != NULL);
+    COS_API_PARAM_CHECK(subsection != NULL);
     if (COS_UNLIKELY(!subsection)) {
         return 0;
     }
@@ -101,7 +101,7 @@ cos_xref_subsection_get_entry(const CosXrefSubsection *subsection,
                               size_t index,
                               CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(subsection != NULL);
+    COS_API_PARAM_CHECK(subsection != NULL);
     if (COS_UNLIKELY(!subsection)) {
         return NULL;
     }

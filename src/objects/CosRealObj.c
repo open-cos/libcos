@@ -45,7 +45,7 @@ cos_real_obj_free(CosRealObj *real_obj)
 double
 cos_real_obj_get_value(const CosRealObj *real_obj)
 {
-    COS_PARAMETER_ASSERT(real_obj != NULL);
+    COS_API_PARAM_CHECK(real_obj != NULL);
     if (!real_obj) {
         return 0.0;
     }
@@ -57,7 +57,7 @@ void
 cos_real_obj_set_value(CosRealObj *real_obj,
                        double value)
 {
-    COS_PARAMETER_ASSERT(real_obj != NULL);
+    COS_API_PARAM_CHECK(real_obj != NULL);
     if (!real_obj) {
         return;
     }
@@ -68,7 +68,7 @@ cos_real_obj_set_value(CosRealObj *real_obj,
 void
 cos_real_obj_print_desc(const CosRealObj *real_obj)
 {
-    COS_PARAMETER_ASSERT(real_obj != NULL);
+    COS_API_PARAM_CHECK(real_obj != NULL);
     if (!real_obj) {
         return;
     }

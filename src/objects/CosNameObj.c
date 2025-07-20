@@ -23,7 +23,7 @@ struct CosNameObj {
 CosNameObj *
 cos_name_obj_alloc(CosString *value)
 {
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!value) {
         return NULL;
     }
@@ -53,7 +53,7 @@ cos_name_obj_free(CosNameObj *name_obj)
 const CosString *
 cos_name_obj_get_value(const CosNameObj *name_obj)
 {
-    COS_PARAMETER_ASSERT(name_obj != NULL);
+    COS_API_PARAM_CHECK(name_obj != NULL);
     if (!name_obj) {
         return NULL;
     }
@@ -65,8 +65,8 @@ void
 cos_name_obj_set_value(CosNameObj *name_obj,
                        CosString *value)
 {
-    COS_PARAMETER_ASSERT(name_obj != NULL);
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(name_obj != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!name_obj || !value) {
         return;
     }
@@ -85,7 +85,7 @@ cos_name_obj_set_value(CosNameObj *name_obj,
 size_t
 cos_name_obj_get_hash(const CosNameObj *name_obj)
 {
-    COS_PARAMETER_ASSERT(name_obj != NULL);
+    COS_API_PARAM_CHECK(name_obj != NULL);
     if (!name_obj) {
         return 0;
     }
@@ -97,8 +97,8 @@ bool
 cos_name_obj_equal(const CosNameObj *name_obj1,
                    const CosNameObj *name_obj2)
 {
-    COS_PARAMETER_ASSERT(name_obj1 != NULL);
-    COS_PARAMETER_ASSERT(name_obj2 != NULL);
+    COS_API_PARAM_CHECK(name_obj1 != NULL);
+    COS_API_PARAM_CHECK(name_obj2 != NULL);
     if (!name_obj1 || !name_obj2) {
         return false;
     }
@@ -110,7 +110,7 @@ cos_name_obj_equal(const CosNameObj *name_obj1,
 void
 cos_name_obj_print_desc(const CosNameObj *name_obj)
 {
-    COS_PARAMETER_ASSERT(name_obj != NULL);
+    COS_API_PARAM_CHECK(name_obj != NULL);
     if (!name_obj) {
         return;
     }

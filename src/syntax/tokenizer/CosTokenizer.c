@@ -120,7 +120,7 @@ cos_keyword_token_type_from_string_(CosStringRef string);
 CosTokenizer *
 cos_tokenizer_create(CosStream *input_stream)
 {
-    COS_PARAMETER_ASSERT(input_stream != NULL);
+    COS_API_PARAM_CHECK(input_stream != NULL);
 
     CosTokenizer *tokenizer = NULL;
     CosStreamReader *stream_reader = NULL;
@@ -165,7 +165,7 @@ cos_tokenizer_destroy(CosTokenizer *tokenizer)
 void
 cos_tokenizer_reset(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_API_PARAM_CHECK(tokenizer != NULL);
     if (COS_UNLIKELY(!tokenizer)) {
         return;
     }
@@ -178,8 +178,8 @@ cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
                              CosToken *out_token,
                              CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(out_token != NULL);
+    COS_API_PARAM_CHECK(tokenizer != NULL);
+    COS_API_PARAM_CHECK(out_token != NULL);
     if (COS_UNLIKELY(!tokenizer || !out_token)) {
         return false;
     }
@@ -399,7 +399,7 @@ failure:
 static inline int
 cos_tokenizer_get_next_char_(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
     if (!tokenizer) {
         return EOF;
     }
@@ -410,7 +410,7 @@ cos_tokenizer_get_next_char_(CosTokenizer *tokenizer)
 static inline int
 cos_tokenizer_peek_next_char_(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
     if (!tokenizer) {
         return EOF;
     }
@@ -422,7 +422,7 @@ static bool
 cos_tokenizer_match_(CosTokenizer *tokenizer,
                      char character)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
 
     int c = cos_tokenizer_peek_next_char_(tokenizer);
     if (c == character) {
@@ -544,8 +544,8 @@ cos_tokenizer_read_name_(CosTokenizer *tokenizer,
                          CosString *string,
                          CosError *error)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(string != NULL);
 
     int c;
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
@@ -602,8 +602,8 @@ static bool
 cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
                                    CosData *data)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(data != NULL);
 
     unsigned int nested_parentheses_level = 0;
 
@@ -667,7 +667,7 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
 static bool
 cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, unsigned char *result)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
 
     const int c = cos_tokenizer_get_next_char_(tokenizer);
     switch (c) {
@@ -755,7 +755,7 @@ cos_tokenizer_handle_literal_string_escape_sequence_(CosTokenizer *tokenizer, un
 static int
 cos_tokenizer_read_octal_escape_sequence_(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
     if (!tokenizer) {
         return 0;
     }
@@ -787,8 +787,8 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
                                CosData *data,
                                CosError *error)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(data != NULL);
 
     int hex_value = 0;
     bool odd_number_of_hex_digits = false;
@@ -843,8 +843,8 @@ cos_read_number_(CosTokenizer *tokenizer,
                  CosNumber *out_number,
                  CosError *out_error)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(out_number != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(out_number != NULL);
     if (!tokenizer || !out_number) {
         return false;
     }
@@ -922,7 +922,7 @@ cos_read_number_(CosTokenizer *tokenizer,
 static void
 cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
 
     int c = EOF;
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
@@ -944,7 +944,7 @@ cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
 static void
 cos_tokenizer_skip_comment_(CosTokenizer *tokenizer)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
 
     int c = EOF;
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
@@ -964,8 +964,8 @@ cos_tokenizer_skip_comment_(CosTokenizer *tokenizer)
 static bool
 cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *error)
 {
-    COS_PARAMETER_ASSERT(tokenizer != NULL);
-    COS_PARAMETER_ASSERT(string != NULL);
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(string != NULL);
 
     int c = EOF;
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {

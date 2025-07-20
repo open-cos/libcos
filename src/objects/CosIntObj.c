@@ -46,7 +46,7 @@ cos_int_obj_free(CosIntObj *int_obj)
 int
 cos_int_obj_get_value(const CosIntObj *int_obj)
 {
-    COS_PARAMETER_ASSERT(int_obj != NULL);
+    COS_API_PARAM_CHECK(int_obj != NULL);
     if (!int_obj) {
         return 0;
     }
@@ -58,7 +58,7 @@ void
 cos_int_obj_set_value(CosIntObj *int_obj,
                       int value)
 {
-    COS_PARAMETER_ASSERT(int_obj != NULL);
+    COS_API_PARAM_CHECK(int_obj != NULL);
     if (!int_obj) {
         return;
     }
@@ -69,7 +69,7 @@ cos_int_obj_set_value(CosIntObj *int_obj,
 void
 cos_int_obj_print_desc(const CosIntObj *int_obj)
 {
-    COS_PARAMETER_ASSERT(int_obj != NULL);
+    COS_API_PARAM_CHECK(int_obj != NULL);
     if (!int_obj) {
         return;
     }

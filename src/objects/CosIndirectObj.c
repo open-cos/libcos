@@ -36,7 +36,7 @@ CosIndirectObj *
 cos_indirect_obj_alloc(CosObjID id,
                        CosObj *value)
 {
-    COS_PARAMETER_ASSERT(value != NULL);
+    COS_API_PARAM_CHECK(value != NULL);
     if (!value) {
         return NULL;
     }
@@ -68,7 +68,7 @@ cos_indirect_obj_free(CosIndirectObj *indirect_obj)
 CosObjID
 cos_indirect_obj_get_id(const CosIndirectObj *indirect_obj)
 {
-    COS_PARAMETER_ASSERT(indirect_obj != NULL);
+    COS_API_PARAM_CHECK(indirect_obj != NULL);
     if (!indirect_obj) {
         return CosObjID_Invalid;
     }
@@ -79,7 +79,7 @@ cos_indirect_obj_get_id(const CosIndirectObj *indirect_obj)
 CosObj *
 cos_indirect_obj_get_value(const CosIndirectObj *indirect_obj)
 {
-    COS_PARAMETER_ASSERT(indirect_obj != NULL);
+    COS_API_PARAM_CHECK(indirect_obj != NULL);
     if (!indirect_obj) {
         return NULL;
     }
@@ -90,7 +90,7 @@ cos_indirect_obj_get_value(const CosIndirectObj *indirect_obj)
 CosObjValueType
 cos_indirect_obj_get_type(const CosIndirectObj *indirect_obj)
 {
-    COS_PARAMETER_ASSERT(indirect_obj != NULL);
+    COS_API_PARAM_CHECK(indirect_obj != NULL);
     if (!indirect_obj) {
         return CosObjValueType_Unknown;
     }
@@ -105,7 +105,7 @@ cos_indirect_obj_get_type(const CosIndirectObj *indirect_obj)
 void
 cos_indirect_obj_print_desc(const CosIndirectObj *indirect_obj)
 {
-    COS_PARAMETER_ASSERT(indirect_obj != NULL);
+    COS_API_PARAM_CHECK(indirect_obj != NULL);
     if (!indirect_obj) {
         return;
     }

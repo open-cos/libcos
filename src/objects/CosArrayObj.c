@@ -80,7 +80,7 @@ cos_array_obj_free(CosArrayObj *array_obj)
 size_t
 cos_array_obj_get_count(const CosArrayObj *array_obj)
 {
-    COS_PARAMETER_ASSERT(array_obj != NULL);
+    COS_API_PARAM_CHECK(array_obj != NULL);
     if (!array_obj) {
         return 0;
     }
@@ -93,7 +93,7 @@ cos_array_obj_get_at(const CosArrayObj *array_obj,
                      size_t index,
                      CosError * COS_Nullable out_error)
 {
-    COS_PARAMETER_ASSERT(array_obj != NULL);
+    COS_API_PARAM_CHECK(array_obj != NULL);
     if (!array_obj) {
         return NULL;
     }
@@ -114,8 +114,8 @@ cos_array_obj_insert(CosArrayObj *array_obj,
                      CosObj *obj,
                      CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(array_obj != NULL);
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(array_obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!array_obj || !obj) {
         return false;
     }
@@ -131,8 +131,8 @@ cos_array_obj_append(CosArrayObj *array_obj,
                      CosObj *obj,
                      CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(array_obj != NULL);
-    COS_PARAMETER_ASSERT(obj != NULL);
+    COS_API_PARAM_CHECK(array_obj != NULL);
+    COS_API_PARAM_CHECK(obj != NULL);
     if (!array_obj || !obj) {
         return false;
     }
@@ -147,7 +147,7 @@ cos_array_obj_remove_at(CosArrayObj *array_obj,
                         size_t index,
                         CosError * COS_Nullable error)
 {
-    COS_PARAMETER_ASSERT(array_obj != NULL);
+    COS_API_PARAM_CHECK(array_obj != NULL);
     if (!array_obj) {
         return false;
     }

@@ -23,7 +23,7 @@ struct CosStringObj {
 CosStringObj * COS_Nullable
 cos_string_obj_alloc(CosData *data)
 {
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!data) {
         return NULL;
     }
@@ -54,8 +54,8 @@ void
 cos_string_obj_set_value(CosStringObj *string_obj,
                          CosData *data)
 {
-    COS_PARAMETER_ASSERT(string_obj != NULL);
-    COS_PARAMETER_ASSERT(data != NULL);
+    COS_API_PARAM_CHECK(string_obj != NULL);
+    COS_API_PARAM_CHECK(data != NULL);
     if (!string_obj || !data) {
         return;
     }
@@ -74,7 +74,7 @@ cos_string_obj_set_value(CosStringObj *string_obj,
 const CosData *
 cos_string_obj_get_value(const CosStringObj *string_obj)
 {
-    COS_PARAMETER_ASSERT(string_obj != NULL);
+    COS_API_PARAM_CHECK(string_obj != NULL);
     if (!string_obj) {
         return NULL;
     }
@@ -85,7 +85,7 @@ cos_string_obj_get_value(const CosStringObj *string_obj)
 void
 cos_string_obj_print_desc(const CosStringObj *string_obj)
 {
-    COS_PARAMETER_ASSERT(string_obj != NULL);
+    COS_API_PARAM_CHECK(string_obj != NULL);
     if (!string_obj) {
         return;
     }

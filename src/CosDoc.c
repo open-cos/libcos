@@ -95,7 +95,7 @@ cos_doc_get_object(CosDoc *doc,
 CosDiagnosticHandler *
 cos_doc_get_diagnostic_handler(const CosDoc *doc)
 {
-    COS_PARAMETER_ASSERT(doc != NULL);
+    COS_API_PARAM_CHECK(doc != NULL);
     if (!doc) {
         return NULL;
     }
@@ -107,7 +107,7 @@ void
 cos_doc_set_diagnostic_handler(CosDoc *doc,
                                CosDiagnosticHandler * COS_Nullable handler)
 {
-    COS_PARAMETER_ASSERT(doc != NULL);
+    COS_API_PARAM_CHECK(doc != NULL);
     if (!doc) {
         return;
     }
