@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
+#include "parse/CosBaseParser.h"
 #include "syntax/tokenizer/CosToken.h"
 #include "syntax/tokenizer/CosTokenValue.h"
 #include "syntax/tokenizer/CosTokenizer.h"
@@ -79,22 +80,10 @@ cos_parser_context_allows_(const CosObjParserContext *context,
     return (context->flags & flags) == flags;
 }
 
-enum {
-    /// The size of the parser's token buffer.
-    COS_OBJ_PARSER_TOKEN_BUFFER_SIZE = 3,
-};
-
 struct CosObjParser {
-    CosDoc *doc;
-    CosStream *input_stream;
-    CosTokenizer *tokenizer;
-
-    CosToken token_buffer[COS_OBJ_PARSER_TOKEN_BUFFER_SIZE];
-    size_t token_count;
+    CosBaseParser base;
 
     CosObj * COS_Nullable peeked_obj;
-
-    CosDiagnosticHandler *diagnostic_handler;
 };
 
 static bool
@@ -131,57 +120,6 @@ static CosObj * COS_Nullable
 cos_handle_real_(CosObjParser *parser,
                  const CosObjParserContext *context,
                  CosError * COS_Nullable error);
-
-/**
- * @brief Gets the parser's current token.
- *
- * @param parser The parser.
- *
- * @return The current token, or @c NULL if there is no current token.
- */
-static CosToken * COS_Nullable
-cos_current_token_(CosObjParser *parser);
-
-/**
- * @brief Checks if there is a next token.
- *
- * @param parser The parser.
- *
- * @return @c true if there is a next token, otherwise @c false.
- */
-static bool
-cos_has_next_token_(CosObjParser *parser);
-
-/**
- * @brief Peeks a next token without consuming it.
- *
- * Additional tokens are read to fill the buffer up to the specified lookahead index.
- *
- * @param parser The parser.
- * @param lookahead The lookahead index.
- *
- * @return The peeked next token, or @c NULL if there is no next token.
- */
-static CosToken * COS_Nullable
-cos_peek_next_token_(CosObjParser *parser,
-                     unsigned int lookahead);
-
-/**
- * @brief Advances the parser to the next token.
- *
- * This function advances the parser to the next token by shifting the token buffer,
- * releasing the current token. Additional tokens are *not* read to re-fill the buffer.
- *
- * @param parser The parser to be advanced.
- */
-static void
-cos_parser_advance_(CosObjParser *parser);
-
-static bool
-cos_matches_next_token_(CosObjParser *parser,
-                        CosToken_Type type,
-                        CosError * COS_Nullable out_error)
-    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 CosObjParser *
 cos_obj_parser_create(CosDoc *document,
@@ -225,30 +163,9 @@ cos_obj_parser_init_(CosObjParser * const self,
         return false;
     }
 
-    CosTokenizer * const tokenizer = cos_tokenizer_create(input_stream);
-    if (!tokenizer) {
-        goto failure;
-    }
-
-    self->doc = document;
-    self->input_stream = input_stream;
-    self->tokenizer = tokenizer;
-
-    CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
-    if (diagnostic_handler) {
-        self->diagnostic_handler = diagnostic_handler;
-    }
-    else {
-        self->diagnostic_handler = cos_diagnostic_handler_get_default();
-    }
-
-    return true;
-
-failure:
-    if (tokenizer) {
-        cos_tokenizer_destroy(tokenizer);
-    }
-    return false;
+    return cos_base_parser_init(&(self->base),
+                                document,
+                                input_stream);
 }
 
 void
@@ -262,15 +179,7 @@ cos_obj_parser_destroy(CosObjParser *parser)
         cos_obj_free(COS_nonnull_cast(parser->peeked_obj));
     }
 
-    // Release all the buffered tokens.
-    for (size_t i = 0; i < parser->token_count; i++) {
-        CosToken * const token = &(parser->token_buffer[i]);
-        cos_token_reset(token);
-    }
-
-    cos_tokenizer_destroy(parser->tokenizer);
-
-    free(parser);
+    cos_base_parser_destroy(&(parser->base));
 }
 
 bool
@@ -406,7 +315,7 @@ cos_next_object_(CosObjParser *parser,
         return NULL;
     }
 
-    CosToken * const token = cos_current_token_(parser);
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (!token) {
         goto failure;
     }
@@ -505,7 +414,7 @@ cos_handle_integer_or_indirect_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
 
-    CosToken *current_token = cos_current_token_(parser);
+    CosToken *current_token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!current_token ||
                      current_token->type != CosToken_Type_Integer)) {
         goto failure;
@@ -513,14 +422,14 @@ cos_handle_integer_or_indirect_(CosObjParser *parser,
     // We have an integer token on the stack.
 
     // Peek up to two more tokens to determine if this is an indirect object reference or definition, or just an integer.
-    CosToken * const second_token = cos_peek_next_token_(parser, 1);
+    CosToken * const second_token = cos_base_parser_peek_next_token(&(parser->base), 1);
     if (!second_token ||
         second_token->type != CosToken_Type_Integer) {
         goto integer_obj;
     }
     // We have two integer tokens on the stack.
 
-    CosToken * const third_token = cos_peek_next_token_(parser, 2);
+    CosToken * const third_token = cos_base_parser_peek_next_token(&(parser->base), 2);
     if (!third_token) {
         goto integer_obj;
     }
@@ -558,7 +467,7 @@ cos_handle_integer_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
 
-    CosToken * const token = cos_current_token_(parser);
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Integer)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -577,7 +486,7 @@ cos_handle_integer_(CosObjParser *parser,
         goto failure;
     }
 
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     CosIntObj * const int_obj = cos_int_obj_alloc(int_value);
     return (CosObj *)int_obj;
@@ -596,7 +505,7 @@ cos_handle_array_(CosObjParser *parser,
 
     CosArray *array = NULL;
 
-    CosToken * const token = cos_current_token_(parser);
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_ArrayStart)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -605,7 +514,7 @@ cos_handle_array_(CosObjParser *parser,
         goto failure;
     }
 
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     array = cos_array_create(sizeof(CosObj *),
                              &cos_array_obj_callbacks,
@@ -615,7 +524,7 @@ cos_handle_array_(CosObjParser *parser,
     }
 
     bool element_success = false;
-    while (cos_has_next_token_(parser)) {
+    while (cos_base_parser_has_next_token(&(parser->base))) {
         // Parse the next array element.
         element_success = cos_handle_array_element_(parser,
                                                     context,
@@ -651,10 +560,10 @@ cos_handle_array_element_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
     COS_IMPL_PARAM_CHECK(array != NULL);
 
-    if (cos_matches_next_token_(parser,
-                                CosToken_Type_ArrayEnd,
-                                out_error)) {
-        cos_parser_advance_(parser);
+    if (cos_base_parser_matches_next_token(&(parser->base),
+                                           CosToken_Type_ArrayEnd,
+                                           out_error)) {
+        cos_base_parser_advance(&(parser->base));
         return false;
     }
 
@@ -699,7 +608,7 @@ cos_handle_dict_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
 
     // Consume the dictionary start token.
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     CosDict *new_dict = NULL;
 
@@ -711,7 +620,7 @@ cos_handle_dict_(CosObjParser *parser,
     }
 
     bool entry_success = false;
-    while (cos_has_next_token_(parser)) {
+    while (cos_base_parser_has_next_token(&(parser->base))) {
         entry_success = cos_handle_dict_entry_(parser,
                                                context,
                                                new_dict,
@@ -728,9 +637,9 @@ cos_handle_dict_(CosObjParser *parser,
     }
 
     // Check if the next token denotes the beginning of a stream object's data.
-    if (cos_matches_next_token_(parser,
-                                CosToken_Type_Stream,
-                                out_error)) {
+    if (cos_base_parser_matches_next_token(&(parser->base),
+                                           CosToken_Type_Stream,
+                                           out_error)) {
         return cos_handle_stream_(parser,
                                   context,
                                   dict_obj,
@@ -756,10 +665,10 @@ cos_handle_dict_entry_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
     COS_IMPL_PARAM_CHECK(dict != NULL);
 
-    if (cos_matches_next_token_(parser,
-                                CosToken_Type_DictionaryEnd,
-                                out_error)) {
-        cos_parser_advance_(parser);
+    if (cos_base_parser_matches_next_token(&(parser->base),
+                                           CosToken_Type_DictionaryEnd,
+                                           out_error)) {
+        cos_base_parser_advance(&(parser->base));
         return false;
     }
 
@@ -819,7 +728,7 @@ cos_handle_stream_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
     COS_IMPL_PARAM_CHECK(dict_obj != NULL);
 
-    CosToken * const stream_token = cos_current_token_(parser);
+    CosToken * const stream_token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!stream_token ||
                      stream_token->type != CosToken_Type_Stream)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -832,7 +741,7 @@ cos_handle_stream_(CosObjParser *parser,
 
     // TODO: Validate the stream keyword token.
     // Consume the stream keyword.
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     COS_LOG_TRACE(cos_log_context_get_default(),
                   "Parsing stream object.");
@@ -875,20 +784,20 @@ cos_handle_stream_(CosObjParser *parser,
     CosStreamOffset stream_end_position = stream_start + stream_length;
 
     // Skip the stream data.
-    if (!cos_stream_seek(parser->input_stream,
+    if (!cos_stream_seek(parser->base.input_stream,
                          stream_end_position,
                          CosStreamOffsetWhence_Set,
                          out_error)) {
         goto failure;
     }
 
-    cos_tokenizer_reset(parser->tokenizer);
+    cos_tokenizer_reset(parser->base.tokenizer);
 
     // Skip the endstream keyword.
-    if (cos_matches_next_token_(parser,
-                                CosToken_Type_EndStream,
-                                out_error)) {
-        cos_parser_advance_(parser);
+    if (cos_base_parser_matches_next_token(&(parser->base),
+                                           CosToken_Type_EndStream,
+                                           out_error)) {
+        cos_base_parser_advance(&(parser->base));
     }
     else {
         // Error: Expected an endstream token.
@@ -976,16 +885,16 @@ cos_handle_indirect_ref_(CosObjParser *parser,
         goto failure;
     }
 
-    COS_ASSERT(parser->token_buffer[0].type == CosToken_Type_Integer,
+    COS_ASSERT(parser->base.token_buffer[0].type == CosToken_Type_Integer,
                "Expected an object-number integer token");
-    COS_ASSERT(parser->token_buffer[1].type == CosToken_Type_Integer,
+    COS_ASSERT(parser->base.token_buffer[1].type == CosToken_Type_Integer,
                "Expected a generation-number integer token");
-    COS_ASSERT(parser->token_buffer[2].type == CosToken_Type_R,
+    COS_ASSERT(parser->base.token_buffer[2].type == CosToken_Type_R,
                "Expected an 'R' keyword token");
 
     // TODO: Validate the indirect reference tokens and whitespace.
-    const CosToken * const obj_num_token = &parser->token_buffer[0];
-    const CosToken * const gen_num_token = &parser->token_buffer[1];
+    const CosToken * const obj_num_token = &parser->base.token_buffer[0];
+    const CosToken * const gen_num_token = &parser->base.token_buffer[1];
 
     int obj_num = 0;
     int gen_num = 0;
@@ -1007,14 +916,14 @@ cos_handle_indirect_ref_(CosObjParser *parser,
 
     CosObj * const obj = (CosObj *)cos_reference_obj_alloc(cos_obj_id_make((unsigned int)obj_num,
                                                                            (unsigned int)gen_num),
-                                                           parser->doc);
+                                                           parser->base.doc);
     if (!obj) {
         goto failure;
     }
 
-    cos_parser_advance_(parser);
-    cos_parser_advance_(parser);
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
+    cos_base_parser_advance(&(parser->base));
+    cos_base_parser_advance(&(parser->base));
 
     return obj;
 
@@ -1038,15 +947,15 @@ cos_handle_indirect_def_(CosObjParser *parser,
         goto failure;
     }
 
-    COS_ASSERT(parser->token_buffer[0].type == CosToken_Type_Integer,
+    COS_ASSERT(parser->base.token_buffer[0].type == CosToken_Type_Integer,
                "Expected an object-number integer token");
-    COS_ASSERT(parser->token_buffer[1].type == CosToken_Type_Integer,
+    COS_ASSERT(parser->base.token_buffer[1].type == CosToken_Type_Integer,
                "Expected a generation-number integer token");
-    COS_ASSERT(parser->token_buffer[2].type == CosToken_Type_Obj,
+    COS_ASSERT(parser->base.token_buffer[2].type == CosToken_Type_Obj,
                "Expected an 'obj' keyword token");
 
-    CosToken * const obj_num_token = &parser->token_buffer[0];
-    CosToken * const gen_num_token = &parser->token_buffer[1];
+    CosToken * const obj_num_token = &parser->base.token_buffer[0];
+    CosToken * const gen_num_token = &parser->base.token_buffer[1];
 
     // ISO 19005-1:2005(E), Section 6.1.8 Indirect objects (PDF/A-1a, PDF/A-1b)
     // "The object number and generation number shall be separated by a single white-space character."
@@ -1073,9 +982,9 @@ cos_handle_indirect_def_(CosObjParser *parser,
     }
 
     // Consume the object header tokens.
-    cos_parser_advance_(parser);
-    cos_parser_advance_(parser);
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
+    cos_base_parser_advance(&(parser->base));
+    cos_base_parser_advance(&(parser->base));
 
     const CosObjID obj_id = cos_obj_id_make((unsigned int)obj_num,
                                             (unsigned int)gen_num);
@@ -1098,11 +1007,11 @@ cos_handle_indirect_def_(CosObjParser *parser,
         goto failure;
     }
 
-    if (cos_matches_next_token_(parser,
-                                CosToken_Type_EndObj,
-                                out_error)) {
+    if (cos_base_parser_matches_next_token(&(parser->base),
+                                           CosToken_Type_EndObj,
+                                           out_error)) {
         // TODO: Validate endobj token.
-        cos_parser_advance_(parser);
+        cos_base_parser_advance(&(parser->base));
     }
     else {
         printf("Expected endobj token\n");
@@ -1133,7 +1042,7 @@ cos_parse_string_(CosObjParser *parser,
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
 
-    CosToken *token = cos_current_token_(parser);
+    CosToken *token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Literal_String ||
                      token->type != CosToken_Type_Hex_String)) {
@@ -1151,7 +1060,7 @@ cos_parse_string_(CosObjParser *parser,
         goto failure;
     }
 
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     CosStringObj * const string_obj = cos_string_obj_alloc(string_data);
     return (CosObj *)string_obj;
@@ -1166,7 +1075,7 @@ cos_parse_name_(CosObjParser *parser,
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
 
-    CosToken * const token = cos_current_token_(parser);
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Name)) {
         goto failure;
@@ -1180,7 +1089,7 @@ cos_parse_name_(CosObjParser *parser,
         goto failure;
     }
 
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     CosNameObj * const nameObj = cos_name_obj_alloc(name);
     return (CosObj *)nameObj;
@@ -1204,7 +1113,7 @@ cos_handle_real_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken *token = cos_current_token_(parser);
+    CosToken *token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Real)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -1222,7 +1131,7 @@ cos_handle_real_(CosObjParser *parser,
         goto failure;
     }
 
-    cos_parser_advance_(parser);
+    cos_base_parser_advance(&(parser->base));
 
     CosRealObj * const real_obj = cos_real_obj_alloc(real_value);
     return (CosObj *)real_obj;
@@ -1232,98 +1141,5 @@ failure:
 }
 
 // NOLINTEND(misc-no-recursion)
-
-static CosToken * COS_Nullable
-cos_current_token_(CosObjParser *parser)
-{
-    COS_IMPL_PARAM_CHECK(parser != NULL);
-
-    return cos_peek_next_token_(parser, 0);
-}
-
-static bool
-cos_has_next_token_(CosObjParser *parser)
-{
-    COS_IMPL_PARAM_CHECK(parser != NULL);
-
-    const CosToken *token = cos_peek_next_token_(parser, 0);
-    return (token != NULL);
-}
-
-static CosToken *
-cos_peek_next_token_(CosObjParser *parser,
-                     unsigned int lookahead)
-{
-    COS_IMPL_PARAM_CHECK(parser != NULL);
-
-    if (lookahead >= COS_ARRAY_SIZE(parser->token_buffer)) {
-        return NULL;
-    }
-
-    // Fill up the buffer up to the requested lookahead index.
-    for (unsigned int i = 0; i <= lookahead; i++) {
-        if (i >= parser->token_count) {
-            CosToken *token = &(parser->token_buffer[i]);
-
-            if (!cos_tokenizer_get_next_token(parser->tokenizer,
-                                              token,
-                                              NULL)) {
-                return NULL;
-            }
-
-            parser->token_count++;
-        }
-    }
-
-    CosToken * const peeked_token = &parser->token_buffer[lookahead];
-    COS_ASSERT(peeked_token != NULL, "Expected a token");
-    return peeked_token;
-}
-
-static void
-cos_parser_advance_(CosObjParser *parser)
-{
-    COS_IMPL_PARAM_CHECK(parser != NULL);
-
-    if (parser->token_count == 0) {
-        return;
-    }
-
-    // Release the current token.
-    CosToken *current_token = &(parser->token_buffer[0]);
-    cos_token_reset(current_token);
-
-    const size_t token_buffer_size = COS_ARRAY_SIZE(parser->token_buffer);
-
-    // "Pop" the first token by moving the rest of the buffer left with memmove.
-    memmove(&parser->token_buffer[0],
-            &parser->token_buffer[1],
-            sizeof(parser->token_buffer[0]) * (token_buffer_size - 1));
-
-    // Zero out the last token after the shift.
-    memset(&(parser->token_buffer[token_buffer_size - 1]),
-           0,
-           sizeof(CosToken));
-
-    // Decrement the token count.
-    parser->token_count--;
-}
-
-static bool
-cos_matches_next_token_(CosObjParser *parser,
-                        CosToken_Type type,
-                        CosError * COS_Nullable out_error)
-{
-    COS_IMPL_PARAM_CHECK(parser != NULL);
-
-    CosToken * const token = cos_peek_next_token_(parser, 0);
-    if (!token) {
-        return false;
-    }
-
-    (void)out_error;
-
-    return (token->type == type);
-}
 
 COS_ASSUME_NONNULL_END

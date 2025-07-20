@@ -14,6 +14,11 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+enum {
+    /// The size of the parser's token buffer.
+    COS_BASE_PARSER_TOKEN_BUFFER_SIZE = 3,
+};
+
 struct CosBaseParser {
     /**
      * The allocator used by the parser.

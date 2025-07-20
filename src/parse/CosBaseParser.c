@@ -5,6 +5,7 @@
 #include "libcos/parse/CosBaseParser.h"
 
 #include "common/Assert.h"
+#include "common/CosDiagnosticHandler.h"
 #include "syntax/tokenizer/CosTokenizer.h"
 
 #include "libcos/CosDoc.h"
@@ -53,9 +54,16 @@ cos_base_parser_init(CosBaseParser *parser,
     parser->tokenizer = tokenizer;
 
     parser->token_buffer = token_buffer;
-    parser->token_buffer_size = 3; // Initial size of the token buffer.
+    parser->token_buffer_size = COS_BASE_PARSER_TOKEN_BUFFER_SIZE; // Initial size of the token buffer.
     parser->token_count = 0;
-    parser->diagnostic_handler = cos_doc_get_diagnostic_handler(document);
+
+    CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
+    if (diagnostic_handler) {
+        parser->diagnostic_handler = diagnostic_handler;
+    }
+    else {
+        parser->diagnostic_handler = cos_diagnostic_handler_get_default();
+    }
 
     return true;
 
