@@ -25,15 +25,37 @@ struct CosBaseParser {
      */
     CosAllocator *allocator;
 
-    CosDoc *doc;             ///< The document being parsed.
-    CosStream *input_stream; ///< The input stream to read from.
-    CosTokenizer *tokenizer; ///< The tokenizer used for parsing.
+    /**
+     * The document being parsed.
+     */
+    CosDoc *doc;
 
-    CosToken *token_buffer;   ///< Buffer for tokens.
-    size_t token_buffer_size; ///< Size of the token buffer.
-    size_t token_count;       ///< Number of tokens in the buffer.
+    /**
+     * The input stream to read from.
+     */
+    CosStream *input_stream;
+    /**
+     * The tokenizer used for parsing.
+     */
+    CosTokenizer *tokenizer;
 
-    CosDiagnosticHandler * COS_Nullable diagnostic_handler; ///< Handler for diagnostics.
+    /**
+     * The buffer for tokens.
+     */
+    CosToken *token_buffer;
+    /**
+     * The size of the token buffer.
+     */
+    size_t token_buffer_size;
+    /**
+     * The number of tokens currently in the buffer.
+     */
+    size_t token_count;
+
+    /**
+     * The handler for diagnostics.
+     */
+    CosDiagnosticHandler * COS_Nullable diagnostic_handler;
 };
 
 COS_API bool
