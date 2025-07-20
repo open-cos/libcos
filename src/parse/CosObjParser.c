@@ -282,7 +282,7 @@ cos_handle_stream_(CosObjParser *parser,
                    const CosObjParserContext *context,
                    CosDictObj *dict_obj,
                    CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_HOLDS(3);
+    COS_OWNERSHIP_TAKES(3);
 
 static CosObj * COS_Nullable
 cos_handle_bool_(CosObjParser *parser,

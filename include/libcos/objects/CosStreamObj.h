@@ -22,7 +22,8 @@ CosStreamObj * COS_Nullable
 cos_stream_obj_create(CosDictObj *dict,
                       CosData * COS_Nullable data)
     COS_ALLOCATOR_FUNC
-    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_obj_destroy);
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_obj_destroy)
+    COS_OWNERSHIP_TAKES(1, 2);
 
 CosDictObj * COS_Nullable
 cos_stream_obj_get_dict(const CosStreamObj *stream_obj);
