@@ -42,6 +42,12 @@
 
 #if COS_HAS_BOUNDS_SAFETY
 
+    #define COS_FIELD_SPEC_ATTR_nonnull_counted_by(x) __counted_by(x)
+    #define COS_FIELD_SPEC_ATTR_nullable_counted_by(x) __counted_by_or_null(x)
+
+    #define COS_FIELD_SPEC_ATTR_nonnull_sized_by(x) __sized_by(x)
+    #define COS_FIELD_SPEC_ATTR_nullable_sized_by(x) __sized_by_or_null(x)
+
     #define COS_ATTR_in_nonnull_counted_by(x) __counted_by(x)
     #define COS_ATTR_in_nullable_counted_by(x) __counted_by_or_null(x)
 
@@ -55,6 +61,12 @@
     #define COS_ATTR_out_nullable_sized_by(x) __sized_by_or_null(x)
 
 #elif COS_HAS_SAL
+
+    #define COS_FIELD_SPEC_ATTR_nonnull_counted_by(x) _Field_size_(x)
+    #define COS_FIELD_SPEC_ATTR_nullable_counted_by(x) _Field_size_opt_(x)
+
+    #define COS_FIELD_SPEC_ATTR_nonnull_sized_by(x) _Field_size_bytes_(x)
+    #define COS_FIELD_SPEC_ATTR_nullable_sized_by(x) _Field_size_bytes_opt_(x)
 
     #define COS_ATTR_in_nonnull_counted_by(x) _In_reads_(x)
     #define COS_ATTR_in_nullable_counted_by(x) _In_reads_opt_(x)
@@ -72,6 +84,12 @@
 
     #define COS_NO_OP_
 
+    #define COS_FIELD_SPEC_ATTR_nonnull_counted_by(x) COS_NO_OP_
+    #define COS_FIELD_SPEC_ATTR_nullable_counted_by(x) COS_NO_OP_
+
+    #define COS_FIELD_SPEC_ATTR_nonnull_sized_by(x) COS_NO_OP_
+    #define COS_FIELD_SPEC_ATTR_nullable_sized_by(x) COS_NO_OP_
+
     #define COS_ATTR_in_nonnull_counted_by(x) COS_NO_OP_
     #define COS_ATTR_in_nullable_counted_by(x) COS_NO_OP_
 
@@ -85,6 +103,19 @@
     #define COS_ATTR_out_nullable_sized_by(x) COS_NO_OP_
 
 #endif
+
+// MARK: Field Specifications
+
+#define COS_FIELD_SPEC(nullability, type) \
+    COS_FIELD_SPEC_IMPL_(nullability, type, _NONE)
+
+#define COS_FIELD_SPEC_IMPL_(nullability, type, ...) \
+    COS_FIELD_SPEC_GET_NAME_(nullability, type)
+
+#define COS_FIELD_SPEC_GET_NAME_(nullability, type) \
+    COS_FIELD_SPEC_ATTR_##nullability##_##type
+
+// MARK: Parameter Specifications
 
 #define COS_PARAM_SPEC(direction, nullability, type) \
     COS_PARAM_SPEC_IMPL_(direction, nullability, type, _NONE)

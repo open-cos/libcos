@@ -41,14 +41,20 @@ struct CosBaseParser {
 
     /**
      * The buffer for tokens.
+     *
+     * The capacity of the buffer is @a token_buffer_size ,
+     * and the current number of tokens in the buffer is @a token_count .
      */
+    COS_FIELD_SPEC(nonnull, counted_by(token_buffer_size))
     CosToken *token_buffer;
+
     /**
-     * The size of the token buffer.
+     * The size or capacity of @a token_buffer .
      */
     size_t token_buffer_size;
+
     /**
-     * The number of tokens currently in the buffer.
+     * The number of tokens currently in @a token_buffer .
      */
     size_t token_count;
 
