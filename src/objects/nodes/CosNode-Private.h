@@ -13,6 +13,8 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosNode {
     CosNodeType type;
+    CosAllocator *allocator;
+    unsigned int retain_count;
     CosNode * COS_Nullable parent;
 };
 
@@ -26,8 +28,11 @@ struct CosNode {
  */
 COS_API bool
 cos_node_init_(CosNode *node,
-              CosNodeType type)
+               CosNodeType type)
     COS_WARN_UNUSED_RESULT;
+
+COS_API void
+cos_node_destroy(CosNode *node);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

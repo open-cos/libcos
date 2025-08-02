@@ -5,7 +5,10 @@
 #include "libcos/objects/nodes/CosNode.h"
 
 #include "common/Assert.h"
+#include "objects/nodes/CosArrayNode-Private.h"
 #include "objects/nodes/CosNode-Private.h"
+
+#include "libcos/common/memory/CosMemory.h"
 
 #include <stddef.h>
 
@@ -24,6 +27,46 @@ cos_node_init_(CosNode *node,
     node->parent = NULL;
 
     return true;
+}
+
+void
+cos_node_destroy(CosNode *node)
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    if (COS_UNLIKELY(!node)) {
+        return;
+    }
+
+    switch (node->type) {
+        case CosNodeType_Unknown:
+            break;
+        case CosNodeType_Array: {
+            cos_array_node_deinit_((CosArrayNode *)node);
+        } break;
+        case CosNodeType_Dictionary:
+            break;
+        case CosNodeType_Stream:
+            break;
+        case CosNodeType_Indirect:
+            break;
+        case CosNodeType_Reference:
+            break;
+        case CosNodeType_Null:
+            break;
+        case CosNodeType_Boolean:
+            break;
+        case CosNodeType_Integer:
+            break;
+        case CosNodeType_Real:
+            break;
+        case CosNodeType_String:
+            break;
+        case CosNodeType_Name:
+            break;
+    }
+
+    // Free the node itself.
+    cos_free(node->allocator, node);
 }
 
 CosNodeType
@@ -46,6 +89,40 @@ cos_node_get_parent(const CosNode *node)
     }
 
     return node->parent;
+}
+
+// MARK: - Reference counting
+
+void
+cos_node_retain(CosNode *node)
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    if (COS_UNLIKELY(!node)) {
+        return;
+    }
+
+    node->retain_count++;
+}
+
+void
+cos_node_release(CosNode *node)
+{
+    COS_API_PARAM_CHECK(node != NULL);
+    if (COS_UNLIKELY(!node)) {
+        return;
+    }
+
+    // Make sure that we are not over-releasing the node.
+    if (COS_UNLIKELY(node->retain_count == 0)) {
+        // TODO: Log warning for over-released node.
+        return;
+    }
+
+    node->retain_count--;
+
+    if (COS_UNLIKELY(node->retain_count == 0)) {
+        cos_node_destroy(node);
+    }
 }
 
 // MARK: - Type checkers

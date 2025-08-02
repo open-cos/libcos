@@ -4,9 +4,10 @@
 
 #include "libcos/objects/nodes/CosArrayNode.h"
 
-#include "CosNode-Private.h"
 #include "common/Assert.h"
 #include "common/CosArray.h"
+#include "objects/nodes/CosArrayNode-Private.h"
+#include "objects/nodes/CosNode-Private.h"
 
 #include "libcos/common/memory/CosAllocator.h"
 
@@ -24,10 +25,7 @@ static bool
 cos_array_node_init_(CosArrayNode *array_node,
                      CosArray *value)
 {
-    COS_API_PARAM_CHECK(array_node != NULL);
-    if (COS_UNLIKELY(!array_node)) {
-        return false;
-    }
+    COS_IMPL_PARAM_CHECK(array_node != NULL);
 
     if (!cos_node_init_(&array_node->base,
                         CosNodeType_Array)) {
@@ -37,6 +35,14 @@ cos_array_node_init_(CosArrayNode *array_node,
     array_node->value = value;
 
     return true;
+}
+
+void
+cos_array_node_deinit_(CosArrayNode *array_node)
+{
+    COS_IMPL_PARAM_CHECK(array_node != NULL);
+
+    cos_array_destroy(array_node->value);
 }
 
 CosArrayNode *

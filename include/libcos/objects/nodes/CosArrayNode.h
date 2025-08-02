@@ -19,6 +19,7 @@ COS_API CosArrayNode * COS_Nullable
 cos_array_node_create(CosAllocator *allocator,
                       CosArray *value)
     COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_node_release)
     COS_OWNERSHIP_HOLDS(2);
 
 /**

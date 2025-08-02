@@ -43,6 +43,14 @@ cos_obj_node_get_type(const CosNode *node);
 COS_API CosNode * COS_Nullable
 cos_node_get_parent(const CosNode *node);
 
+// MARK: - Reference counting
+
+COS_API void
+cos_node_retain(CosNode *node);
+
+COS_API void
+cos_node_release(CosNode *node);
+
 // MARK: - Type checkers
 
 COS_API bool
