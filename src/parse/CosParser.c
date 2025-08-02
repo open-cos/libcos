@@ -2,7 +2,7 @@
  * Copyright (c) 2023-2024 OpenCOS.
  */
 
-#include "CosObjParser.h"
+#include "CosParser.h"
 
 #include "common/Assert.h"
 #include "common/CosDict.h"
@@ -33,6 +33,7 @@
 #include <libcos/objects/CosReferenceObj.h>
 #include <libcos/objects/CosStreamObj.h>
 #include <libcos/objects/CosStringObj.h>
+#include <libcos/objects/nodes/CosNode.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +84,7 @@ cos_parser_context_allows_(const CosObjParserContext *context,
 struct CosObjParser {
     CosBaseParser base;
 
-    CosObj * COS_Nullable peeked_node;
+    CosNode * COS_Nullable peeked_node;
 };
 
 static bool
@@ -122,8 +123,8 @@ cos_handle_real_(CosObjParser *parser,
                  CosError * COS_Nullable error);
 
 CosObjParser *
-cos_obj_parser_create(CosDoc *document,
-                      CosStream *input_stream)
+cos_obj_parser_create2(CosDoc *document,
+                       CosStream *input_stream)
 {
     COS_API_PARAM_CHECK(document != NULL);
     COS_API_PARAM_CHECK(input_stream != NULL);
@@ -169,34 +170,34 @@ cos_obj_parser_init_(CosObjParser * const self,
 }
 
 void
-cos_obj_parser_destroy(CosObjParser *parser)
+cos_obj_parser_destroy2(CosObjParser *parser)
 {
     if (!parser) {
         return;
     }
 
     if (parser->peeked_node) {
-        cos_obj_free(COS_nonnull_cast(parser->peeked_node));
+        //        cos_obj_free(COS_nonnull_cast(parser->peeked_node));
     }
 
     cos_base_parser_destroy(&(parser->base));
 }
 
 bool
-cos_obj_parser_has_next_object(CosObjParser *parser)
+cos_obj_parser_has_next(CosObjParser *parser)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     if (!parser) {
         return false;
     }
 
-    const CosObj * const obj = cos_obj_parser_peek_object(parser, NULL);
-    return (obj != NULL);
+    const CosNode * const node = cos_obj_parser_peek(parser, NULL);
+    return (node != NULL);
 }
 
-CosObj *
-cos_obj_parser_peek_object(CosObjParser *parser,
-                           CosError * COS_Nullable error)
+CosNode *
+cos_obj_parser_peek(CosObjParser *parser,
+                    CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     if (!parser) {
@@ -221,15 +222,17 @@ cos_obj_parser_peek_object(CosObjParser *parser,
         COS_ERROR_PROPAGATE(error_, error);
         return NULL;
     }
+    //
+    //    parser->peeked_node = obj;
+    //
+    //    return obj;
 
-    parser->peeked_node = obj;
-
-    return obj;
+    return NULL;
 }
 
-CosObj *
-cos_obj_parser_next_object(CosObjParser *parser,
-                           CosError * COS_Nullable error)
+CosNode *
+cos_obj_parser_next(CosObjParser *parser,
+                    CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     if (!parser) {
@@ -237,18 +240,20 @@ cos_obj_parser_next_object(CosObjParser *parser,
     }
 
     if (parser->peeked_node) {
-        CosObj * const obj = parser->peeked_node;
+        CosNode * const node = parser->peeked_node;
         parser->peeked_node = NULL;
-        return obj;
+        return node;
     }
 
     const CosObjParserContext context = {
         .flags = CosObjParserFlag_IndirectObjDef,
     };
+    //
+    //    return cos_next_object_(parser,
+    //                            &context,
+    //                            error);
 
-    return cos_next_object_(parser,
-                            &context,
-                            error);
+    return NULL;
 }
 
 // MARK: - Implementation

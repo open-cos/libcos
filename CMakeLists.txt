@@ -121,6 +121,7 @@ add_library(libcos
     src/objects/nodes/CosRealNode.c
     include/libcos/objects/nodes/CosNullNode.h
     src/objects/nodes/CosNullNode.c
+    src/objects/nodes/CosArrayNode-Private.h
 )
 
 target_include_directories(libcos
@@ -190,6 +191,8 @@ target_sources(libcos PRIVATE
     src/parse/CosBaseParser.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
+    src/parse/CosParser.c
+    src/parse/CosParser.h
     src/syntax/CosKeywords.c
     src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosToken.h

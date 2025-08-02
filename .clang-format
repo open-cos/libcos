@@ -17,6 +17,7 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: All
 AlwaysBreakTemplateDeclarations: Yes
 AttributeMacros:
+  - COS_API
   - COS_Nullable
   - COS_Nonnull
   - COS_ATTR_ALLOC_SIZE
