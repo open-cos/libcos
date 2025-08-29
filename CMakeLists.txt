@@ -514,6 +514,8 @@ target_link_libraries(libcos++ INTERFACE
     libcos
 )
 
+add_subdirectory(tools)
+
 enable_testing()
 add_subdirectory(tests)
 add_clang_format(libcos-test)
