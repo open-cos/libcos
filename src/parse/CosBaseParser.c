@@ -56,6 +56,7 @@ cos_base_parser_init(CosBaseParser *parser,
     parser->token_buffer = token_buffer;
     parser->token_buffer_size = COS_BASE_PARSER_TOKEN_BUFFER_SIZE; // Initial size of the token buffer.
     parser->token_count = 0;
+    parser->owns_tokenizer = true;
 
     CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
     if (diagnostic_handler) {
@@ -77,6 +78,49 @@ failure:
     return false;
 }
 
+bool
+cos_base_parser_init_with_tokenizer(CosBaseParser *parser,
+                                    CosDoc *document,
+                                    CosTokenizer *tokenizer)
+{
+    COS_API_PARAM_CHECK(parser != NULL);
+    COS_API_PARAM_CHECK(document != NULL);
+    COS_API_PARAM_CHECK(tokenizer != NULL);
+    if (COS_UNLIKELY(!parser || !document || !tokenizer)) {
+        return false;
+    }
+
+    CosAllocator * const allocator = cos_doc_get_allocator(document);
+    if (!allocator) {
+        return false;
+    }
+
+    CosToken *token_buffer = cos_alloc(allocator,
+                                       sizeof(CosToken) * COS_BASE_PARSER_TOKEN_BUFFER_SIZE);
+    if (!token_buffer) {
+        return false;
+    }
+
+    parser->allocator = allocator;
+    parser->doc = document;
+    parser->input_stream = NULL;
+    parser->tokenizer = tokenizer;
+    parser->token_buffer = token_buffer;
+    parser->token_buffer_size = COS_BASE_PARSER_TOKEN_BUFFER_SIZE;
+    parser->token_count = 0;
+    parser->owns_tokenizer = false;
+
+    CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
+    if (diagnostic_handler) {
+        parser->diagnostic_handler = diagnostic_handler;
+    }
+    else {
+        parser->diagnostic_handler = cos_diagnostic_handler_get_default();
+    }
+
+    return true;
+}
+
 void
 cos_base_parser_destroy(CosBaseParser *parser)
 {
@@ -91,7 +135,9 @@ cos_base_parser_destroy(CosBaseParser *parser)
         cos_token_reset(token);
     }
 
-    cos_tokenizer_destroy(parser->tokenizer);
+    if (parser->owns_tokenizer) {
+        cos_tokenizer_destroy(parser->tokenizer);
+    }
 
     cos_free(parser->allocator, parser);
 }

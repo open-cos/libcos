@@ -10,6 +10,7 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 COS_DECLS_BEGIN
@@ -30,6 +31,20 @@ cos_xref_table_get_section_count(const CosXrefTable *table);
 CosXrefSection * COS_Nullable
 cos_xref_table_get_section(const CosXrefTable *table,
                            size_t index,
+                           CosError * COS_Nullable out_error);
+
+/**
+ * @brief Adds a section to a cross-reference table.
+ *
+ * @param table The cross-reference table.
+ * @param section The section to add.
+ * @param out_error On input, a pointer to an error object, or @c NULL.
+ *
+ * @return @c true if the section was added, or @c false if an error occurred.
+ */
+bool
+cos_xref_table_add_section(CosXrefTable *table,
+                           CosXrefSection *section,
                            CosError * COS_Nullable out_error);
 
 CosXrefEntry * COS_Nullable

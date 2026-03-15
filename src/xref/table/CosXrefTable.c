@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 
 #include "libcos/common/CosArray.h"
+#include "libcos/common/CosError.h"
 #include "libcos/xref/table/CosXrefEntry.h"
 #include "libcos/xref/table/CosXrefSection.h"
 #include "libcos/xref/table/CosXrefSubsection.h"
@@ -23,13 +24,30 @@ CosXrefTable *
 cos_xref_table_create(void)
 {
     CosXrefTable *table = NULL;
+    CosArray *sections = NULL;
 
     table = calloc(1, sizeof(CosXrefTable));
     if (COS_UNLIKELY(!table)) {
-        return NULL;
+        goto failure;
     }
 
+    sections = cos_array_create(sizeof(CosXrefSection *), NULL, 0);
+    if (COS_UNLIKELY(!sections)) {
+        goto failure;
+    }
+
+    table->sections = sections;
+
     return table;
+
+failure:
+    if (table) {
+        free(table);
+    }
+    if (sections) {
+        cos_array_destroy(sections);
+    }
+    return NULL;
 }
 
 void
@@ -40,6 +58,9 @@ cos_xref_table_destroy(CosXrefTable *table)
         return;
     }
 
+    if (table->sections) {
+        cos_array_destroy(table->sections);
+    }
     free(table);
 }
 
@@ -73,6 +94,20 @@ cos_xref_table_get_section(const CosXrefTable *table,
     }
 
     return section;
+}
+
+bool
+cos_xref_table_add_section(CosXrefTable *table,
+                           CosXrefSection *section,
+                           CosError * COS_Nullable out_error)
+{
+    COS_API_PARAM_CHECK(table != NULL);
+    COS_API_PARAM_CHECK(section != NULL);
+    if (COS_UNLIKELY(!table || !section)) {
+        return false;
+    }
+
+    return cos_array_append_item(table->sections, &section, out_error);
 }
 
 CosXrefEntry *

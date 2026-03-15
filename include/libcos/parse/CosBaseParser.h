@@ -62,6 +62,14 @@ struct CosBaseParser {
      * The handler for diagnostics.
      */
     CosDiagnosticHandler * COS_Nullable diagnostic_handler;
+
+    /**
+     * Whether the parser owns the tokenizer.
+     *
+     * If @c true, the parser will destroy the tokenizer when it is destroyed.
+     * If @c false, the tokenizer is borrowed and will not be destroyed.
+     */
+    bool owns_tokenizer;
 };
 
 COS_API bool
@@ -69,6 +77,24 @@ cos_base_parser_init(CosBaseParser *parser,
                      CosDoc *document,
                      CosStream *input_stream)
     COS_OWNERSHIP_HOLDS(3)
+    COS_WARN_UNUSED_RESULT;
+
+/**
+ * @brief Initializes a parser with an existing (borrowed) tokenizer.
+ *
+ * The parser does not take ownership of the tokenizer; the caller is
+ * responsible for its lifetime.
+ *
+ * @param parser The parser to initialize.
+ * @param document The document being parsed.
+ * @param tokenizer The tokenizer to use. Not owned by the parser.
+ *
+ * @return @c true if the parser was initialized successfully, otherwise @c false.
+ */
+COS_API bool
+cos_base_parser_init_with_tokenizer(CosBaseParser *parser,
+                                    CosDoc *document,
+                                    CosTokenizer *tokenizer)
     COS_WARN_UNUSED_RESULT;
 
 COS_API void
