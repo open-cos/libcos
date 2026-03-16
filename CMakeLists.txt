@@ -191,8 +191,6 @@ target_sources(libcos PRIVATE
     src/parse/CosBaseParser.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
-    src/parse/CosParser.c
-    src/parse/CosParser.h
     src/syntax/CosKeywords.c
     src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosToken.h
