@@ -122,7 +122,7 @@ cos_xref_table_parser_parse(CosXrefTableParser *parser,
                                                out_error) &&
            cos_base_parser_has_next_token(&(parser->base))) {
         CosXrefSection * const section = cos_xref_table_parser_parse_section_(parser,
-                                                                               out_error);
+                                                                              out_error);
         if (!section) {
             goto failure;
         }
@@ -192,7 +192,7 @@ cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
         }
 
         CosXrefSubsection * const subsection = cos_xref_table_parser_parse_subsection_(parser,
-                                                                                        out_error);
+                                                                                       out_error);
         if (!subsection) {
             goto failure;
         }
