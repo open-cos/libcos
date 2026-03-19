@@ -18,6 +18,13 @@
     TEST_NAME(COS_ATTR_UNUSED int argc,               \
               COS_ATTR_UNUSED char * COS_Nullable argv[COS_Nonnull])
 
+#define TEST_EXPECT(expr)            \
+    do {                             \
+        if (COS_UNLIKELY(!(expr))) { \
+            return EXIT_FAILURE;     \
+        }                            \
+    } while (0)
+
 #define TEST_PROLOGUE \
     int test_result = EXIT_SUCCESS;
 

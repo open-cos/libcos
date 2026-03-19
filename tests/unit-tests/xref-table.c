@@ -18,13 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TEST_EXPECT(expr)            \
-    do {                             \
-        if (COS_UNLIKELY(!(expr))) { \
-            return EXIT_FAILURE;     \
-        }                            \
-    } while (0)
-
 COS_ASSUME_NONNULL_BEGIN
 
 /**
