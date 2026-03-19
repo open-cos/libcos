@@ -5,16 +5,18 @@
 #ifndef LIBCOS_COS_TEST_H
 #define LIBCOS_COS_TEST_H
 
+#include <libcos/common/CosDefines.h>
+
 #include <stdlib.h>
 
-#define TEST_MAIN()                     \
-    extern int                          \
-    TEST_NAME(int argc,                 \
-              char *argv[]);            \
-                                        \
-    int                                 \
-    TEST_NAME(COS_ATTR_UNUSED int argc, \
-              COS_ATTR_UNUSED char *argv[])
+#define TEST_MAIN()                                   \
+    extern int                                        \
+    TEST_NAME(int argc,                               \
+              char * COS_Nullable argv[COS_Nonnull]); \
+                                                      \
+    int                                               \
+    TEST_NAME(COS_ATTR_UNUSED int argc,               \
+              COS_ATTR_UNUSED char * COS_Nullable argv[COS_Nonnull])
 
 #define TEST_PROLOGUE \
     int test_result = EXIT_SUCCESS;
