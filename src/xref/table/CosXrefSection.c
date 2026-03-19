@@ -103,7 +103,7 @@ cos_xref_section_add_subsection(CosXrefSection *section,
         return false;
     }
 
-    return cos_array_append_item(section->subsections, subsection, out_error);
+    return cos_array_append_item(section->subsections, &subsection, out_error);
 }
 
 COS_ASSUME_NONNULL_END
