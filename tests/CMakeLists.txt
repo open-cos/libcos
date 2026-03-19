@@ -25,7 +25,8 @@ set(LIBCOS_TESTS
     filters/ascii85.c
     filters/ascii-hex.c
     filters/run-length.c
-    unit/test-dict.c
+    unit-tests/test-dict.c
+    unit-tests/xref-table.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
