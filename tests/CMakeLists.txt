@@ -27,6 +27,7 @@ set(LIBCOS_TESTS
     filters/run-length.c
     unit-tests/test-dict.c
     unit-tests/xref-table.c
+    unit-tests/file-structure.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
