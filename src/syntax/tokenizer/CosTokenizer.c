@@ -52,7 +52,8 @@ static bool
 cos_tokenizer_match_(CosTokenizer *tokenizer, char character);
 
 static void
-cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer);
+cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer,
+                                            CosTokenWhitespace *out_whitespace);
 
 static void
 cos_tokenizer_skip_comment_(CosTokenizer *tokenizer);
@@ -205,7 +206,8 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
     COS_IMPL_PARAM_CHECK(token != NULL);
 
     // Skip over ignorable whitespace characters and comments.
-    cos_tokenizer_skip_whitespace_and_comments_(tokenizer);
+    CosTokenWhitespace ws = {0};
+    cos_tokenizer_skip_whitespace_and_comments_(tokenizer, &ws);
 
     const CosStreamOffset token_start_position = cos_stream_reader_get_position(tokenizer->stream_reader);
     if (token_start_position < 0) {
@@ -214,6 +216,7 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
     }
 
     token->offset = (size_t)token_start_position;
+    token->leading_whitespace = ws;
 
     const int c = cos_stream_reader_getc(tokenizer->stream_reader);
     switch (c) {
@@ -920,17 +923,25 @@ cos_read_number_(CosTokenizer *tokenizer,
 }
 
 static void
-cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer)
+cos_tokenizer_skip_whitespace_and_comments_(CosTokenizer *tokenizer,
+                                            CosTokenWhitespace *out_whitespace)
 {
     COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(out_whitespace != NULL);
 
     int c = EOF;
     while ((c = cos_tokenizer_get_next_char_(tokenizer)) != EOF) {
         if (cos_is_whitespace(c)) {
-            continue;
+            out_whitespace->char_count++;
+            if (out_whitespace->bytes_count < COS_TOKEN_WHITESPACE_MAX_BYTES) {
+                out_whitespace->bytes[out_whitespace->bytes_count++] = (unsigned char)c;
+            }
         }
         else if (c == CosCharacterSet_PercentSign) {
-            // Skip comment.
+            // Skip comment; record that a comment was present but do not add
+            // comment bytes to `bytes`.  The EOL that ends the comment is a
+            // whitespace character and is recorded on the next iteration.
+            out_whitespace->has_comment = true;
             cos_tokenizer_skip_comment_(tokenizer);
         }
         else {

@@ -8,8 +8,65 @@
 #include "common/Assert.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 COS_ASSUME_NONNULL_BEGIN
+
+bool
+cos_token_whitespace_is_single_space(const CosTokenWhitespace *ws)
+{
+    COS_API_PARAM_CHECK(ws != NULL);
+    if (COS_UNLIKELY(!ws)) {
+        return false;
+    }
+
+    return ws->char_count == 1
+        && !ws->has_comment
+        && ws->bytes_count == 1
+        && ws->bytes[0] == 0x20;
+}
+
+bool
+cos_token_whitespace_is_eol(const CosTokenWhitespace *ws)
+{
+    COS_API_PARAM_CHECK(ws != NULL);
+    if (COS_UNLIKELY(!ws)) {
+        return false;
+    }
+
+    if (ws->has_comment || ws->bytes_count == 0) {
+        return false;
+    }
+
+    /* LF only */
+    if (ws->char_count == 1 && ws->bytes[0] == 0x0A) {
+        return true;
+    }
+
+    /* CR+LF */
+    if (ws->char_count == 2
+        && ws->bytes_count >= 2
+        && ws->bytes[0] == 0x0D
+        && ws->bytes[1] == 0x0A) {
+        return true;
+    }
+
+    return false;
+}
+
+bool
+cos_token_whitespace_is_bare_cr(const CosTokenWhitespace *ws)
+{
+    COS_API_PARAM_CHECK(ws != NULL);
+    if (COS_UNLIKELY(!ws)) {
+        return false;
+    }
+
+    return ws->char_count == 1
+        && !ws->has_comment
+        && ws->bytes_count == 1
+        && ws->bytes[0] == 0x0D;
+}
 
 void
 cos_token_reset(CosToken *token)
@@ -23,6 +80,7 @@ cos_token_reset(CosToken *token)
     token->offset = 0;
     token->length = 0;
     cos_token_value_reset(&token->value);
+    memset(&token->leading_whitespace, 0, sizeof(token->leading_whitespace));
 }
 
 bool

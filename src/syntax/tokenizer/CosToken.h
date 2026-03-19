@@ -14,6 +14,23 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+#define COS_TOKEN_WHITESPACE_MAX_BYTES 8u
+
+/**
+ * Describes the whitespace region that immediately precedes a token.
+ *
+ * `char_count` counts every whitespace character (NUL, HT, LF, FF, CR, SP).
+ * Comments (%...EOL) are NOT counted in `char_count` but set `has_comment`.
+ * `bytes` captures the first COS_TOKEN_WHITESPACE_MAX_BYTES raw whitespace
+ * characters (comments excluded); `bytes_count <= COS_TOKEN_WHITESPACE_MAX_BYTES`.
+ */
+typedef struct CosTokenWhitespace {
+    size_t char_count;
+    bool has_comment;
+    unsigned char bytes[COS_TOKEN_WHITESPACE_MAX_BYTES];
+    size_t bytes_count;
+} CosTokenWhitespace;
+
 typedef enum CosToken_Type {
     CosToken_Type_Unknown,
 
@@ -92,7 +109,24 @@ struct CosToken {
      * This is only valid for certain token types.
      */
     CosTokenValue value;
+
+    /**
+     * @brief The whitespace that immediately preceded this token in the input.
+     */
+    CosTokenWhitespace leading_whitespace;
 };
+
+/** True iff leading whitespace is exactly one SP (0x20) with no comment. */
+bool
+cos_token_whitespace_is_single_space(const CosTokenWhitespace *ws);
+
+/** True iff leading whitespace forms a single EOL: LF or CR+LF. */
+bool
+cos_token_whitespace_is_eol(const CosTokenWhitespace *ws);
+
+/** True iff leading whitespace is a single CR (bare, not followed by LF). */
+bool
+cos_token_whitespace_is_bare_cr(const CosTokenWhitespace *ws);
 
 /**
  * @brief Resets a token to its initial state.

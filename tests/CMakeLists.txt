@@ -20,12 +20,12 @@ macro(get_test_name TEST_NAME TEST_SOURCE)
 endmacro()
 
 set(LIBCOS_TESTS
-    tokenizer.c
     parser.c
     filters/ascii85.c
     filters/ascii-hex.c
     filters/run-length.c
     unit-tests/test-dict.c
+    unit-tests/tokenizer.c
     unit-tests/xref-table.c
     unit-tests/file-structure.c
 )
