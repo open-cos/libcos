@@ -35,11 +35,12 @@ COS_ASSUME_NONNULL_BEGIN
  * @return @c true if the parse succeeded, @c false otherwise.
  */
 static bool
-parse_pdf_(char *input,
+parse_pdf_(const char *input,
            CosError * COS_Nullable out_error)
 {
     CosDoc *doc = NULL;
     CosMemoryStream *stream = NULL;
+    CosParser *parser = NULL;
     bool result = false;
 
     doc = cos_doc_create(NULL);
@@ -47,14 +48,13 @@ parse_pdf_(char *input,
         goto cleanup;
     }
 
-    stream = cos_memory_stream_create((void *)input,
-                                      strlen(input),
-                                      false);
+    stream = cos_memory_stream_create_readonly(input,
+                                               strlen(input));
     if (!stream) {
         goto cleanup;
     }
 
-    CosParser * const parser = cos_parser_create(doc, (CosStream *)stream);
+    parser = cos_parser_create(doc, (CosStream *)stream);
     if (!parser) {
         goto cleanup;
     }
@@ -103,9 +103,9 @@ static int
 parse_minimalValidPdf_Succeeds(void)
 {
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(k_minimal_valid_pdf, &error);
+    const bool result = parse_pdf_(k_minimal_valid_pdf, &error);
 
-    TEST_EXPECT(ok);
+    TEST_EXPECT(result);
     TEST_EXPECT(error.code == COS_ERROR_NONE);
 
     return EXIT_SUCCESS;
@@ -118,9 +118,9 @@ parse_fileTooShort_ReturnsError(void)
 {
     /* 7 bytes — shorter than the 8-byte minimum for "%PDF-X.Y". */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_("%PDF-1.", &error);
+    const bool result = parse_pdf_("%PDF-1.", &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -131,9 +131,9 @@ parse_missingPdfPrefix_ReturnsError(void)
 {
     /* Correct length but wrong magic bytes. */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_("%PSF-1.0\n", &error);
+    const bool result = parse_pdf_("%PSF-1.0\n", &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -144,9 +144,9 @@ parse_invalidVersionNoDot_ReturnsError(void)
 {
     /* "%PDF-17" — dot separator is missing (header[6] == '7', not '.'). */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_("%PDF-17\n", &error);
+    const bool result = parse_pdf_("%PDF-17\n", &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -157,9 +157,9 @@ parse_invalidVersionMajorNotDigit_ReturnsError(void)
 {
     /* Major version is a letter, not a digit. */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_("%PDF-A.7\n", &error);
+    const bool result = parse_pdf_("%PDF-A.7\n", &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -170,9 +170,9 @@ parse_invalidVersionMinorNotDigit_ReturnsError(void)
 {
     /* Minor version is a letter, not a digit. */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_("%PDF-1.B\n", &error);
+    const bool result = parse_pdf_("%PDF-1.B\n", &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -185,7 +185,7 @@ parse_missingEofMarker_ReturnsError(void)
 {
     /* Well-formed header and xref/trailer, but no %%EOF at all. */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -196,7 +196,7 @@ parse_missingEofMarker_ReturnsError(void)
         "9\n",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -210,7 +210,7 @@ parse_eofMarkerMalformed_ReturnsError(void)
      * searches for the five-byte sequence "%%EOF" and will not find it.
      */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -222,7 +222,7 @@ parse_eofMarkerMalformed_ReturnsError(void)
         "%EOF",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -238,7 +238,7 @@ parse_missingXrefOffset_ReturnsError(void)
      * The backward scanner expects a decimal offset immediately before "%%EOF".
      */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -249,7 +249,7 @@ parse_missingXrefOffset_ReturnsError(void)
         "%%EOF",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -273,7 +273,7 @@ parse_missingStartxrefKeyword_ReturnsError(void)
      *   offset 62 : %%EOF                 (5 bytes)
      */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -284,7 +284,7 @@ parse_missingStartxrefKeyword_ReturnsError(void)
         "%%EOF",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
 
     return EXIT_SUCCESS;
@@ -312,7 +312,7 @@ parse_xrefNotBeforeTrailer_ReturnsError(void)
      *   offset 72 : %%EOF                 (5 bytes)
      */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "trailer\n"
         "<< /Size 1 >>\n"
@@ -324,7 +324,7 @@ parse_xrefNotBeforeTrailer_ReturnsError(void)
         "%%EOF",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_XREF);
 
     return EXIT_SUCCESS;
@@ -350,7 +350,7 @@ parse_trailerDictMissingBeforeEof_ReturnsError(void)
      *   offset 58 : %%EOF                 (5 bytes)
      */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -361,7 +361,7 @@ parse_trailerDictMissingBeforeEof_ReturnsError(void)
         "%%EOF",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
 
     return EXIT_SUCCESS;
 }
@@ -387,7 +387,7 @@ parse_trailerObjectNotDict_ReturnsError(void)
      *   offset 61 : %%EOF                 (5 bytes)
      */
     CosError error = cos_error_none();
-    const bool ok = parse_pdf_(
+    const bool result = parse_pdf_(
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -399,7 +399,7 @@ parse_trailerObjectNotDict_ReturnsError(void)
         "%%EOF",
         &error);
 
-    TEST_EXPECT(!ok);
+    TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_PARSE);
 
     return EXIT_SUCCESS;
