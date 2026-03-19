@@ -47,7 +47,7 @@ cos_xref_table_add_section(CosXrefTable *table,
                            CosXrefSection *section,
                            CosError * COS_Nullable out_error);
 
-CosXrefEntry * COS_Nullable
+const CosXrefEntry * COS_Nullable
 cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
                                       CosObjNumber object_number,
                                       CosError * COS_Nullable out_error);

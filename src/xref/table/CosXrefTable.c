@@ -107,10 +107,10 @@ cos_xref_table_add_section(CosXrefTable *table,
         return false;
     }
 
-    return cos_array_append_item(table->sections, &section, out_error);
+    return cos_array_append_item(table->sections, (void *)&section, out_error);
 }
 
-CosXrefEntry *
+const CosXrefEntry *
 cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
                                       CosObjNumber object_number,
                                       CosError * COS_Nullable out_error)
@@ -120,8 +120,30 @@ cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
         return NULL;
     }
 
-    (void)object_number;
-    (void)out_error;
+    const size_t section_count = cos_xref_table_get_section_count(table);
+    for (size_t si = 0; si < section_count; si++) {
+        CosXrefSection * const section = cos_xref_table_get_section(table, si, out_error);
+        if (!section) {
+            continue;
+        }
+
+        const size_t subsection_count = cos_xref_section_get_subsection_count(section);
+        for (size_t ssi = 0; ssi < subsection_count; ssi++) {
+            CosXrefSubsection * const sub = cos_xref_section_get_subsection(section, ssi, out_error);
+            if (!sub) {
+                continue;
+            }
+
+            const CosObjNumber first = cos_xref_subsection_get_first_object_number(sub);
+            const size_t count = cos_xref_subsection_get_entry_count(sub);
+
+            if (object_number >= first && (object_number - first) < (CosObjNumber)count) {
+                const size_t index = (size_t)(object_number - first);
+                const CosXrefEntry * const entry = cos_xref_subsection_get_entry(sub, index, out_error);
+                return entry;
+            }
+        }
+    }
 
     return NULL;
 }

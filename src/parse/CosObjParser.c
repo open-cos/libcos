@@ -168,6 +168,29 @@ cos_obj_parser_init_(CosObjParser * const self,
                                 input_stream);
 }
 
+CosObjParser *
+cos_obj_parser_create_with_tokenizer(CosDoc *document,
+                                     CosTokenizer *tokenizer)
+{
+    COS_API_PARAM_CHECK(document != NULL);
+    COS_API_PARAM_CHECK(tokenizer != NULL);
+    if (!document || !tokenizer) {
+        return NULL;
+    }
+
+    CosObjParser * const parser = calloc(1, sizeof(CosObjParser));
+    if (!parser) {
+        return NULL;
+    }
+
+    if (!cos_base_parser_init_with_tokenizer(&(parser->base), document, tokenizer)) {
+        free(parser);
+        return NULL;
+    }
+
+    return parser;
+}
+
 void
 cos_obj_parser_destroy(CosObjParser *parser)
 {
@@ -180,6 +203,20 @@ cos_obj_parser_destroy(CosObjParser *parser)
     }
 
     cos_base_parser_destroy(&(parser->base));
+}
+
+void
+cos_obj_parser_flush_tokens_(CosObjParser *parser)
+{
+    if (!parser) {
+        return;
+    }
+
+    CosBaseParser * const base = &parser->base;
+    for (size_t i = 0; i < base->token_count; i++) {
+        cos_token_reset(&(base->token_buffer[i]));
+    }
+    base->token_count = 0;
 }
 
 bool

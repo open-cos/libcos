@@ -42,7 +42,7 @@ cos_doc_get_root(CosDoc *doc);
 
 void * COS_Nullable
 cos_doc_get_object(CosDoc *doc,
-                   CosObjID id,
+                   CosObjID obj_id,
                    CosError * COS_Nullable error);
 
 // MARK: - Diagnostics

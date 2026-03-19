@@ -38,6 +38,34 @@ cos_obj_parser_create(CosDoc *document,
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_parser_destroy);
 
 /**
+ * @brief Allocate a new object parser that borrows an existing tokenizer.
+ *
+ * The parser does not take ownership of the tokenizer; the caller retains ownership.
+ * This allows sharing a single tokenizer across multiple parsers.
+ *
+ * @param document The document.
+ * @param tokenizer The tokenizer to use. Not owned by the parser.
+ *
+ * @return The object parser, or @c NULL if an error occurred.
+ */
+CosObjParser * COS_Nullable
+cos_obj_parser_create_with_tokenizer(CosDoc *document,
+                                     CosTokenizer *tokenizer)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_parser_destroy);
+
+/**
+ * @brief Flushes the token buffer of the object parser.
+ *
+ * Call this after seeking the stream and resetting the tokenizer, to discard
+ * any tokens that were buffered from the previous stream position.
+ *
+ * @param parser The object parser.
+ */
+void
+cos_obj_parser_flush_tokens_(CosObjParser *parser);
+
+/**
  * Checks if there is a next object or if the end of the input stream has been reached.
  *
  * @param parser The object parser.
