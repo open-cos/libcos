@@ -82,6 +82,46 @@ failure:
     return NULL;
 }
 
+CosMemoryStream *
+cos_memory_stream_create_readonly(const void *buffer,
+                                  size_t size)
+{
+    COS_API_PARAM_CHECK(buffer != NULL);
+    if (COS_UNLIKELY(!buffer)) {
+        return NULL;
+    }
+
+    const CosStreamFunctions stream_functions = {
+        .read_func = &cos_memory_stream_read_,
+        .write_func = NULL,
+        .seek_func = &cos_memory_stream_seek_,
+        .tell_func = &cos_memory_stream_tell_,
+        .eof_func = &cos_memory_stream_eof_,
+        .close_func = &cos_memory_stream_close_,
+    };
+
+    CosMemoryStream *memory_stream = calloc(1, sizeof(CosMemoryStream));
+    if (COS_UNLIKELY(!memory_stream)) {
+        goto failure;
+    }
+
+    memory_stream->buffer.read = buffer;
+    memory_stream->size = size;
+    memory_stream->position = 0;
+    memory_stream->free_buffer = false;
+
+    cos_stream_init(&(memory_stream->base),
+                    &stream_functions);
+
+    return memory_stream;
+
+failure:
+    if (memory_stream) {
+        free(memory_stream);
+    }
+    return NULL;
+}
+
 static size_t
 cos_memory_stream_read_(CosStream *stream,
                         void *buffer,

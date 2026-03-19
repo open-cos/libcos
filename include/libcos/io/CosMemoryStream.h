@@ -32,6 +32,12 @@ cos_memory_stream_create(void *buffer,
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
+CosMemoryStream * COS_Nullable
+cos_memory_stream_create_readonly(const void *buffer,
+                                  size_t size)
+    COS_ALLOCATOR_FUNC
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
