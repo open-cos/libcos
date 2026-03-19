@@ -33,7 +33,8 @@ struct CosParser {
 
 static bool
 cos_parser_parse_header_(CosParser *parser,
-                         CosError * COS_Nullable out_error);
+                         CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 static bool
 cos_parser_find_startxref_(CosParser *parser,
@@ -45,7 +46,8 @@ cos_parser_find_startxref_(CosParser *parser,
 static bool
 cos_parser_parse_xref_and_trailer_(CosParser *parser,
                                    CosStreamOffset xref_offset,
-                                   CosError * COS_Nullable out_error);
+                                   CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 // MARK: - Public API
 
