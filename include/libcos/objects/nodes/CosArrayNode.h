@@ -8,6 +8,7 @@
 #include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/objects/nodes/CosNode.h>
 
 #include <stdbool.h>
 #include <stddef.h>
