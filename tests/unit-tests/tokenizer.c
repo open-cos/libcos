@@ -81,7 +81,7 @@ static int
 tokenize_negativeInteger_HasCorrectValue(void)
 {
     CosToken tok = {0};
-    TEST_EXPECT(get_tokens_("-7 ", &tok, 1));
+    TEST_EXPECT(get_tokens_("-7", &tok, 1));
     TEST_EXPECT(tok.type == CosToken_Type_Integer);
     int value = 0;
     TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
@@ -93,7 +93,7 @@ static int
 tokenize_positiveSignedInteger_HasCorrectValue(void)
 {
     CosToken tok = {0};
-    TEST_EXPECT(get_tokens_("+3 ", &tok, 1));
+    TEST_EXPECT(get_tokens_("+3", &tok, 1));
     TEST_EXPECT(tok.type == CosToken_Type_Integer);
     int value = 0;
     TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
@@ -105,7 +105,7 @@ static int
 tokenize_negativeReal_HasCorrectValue(void)
 {
     CosToken tok = {0};
-    TEST_EXPECT(get_tokens_("-1.5 ", &tok, 1));
+    TEST_EXPECT(get_tokens_("-1.5", &tok, 1));
     TEST_EXPECT(tok.type == CosToken_Type_Real);
     double value = 0.0;
     TEST_EXPECT(cos_token_value_get_real_number(&tok.value, &value));
@@ -267,12 +267,8 @@ tokenize_fKeyword_RecognizedCorrectly(void)
 static int
 tokenize_singleToken_OffsetIsZero(void)
 {
-    /*
-     * "99 " — trailing space terminates the number cleanly (the space is
-     * ungot), so length is 2 and offset is 0.
-     */
     CosToken tok = {0};
-    TEST_EXPECT(get_tokens_("99 ", &tok, 1));
+    TEST_EXPECT(get_tokens_("99", &tok, 1));
     TEST_EXPECT(tok.offset == 0);
     TEST_EXPECT(tok.length == 2);
     return EXIT_SUCCESS;
@@ -281,13 +277,9 @@ tokenize_singleToken_OffsetIsZero(void)
 static int
 tokenize_secondToken_OffsetAccountsForWhitespace(void)
 {
-    /*
-     * "42 7 ": "42" is 2 bytes at offset 0; "7" starts at offset 3.
-     * The trailing space ensures "7" is terminated by unget rather than EOF,
-     * giving it the correct length of 1.
-     */
+    /* "42 7": "42" is 2 bytes at offset 0; "7" starts at offset 3. */
     CosToken tokens[2] = {{0}, {0}};
-    TEST_EXPECT(get_tokens_("42 7 ", tokens, 2));
+    TEST_EXPECT(get_tokens_("42 7", tokens, 2));
     TEST_EXPECT(tokens[0].offset == 0);
     TEST_EXPECT(tokens[0].length == 2);
     TEST_EXPECT(tokens[1].offset == 3);
@@ -299,12 +291,11 @@ static int
 tokenize_nameToken_OffsetAndLengthCorrect(void)
 {
     /*
-     * "/AB " — 4 bytes, name terminated by the trailing space.
-     * The space is ungetted so the token length is exactly 3 (solidus + 2
+     * "/AB" — name terminated by EOF; length is exactly 3 (solidus + 2
      * letters), and the offset is 0.
      */
     CosToken tok = {0};
-    TEST_EXPECT(get_tokens_("/AB ", &tok, 1));
+    TEST_EXPECT(get_tokens_("/AB", &tok, 1));
     TEST_EXPECT(tok.offset == 0);
     TEST_EXPECT(tok.length == 3);
     cos_token_reset(&tok);

@@ -128,7 +128,9 @@ cos_stream_reader_getc(CosStreamReader *stream_reader)
     COS_API_PARAM_CHECK(stream_reader != NULL);
 
     int result = cos_stream_reader_get_current_(stream_reader);
-    cos_stream_reader_advance_(stream_reader);
+    if (result != EOF) {
+        cos_stream_reader_advance_(stream_reader);
+    }
     return result;
 }
 
