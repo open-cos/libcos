@@ -4,6 +4,7 @@
 
 #include "CosTest.h"
 #include "syntax/tokenizer/CosToken.h"
+#include "syntax/tokenizer/CosTokenValue.h"
 #include "syntax/tokenizer/CosTokenizer.h"
 
 #include <libcos/io/CosMemoryStream.h>
@@ -73,6 +74,42 @@ tokenize_integer_HasCorrectTypeAndValue(void)
     int value = 0;
     TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
     TEST_EXPECT(value == 42);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_negativeInteger_HasCorrectValue(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("-7 ", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    int value = 0;
+    TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
+    TEST_EXPECT(value == -7);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_positiveSignedInteger_HasCorrectValue(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("+3 ", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    int value = 0;
+    TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
+    TEST_EXPECT(value == 3);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_negativeReal_HasCorrectValue(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("-1.5 ", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Real);
+    double value = 0.0;
+    TEST_EXPECT(cos_token_value_get_real_number(&tok.value, &value));
+    TEST_EXPECT(value == -1.5);
     return EXIT_SUCCESS;
 }
 
@@ -426,6 +463,9 @@ TEST_MAIN()
 {
     /* Token type tests */
     TEST_EXPECT(tokenize_integer_HasCorrectTypeAndValue() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_negativeInteger_HasCorrectValue() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_positiveSignedInteger_HasCorrectValue() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_negativeReal_HasCorrectValue() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_name_HasCorrectType() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_literalString_HasCorrectType() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_hexString_HasCorrectType() == EXIT_SUCCESS);

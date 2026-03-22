@@ -853,6 +853,7 @@ cos_read_number_(CosTokenizer *tokenizer,
     }
 
     bool has_sign = false;
+    bool is_negative = false;
     bool has_decimal_point = false;
     unsigned int digit_count = 0;
     unsigned int fractional_digit_count = 0;
@@ -883,6 +884,7 @@ cos_read_number_(CosTokenizer *tokenizer,
         else if ((c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) &&
                  !(has_sign || has_decimal_point || digit_count > 0)) {
             has_sign = true;
+            is_negative = (c == CosCharacterSet_HyphenMinus);
         }
         else if (c == CosCharacterSet_FullStop && !has_decimal_point) {
             // Switch to reading the fractional part of a real number.
@@ -913,10 +915,10 @@ cos_read_number_(CosTokenizer *tokenizer,
     }
 
     if (has_decimal_point) {
-        *out_number = cos_number_make_real(real_value);
+        *out_number = cos_number_make_real(is_negative ? -real_value : real_value);
     }
     else {
-        *out_number = cos_number_make_integer(int_value);
+        *out_number = cos_number_make_integer(is_negative ? -int_value : int_value);
     }
 
     return true;
