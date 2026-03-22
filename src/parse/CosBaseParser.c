@@ -6,7 +6,7 @@
 
 #include "common/Assert.h"
 #include "common/CosDiagnosticHandler.h"
-#include "syntax/tokenizer/CosTokenizer.h"
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include "libcos/CosDoc.h"
 #include "libcos/common/memory/CosMemory.h"

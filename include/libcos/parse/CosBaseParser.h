@@ -6,7 +6,7 @@
 #define LIBCOS_PARSE_COS_BASE_PARSER_H
 
 #include "common/CosAPI.h"
-#include "syntax/tokenizer/CosToken.h"
+#include <libcos/syntax/tokenizer/CosToken.h>
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>

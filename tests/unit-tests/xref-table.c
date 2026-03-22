@@ -3,7 +3,7 @@
  */
 
 #include "CosTest.h"
-#include "syntax/tokenizer/CosTokenizer.h"
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <libcos/CosDoc.h>
 #include <libcos/common/CosError.h>

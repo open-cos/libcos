@@ -6,8 +6,8 @@
 
 #include "common/Assert.h"
 #include "parse/CosBaseParser.h"
-#include "syntax/tokenizer/CosToken.h"
-#include "syntax/tokenizer/CosTokenValue.h"
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
 
 #include "libcos/common/CosArray.h"
 #include "libcos/common/CosError.h"

@@ -3,9 +3,9 @@
  */
 
 #include "CosTest.h"
-#include "syntax/tokenizer/CosToken.h"
-#include "syntax/tokenizer/CosTokenValue.h"
-#include "syntax/tokenizer/CosTokenizer.h"
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>

@@ -8,9 +8,9 @@
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
 #include "parse/CosBaseParser.h"
-#include "syntax/tokenizer/CosToken.h"
-#include "syntax/tokenizer/CosTokenValue.h"
-#include "syntax/tokenizer/CosTokenizer.h"
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include "libcos/common/CosMacros.h"
 

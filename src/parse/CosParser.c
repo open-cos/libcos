@@ -8,7 +8,7 @@
 #include "common/Assert.h"
 #include "parse/CosBaseParser.h"
 #include "parse/CosObjParser.h"
-#include "syntax/tokenizer/CosTokenizer.h"
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <libcos/CosDoc.h>
 #include <libcos/common/CosError.h>

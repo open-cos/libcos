@@ -2,9 +2,9 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "syntax/tokenizer/CosToken.h"
+#include <libcos/syntax/tokenizer/CosToken.h>
 
-#include "CosTokenValue.h"
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
 #include "common/Assert.h"
 
 #include <stdlib.h>

@@ -2,9 +2,9 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include "CosTokenizer.h"
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
-#include "CosTokenValue.h"
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "io/CosStreamReader.h"
