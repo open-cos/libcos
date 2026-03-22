@@ -12,6 +12,7 @@ include(CheckLanguage)
 include(CMakeDependentOption)
 
 include(Common)
+include(ClangFormat)
 
 option(COS_BUILD_DOCUMENTATION "Build the documentation" OFF)
 
@@ -271,6 +272,8 @@ target_sources(libcos PUBLIC
     include/libcos/xref/table/CosXrefSubsection.h
     include/libcos/xref/table/CosXrefTable.h
 )
+
+add_clang_format(libcos)
 
 include(Sanitizers)
 add_sanitizers(libcos)
@@ -532,6 +535,7 @@ target_link_libraries(libcos++ INTERFACE
 
 enable_testing()
 add_subdirectory(tests)
+add_clang_format(libcos-test)
 
 if (COS_BUILD_DOCUMENTATION)
     add_subdirectory(docs)
