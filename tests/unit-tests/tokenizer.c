@@ -3,12 +3,12 @@
  */
 
 #include "CosTest.h"
-#include <libcos/syntax/tokenizer/CosToken.h>
-#include <libcos/syntax/tokenizer/CosTokenValue.h>
-#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <stdlib.h>
 #include <string.h>

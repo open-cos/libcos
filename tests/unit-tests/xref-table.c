@@ -3,12 +3,12 @@
  */
 
 #include "CosTest.h"
-#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <libcos/CosDoc.h>
 #include <libcos/common/CosError.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 #include <libcos/xref/CosXrefTableParser.h>
 #include <libcos/xref/table/CosXrefEntry.h>
 #include <libcos/xref/table/CosXrefSection.h>
