@@ -20,7 +20,7 @@ cos_filter_init(CosFilter *filter,
 
     cos_stream_init((CosStream *)filter,
                     functions);
-    
+
     filter->source = NULL;
 }
 

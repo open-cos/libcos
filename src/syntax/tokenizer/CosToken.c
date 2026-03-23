@@ -2,10 +2,11 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
-#include <libcos/syntax/tokenizer/CosToken.h>
-
-#include <libcos/syntax/tokenizer/CosTokenValue.h>
 #include "common/Assert.h"
+#include "common/CharacterSet.h"
+
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -20,10 +21,10 @@ cos_token_whitespace_is_single_space(const CosTokenWhitespace *ws)
         return false;
     }
 
-    return ws->char_count == 1
-        && !ws->has_comment
-        && ws->bytes_count == 1
-        && ws->bytes[0] == 0x20;
+    return (ws->char_count == 1 &&
+            !ws->has_comment &&
+            ws->bytes_count == 1 &&
+            ws->bytes[0] == CosCharacterSet_Space);
 }
 
 bool
@@ -39,15 +40,15 @@ cos_token_whitespace_is_eol(const CosTokenWhitespace *ws)
     }
 
     /* LF only */
-    if (ws->char_count == 1 && ws->bytes[0] == 0x0A) {
+    if (ws->char_count == 1 && ws->bytes[0] == CosCharacterSet_LineFeed) {
         return true;
     }
 
     /* CR+LF */
-    if (ws->char_count == 2
-        && ws->bytes_count >= 2
-        && ws->bytes[0] == 0x0D
-        && ws->bytes[1] == 0x0A) {
+    if (ws->char_count == 2 &&
+        ws->bytes_count >= 2 &&
+        ws->bytes[0] == CosCharacterSet_CarriageReturn &&
+        ws->bytes[1] == CosCharacterSet_LineFeed) {
         return true;
     }
 
@@ -62,10 +63,10 @@ cos_token_whitespace_is_bare_cr(const CosTokenWhitespace *ws)
         return false;
     }
 
-    return ws->char_count == 1
-        && !ws->has_comment
-        && ws->bytes_count == 1
-        && ws->bytes[0] == 0x0D;
+    return (ws->char_count == 1 &&
+            !ws->has_comment &&
+            ws->bytes_count == 1 &&
+            ws->bytes[0] == CosCharacterSet_CarriageReturn);
 }
 
 void

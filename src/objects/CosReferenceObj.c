@@ -5,6 +5,7 @@
 #include "libcos/objects/CosReferenceObj.h"
 
 #include "common/Assert.h"
+
 #include "libcos/CosDoc.h"
 #include "libcos/CosObjID.h"
 #include "libcos/common/CosError.h"

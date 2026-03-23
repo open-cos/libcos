@@ -5,6 +5,7 @@
 #include "libcos/objects/CosObj.h"
 
 #include "common/Assert.h"
+
 #include "libcos/objects/CosArrayObj.h"
 #include "libcos/objects/CosBoolObj.h"
 #include "libcos/objects/CosDictObj.h"

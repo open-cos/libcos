@@ -14,7 +14,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 COS_API CosRealNode * COS_Nullable
 cos_real_node_create(CosAllocator *allocator,
-                      double value)
+                     double value)
     COS_ALLOCATOR_FUNC;
 
 /**

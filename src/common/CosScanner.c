@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
+
 #include "libcos/common/CosError.h"
 
 #include <errno.h>

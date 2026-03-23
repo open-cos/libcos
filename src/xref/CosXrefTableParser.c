@@ -6,8 +6,6 @@
 
 #include "common/Assert.h"
 #include "parse/CosBaseParser.h"
-#include <libcos/syntax/tokenizer/CosToken.h>
-#include <libcos/syntax/tokenizer/CosTokenValue.h>
 
 #include "libcos/common/CosArray.h"
 #include "libcos/common/CosError.h"
@@ -16,6 +14,9 @@
 #include "libcos/xref/table/CosXrefSection.h"
 #include "libcos/xref/table/CosXrefSubsection.h"
 #include "libcos/xref/table/CosXrefTable.h"
+
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
 
 #include <stdlib.h>
 

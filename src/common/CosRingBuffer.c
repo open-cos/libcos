@@ -4,12 +4,11 @@
 
 #include "libcos/common/CosRingBuffer.h"
 
+#include "Assert.h"
 #include "common/CosError.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-#include "Assert.h"
 
 COS_ASSUME_NONNULL_BEGIN
 

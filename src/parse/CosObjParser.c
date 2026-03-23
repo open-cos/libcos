@@ -8,9 +8,6 @@
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
 #include "parse/CosBaseParser.h"
-#include <libcos/syntax/tokenizer/CosToken.h>
-#include <libcos/syntax/tokenizer/CosTokenValue.h>
-#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include "libcos/common/CosMacros.h"
 
@@ -33,6 +30,9 @@
 #include <libcos/objects/CosReferenceObj.h>
 #include <libcos/objects/CosStreamObj.h>
 #include <libcos/objects/CosStringObj.h>
+#include <libcos/syntax/tokenizer/CosToken.h>
+#include <libcos/syntax/tokenizer/CosTokenValue.h>
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <stdio.h>
 #include <stdlib.h>

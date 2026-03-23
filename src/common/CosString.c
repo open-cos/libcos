@@ -294,15 +294,15 @@ cos_string_push_back(CosString *string, char c)
 }
 
 #if SIZE_MAX == UINT32_MAX
-#define COS_SIZE_IS_32_BIT 1
+    #define COS_SIZE_IS_32_BIT 1
 #else
-#define COS_SIZE_IS_32_BIT 0
+    #define COS_SIZE_IS_32_BIT 0
 #endif
 
 #if COS_SIZE_IS_32_BIT
 
-#define COS_STRING_HASH_SEED_32 2166136261U
-#define COS_STRING_HASH_FACTOR_32 16777619
+    #define COS_STRING_HASH_SEED_32 2166136261U
+    #define COS_STRING_HASH_FACTOR_32 16777619
 
 static uint32_t
 hash_string_32_(const char *key,
@@ -318,8 +318,8 @@ hash_string_32_(const char *key,
 
 #else
 
-#define COS_STRING_HASH_SEED_64 14695981039346656037ULL
-#define COS_STRING_HASH_FACTOR_64 1099511628211ULL
+    #define COS_STRING_HASH_SEED_64 14695981039346656037ULL
+    #define COS_STRING_HASH_FACTOR_64 1099511628211ULL
 
 static uint64_t
 hash_string_64_(const char *key,
