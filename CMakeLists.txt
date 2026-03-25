@@ -175,6 +175,8 @@ target_sources(libcos PRIVATE
     src/objects/CosNameObj.c
     src/objects/CosNullObj.c
     src/objects/CosObj.c
+    src/objects/CosObjCache.c
+    src/objects/CosObjCache.h
     src/objects/CosObjID.c
     src/objects/CosRealObj.c
     src/objects/CosReferenceObj.c

@@ -19,6 +19,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosReferenceObj {
     CosObjType type;
+    unsigned int ref_count;
 
     CosObjID id;
     CosDoc *doc;
@@ -40,6 +41,7 @@ cos_reference_obj_alloc(CosObjID id,
     }
 
     reference_obj->type = CosObjType_Reference;
+    reference_obj->ref_count = 1;
     reference_obj->id = id;
     reference_obj->doc = document;
 
@@ -53,7 +55,9 @@ cos_reference_obj_free(CosReferenceObj *reference_obj)
         return;
     }
 
-    // TODO: Decrease reference count of value.
+    if (reference_obj->value) {
+        cos_obj_free(reference_obj->value);
+    }
 
     free(reference_obj);
 }

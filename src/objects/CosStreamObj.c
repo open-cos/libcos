@@ -18,6 +18,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosStreamObj {
     CosObjType type;
+    unsigned int ref_count;
 
     CosDictObj *dict_obj;
     CosData * COS_Nullable data;
@@ -33,6 +34,7 @@ cos_stream_obj_create(CosDictObj *dict,
     }
 
     stream_obj->type = CosObjType_Stream;
+    stream_obj->ref_count = 1;
     stream_obj->dict_obj = dict;
     stream_obj->data = data;
 

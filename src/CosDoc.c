@@ -6,6 +6,7 @@
 
 #include "CosDoc-Private.h"
 #include "common/Assert.h"
+#include "objects/CosObjCache.h"
 
 #include <libcos/CosObjID.h>
 #include <libcos/CosParser.h>
@@ -13,6 +14,7 @@
 #include <libcos/common/memory/CosAllocator.h>
 #include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosDictObj.h>
+#include <libcos/objects/CosObj.h>
 #include <libcos/xref/table/CosXrefEntry.h>
 #include <libcos/xref/table/CosXrefTable.h>
 
@@ -29,6 +31,8 @@ struct CosDoc {
     CosParser * COS_Nullable parser;
     CosXrefTable * COS_Nullable xref_table;
     CosDictObj * COS_Nullable trailer_dict;
+
+    CosObjCache * COS_Nullable obj_cache;
 
     CosDiagnosticHandler * COS_Nullable diagnostic_handler;
 };
@@ -71,6 +75,11 @@ cos_doc_destroy(CosDoc *doc)
     if (doc->trailer_dict) {
         cos_dict_obj_destroy(COS_nonnull_cast(doc->trailer_dict));
         doc->trailer_dict = NULL;
+    }
+
+    if (doc->obj_cache) {
+        cos_obj_cache_destroy(COS_nonnull_cast(doc->obj_cache));
+        doc->obj_cache = NULL;
     }
 
     cos_free(doc->allocator, doc);
@@ -148,9 +157,42 @@ cos_doc_get_object(CosDoc *doc,
             break;
     }
 
-    return cos_parser_load_object(COS_nonnull_cast(doc->parser),
-                                  (CosStreamOffset)entry->value.in_use.byte_offset,
-                                  error);
+    // Validate that the reference's generation number matches the xref entry.
+    if (entry->value.in_use.gen_number != obj_id.gen_number) {
+        cos_error_propagate(error,
+                            cos_error_make(COS_ERROR_XREF,
+                                           "Generation number mismatch"));
+        return NULL;
+    }
+
+    // Check the cache for a previously loaded object.
+    if (doc->obj_cache) {
+        CosObj * const cached = cos_obj_cache_get(COS_nonnull_cast(doc->obj_cache),
+                                                  obj_id.obj_number);
+        if (cached) {
+            return cos_obj_retain(cached);
+        }
+    }
+
+    // Parse the object from the file.
+    CosObj * const obj = cos_parser_load_object(COS_nonnull_cast(doc->parser),
+                                                (CosStreamOffset)entry->value.in_use.byte_offset,
+                                                error);
+    if (!obj) {
+        return NULL;
+    }
+
+    // Lazily create the cache and insert the object.
+    if (!doc->obj_cache) {
+        doc->obj_cache = cos_obj_cache_create(0);
+    }
+    if (doc->obj_cache) {
+        cos_obj_cache_insert(COS_nonnull_cast(doc->obj_cache),
+                             obj_id.obj_number,
+                             obj);
+    }
+
+    return obj;
 }
 
 // MARK: - Diagnostics

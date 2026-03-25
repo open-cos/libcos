@@ -15,6 +15,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosRealObj {
     CosObjType type;
+    unsigned int ref_count;
 
     double value;
 };
@@ -28,6 +29,7 @@ cos_real_obj_alloc(double value)
     }
 
     result->type = CosObjType_Real;
+    result->ref_count = 1;
     result->value = value;
 
     return result;

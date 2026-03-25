@@ -16,6 +16,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosStringObj {
     CosObjType type;
+    unsigned int ref_count;
 
     CosData *data;
 };
@@ -34,6 +35,7 @@ cos_string_obj_alloc(CosData *data)
     }
 
     string_obj->type = CosObjType_String;
+    string_obj->ref_count = 1;
     string_obj->data = data;
 
     return string_obj;

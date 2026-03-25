@@ -25,15 +25,30 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosObj {
     CosObjType type;
 
-    COS_ATTR_UNUSED unsigned char padding_[4];
+    unsigned int ref_count;
 };
 
-void
-cos_obj_free(CosObj *obj)
+CosObj *
+cos_obj_retain(CosObj *obj)
 {
-    if (!obj) {
-        return;
+    COS_API_PARAM_CHECK(obj != NULL);
+    if (COS_UNLIKELY(!obj)) {
+        return NULL;
     }
+
+    // The null singleton has no ref_count and must not be retained.
+    if (obj->type == CosObjType_Null) {
+        return obj;
+    }
+
+    obj->ref_count++;
+    return obj;
+}
+
+static void
+cos_obj_dealloc_(CosObj *obj)
+{
+    COS_IMPL_PARAM_CHECK(obj != NULL);
 
     switch (obj->type) {
         case CosObjType_Unknown:
@@ -82,6 +97,26 @@ cos_obj_free(CosObj *obj)
             cos_reference_obj_free((CosReferenceObj *)obj);
         } break;
     }
+}
+
+void
+cos_obj_free(CosObj *obj)
+{
+    if (!obj) {
+        return;
+    }
+
+    // The null singleton has no ref_count and must not be freed.
+    if (obj->type == CosObjType_Null) {
+        return;
+    }
+
+    if (obj->ref_count > 1) {
+        obj->ref_count--;
+        return;
+    }
+
+    cos_obj_dealloc_(obj);
 }
 
 CosObjType

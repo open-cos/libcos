@@ -21,6 +21,7 @@ struct CosIndirectObj {
      * @c CosObjType_Indirect.
      */
     CosObjType type;
+    unsigned int ref_count;
 
     /**
      * The ID of the indirect object.
@@ -48,6 +49,7 @@ cos_indirect_obj_alloc(CosObjID id,
     }
 
     indirect_obj->type = CosObjType_Indirect;
+    indirect_obj->ref_count = 1;
     indirect_obj->id = id;
     indirect_obj->value = value;
 

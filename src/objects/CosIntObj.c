@@ -16,6 +16,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosIntObj {
     CosObjType type;
+    unsigned int ref_count;
 
     int value;
 };
@@ -29,6 +30,7 @@ cos_int_obj_alloc(int value)
     }
 
     int_obj->type = CosObjType_Integer;
+    int_obj->ref_count = 1;
     int_obj->value = value;
 
     return int_obj;

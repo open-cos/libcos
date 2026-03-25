@@ -191,14 +191,14 @@ int
 TEST_NAME(COS_ATTR_UNUSED int argc,
           COS_ATTR_UNUSED char * COS_Nonnull argv[])
 {
-//    TEST_EXPECT(createDictWithNullCallbacks_ReturnsInvalidDict() == EXIT_SUCCESS);
+    //    TEST_EXPECT(createDictWithNullCallbacks_ReturnsInvalidDict() == EXIT_SUCCESS);
     TEST_EXPECT(createDictWithValidCallbacks_ReturnsValidDict() == EXIT_SUCCESS);
     TEST_EXPECT(addToDict_ValidKeyAndValue_IncreasesDictSize() == EXIT_SUCCESS);
     //TEST_EXPECT(removeFromDict_ValidKey_DecreasesDictSize() == EXIT_SUCCESS);
     TEST_EXPECT(lookupInDict_ExistingKey_ReturnsCorrectValue() == EXIT_SUCCESS);
     TEST_EXPECT(lookupInDict_NonExistingKey_ReturnsNull() == EXIT_SUCCESS);
     TEST_EXPECT(dictWithZeroCapacity_InitialSizeIsZero() == EXIT_SUCCESS);
-//    TEST_EXPECT(addToDict_NullKey_ReturnsError() == EXIT_SUCCESS);
+    //    TEST_EXPECT(addToDict_NullKey_ReturnsError() == EXIT_SUCCESS);
     TEST_EXPECT(addToDict_NullValue_HandledGracefully() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;

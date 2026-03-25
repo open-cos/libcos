@@ -16,6 +16,7 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosDictObj {
     CosObjType type;
+    unsigned int ref_count;
 
     CosDict *value;
 };
@@ -85,6 +86,7 @@ cos_dict_obj_create(CosDict * COS_Nullable dict)
     }
 
     dict_obj->type = CosObjType_Dict;
+    dict_obj->ref_count = 1;
 
     if (dict) {
         dict_obj->value = COS_nonnull_cast(dict);

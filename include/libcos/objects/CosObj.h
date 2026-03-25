@@ -32,9 +32,25 @@ typedef enum CosObjType {
     CosObjType_Reference,
 } CosObjType;
 
+/**
+ * @brief Retains an object, incrementing its reference count.
+ *
+ * @param obj The object to retain.
+ *
+ * @return The retained object (same pointer as @p obj).
+ */
+CosObj *
+cos_obj_retain(CosObj *obj);
+
+/**
+ * @brief Releases an object, decrementing its reference count.
+ *
+ * When the reference count reaches zero the object is deallocated.
+ *
+ * @param obj The object to release.
+ */
 void
-cos_obj_free(CosObj *obj)
-    COS_DEALLOCATOR_FUNC;
+cos_obj_free(CosObj *obj);
 
 /** @name Object type **/
 /** @{ **/

@@ -15,10 +15,9 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosBoolObj {
     CosObjType type;
+    unsigned int ref_count;
 
     bool value;
-
-    COS_ATTR_UNUSED unsigned char padding_[3] /* for alignment */;
 };
 
 CosBoolObj *
@@ -30,6 +29,7 @@ cos_bool_obj_alloc(bool value)
     }
 
     obj->type = CosObjType_Boolean;
+    obj->ref_count = 1;
     obj->value = value;
 
     return obj;

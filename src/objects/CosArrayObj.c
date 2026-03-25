@@ -29,6 +29,7 @@ const CosArrayCallbacks cos_array_obj_callbacks = {
 
 struct CosArrayObj {
     CosObjType type;
+    unsigned int ref_count;
 
     CosArray *value;
 };
@@ -42,6 +43,7 @@ cos_array_obj_alloc(CosArray * COS_Nullable array)
     }
 
     array_obj->type = CosObjType_Array;
+    array_obj->ref_count = 1;
 
     if (array) {
         array_obj->value = COS_nonnull_cast(array);
