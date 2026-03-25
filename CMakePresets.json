@@ -14,6 +14,12 @@
             "toolchainFile": "${sourceDir}/cmake/toolchains/mingw-w64-i686.cmake"
         },
         {
+            "name": "llvm",
+            "displayName": "LLVM/Clang",
+            "description": "Build with the LLVM/Clang compiler.",
+            "toolchainFile": "${sourceDir}/cmake/toolchains/llvm.cmake"
+        },
+        {
             "name": "emscripten",
             "displayName": "Emscripten",
             "description": "Target WebAssembly with the Emscripten development environment.",
