@@ -56,7 +56,7 @@ cos_reference_obj_free(CosReferenceObj *reference_obj)
     }
 
     if (reference_obj->value) {
-        cos_obj_free(reference_obj->value);
+        cos_obj_free(COS_nonnull_cast(reference_obj->value));
     }
 
     free(reference_obj);

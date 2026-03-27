@@ -39,8 +39,8 @@ typedef enum CosObjType {
  *
  * @return The retained object (same pointer as @p obj).
  */
-CosObj *
-cos_obj_retain(CosObj *obj);
+CosObj * COS_Nullable
+cos_obj_retain(CosObj * COS_Nullable obj);
 
 /**
  * @brief Releases an object, decrementing its reference count.
@@ -50,7 +50,7 @@ cos_obj_retain(CosObj *obj);
  * @param obj The object to release.
  */
 void
-cos_obj_free(CosObj *obj);
+cos_obj_free(CosObj * COS_Nullable obj);
 
 /** @name Object type **/
 /** @{ **/

@@ -58,20 +58,32 @@ static const CosDictValueCallbacks cos_obj_cache_value_callbacks_ = {
 CosObjCache *
 cos_obj_cache_create(size_t capacity_hint)
 {
-    CosObjCache *cache = calloc(1, sizeof(CosObjCache));
+    CosObjCache *cache = NULL;
+    CosDict *dict = NULL;
+
+    cache = calloc(1, sizeof(CosObjCache));
     if (!cache) {
-        return NULL;
+        goto failure;
     }
 
-    cache->dict = cos_dict_create(&cos_obj_cache_key_callbacks_,
-                                  &cos_obj_cache_value_callbacks_,
-                                  capacity_hint);
-    if (!cache->dict) {
-        free(cache);
-        return NULL;
+    dict = cos_dict_create(&cos_obj_cache_key_callbacks_,
+                           &cos_obj_cache_value_callbacks_,
+                           capacity_hint);
+    if (!dict) {
+        goto failure;
     }
+    cache->dict = COS_nonnull_cast(dict);
 
     return cache;
+
+failure:
+    if (cache) {
+        free(cache);
+    }
+    if (dict) {
+        cos_dict_destroy(dict);
+    }
+    return NULL;
 }
 
 void

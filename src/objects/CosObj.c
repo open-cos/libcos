@@ -28,10 +28,9 @@ struct CosObj {
     unsigned int ref_count;
 };
 
-CosObj *
-cos_obj_retain(CosObj *obj)
+CosObj * COS_Nullable
+cos_obj_retain(CosObj * COS_Nullable obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
     if (COS_UNLIKELY(!obj)) {
         return NULL;
     }
@@ -100,7 +99,7 @@ cos_obj_dealloc_(CosObj *obj)
 }
 
 void
-cos_obj_free(CosObj *obj)
+cos_obj_free(CosObj * COS_Nullable obj)
 {
     if (!obj) {
         return;
@@ -116,7 +115,7 @@ cos_obj_free(CosObj *obj)
         return;
     }
 
-    cos_obj_dealloc_(obj);
+    cos_obj_dealloc_(COS_nonnull_cast(obj));
 }
 
 CosObjType
