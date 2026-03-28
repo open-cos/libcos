@@ -146,7 +146,6 @@ target_sources(libcos PRIVATE
     src/common/CosError.c
     src/common/CosLog.c
     src/common/CosRingBuffer.c
-    src/common/CosScanner.c
     src/common/CosString.c
     src/common/CosTypedArray.h
     src/common/CosUtils.c
@@ -226,7 +225,6 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosLog.h
     include/libcos/common/CosMacros.h
     include/libcos/common/CosRingBuffer.h
-    include/libcos/common/CosScanner.h
     include/libcos/common/CosString.h
     include/libcos/common/CosTypes.h
     include/libcos/common/memory/CosAllocator.h
