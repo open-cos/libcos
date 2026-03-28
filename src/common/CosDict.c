@@ -202,6 +202,50 @@ cos_dict_set(CosDict *dict,
     return true;
 }
 
+// MARK: - Iterator
+
+CosDictIterator
+cos_dict_iterator_init(CosDict *dict)
+{
+    COS_API_PARAM_CHECK(dict != NULL);
+
+    CosDictIterator iterator = {0};
+    iterator.dict = dict;
+    iterator.index = 0;
+    return iterator;
+}
+
+bool
+cos_dict_iterator_next(CosDictIterator *iterator,
+                       void * COS_Nullable * COS_Nonnull out_key,
+                       void * COS_Nullable * COS_Nonnull out_value)
+{
+    COS_API_PARAM_CHECK(iterator != NULL);
+    COS_API_PARAM_CHECK(out_key != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
+    if (COS_UNLIKELY(!iterator || !out_key || !out_value)) {
+        return false;
+    }
+
+    CosDict * const dict = iterator->dict;
+    const size_t capacity = dict->capacity;
+
+    while (iterator->index < capacity) {
+        CosDictEntry * const entry = &dict->entries[iterator->index];
+        iterator->index++;
+
+        if (entry->key != NULL) {
+            *out_key = entry->key;
+            *out_value = entry->value;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// MARK: - Private
+
 COS_STATIC_INLINE
 bool
 cos_dict_grow_(CosDict *dict,
