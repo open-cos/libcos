@@ -107,7 +107,9 @@ cos_dict_iterator_init(CosDict *dict);
 bool
 cos_dict_iterator_next(CosDictIterator *iterator,
                        void * COS_Nullable * COS_Nonnull out_key,
-                       void * COS_Nullable * COS_Nonnull out_value);
+                       void * COS_Nullable * COS_Nonnull out_value)
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
