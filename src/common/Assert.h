@@ -7,7 +7,25 @@
 
 #include <libcos/common/CosDefines.h>
 
-#if !defined(COS_DISABLE_ASSERTIONS)
+#if defined(COS_BUILD_COVERAGE)
+
+    /*
+     * Coverage build: reduce assertion macros to plain expression evaluation
+     * so that defensive checks do not create uncoverable branches.
+     * Modelled after SQLite's coverage testing approach.
+     */
+
+    #define COS_ASSERT(condition, ...) ((void)(condition))
+
+    #define COS_PARAMETER_ASSERT(condition) ((void)(condition))
+
+    #define COS_PARAM_ASSERT_INTERNAL(condition) ((void)(condition))
+
+    #define COS_API_PARAM_CHECK(condition) ((void)(condition))
+
+    #define COS_IMPL_PARAM_CHECK(condition) ((void)(condition))
+
+#elif !defined(COS_DISABLE_ASSERTIONS)
 
     #define COS_ASSERT(condition, ...) \
         COS_ASSERT_(condition, #condition, __VA_ARGS__)
@@ -33,6 +51,40 @@
     #define COS_PARAMETER_ASSERT(condition) ((void)0)
 
     #define COS_PARAM_ASSERT_INTERNAL(condition) ((void)0)
+
+#endif
+
+/*
+ * COS_ALWAYS(x) / COS_NEVER(x)
+ *
+ * Wrap conditions that are believed to always be true (or false) but where
+ * the code still handles the "impossible" case defensively.
+ *
+ * Modelled after SQLite's ALWAYS/NEVER macros:
+ *   - Coverage build:  constant 1 / 0 -- eliminates uncoverable branches.
+ *   - Debug build:     aborts if the assumption is violated.
+ *   - Release build:   pass-through -- the defensive code is still present.
+ */
+#if defined(COS_BUILD_COVERAGE)
+
+    #define COS_ALWAYS(x) (1)
+    #define COS_NEVER(x)  (0)
+
+#elif !defined(COS_DISABLE_ASSERTIONS)
+
+    #define COS_ALWAYS(x) ((x) ? 1 : (cos_fatal_assertion_failure_(          \
+                                           "COS_ALWAYS(" #x ") failed",      \
+                                           __func__, __FILE__, __LINE__,      \
+                                           (const char *)0), 0))
+    #define COS_NEVER(x)  ((x) ? (cos_fatal_assertion_failure_(              \
+                                      "COS_NEVER(" #x ") failed",            \
+                                      __func__, __FILE__, __LINE__,           \
+                                      (const char *)0), 1) : 0)
+
+#else
+
+    #define COS_ALWAYS(x) (x)
+    #define COS_NEVER(x)  (x)
 
 #endif
 

@@ -278,6 +278,9 @@ add_clang_format(libcos)
 include(Sanitizers)
 add_sanitizers(libcos)
 
+include(Coverage)
+add_coverage(libcos)
+
 # libcos++
 
 add_library(libcos++ INTERFACE
@@ -536,6 +539,7 @@ target_link_libraries(libcos++ INTERFACE
 enable_testing()
 add_subdirectory(tests)
 add_clang_format(libcos-test)
+add_coverage(libcos-test)
 
 if (COS_BUILD_DOCUMENTATION)
     add_subdirectory(docs)
