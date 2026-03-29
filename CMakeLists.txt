@@ -541,6 +541,9 @@ add_subdirectory(tests)
 add_clang_format(libcos-test)
 add_coverage(libcos-test)
 
+add_subdirectory(examples)
+add_coverage(libcos-examples)
+
 if (COS_BUILD_DOCUMENTATION)
     add_subdirectory(docs)
 endif (COS_BUILD_DOCUMENTATION)
