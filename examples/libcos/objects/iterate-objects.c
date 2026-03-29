@@ -65,6 +65,7 @@ obj_type_name_(CosObjType type)
         case CosObjType_Unknown:
             return "Unknown";
     }
+    return "Unknown";
 }
 
 static void

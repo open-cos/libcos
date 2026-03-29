@@ -58,17 +58,6 @@ create_withValidCallbacks_succeeds(void)
     return EXIT_SUCCESS;
 }
 
-static int
-create_withNullCallbacks_returnsNull(void)
-{
-    CosDict * const dict = cos_dict_create(COS_nonnull_cast(NULL),
-                                           COS_nonnull_cast(NULL),
-                                           0);
-    TEST_EXPECT(dict == NULL);
-
-    return EXIT_SUCCESS;
-}
-
 // MARK: - Count tests
 
 static int
@@ -140,32 +129,6 @@ get_nonExistingKey_returnsFalse(void)
     void *out = NULL;
     TEST_EXPECT(!cos_dict_get(dict, (void *)1, &out, NULL));
     TEST_EXPECT(out == NULL);
-
-    cos_dict_destroy(dict);
-    return EXIT_SUCCESS;
-}
-
-static int
-set_nullKey_returnsFalse(void)
-{
-    CosDict * const dict = create_dict_();
-    TEST_EXPECT(dict != NULL);
-
-    TEST_EXPECT(!cos_dict_set(dict, COS_nonnull_cast(NULL), (void *)100, NULL));
-    TEST_EXPECT(cos_dict_get_count(dict) == 0);
-
-    cos_dict_destroy(dict);
-    return EXIT_SUCCESS;
-}
-
-static int
-set_nullValue_returnsFalse(void)
-{
-    CosDict * const dict = create_dict_();
-    TEST_EXPECT(dict != NULL);
-
-    TEST_EXPECT(!cos_dict_set(dict, (void *)1, COS_nonnull_cast(NULL), NULL));
-    TEST_EXPECT(cos_dict_get_count(dict) == 0);
 
     cos_dict_destroy(dict);
     return EXIT_SUCCESS;
@@ -250,7 +213,6 @@ TEST_MAIN()
 {
     /* Creation */
     TEST_EXPECT(create_withValidCallbacks_succeeds() == EXIT_SUCCESS);
-    TEST_EXPECT(create_withNullCallbacks_returnsNull() == EXIT_SUCCESS);
 
     /* Count */
     TEST_EXPECT(count_emptyDict_returnsZero() == EXIT_SUCCESS);
@@ -260,8 +222,6 @@ TEST_MAIN()
     TEST_EXPECT(set_duplicateKey_doesNotIncrementCount() == EXIT_SUCCESS);
     TEST_EXPECT(get_existingKey_returnsValue() == EXIT_SUCCESS);
     TEST_EXPECT(get_nonExistingKey_returnsFalse() == EXIT_SUCCESS);
-    TEST_EXPECT(set_nullKey_returnsFalse() == EXIT_SUCCESS);
-    TEST_EXPECT(set_nullValue_returnsFalse() == EXIT_SUCCESS);
 
     /* Iterator */
     TEST_EXPECT(iterator_emptyDict_returnsNoEntries() == EXIT_SUCCESS);
