@@ -3,7 +3,7 @@
  */
 
 #include "../../src/parse/CosObjParser.h"
-#include "objects/CosObj.h"
+#include "objects/CosObjNode.h"
 
 #include <libcos/CosDoc.h>
 
@@ -30,15 +30,15 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
     }
 
     while (cos_obj_parser_has_next_object(parser)) {
-        CosObj * const obj = cos_obj_parser_next_object(parser,
+        CosObjNode * const obj = cos_obj_parser_next_object(parser,
                                                         NULL);
         if (!obj) {
             goto failure;
         }
 
-        cos_obj_print_desc(obj);
+        cos_obj_node_print_desc(obj);
 
-        cos_obj_free(obj);
+        cos_obj_node_free(obj);
     }
 
     cos_obj_parser_destroy(parser);

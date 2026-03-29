@@ -10,9 +10,9 @@
 #include <libcos/common/CosError.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
-#include <libcos/objects/CosIndirectObj.h>
-#include <libcos/objects/CosIntObj.h>
-#include <libcos/objects/CosObj.h>
+#include <libcos/objects/CosIndirectObjNode.h>
+#include <libcos/objects/CosIntObjNode.h>
+#include <libcos/objects/CosObjNode.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -121,18 +121,18 @@ resolveIndirectObj_MatchingGenNumber_ReturnsObject(void)
 
     CosError error = cos_error_none();
     const CosObjID obj_id = cos_obj_id_make(1, 0);
-    CosIndirectObj *indirect = cos_doc_get_object(doc, obj_id, &error);
+    CosIndirectObjNode *indirect = cos_doc_get_object(doc, obj_id, &error);
 
     TEST_EXPECT(indirect != NULL);
     TEST_EXPECT(error.code == COS_ERROR_NONE);
-    TEST_EXPECT(cos_obj_get_type((CosObj *)indirect) == CosObjType_Indirect);
+    TEST_EXPECT(cos_obj_node_get_type((CosObjNode *)indirect) == CosObjNodeType_Indirect);
 
-    CosObj *value = cos_indirect_obj_get_value(indirect);
+    CosObjNode *value = cos_indirect_obj_node_get_value(indirect);
     TEST_EXPECT(value != NULL);
-    TEST_EXPECT(cos_obj_get_type(value) == CosObjType_Integer);
-    TEST_EXPECT(cos_int_obj_get_value((CosIntObj *)value) == 42);
+    TEST_EXPECT(cos_obj_node_get_type(value) == CosObjNodeType_Integer);
+    TEST_EXPECT(cos_int_obj_node_get_value((CosIntObjNode *)value) == 42);
 
-    cos_obj_free((CosObj *)indirect);
+    cos_obj_node_free((CosObjNode *)indirect);
     cos_doc_destroy(doc);
     cos_stream_close((CosStream *)stream);
 
@@ -149,7 +149,7 @@ resolveIndirectObj_MismatchedGenNumber_ReturnsError(void)
     CosError error = cos_error_none();
     /* Object 1 is gen 0 in the xref; request it with gen 1. */
     const CosObjID obj_id = cos_obj_id_make(1, 1);
-    CosObj *obj = cos_doc_get_object(doc, obj_id, &error);
+    CosObjNode *obj = cos_doc_get_object(doc, obj_id, &error);
 
     TEST_EXPECT(obj == NULL);
     TEST_EXPECT(error.code == COS_ERROR_XREF);
@@ -170,7 +170,7 @@ resolveIndirectObj_NonexistentObjNumber_ReturnsError(void)
     CosError error = cos_error_none();
     /* Object 99 does not exist in the xref table. */
     const CosObjID obj_id = cos_obj_id_make(99, 0);
-    CosObj *obj = cos_doc_get_object(doc, obj_id, &error);
+    CosObjNode *obj = cos_doc_get_object(doc, obj_id, &error);
 
     TEST_EXPECT(obj == NULL);
     TEST_EXPECT(error.code == COS_ERROR_XREF);
@@ -191,7 +191,7 @@ resolveIndirectObj_FreeEntry_ReturnsError(void)
     CosError error = cos_error_none();
     /* Object 0 is always the head of the free list. */
     const CosObjID obj_id = cos_obj_id_make(0, 65535);
-    CosObj *obj = cos_doc_get_object(doc, obj_id, &error);
+    CosObjNode *obj = cos_doc_get_object(doc, obj_id, &error);
 
     TEST_EXPECT(obj == NULL);
     TEST_EXPECT(error.code == COS_ERROR_XREF);

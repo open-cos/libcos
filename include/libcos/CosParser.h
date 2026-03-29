@@ -74,7 +74,7 @@ cos_parser_parse(CosParser *parser,
  *
  * @return The parsed object (caller owns it), or @c NULL on error.
  */
-CosObj * COS_Nullable
+CosObjNode * COS_Nullable
 cos_parser_load_object(CosParser *parser,
                        CosStreamOffset byte_offset,
                        CosError * COS_Nullable out_error)

@@ -7,7 +7,7 @@
 
 #include <libcos/CosDoc.h>
 #include <libcos/io/CosFileStream.h>
-#include <libcos/objects/CosObj.h>
+#include <libcos/objects/CosObjNode.h>
 
 #include <stdlib.h>
 
@@ -47,15 +47,15 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
     }
 
     while (cos_obj_parser_has_next_object(parser)) {
-        CosObj * const obj = cos_obj_parser_next_object(parser,
+        CosObjNode * const obj = cos_obj_parser_next_object(parser,
                                                         NULL);
         if (!obj) {
             goto failure;
         }
 
-        cos_obj_print_desc(obj);
+        cos_obj_node_print_desc(obj);
 
-        cos_obj_free(obj);
+        cos_obj_node_free(obj);
     }
 
     cos_obj_parser_destroy(parser);

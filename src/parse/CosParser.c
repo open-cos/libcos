@@ -13,8 +13,8 @@
 #include <libcos/common/CosError.h>
 #include <libcos/common/memory/CosMemory.h>
 #include <libcos/io/CosStream.h>
-#include <libcos/objects/CosDictObj.h>
-#include <libcos/objects/CosObj.h>
+#include <libcos/objects/CosDictObjNode.h>
+#include <libcos/objects/CosObjNode.h>
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
 #include <libcos/xref/CosXrefTableParser.h>
 #include <libcos/xref/table/CosXrefTable.h>
@@ -138,7 +138,7 @@ cos_parser_parse(CosParser *parser,
     return true;
 }
 
-CosObj *
+CosObjNode *
 cos_parser_load_object(CosParser *parser,
                        CosStreamOffset byte_offset,
                        CosError * COS_Nullable out_error)
@@ -389,7 +389,7 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     // cos_obj_parser_next_object() call will therefore read the trailer dict "<<".
     cos_obj_parser_flush_tokens_(parser->obj_parser);
 
-    CosObj * const trailer_obj = cos_obj_parser_next_object(parser->obj_parser, out_error);
+    CosObjNode * const trailer_obj = cos_obj_parser_next_object(parser->obj_parser, out_error);
     if (!trailer_obj) {
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_PARSE,
@@ -397,20 +397,20 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
         return false;
     }
 
-    if (!cos_obj_is_dict(trailer_obj)) {
-        cos_obj_free(trailer_obj);
+    if (!cos_obj_node_is_dict(trailer_obj)) {
+        cos_obj_node_free(trailer_obj);
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_PARSE,
                                            "Trailer is not a dictionary"));
         return false;
     }
 
-    CosDictObj * const trailer_dict = (CosDictObj *)trailer_obj;
+    CosDictObjNode * const trailer_dict = (CosDictObjNode *)trailer_obj;
     cos_doc_set_trailer_dict_(doc, trailer_dict);
 
     // Phase 5: Extract the /Root reference for lazy object resolution.
-    CosObj * COS_Nullable root_obj = NULL;
-    if (cos_dict_obj_get_value_with_string(trailer_dict, "Root", &root_obj, NULL) &&
+    CosObjNode * COS_Nullable root_obj = NULL;
+    if (cos_dict_obj_node_get_value_with_string(trailer_dict, "Root", &root_obj, NULL) &&
         root_obj != NULL) {
         // Store as a borrowed reference; trailer_dict owns the object.
         cos_doc_set_root_(doc, root_obj);

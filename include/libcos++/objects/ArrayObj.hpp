@@ -22,9 +22,9 @@ public:
     Obj
     getAt(std::size_t index) const;
 
-    explicit ArrayObj(CosArrayObj *impl);
+    explicit ArrayObj(CosArrayObjNode *impl);
 
-    CosArrayObj *
+    CosArrayObjNode *
     getArrayImpl() const;
 };
 

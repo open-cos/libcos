@@ -13,8 +13,8 @@
 #include <libcos/common/CosError.h>
 #include <libcos/common/memory/CosAllocator.h>
 #include <libcos/common/memory/CosMemory.h>
-#include <libcos/objects/CosDictObj.h>
-#include <libcos/objects/CosObj.h>
+#include <libcos/objects/CosDictObjNode.h>
+#include <libcos/objects/CosObjNode.h>
 #include <libcos/xref/table/CosXrefEntry.h>
 #include <libcos/xref/table/CosXrefTable.h>
 
@@ -26,11 +26,11 @@ struct CosDoc {
     int version;
 
     CosAllocator *allocator;
-    CosObj * COS_Nullable root;
+    CosObjNode * COS_Nullable root;
 
     CosParser * COS_Nullable parser;
     CosXrefTable * COS_Nullable xref_table;
-    CosDictObj * COS_Nullable trailer_dict;
+    CosDictObjNode * COS_Nullable trailer_dict;
 
     CosObjCache * COS_Nullable obj_cache;
 
@@ -73,7 +73,7 @@ cos_doc_destroy(CosDoc *doc)
     }
 
     if (doc->trailer_dict) {
-        cos_dict_obj_destroy(COS_nonnull_cast(doc->trailer_dict));
+        cos_dict_obj_node_destroy(COS_nonnull_cast(doc->trailer_dict));
         doc->trailer_dict = NULL;
     }
 
@@ -106,7 +106,7 @@ cos_doc_get_version(CosDoc *doc)
     return doc->version;
 }
 
-CosObj *
+CosObjNode *
 cos_doc_get_root(CosDoc *doc)
 {
     return doc->root;
@@ -167,15 +167,15 @@ cos_doc_get_object(CosDoc *doc,
 
     // Check the cache for a previously loaded object.
     if (doc->obj_cache) {
-        CosObj * const cached = cos_obj_cache_get(COS_nonnull_cast(doc->obj_cache),
+        CosObjNode * const cached = cos_obj_cache_get(COS_nonnull_cast(doc->obj_cache),
                                                   obj_id.obj_number);
         if (cached) {
-            return cos_obj_retain(cached);
+            return cos_obj_node_retain(cached);
         }
     }
 
     // Parse the object from the file.
-    CosObj * const obj = cos_parser_load_object(COS_nonnull_cast(doc->parser),
+    CosObjNode * const obj = cos_parser_load_object(COS_nonnull_cast(doc->parser),
                                                 (CosStreamOffset)entry->value.in_use.byte_offset,
                                                 error);
     if (!obj) {
@@ -265,14 +265,14 @@ cos_doc_set_xref_table_(CosDoc *doc,
 
 void
 cos_doc_set_trailer_dict_(CosDoc *doc,
-                          CosDictObj * COS_Nullable dict)
+                          CosDictObjNode * COS_Nullable dict)
 {
     if (!doc) {
         return;
     }
 
     if (doc->trailer_dict) {
-        cos_dict_obj_destroy(COS_nonnull_cast(doc->trailer_dict));
+        cos_dict_obj_node_destroy(COS_nonnull_cast(doc->trailer_dict));
     }
 
     doc->trailer_dict = dict;
@@ -280,7 +280,7 @@ cos_doc_set_trailer_dict_(CosDoc *doc,
 
 void
 cos_doc_set_root_(CosDoc *doc,
-                  CosObj * COS_Nullable root)
+                  CosObjNode * COS_Nullable root)
 {
     if (!doc) {
         return;

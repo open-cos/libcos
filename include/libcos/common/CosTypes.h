@@ -45,31 +45,18 @@ typedef struct CosDoc CosDoc;
 
 typedef struct CosObjID CosObjID;
 
-typedef struct CosNode CosNode;
-typedef struct CosBoolNode CosBoolNode;
-typedef struct CosIntegerNode CosIntegerNode;
-typedef struct CosRealNode CosRealNode;
-typedef struct CosStringNode CosStringNode;
-typedef struct CosNameNode CosNameNode;
-typedef struct CosArrayNode CosArrayNode;
-typedef struct CosDictNode CosDictNode;
-typedef struct CosStreamNode CosStreamNode;
-typedef struct CosIndirectNode CosIndirectNode;
-typedef struct CosReferenceNode CosReferenceNode;
-typedef struct CosNullNode CosNullNode;
-
-typedef struct CosObj CosObj;
-typedef struct CosBoolObj CosBoolObj;
-typedef struct CosIntObj CosIntObj;
-typedef struct CosRealObj CosRealObj;
-typedef struct CosStringObj CosStringObj;
-typedef struct CosNameObj CosNameObj;
-typedef struct CosArrayObj CosArrayObj;
-typedef struct CosDictObj CosDictObj;
-typedef struct CosStreamObj CosStreamObj;
-typedef struct CosNullObj CosNullObj;
-typedef struct CosIndirectObj CosIndirectObj;
-typedef struct CosReferenceObj CosReferenceObj;
+typedef struct CosObjNode CosObjNode;
+typedef struct CosBoolObjNode CosBoolObjNode;
+typedef struct CosIntObjNode CosIntObjNode;
+typedef struct CosRealObjNode CosRealObjNode;
+typedef struct CosStringObjNode CosStringObjNode;
+typedef struct CosNameObjNode CosNameObjNode;
+typedef struct CosArrayObjNode CosArrayObjNode;
+typedef struct CosDictObjNode CosDictObjNode;
+typedef struct CosStreamObjNode CosStreamObjNode;
+typedef struct CosNullObjNode CosNullObjNode;
+typedef struct CosIndirectObjNode CosIndirectObjNode;
+typedef struct CosReferenceObjNode CosReferenceObjNode;
 
 typedef struct CosXrefTable CosXrefTable;
 typedef struct CosXrefSection CosXrefSection;

@@ -37,7 +37,7 @@ cos_doc_get_allocator(const CosDoc *doc)
 int
 cos_doc_get_version(CosDoc *doc);
 
-CosObj * COS_Nullable
+CosObjNode * COS_Nullable
 cos_doc_get_root(CosDoc *doc);
 
 void * COS_Nullable

@@ -114,15 +114,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_library(libcos
     src/dummy.c
-    include/libcos/objects/nodes/CosStreamNode.h
-    src/objects/nodes/CosStreamNode.c
-    include/libcos/objects/nodes/CosIntegerNode.h
-    include/libcos/objects/nodes/CosRealNode.h
-    src/objects/nodes/CosIntegerNode.c
-    src/objects/nodes/CosRealNode.c
-    include/libcos/objects/nodes/CosNullNode.h
-    src/objects/nodes/CosNullNode.c
-    src/objects/nodes/CosArrayNode-Private.h
 )
 
 target_include_directories(libcos
@@ -166,30 +157,21 @@ target_sources(libcos PRIVATE
     src/io/CosStream.c
     src/io/CosStreamReader.c
     src/io/string-support.c
-    src/objects/CosArrayObj.c
-    src/objects/CosBoolObj.c
-    src/objects/CosDictObj.c
-    src/objects/CosIndirectObj.c
-    src/objects/CosIntObj.c
-    src/objects/CosNameObj.c
-    src/objects/CosNullObj.c
-    src/objects/CosObj.c
+    src/objects/CosArrayObjNode.c
+    src/objects/CosBoolObjNode.c
+    src/objects/CosDictObjNode.c
+    src/objects/CosIndirectObjNode.c
+    src/objects/CosIntObjNode.c
+    src/objects/CosNameObjNode.c
+    src/objects/CosNullObjNode.c
+    src/objects/CosObjNode.c
     src/objects/CosObjCache.c
     src/objects/CosObjCache.h
     src/objects/CosObjID.c
-    src/objects/CosRealObj.c
-    src/objects/CosReferenceObj.c
-    src/objects/CosStreamObj.c
-    src/objects/CosStringObj.c
-    src/objects/nodes/CosArrayNode.c
-    src/objects/nodes/CosBoolNode.c
-    src/objects/nodes/CosDictNode.c
-    src/objects/nodes/CosIndirectNode.c
-    src/objects/nodes/CosNameNode.c
-    src/objects/nodes/CosNode-Private.h
-    src/objects/nodes/CosNode.c
-    src/objects/nodes/CosReferenceNode.c
-    src/objects/nodes/CosStringNode.c
+    src/objects/CosRealObjNode.c
+    src/objects/CosReferenceObjNode.c
+    src/objects/CosStreamObjNode.c
+    src/objects/CosStringObjNode.c
     src/parse/CosBaseParser.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
@@ -238,27 +220,19 @@ target_sources(libcos PUBLIC
     include/libcos/io/CosStream.h
     include/libcos/io/CosStreamReader.h
     include/libcos/io/string-support.h
-    include/libcos/objects/CosArrayObj.h
-    include/libcos/objects/CosBoolObj.h
-    include/libcos/objects/CosDictObj.h
-    include/libcos/objects/CosIndirectObj.h
-    include/libcos/objects/CosIntObj.h
-    include/libcos/objects/CosNameObj.h
-    include/libcos/objects/CosNullObj.h
-    include/libcos/objects/CosObj.h
-    include/libcos/objects/CosObjectTypes.h
-    include/libcos/objects/CosRealObj.h
-    include/libcos/objects/CosReferenceObj.h
-    include/libcos/objects/CosStreamObj.h
-    include/libcos/objects/CosStringObj.h
-    include/libcos/objects/nodes/CosArrayNode.h
-    include/libcos/objects/nodes/CosBoolNode.h
-    include/libcos/objects/nodes/CosDictNode.h
-    include/libcos/objects/nodes/CosIndirectNode.h
-    include/libcos/objects/nodes/CosNameNode.h
-    include/libcos/objects/nodes/CosNode.h
-    include/libcos/objects/nodes/CosReferenceNode.h
-    include/libcos/objects/nodes/CosStringNode.h
+    include/libcos/objects/CosArrayObjNode.h
+    include/libcos/objects/CosBoolObjNode.h
+    include/libcos/objects/CosDictObjNode.h
+    include/libcos/objects/CosIndirectObjNode.h
+    include/libcos/objects/CosIntObjNode.h
+    include/libcos/objects/CosNameObjNode.h
+    include/libcos/objects/CosNullObjNode.h
+    include/libcos/objects/CosObjNode.h
+    include/libcos/objects/CosObjNodeTypes.h
+    include/libcos/objects/CosRealObjNode.h
+    include/libcos/objects/CosReferenceObjNode.h
+    include/libcos/objects/CosStreamObjNode.h
+    include/libcos/objects/CosStringObjNode.h
     include/libcos/CosParser.h
     include/libcos/parse/CosBaseParser.h
     include/libcos/syntax/CosKeywords.h

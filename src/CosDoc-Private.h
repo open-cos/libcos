@@ -28,12 +28,12 @@ cos_doc_set_xref_table_(CosDoc *doc,
 
 void
 cos_doc_set_trailer_dict_(CosDoc *doc,
-                          CosDictObj * COS_Nullable dict)
+                          CosDictObjNode * COS_Nullable dict)
     COS_OWNERSHIP_HOLDS(2);
 
 void
 cos_doc_set_root_(CosDoc *doc,
-                  CosObj * COS_Nullable root);
+                  CosObjNode * COS_Nullable root);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

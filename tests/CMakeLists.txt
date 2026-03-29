@@ -22,7 +22,7 @@ create_test_sourcelist(LIBCOS_TEST_SOURCES
 add_executable(libcos-test
     ${LIBCOS_TEST_SOURCES}
     CosTest.h
-    nodes/basic.c
+
 )
 
 foreach (TEST_SOURCE ${LIBCOS_TESTS})

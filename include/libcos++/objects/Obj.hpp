@@ -30,13 +30,13 @@ public:
     bool
     is_name() const noexcept;
 
-    explicit Obj(CosObj *impl, bool owner = false);
+    explicit Obj(CosObjNode *impl, bool owner = false);
 
-    CosObj *
+    CosObjNode *
     getImpl() const noexcept;
 
 private:
-    SharedOwnablePtr<CosObj *> impl_;
+    SharedOwnablePtr<CosObjNode *> impl_;
 };
 
 } // namespace opencos

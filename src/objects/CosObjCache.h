@@ -49,7 +49,7 @@ cos_obj_cache_create(size_t capacity_hint)
  *
  * @return The cached object, or NULL if not found.
  */
-CosObj * COS_Nullable
+CosObjNode * COS_Nullable
 cos_obj_cache_get(CosObjCache *cache,
                   unsigned int obj_number);
 
@@ -69,7 +69,7 @@ cos_obj_cache_get(CosObjCache *cache,
 bool
 cos_obj_cache_insert(CosObjCache *cache,
                      unsigned int obj_number,
-                     CosObj *obj);
+                     CosObjNode *obj);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

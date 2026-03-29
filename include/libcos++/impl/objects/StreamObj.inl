@@ -7,7 +7,7 @@
 
 #include "libcos/common/CosArray.h"
 #include "libcos/common/CosError.h"
-#include "libcos/objects/CosArrayObj.h"
+#include "libcos/objects/CosArrayObjNode.h"
 #include "objects/ArrayObj.hpp"
 #include "objects/NameObj.hpp"
 
@@ -22,7 +22,7 @@ StreamObj::~StreamObj() = default;
 std::size_t
 StreamObj::getLength() const
 {
-    return cos_stream_obj_get_length(getStreamImpl());
+    return cos_stream_obj_node_get_length(getStreamImpl());
 }
 
 std::vector<std::string>
@@ -31,7 +31,7 @@ StreamObj::getFilterNames() const
     std::vector<std::string> filterNames;
 
     CosError error;
-    CosArrayObj * const filter_names = cos_stream_obj_get_filter_names(getStreamImpl(),
+    CosArrayObjNode * const filter_names = cos_stream_obj_node_get_filter_names(getStreamImpl(),
                                                                        &error);
     if (filter_names == nullptr) {
         return filterNames;
@@ -51,15 +51,15 @@ StreamObj::getFilterNames() const
     return filterNames;
 }
 
-StreamObj::StreamObj(CosStreamObj *impl)
-    : Obj(reinterpret_cast<CosObj *>(impl))
+StreamObj::StreamObj(CosStreamObjNode *impl)
+    : Obj(reinterpret_cast<CosObjNode *>(impl))
 {
 }
 
-CosStreamObj *
+CosStreamObjNode *
 StreamObj::getStreamImpl() const noexcept
 {
-    return reinterpret_cast<CosStreamObj *>(Obj::getImpl());
+    return reinterpret_cast<CosStreamObjNode *>(Obj::getImpl());
 }
 
 } // namespace opencos

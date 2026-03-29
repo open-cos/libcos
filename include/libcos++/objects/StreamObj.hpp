@@ -6,7 +6,7 @@
 #define LIBCOSXX_OBJECTS_STREAM_OBJ_HPP
 
 #include <libcos++/objects/Obj.hpp>
-#include <libcos/objects/CosStreamObj.h>
+#include <libcos/objects/CosStreamObjNode.h>
 
 #include <cstddef>
 #include <string>
@@ -24,9 +24,9 @@ public:
     std::vector<std::string>
     getFilterNames() const;
 
-    explicit StreamObj(CosStreamObj *impl);
+    explicit StreamObj(CosStreamObjNode *impl);
 
-    CosStreamObj *
+    CosStreamObjNode *
     getStreamImpl() const noexcept;
 };
 

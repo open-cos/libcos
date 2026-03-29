@@ -20,9 +20,9 @@ public:
     std::string
     getName() const;
 
-    explicit NameObj(CosNameObj *impl);
+    explicit NameObj(CosNameObjNode *impl);
 
-    CosNameObj *
+    CosNameObjNode *
     getNameImpl() const;
 };
 

@@ -8,7 +8,7 @@
 #include "common/CosString.h"
 
 #include <libcos++/objects/NameObj.hpp>
-#include <libcos/objects/CosNameObj.h>
+#include <libcos/objects/CosNameObjNode.h>
 
 namespace opencos {
 
@@ -23,7 +23,7 @@ NameObj::~NameObj() = default;
 std::string
 NameObj::getName() const
 {
-    const CosString * const name_value = cos_name_obj_get_value(getNameImpl());
+    const CosString * const name_value = cos_name_obj_node_get_value(getNameImpl());
     if (name_value == nullptr) {
         return {};
     }
@@ -32,14 +32,14 @@ NameObj::getName() const
             cos_string_get_length(name_value)};
 }
 
-NameObj::NameObj(CosNameObj *impl)
-    : Obj(reinterpret_cast<CosObj *>(impl))
+NameObj::NameObj(CosNameObjNode *impl)
+    : Obj(reinterpret_cast<CosObjNode *>(impl))
 {}
 
-CosNameObj *
+CosNameObjNode *
 NameObj::getNameImpl() const
 {
-    return reinterpret_cast<CosNameObj *>(Obj::getImpl());
+    return reinterpret_cast<CosNameObjNode *>(Obj::getImpl());
 }
 
 } // namespace opencos

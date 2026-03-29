@@ -6,7 +6,7 @@
  * Demonstrates how to:
  *   - Open and parse a PDF document from memory.
  *   - Retrieve the document root (catalog dictionary).
- *   - Iterate over dictionary entries using CosDictObjIterator.
+ *   - Iterate over dictionary entries using CosDictObjNodeIterator.
  *   - Resolve indirect object references.
  *   - Recursively walk the object tree.
  */
@@ -20,13 +20,13 @@
 #include <libcos/common/CosString.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
-#include <libcos/objects/CosArrayObj.h>
-#include <libcos/objects/CosDictObj.h>
-#include <libcos/objects/CosIndirectObj.h>
-#include <libcos/objects/CosIntObj.h>
-#include <libcos/objects/CosNameObj.h>
-#include <libcos/objects/CosObj.h>
-#include <libcos/objects/CosReferenceObj.h>
+#include <libcos/objects/CosArrayObjNode.h>
+#include <libcos/objects/CosDictObjNode.h>
+#include <libcos/objects/CosIndirectObjNode.h>
+#include <libcos/objects/CosIntObjNode.h>
+#include <libcos/objects/CosNameObjNode.h>
+#include <libcos/objects/CosObjNode.h>
+#include <libcos/objects/CosReferenceObjNode.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,32 +37,32 @@ COS_ASSUME_NONNULL_BEGIN
 // MARK: - Helpers
 
 static const char *
-obj_type_name_(CosObjType type)
+obj_type_name_(CosObjNodeType type)
 {
     switch (type) {
-        case CosObjType_Boolean:
+        case CosObjNodeType_Boolean:
             return "Boolean";
-        case CosObjType_Integer:
+        case CosObjNodeType_Integer:
             return "Integer";
-        case CosObjType_Real:
+        case CosObjNodeType_Real:
             return "Real";
-        case CosObjType_String:
+        case CosObjNodeType_String:
             return "String";
-        case CosObjType_Name:
+        case CosObjNodeType_Name:
             return "Name";
-        case CosObjType_Array:
+        case CosObjNodeType_Array:
             return "Array";
-        case CosObjType_Dict:
+        case CosObjNodeType_Dict:
             return "Dict";
-        case CosObjType_Stream:
+        case CosObjNodeType_Stream:
             return "Stream";
-        case CosObjType_Null:
+        case CosObjNodeType_Null:
             return "Null";
-        case CosObjType_Indirect:
+        case CosObjNodeType_Indirect:
             return "Indirect";
-        case CosObjType_Reference:
+        case CosObjNodeType_Reference:
             return "Reference";
-        case CosObjType_Unknown:
+        case CosObjNodeType_Unknown:
             return "Unknown";
     }
     return "Unknown";
@@ -79,22 +79,22 @@ print_indent_(int depth)
 // MARK: - Object traversal
 
 static void
-visit_object_(CosObj *obj, int depth);
+visit_object_(CosObjNode *obj, int depth);
 
 static void
-visit_dict_(CosDictObj *dict_obj, int depth)
+visit_dict_(CosDictObjNode *dict_obj, int depth)
 {
-    const size_t count = cos_dict_obj_get_count(dict_obj);
+    const size_t count = cos_dict_obj_node_get_count(dict_obj);
 
     print_indent_(depth);
     printf("Dict (%zu entries):\n", count);
 
-    CosDictObjIterator iter = cos_dict_obj_iterator_init(dict_obj);
-    CosNameObj *key = NULL;
-    CosObj *value = NULL;
+    CosDictObjNodeIterator iter = cos_dict_obj_node_iterator_init(dict_obj);
+    CosNameObjNode *key = NULL;
+    CosObjNode *value = NULL;
 
-    while (cos_dict_obj_iterator_next(&iter, &key, &value)) {
-        const CosString *key_str = cos_name_obj_get_value(key);
+    while (cos_dict_obj_node_iterator_next(&iter, &key, &value)) {
+        const CosString *key_str = cos_name_obj_node_get_value(key);
         const char *key_name = key_str ? cos_string_get_data(key_str) : "";
 
         print_indent_(depth + 1);
@@ -102,7 +102,7 @@ visit_dict_(CosDictObj *dict_obj, int depth)
 
         /* Skip /Parent to avoid infinite recursion in the page tree. */
         if (strcmp(key_name, "Parent") == 0) {
-            printf("(%s, skipped)\n", obj_type_name_(cos_obj_get_type(value)));
+            printf("(%s, skipped)\n", obj_type_name_(cos_obj_node_get_type(value)));
         }
         else {
             printf("\n");
@@ -112,16 +112,16 @@ visit_dict_(CosDictObj *dict_obj, int depth)
 }
 
 static void
-visit_array_(CosArrayObj *array_obj, int depth)
+visit_array_(CosArrayObjNode *array_obj, int depth)
 {
     CosError error = cos_error_none();
-    const size_t count = cos_array_obj_get_count(array_obj);
+    const size_t count = cos_array_obj_node_get_count(array_obj);
 
     print_indent_(depth);
     printf("Array (%zu elements):\n", count);
 
     for (size_t i = 0; i < count; i++) {
-        CosObj *element = cos_array_obj_get_at(array_obj, i, &error);
+        CosObjNode *element = cos_array_obj_node_get_at(array_obj, i, &error);
         if (!element) {
             print_indent_(depth + 1);
             printf("[%zu] <error>\n", i);
@@ -135,38 +135,38 @@ visit_array_(CosArrayObj *array_obj, int depth)
 }
 
 static void
-visit_object_(CosObj *obj, int depth)
+visit_object_(CosObjNode *obj, int depth)
 {
-    const CosObjType type = cos_obj_get_type(obj);
+    const CosObjNodeType type = cos_obj_node_get_type(obj);
 
     switch (type) {
-        case CosObjType_Dict:
-            visit_dict_((CosDictObj *)obj, depth);
+        case CosObjNodeType_Dict:
+            visit_dict_((CosDictObjNode *)obj, depth);
             break;
 
-        case CosObjType_Array:
-            visit_array_((CosArrayObj *)obj, depth);
+        case CosObjNodeType_Array:
+            visit_array_((CosArrayObjNode *)obj, depth);
             break;
 
-        case CosObjType_Indirect: {
-            CosIndirectObj *indirect = (CosIndirectObj *)obj;
-            CosObjID id = cos_indirect_obj_get_id(indirect);
+        case CosObjNodeType_Indirect: {
+            CosIndirectObjNode *indirect = (CosIndirectObjNode *)obj;
+            CosObjID id = cos_indirect_obj_node_get_id(indirect);
             print_indent_(depth);
             printf("Indirect object %u %u:\n", id.obj_number, id.gen_number);
 
-            CosObj *value = cos_indirect_obj_get_value(indirect);
+            CosObjNode *value = cos_indirect_obj_node_get_value(indirect);
             if (value) {
                 visit_object_(value, depth + 1);
             }
             break;
         }
 
-        case CosObjType_Reference: {
-            CosReferenceObj *ref = (CosReferenceObj *)obj;
+        case CosObjNodeType_Reference: {
+            CosReferenceObjNode *ref = (CosReferenceObjNode *)obj;
             print_indent_(depth);
             printf("Reference -> resolving\n");
 
-            CosObj *resolved = cos_reference_obj_get_value(ref);
+            CosObjNode *resolved = cos_reference_obj_node_get_value(ref);
             if (resolved) {
                 visit_object_(resolved, depth + 1);
             }
@@ -177,27 +177,27 @@ visit_object_(CosObj *obj, int depth)
             break;
         }
 
-        case CosObjType_Integer: {
-            int value = cos_int_obj_get_value((CosIntObj *)obj);
+        case CosObjNodeType_Integer: {
+            int value = cos_int_obj_node_get_value((CosIntObjNode *)obj);
             print_indent_(depth);
             printf("Integer: %d\n", value);
             break;
         }
 
-        case CosObjType_Name: {
-            const CosString *str = cos_name_obj_get_value((CosNameObj *)obj);
+        case CosObjNodeType_Name: {
+            const CosString *str = cos_name_obj_node_get_value((CosNameObjNode *)obj);
             const char *data = str ? cos_string_get_data(str) : "";
             print_indent_(depth);
             printf("Name: /%s\n", data);
             break;
         }
 
-        case CosObjType_Unknown:
-        case CosObjType_Boolean:
-        case CosObjType_Real:
-        case CosObjType_String:
-        case CosObjType_Stream:
-        case CosObjType_Null:
+        case CosObjNodeType_Unknown:
+        case CosObjNodeType_Boolean:
+        case CosObjNodeType_Real:
+        case CosObjNodeType_String:
+        case CosObjNodeType_Stream:
+        case CosObjNodeType_Null:
             print_indent_(depth);
             printf("%s\n", obj_type_name_(type));
             break;
@@ -277,7 +277,7 @@ EXAMPLE_MAIN()
     printf("PDF version: 1.%d\n\n", cos_doc_get_version(doc));
 
     /* Get the root object and walk the tree. */
-    CosObj *root = cos_doc_get_root(doc);
+    CosObjNode *root = cos_doc_get_root(doc);
     if (!root) {
         fprintf(stderr, "No root object found\n");
         goto cleanup;

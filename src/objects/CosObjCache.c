@@ -8,7 +8,7 @@
 
 #include <libcos/common/CosDict.h>
 #include <libcos/common/CosError.h>
-#include <libcos/objects/CosObj.h>
+#include <libcos/objects/CosObjNode.h>
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -31,13 +31,13 @@ cos_obj_cache_keys_equal_(void *key1,
 static void
 cos_obj_cache_value_retain_(void *value)
 {
-    cos_obj_retain((CosObj *)value);
+    cos_obj_node_retain((CosObjNode *)value);
 }
 
 static void
 cos_obj_cache_value_release_(void *value)
 {
-    cos_obj_free((CosObj *)value);
+    cos_obj_node_free((CosObjNode *)value);
 }
 
 static const CosDictKeyCallbacks cos_obj_cache_key_callbacks_ = {
@@ -99,7 +99,7 @@ cos_obj_cache_destroy(CosObjCache *cache)
 
 // MARK: - Operations
 
-CosObj *
+CosObjNode *
 cos_obj_cache_get(CosObjCache *cache,
                   unsigned int obj_number)
 {
@@ -113,7 +113,7 @@ cos_obj_cache_get(CosObjCache *cache,
                      (void *)(uintptr_t)obj_number,
                      &value,
                      NULL)) {
-        return (CosObj *)value;
+        return (CosObjNode *)value;
     }
 
     return NULL;
@@ -122,7 +122,7 @@ cos_obj_cache_get(CosObjCache *cache,
 bool
 cos_obj_cache_insert(CosObjCache *cache,
                      unsigned int obj_number,
-                     CosObj *obj)
+                     CosObjNode *obj)
 {
     COS_API_PARAM_CHECK(cache != NULL);
     COS_API_PARAM_CHECK(obj != NULL);

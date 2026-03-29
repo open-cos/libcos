@@ -6,7 +6,7 @@
 #define LIBCOSXX_OBJECTS_OBJ_INL
 
 #include <libcos++/objects/Obj.hpp>
-#include <libcos/objects/CosObj.h>
+#include <libcos/objects/CosObjNode.h>
 
 namespace opencos {
 
@@ -14,9 +14,9 @@ namespace detail {
 
 struct ObjDeleter {
     void
-    operator()(CosObj *obj) const
+    operator()(CosObjNode *obj) const
     {
-        cos_obj_free(obj);
+        cos_obj_node_free(obj);
     }
 };
 
@@ -35,16 +35,16 @@ operator bool() const
 bool
 Obj::is_name() const noexcept
 {
-    return cos_obj_is_name(getImpl());
+    return cos_obj_node_is_name(getImpl());
 }
 
-Obj::Obj(CosObj *impl, bool owner)
+Obj::Obj(CosObjNode *impl, bool owner)
     : impl_(make_ownable(impl,
                          owner,
                          detail::ObjDeleter()))
 {}
 
-CosObj *
+CosObjNode *
 Obj::getImpl() const noexcept
 {
     return impl_->value();

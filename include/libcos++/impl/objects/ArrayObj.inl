@@ -8,7 +8,7 @@
 #include "common/CosError.h"
 
 #include <libcos++/objects/ArrayObj.hpp>
-#include <libcos/objects/CosArrayObj.h>
+#include <libcos/objects/CosArrayObjNode.h>
 
 namespace opencos {
 
@@ -17,14 +17,14 @@ ArrayObj::~ArrayObj() = default;
 std::size_t
 ArrayObj::getCount() const
 {
-    return cos_array_obj_get_count(getArrayImpl());
+    return cos_array_obj_node_get_count(getArrayImpl());
 }
 
 Obj
 ArrayObj::getAt(std::size_t index) const
 {
     CosError error;
-    CosObj * const obj = cos_array_obj_get_at(getArrayImpl(),
+    CosObjNode * const obj = cos_array_obj_node_get_at(getArrayImpl(),
                                               index,
                                               &error);
     if (obj == nullptr) {
@@ -34,14 +34,14 @@ ArrayObj::getAt(std::size_t index) const
     return Obj(obj);
 }
 
-ArrayObj::ArrayObj(CosArrayObj *impl)
-    : Obj(reinterpret_cast<CosObj *>(impl))
+ArrayObj::ArrayObj(CosArrayObjNode *impl)
+    : Obj(reinterpret_cast<CosObjNode *>(impl))
 {}
 
-CosArrayObj *
+CosArrayObjNode *
 ArrayObj::getArrayImpl() const
 {
-    return reinterpret_cast<CosArrayObj *>(Obj::getImpl());
+    return reinterpret_cast<CosArrayObjNode *>(Obj::getImpl());
 }
 
 } // namespace opencos
