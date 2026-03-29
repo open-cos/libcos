@@ -93,6 +93,50 @@ cos_dict_obj_set(CosDictObj *dict_obj,
 extern const CosDictKeyCallbacks cos_dict_obj_key_callbacks;
 extern const CosDictValueCallbacks cos_dict_obj_value_callbacks;
 
+// MARK: - Iterator
+
+/**
+ * An iterator over the key-value pairs in a dictionary object.
+ *
+ * Initialize with @c cos_dict_obj_iterator_init and advance with
+ * @c cos_dict_obj_iterator_next.  The iterator does not own any resources
+ * and becomes invalid if the dictionary is mutated.
+ */
+typedef struct CosDictObjIterator {
+    /**
+     * The underlying dictionary iterator.
+     * @private
+     */
+    CosDictIterator base;
+} CosDictObjIterator;
+
+/**
+ * Initializes a dictionary object iterator.
+ *
+ * @param dict_obj The dictionary object to iterate over.
+ *
+ * @return An iterator positioned before the first entry.
+ */
+CosDictObjIterator
+cos_dict_obj_iterator_init(CosDictObj *dict_obj);
+
+/**
+ * Advances the iterator to the next key-value pair.
+ *
+ * @param iterator The iterator.
+ * @param[out] out_key On success, receives the key (a name object).
+ * @param[out] out_value On success, receives the value.
+ *
+ * @return @c true if another entry was found, @c false when iteration is
+ * complete.
+ */
+bool
+cos_dict_obj_iterator_next(CosDictObjIterator *iterator,
+                           CosNameObj * COS_Nullable * COS_Nonnull out_key,
+                           CosObj * COS_Nullable * COS_Nonnull out_value)
+    COS_ATTR_ACCESS_WRITE_ONLY(2)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

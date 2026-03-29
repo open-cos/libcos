@@ -216,4 +216,34 @@ cos_dict_obj_set(CosDictObj *dict_obj,
                         error);
 }
 
+// MARK: - Iterator
+
+CosDictObjIterator
+cos_dict_obj_iterator_init(CosDictObj *dict_obj)
+{
+    COS_API_PARAM_CHECK(dict_obj != NULL);
+
+    CosDictObjIterator iterator = {
+        .base = cos_dict_iterator_init(dict_obj->value),
+    };
+    return iterator;
+}
+
+bool
+cos_dict_obj_iterator_next(CosDictObjIterator *iterator,
+                           CosNameObj * COS_Nullable * COS_Nonnull out_key,
+                           CosObj * COS_Nullable * COS_Nonnull out_value)
+{
+    COS_API_PARAM_CHECK(iterator != NULL);
+    COS_API_PARAM_CHECK(out_key != NULL);
+    COS_API_PARAM_CHECK(out_value != NULL);
+    if (COS_UNLIKELY(!iterator || !out_key || !out_value)) {
+        return false;
+    }
+
+    return cos_dict_iterator_next(&iterator->base,
+                                  (void **)out_key,
+                                  (void **)out_value);
+}
+
 COS_ASSUME_NONNULL_END
