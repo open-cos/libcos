@@ -122,6 +122,7 @@ target_include_directories(libcos
 )
 
 target_sources(libcos PRIVATE
+    src/CosObj.c
     src/CosDoc.c
     src/common/Assert.c
     src/common/Assert.h
@@ -193,6 +194,7 @@ target_sources(libcos PUBLIC
     BASE_DIRS include/libcos
     FILES
     include/libcos/CosDoc.h
+    include/libcos/CosObj.h
     include/libcos/CosObjID.h
     include/libcos/common/CosAPI.h
     include/libcos/common/CosArray.h

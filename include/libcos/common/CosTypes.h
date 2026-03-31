@@ -10,6 +10,8 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
+typedef struct CosObj CosObj;
+
 typedef struct CosAllocator CosAllocator;
 
 typedef struct CosError CosError;

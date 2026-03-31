@@ -10,6 +10,7 @@ set(LIBCOS_TESTS
     unit-tests/xref-table.c
     unit-tests/file-structure.c
     unit-tests/indirect-obj.c
+    unit-tests/obj.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
