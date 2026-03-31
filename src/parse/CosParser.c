@@ -398,7 +398,7 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     }
 
     if (!cos_obj_node_is_dict(trailer_obj)) {
-        cos_obj_node_free(trailer_obj);
+        cos_obj_node_release(trailer_obj);
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_PARSE,
                                            "Trailer is not a dictionary"));

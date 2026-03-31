@@ -63,7 +63,7 @@ cos_indirect_obj_node_free(CosIndirectObjNode *indirect_obj)
         return;
     }
 
-    cos_obj_node_free(indirect_obj->value);
+    cos_obj_node_release(indirect_obj->value);
 
     free(indirect_obj);
 }

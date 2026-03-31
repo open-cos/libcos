@@ -40,7 +40,7 @@ create_fromDirectIntNode_succeeds(void)
     TEST_EXPECT(cos_obj_get_int_value(obj) == 42);
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)int_node);
+    cos_obj_node_release((CosObjNode *)int_node);
 
     return EXIT_SUCCESS;
 }
@@ -64,7 +64,7 @@ create_fromIndirectNode_resolvesType(void)
     TEST_EXPECT(cos_obj_get_int_value(obj) == 99);
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)indirect);
+    cos_obj_node_release((CosObjNode *)indirect);
 
     return EXIT_SUCCESS;
 }
@@ -100,7 +100,7 @@ getBoolValue_boolObj_returnsValue(void)
     TEST_EXPECT(cos_obj_get_bool_value(obj) == true);
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)bool_node);
+    cos_obj_node_release((CosObjNode *)bool_node);
 
     return EXIT_SUCCESS;
 }
@@ -117,7 +117,7 @@ getRealValue_realObj_returnsValue(void)
     TEST_EXPECT(cos_obj_get_real_value(obj) == 3.14);
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)real_node);
+    cos_obj_node_release((CosObjNode *)real_node);
 
     return EXIT_SUCCESS;
 }
@@ -133,7 +133,7 @@ getIntValue_typeMismatch_returnsZero(void)
     TEST_EXPECT(cos_obj_get_int_value(obj) == 0);
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)bool_node);
+    cos_obj_node_release((CosObjNode *)bool_node);
 
     return EXIT_SUCCESS;
 }
@@ -163,7 +163,7 @@ getArrayCount_arrayObj_returnsCount(void)
 
     cos_obj_destroy(child);
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)array_node);
+    cos_obj_node_release((CosObjNode *)array_node);
 
     return EXIT_SUCCESS;
 }
@@ -199,7 +199,7 @@ getDictValue_existingKey_returnsValue(void)
 
     cos_obj_destroy(result);
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)dict_node);
+    cos_obj_node_release((CosObjNode *)dict_node);
 
     return EXIT_SUCCESS;
 }
@@ -218,7 +218,7 @@ getDictValue_nonExistingKey_returnsNull(void)
     TEST_EXPECT(result == NULL);
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)dict_node);
+    cos_obj_node_release((CosObjNode *)dict_node);
 
     return EXIT_SUCCESS;
 }
@@ -260,7 +260,7 @@ dictIterator_singleEntry_yieldsEntry(void)
     TEST_EXPECT(!cos_obj_dict_iterator_next(&iter, &iter_key, &iter_value));
 
     cos_obj_destroy(obj);
-    cos_obj_node_free((CosObjNode *)dict_node);
+    cos_obj_node_release((CosObjNode *)dict_node);
 
     return EXIT_SUCCESS;
 }

@@ -199,7 +199,7 @@ cos_obj_parser_destroy(CosObjParser *parser)
     }
 
     if (parser->peeked_node) {
-        cos_obj_node_free(COS_nonnull_cast(parser->peeked_node));
+        cos_obj_node_release(COS_nonnull_cast(parser->peeked_node));
     }
 
     cos_base_parser_destroy(&(parser->base));
@@ -631,7 +631,7 @@ cos_handle_array_element_(CosObjParser *parser,
 
 failure:
     if (element) {
-        cos_obj_node_free(element);
+        cos_obj_node_release(element);
     }
     return false;
 }
@@ -747,10 +747,10 @@ cos_handle_dict_entry_(CosObjParser *parser,
 
 failure:
     if (key) {
-        cos_obj_node_free(key);
+        cos_obj_node_release(key);
     }
     if (value) {
-        cos_obj_node_free(value);
+        cos_obj_node_release(value);
     }
     return false;
 }

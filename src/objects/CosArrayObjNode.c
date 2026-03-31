@@ -168,7 +168,7 @@ cos_array_obj_node_callbacks_release_(void *item)
     }
 
     CosObjNode * const obj = *(CosObjNode **)item;
-    cos_obj_node_free(obj);
+    cos_obj_node_release(obj);
 }
 
 static bool

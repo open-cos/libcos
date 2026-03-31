@@ -16,7 +16,7 @@ struct ObjDeleter {
     void
     operator()(CosObjNode *obj) const
     {
-        cos_obj_node_free(obj);
+        cos_obj_node_release(obj);
     }
 };
 

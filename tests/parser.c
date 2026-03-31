@@ -55,7 +55,7 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
 
         cos_obj_node_print_desc(obj);
 
-        cos_obj_node_free(obj);
+        cos_obj_node_release(obj);
     }
 
     cos_obj_parser_destroy(parser);

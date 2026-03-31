@@ -99,7 +99,7 @@ cos_obj_dealloc_(CosObjNode *obj)
 }
 
 void
-cos_obj_node_free(CosObjNode * COS_Nullable obj)
+cos_obj_node_release(CosObjNode * COS_Nullable obj)
 {
     if (!obj) {
         return;

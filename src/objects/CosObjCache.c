@@ -37,7 +37,7 @@ cos_obj_cache_value_retain_(void *value)
 static void
 cos_obj_cache_value_release_(void *value)
 {
-    cos_obj_node_free((CosObjNode *)value);
+    cos_obj_node_release((CosObjNode *)value);
 }
 
 static const CosDictKeyCallbacks cos_obj_cache_key_callbacks_ = {

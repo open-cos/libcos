@@ -132,7 +132,7 @@ resolveIndirectObj_MatchingGenNumber_ReturnsObject(void)
     TEST_EXPECT(cos_obj_node_get_type(value) == CosObjNodeType_Integer);
     TEST_EXPECT(cos_int_obj_node_get_value((CosIntObjNode *)value) == 42);
 
-    cos_obj_node_free((CosObjNode *)indirect);
+    cos_obj_node_release((CosObjNode *)indirect);
     cos_doc_destroy(doc);
     cos_stream_close((CosStream *)stream);
 

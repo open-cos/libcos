@@ -41,7 +41,7 @@ cos_dict_obj_node_key_value_release_(void *key)
     CosObjNode * const obj = (CosObjNode *)key;
     COS_ASSERT(obj != NULL, "Expected an object");
 
-    cos_obj_node_free(obj);
+    cos_obj_node_release(obj);
 }
 
 static bool

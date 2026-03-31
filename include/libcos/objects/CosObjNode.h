@@ -50,7 +50,7 @@ cos_obj_node_retain(CosObjNode * COS_Nullable obj);
  * @param obj The object to release.
  */
 void
-cos_obj_node_free(CosObjNode * COS_Nullable obj);
+cos_obj_node_release(CosObjNode * COS_Nullable obj);
 
 /** @name Object type **/
 /** @{ **/

@@ -38,7 +38,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
 
         cos_obj_node_print_desc(obj);
 
-        cos_obj_node_free(obj);
+        cos_obj_node_release(obj);
     }
 
     cos_obj_parser_destroy(parser);

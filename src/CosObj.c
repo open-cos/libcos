@@ -114,7 +114,7 @@ cos_obj_destroy(CosObj *obj)
         return;
     }
 
-    cos_obj_node_free(obj->node);
+    cos_obj_node_release(obj->node);
     free(obj);
 }
 
