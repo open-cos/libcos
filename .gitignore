@@ -1,5 +1,6 @@
 .idea
 .vs
+.clangd
 cmake-build-*
 out/build
 *-cppcheck-build-dir
