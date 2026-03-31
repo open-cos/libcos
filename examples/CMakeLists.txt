@@ -2,6 +2,7 @@ include(TestUtils)
 
 set(LIBCOS_EXAMPLES
     libcos/objects/iterate-objects.c
+    libcos/objects/traverse-document.c
 )
 
 create_test_sourcelist(LIBCOS_EXAMPLE_SOURCES
