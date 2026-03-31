@@ -25,6 +25,8 @@ cmake_dependent_option(COS_DETERMINISTIC_FUZZING "Enable deterministic fuzzing" 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 check_language(CXX)
 if (CMAKE_CXX_COMPILER)
     enable_language(CXX)
