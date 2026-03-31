@@ -6,7 +6,6 @@
 
 #include "common/Assert.h"
 
-#include "libcos/common/CosData.h"
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosString.h"
 #include "libcos/objects/CosArrayObjNode.h"
@@ -15,7 +14,6 @@
 #include "libcos/objects/CosIndirectObjNode.h"
 #include "libcos/objects/CosIntObjNode.h"
 #include "libcos/objects/CosNameObjNode.h"
-#include "libcos/objects/CosNullObjNode.h"
 #include "libcos/objects/CosObjNode.h"
 #include "libcos/objects/CosRealObjNode.h"
 #include "libcos/objects/CosReferenceObjNode.h"
@@ -35,6 +33,9 @@ struct CosObj {
 /**
  * Resolves through Indirect and Reference wrappers to the direct node.
  *
+ * A Reference resolves to an Indirect object, which in turn wraps the
+ * direct value. An Indirect object wraps a direct value directly.
+ *
  * The returned pointer is borrowed from the wrapper -- it remains valid
  * as long as the wrapper (and thus the CosObj) is alive.
  */
@@ -43,15 +44,19 @@ cos_obj_get_direct_node_(const CosObj *obj)
 {
     COS_IMPL_PARAM_CHECK(obj != NULL);
 
-    CosObjNode * const node = obj->node;
-    const CosObjNodeType type = cos_obj_node_get_type(node);
+    CosObjNode *node = obj->node;
 
-    if (type == CosObjNodeType_Indirect) {
+    if (cos_obj_node_get_type(node) == CosObjNodeType_Reference) {
+        node = cos_reference_obj_node_get_value((CosReferenceObjNode *)node);
+        if (!node) {
+            return NULL;
+        }
+    }
+
+    if (cos_obj_node_get_type(node) == CosObjNodeType_Indirect) {
         return cos_indirect_obj_node_get_value((CosIndirectObjNode *)node);
     }
-    if (type == CosObjNodeType_Reference) {
-        return cos_reference_obj_node_get_value((CosReferenceObjNode *)node);
-    }
+
     return node;
 }
 
