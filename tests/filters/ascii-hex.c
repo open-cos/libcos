@@ -99,10 +99,35 @@ TEST_CASE_BEGIN(ascii_hex_hello_world_decode)
 
 TEST_CASE_END
 
+TEST_CASE_BEGIN(decode_oddNibble_paddedWithZero)
+{
+    /* PDF spec section 7.3.4.2: a trailing odd digit "A" means "A0". */
+    char input[] = "A>";
+
+    if (!ascii_hex_set_source(fixture->hex_filter,
+                              input,
+                              sizeof(input))) {
+        TEST_FAILURE();
+    }
+
+    unsigned char output[1] = {0};
+    const size_t read_count = cos_stream_read((CosStream *)fixture->hex_filter,
+                                              output,
+                                              sizeof(output),
+                                              NULL);
+
+    if (read_count != 1 || output[0] != 0xA0) {
+        TEST_FAILURE();
+    }
+}
+
+TEST_CASE_END
+
 TEST_MAIN()
 {
     int (*tests_to_run[])(TestFixture *) = {
         &ascii_hex_hello_world_decode,
+        &decode_oddNibble_paddedWithZero,
     };
     for (size_t i = 0; i < sizeof(tests_to_run) / sizeof(tests_to_run[0]); i++) {
         TestFixture fixture = {0};

@@ -42,6 +42,9 @@ struct CosASCIIHexFilterContext {
 
 // Private function prototypes
 
+static bool
+cos_ascii_hex_filter_init_(CosASCIIHexFilter *ascii_hex_filter);
+
 static size_t
 cos_ascii_hex_filter_read_(CosStream *stream,
                            void *buffer,
@@ -99,7 +102,7 @@ cos_ascii_hex_filter_create(void)
         goto failure;
     }
 
-    if (COS_UNLIKELY(!cos_ascii_hex_filter_init(ascii_hex_filter))) {
+    if (COS_UNLIKELY(!cos_ascii_hex_filter_init_(ascii_hex_filter))) {
         goto failure;
     }
 
@@ -112,10 +115,10 @@ failure:
     return NULL;
 }
 
-bool
-cos_ascii_hex_filter_init(CosASCIIHexFilter *ascii_hex_filter)
+static bool
+cos_ascii_hex_filter_init_(CosASCIIHexFilter *ascii_hex_filter)
 {
-    COS_API_PARAM_CHECK(ascii_hex_filter != NULL);
+    COS_IMPL_PARAM_CHECK(ascii_hex_filter != NULL);
 
     cos_filter_init(&(ascii_hex_filter->base),
                     &(CosStreamFunctions){
@@ -126,12 +129,16 @@ cos_ascii_hex_filter_init(CosASCIIHexFilter *ascii_hex_filter)
 
     CosASCIIHexFilterContext * const context = calloc(1, sizeof(CosASCIIHexFilterContext));
     if (COS_UNLIKELY(!context)) {
-        return false;
+        goto failure;
     }
 
     ascii_hex_filter->context = context;
 
     return true;
+
+failure:
+    cos_filter_deinit(&ascii_hex_filter->base);
+    return false;
 }
 
 // Private function implementations
@@ -257,6 +264,11 @@ cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
 
         if (block_length == 0) {
             break;
+        }
+
+        /* PDF spec section 7.3.4.2: a trailing odd digit A means A0. */
+        if (block_length == 1) {
+            in_block[1] = '0';
         }
 
         if (!cos_ascii_hex_decode_(in_block,

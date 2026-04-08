@@ -35,16 +35,6 @@ cos_ascii_hex_filter_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
-/**
- * @brief Initializes an ASCII hexadecimal filter.
- *
- * @param ascii_hex_filter The ASCII hexadecimal filter to be initialized.
- *
- * @return @c true if the filter was initialized, @c false otherwise.
- */
-bool
-cos_ascii_hex_filter_init(CosASCIIHexFilter *ascii_hex_filter);
-
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
