@@ -35,14 +35,6 @@ cos_run_length_filter_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
-/**
- * @brief Initializes a run-length encoding filter.
- *
- * @param run_length_filter The run-length encoding filter to be initialized.
- */
-bool
-cos_run_length_filter_init(CosRunLengthFilter *run_length_filter);
-
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

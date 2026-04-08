@@ -84,6 +84,9 @@ struct CosRunLengthFilterContext {
 
 // Private function prototypes
 
+static bool
+cos_run_length_filter_init_(CosRunLengthFilter *run_length_filter);
+
 static size_t
 cos_run_length_filter_read_(CosStream *stream,
                             void *buffer,
@@ -124,7 +127,7 @@ cos_run_length_filter_create(void)
         return NULL;
     }
 
-    if (COS_UNLIKELY(!cos_run_length_filter_init(run_length_filter))) {
+    if (COS_UNLIKELY(!cos_run_length_filter_init_(run_length_filter))) {
         goto failure;
     }
 
@@ -137,10 +140,10 @@ failure:
     return NULL;
 }
 
-bool
-cos_run_length_filter_init(CosRunLengthFilter *run_length_filter)
+static bool
+cos_run_length_filter_init_(CosRunLengthFilter *run_length_filter)
 {
-    COS_API_PARAM_CHECK(run_length_filter != NULL);
+    COS_IMPL_PARAM_CHECK(run_length_filter != NULL);
 
     cos_filter_init(&(run_length_filter->base),
                     &(CosStreamFunctions){
