@@ -38,16 +38,6 @@ cos_ascii85_filter_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
-/**
- * @brief Initializes an ASCII base-85 filter.
- *
- * @param ascii_85_filter The ASCII base-85 filter to be initialized.
- *
- * @return @c true if the filter was initialized, @c false otherwise.
- */
-bool
-cos_ascii85_filter_init(CosASCII85Filter *ascii_85_filter);
-
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

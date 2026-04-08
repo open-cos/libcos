@@ -6,7 +6,9 @@
 #define LIBCOS_COS_TEST_H
 
 #include <libcos/common/CosDefines.h>
+#include <libcos/common/CosMacros.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #define TEST_MAIN()                                   \
@@ -45,16 +47,19 @@ static int name(TestFixture *fixture) \
 
 // clang-format on
 
-#define TEST_RUN(test, fixture)       \
-    do {                              \
-        if (!setup(fixture)) {        \
-            return EXIT_FAILURE;      \
-        }                             \
-        int result = test(fixture);   \
-        teardown(fixture);            \
-        if (result != EXIT_SUCCESS) { \
-            return result;            \
-        }                             \
+#define TEST_RUN(test, fixture) TEST_RUN_IMPL(test, COS_STRINGIFY(test), fixture)
+
+#define TEST_RUN_IMPL(test, test_name, fixture)                         \
+    do {                                                                \
+        if (!setup(fixture)) {                                          \
+            return EXIT_FAILURE;                                        \
+        }                                                               \
+        int result = test(fixture);                                     \
+        teardown(fixture);                                              \
+        if (result != EXIT_SUCCESS) {                                   \
+            (void)fprintf(stderr, "Test case failed: %s\n", test_name); \
+            return result;                                              \
+        }                                                               \
     } while (0)
 
 #define TEST_SUCCESS()          \
