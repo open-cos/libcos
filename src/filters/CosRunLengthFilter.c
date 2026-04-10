@@ -38,6 +38,7 @@ typedef enum CosRunLength_RunType {
      * @brief A copy run, where a byte is repeated.
      */
     CosRunLength_RunType_Copy,
+
 } CosRunLength_RunType;
 
 struct CosRunLengthFilterContext {
@@ -250,15 +251,6 @@ cos_run_length_fill_decode_buffer_(CosRunLengthFilter *run_length_filter,
     run_length_filter->context->buffer_length = 0;
     run_length_filter->context->buffer_index = 0;
 
-    // Ensure we have a source stream to read from.
-    CosStream * const source_stream = run_length_filter->base.source;
-    if (COS_UNLIKELY(!source_stream)) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
-                                           "No source stream"),
-                            error);
-        return 0;
-    }
-
     const size_t buffer_size = COS_ARRAY_SIZE(run_length_filter->context->buffer);
 
     const size_t max_read_count = COS_MIN(count, buffer_size);
@@ -283,7 +275,12 @@ cos_run_length_decode_run_(CosRunLengthFilter *run_length_filter,
     COS_IMPL_PARAM_CHECK(run_length_filter != NULL);
 
     CosStream * const source_stream = run_length_filter->base.source;
-    COS_ASSERT(source_stream != NULL, "No source stream");
+    if (COS_UNLIKELY(!source_stream)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "No source stream"),
+                            error);
+        return 0;
+    }
 
     const size_t buffer_size = COS_ARRAY_SIZE(run_length_filter->context->buffer);
 
@@ -345,6 +342,7 @@ cos_run_length_decode_run_(CosRunLengthFilter *run_length_filter,
         if (read_count == 0) {
             return total_read_count;
         }
+        total_read_count += read_count;
     }
 
     return total_read_count;

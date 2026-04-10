@@ -58,13 +58,39 @@ teardown(TestFixture *fixture)
     }
 }
 
-TEST_CASE_BEGIN(run_length_hello_world_decode)
+TEST_CASE_BEGIN(decode_eod_only)
 {
-    char input[] = "";
+    /* EOD marker alone produces no output. */
+    char input[] = "\x80";
 
     if (!run_length_set_source(fixture->run_length_filter,
                                input,
-                               sizeof(input))) {
+                               sizeof(input) - 1)) {
+        TEST_FAILURE();
+    }
+
+    char output[4] = {0};
+    const size_t read_count = cos_stream_read((CosStream *)fixture->run_length_filter,
+                                              output,
+                                              sizeof(output),
+                                              NULL);
+
+    if (read_count != 0) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+TEST_CASE_END
+
+TEST_CASE_BEGIN(decode_literal_run)
+{
+    /* \x04 = literal indicator 4, copy next 5 bytes, then EOD. */
+    char input[] = "\x04Hello\x80";
+
+    if (!run_length_set_source(fixture->run_length_filter,
+                               input,
+                               sizeof(input) - 1)) {
         TEST_FAILURE();
     }
 
@@ -82,29 +108,100 @@ TEST_CASE_BEGIN(run_length_hello_world_decode)
         total_read_count += read_count;
     }
 
-    // Print up to 256 characters of the output.
-    printf("Output: %.*s\n", (int)total_read_count, output);
+    const char expected[] = "Hello";
+    const size_t expected_length = sizeof(expected) - 1;
 
-    char expected_output[] = "";
-    const size_t expected_output_length = sizeof(expected_output) - 1;
-
-    if (total_read_count != expected_output_length ||
-        memcmp(output,
-               expected_output,
-               COS_MIN(total_read_count, expected_output_length)) != 0) {
+    if (total_read_count != expected_length ||
+        memcmp(output, expected, expected_length) != 0) {
         TEST_FAILURE();
     }
 
     TEST_SUCCESS();
 }
+TEST_CASE_END
 
+TEST_CASE_BEGIN(decode_copy_run)
+{
+    /* \xFE = copy indicator 254, repeat next byte 257-254=3 times, then EOD. */
+    char input[] = "\xFE*\x80";
+
+    if (!run_length_set_source(fixture->run_length_filter,
+                               input,
+                               sizeof(input) - 1)) {
+        TEST_FAILURE();
+    }
+
+    char output[256] = {0};
+    size_t total_read_count = 0;
+
+    while (total_read_count < sizeof(output) - 1) {
+        const size_t read_count = cos_stream_read((CosStream *)fixture->run_length_filter,
+                                                  output + total_read_count,
+                                                  sizeof(output) - 1 - total_read_count,
+                                                  NULL);
+        if (read_count == 0) {
+            break;
+        }
+        total_read_count += read_count;
+    }
+
+    const char expected[] = "***";
+    const size_t expected_length = sizeof(expected) - 1;
+
+    if (total_read_count != expected_length ||
+        memcmp(output, expected, expected_length) != 0) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+TEST_CASE_END
+
+TEST_CASE_BEGIN(decode_mixed_runs)
+{
+    /* \x01 = literal run of 2 bytes ("Hi"), \xFD = repeat '!' 257-253=4 times, then EOD. */
+    char input[] = "\x01Hi\xFD!\x80";
+
+    if (!run_length_set_source(fixture->run_length_filter,
+                               input,
+                               sizeof(input) - 1)) {
+        TEST_FAILURE();
+    }
+
+    char output[256] = {0};
+    size_t total_read_count = 0;
+
+    while (total_read_count < sizeof(output) - 1) {
+        const size_t read_count = cos_stream_read((CosStream *)fixture->run_length_filter,
+                                                  output + total_read_count,
+                                                  sizeof(output) - 1 - total_read_count,
+                                                  NULL);
+        if (read_count == 0) {
+            break;
+        }
+        total_read_count += read_count;
+    }
+
+    const char expected[] = "Hi!!!!";
+    const size_t expected_length = sizeof(expected) - 1;
+
+    if (total_read_count != expected_length ||
+        memcmp(output, expected, expected_length) != 0) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
 TEST_CASE_END
 
 TEST_MAIN()
 {
     TestFixture fixture = {0};
 
-    TEST_RUN(run_length_hello_world_decode, &fixture);
+    TEST_RUN(decode_eod_only, &fixture);
+    TEST_RUN(decode_literal_run, &fixture);
+    TEST_RUN(decode_copy_run, &fixture);
+    TEST_RUN(decode_mixed_runs, &fixture);
 
     return EXIT_SUCCESS;
 }
