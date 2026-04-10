@@ -14,10 +14,25 @@
 COS_ASSUME_NONNULL_BEGIN
 
 enum CosRunLengthConstants {
+    
+    COS_RUN_LENGTH_LITERAL_INDICATOR_MAX = 127,
+
+    /**
+     * @brief The base value for computing the repeat count of a copy run.
+     *
+     * The repeat count is @c COS_RUN_LENGTH_COPY_COUNT_BASE minus the run-length indicator byte.
+     */
+    COS_RUN_LENGTH_COPY_COUNT_BASE = 257,
+
     /**
      * @brief The end-of-data marker.
      */
     COS_RUN_LENGTH_EOD = 128,
+
+    /**
+     * The size of the run length filter's internal buffer.
+     */
+    COS_RUN_LENGTH_BUFFER_SIZE = 256,
 };
 
 /**
@@ -45,7 +60,7 @@ struct CosRunLengthFilterContext {
     /**
      * @brief The buffer used to store decoded or encoded data.
      */
-    unsigned char buffer[256];
+    unsigned char buffer[COS_RUN_LENGTH_BUFFER_SIZE];
 
     /**
      * @brief The number of valid bytes in @c buffer .
@@ -180,9 +195,10 @@ cos_run_length_filter_read_(CosStream *stream,
     size_t total_read = 0;
 
     while (total_read < count) {
+        // If the internal decode buffer has been consumed, refill it from the source.
         if (run_length_filter->context->buffer_index == run_length_filter->context->buffer_length) {
             if (run_length_filter->context->eod) {
-                // End of data reached.
+                // The EOD marker was already seen; no more data will arrive.
                 break;
             }
 
@@ -190,10 +206,12 @@ cos_run_length_filter_read_(CosStream *stream,
                                                                             count - total_read,
                                                                             out_error);
             if (decoded_count == 0 || run_length_filter->context->buffer_length == 0) {
+                // Source is exhausted or an error prevented any progress.
                 break;
             }
         }
 
+        // Copy as many bytes as are available in the decode buffer, up to what the caller requested.
         const size_t read_count = COS_MIN(run_length_filter->context->buffer_length - run_length_filter->context->buffer_index,
                                           count - total_read);
         memcpy(out_buffer + total_read,
@@ -303,15 +321,15 @@ cos_run_length_decode_run_(CosRunLengthFilter *run_length_filter,
             return total_read_count;
         }
 
-        if (run_length_indicator <= 127) {
-            // Copy the next length+1 bytes directly to the output buffer.
+        if (run_length_indicator <= COS_RUN_LENGTH_LITERAL_INDICATOR_MAX) {
+            // Copy the next length+1 (1 to 128) bytes directly to the output buffer.
             run_length_filter->context->current_run_type = CosRunLength_RunType_Literal;
             run_length_filter->context->remaining_run_length = (uint8_t)(run_length_indicator + 1);
         }
         else {
-            // Copy the next byte 257-length times.
+            // Copy the next byte 257-length (2 to 128) times.
             run_length_filter->context->current_run_type = CosRunLength_RunType_Copy;
-            run_length_filter->context->remaining_run_length = (uint8_t)(257 - run_length_indicator);
+            run_length_filter->context->remaining_run_length = (uint8_t)(COS_RUN_LENGTH_COPY_COUNT_BASE - run_length_indicator);
 
             unsigned char repeated_byte = 0;
             if (cos_stream_read(source_stream, &repeated_byte, 1, error) == 0) {
