@@ -7,37 +7,13 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "common/CosError.h"
-#include "common/CosMacros.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
 enum CosASCIIHexConstants {
     COS_ASCII_HEX_BLOCK_SIZE = 2,
-};
-
-struct CosASCIIHexFilterContext {
-    /**
-     * @brief The buffer used to store decoded or encoded data.
-     */
-    unsigned char buffer[256];
-
-    /**
-     * @brief The number of valid bytes in @c buffer .
-     */
-    size_t buffer_length;
-
-    /**
-     * @brief The index of the next byte to read from @c buffer .
-     */
-    size_t buffer_index;
-
-    /**
-     * @brief Flag to indicate the end of the data stream.
-     */
-    bool eod;
 };
 
 // Private function prototypes
@@ -46,36 +22,11 @@ static bool
 cos_ascii_hex_filter_init_(CosASCIIHexFilter *ascii_hex_filter);
 
 static size_t
-cos_ascii_hex_filter_read_(CosStream *stream,
-                           void *buffer,
-                           size_t count,
-                           CosError * COS_Nullable out_error);
-
-static size_t
-cos_ascii_hex_filter_write_(CosStream *stream,
-                            const void *buffer,
-                            size_t count,
-                            CosError * COS_Nullable out_error);
-
-static void
-cos_ascii_hex_filter_close_(CosStream *stream);
+cos_ascii_hex_fill_decode_buffer_(CosFilter *filter,
+                                   CosError * COS_Nullable out_error);
 
 /**
- * @brief Fills the buffer with decoded data.
- *
- * @param ascii_hex_filter The ASCII hexadecimal filter.
- * @param count The number of bytes to read. This number is taken as a hint and may not be met.
- * @param error The error information.
- *
- * @return The number of bytes read.
- */
-static size_t
-cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
-                                  size_t count,
-                                  CosError * COS_Nullable error);
-
-/**
- * @brief Decodes a pair of ASCII hexadecimal digits.
+ * Decodes a pair of ASCII hexadecimal digits.
  *
  * @param input The ASCII hexadecimal digit pair.
  * @param output The output buffer for the decoded byte value.
@@ -120,113 +71,27 @@ cos_ascii_hex_filter_init_(CosASCIIHexFilter *ascii_hex_filter)
 {
     COS_IMPL_PARAM_CHECK(ascii_hex_filter != NULL);
 
+    static const CosFilterFunctions ascii_hex_filter_functions_ = {
+        .decode_func = &cos_ascii_hex_fill_decode_buffer_,
+        .encode_func = NULL,
+        .close_func  = NULL,
+    };
+
     cos_filter_init(&(ascii_hex_filter->base),
-                    &(CosStreamFunctions){
-                        .read_func = &cos_ascii_hex_filter_read_,
-                        .write_func = &cos_ascii_hex_filter_write_,
-                        .close_func = &cos_ascii_hex_filter_close_,
-                    });
-
-    CosASCIIHexFilterContext * const context = calloc(1, sizeof(CosASCIIHexFilterContext));
-    if (COS_UNLIKELY(!context)) {
-        goto failure;
-    }
-
-    ascii_hex_filter->context = context;
+                    &ascii_hex_filter_functions_);
 
     return true;
-
-failure:
-    cos_filter_deinit(&ascii_hex_filter->base);
-    return false;
 }
 
 // Private function implementations
 
 static size_t
-cos_ascii_hex_filter_read_(CosStream *stream,
-                           void *buffer,
-                           size_t count,
-                           CosError * COS_Nullable out_error)
+cos_ascii_hex_fill_decode_buffer_(CosFilter *filter,
+                                   CosError * COS_Nullable error)
 {
-    CosASCIIHexFilter * const ascii_hex_filter = (CosASCIIHexFilter *)stream;
+    COS_IMPL_PARAM_CHECK(filter != NULL);
 
-    unsigned char * const output_buffer = (unsigned char *)buffer;
-    size_t total_read = 0;
-
-    while (total_read < count) {
-        // Refill the buffer if necessary.
-        if (ascii_hex_filter->context->buffer_index >= ascii_hex_filter->context->buffer_length) {
-            if (ascii_hex_filter->context->eod) {
-                // No more data to read.
-                break;
-            }
-
-            const size_t decoded_count = cos_ascii_hex_fill_decode_buffer_(ascii_hex_filter,
-                                                                           count - total_read,
-                                                                           out_error);
-            if (decoded_count == 0) {
-                break;
-            }
-
-            if (ascii_hex_filter->context->buffer_length == 0) {
-                // No more data to read.
-                break;
-            }
-        }
-
-        const size_t read_count = COS_MIN(ascii_hex_filter->context->buffer_length - ascii_hex_filter->context->buffer_index,
-                                          count - total_read);
-        memcpy(output_buffer + total_read,
-               ascii_hex_filter->context->buffer + ascii_hex_filter->context->buffer_index,
-               read_count);
-
-        ascii_hex_filter->context->buffer_index += read_count;
-
-        total_read += read_count;
-    }
-
-    return total_read;
-}
-
-static size_t
-cos_ascii_hex_filter_write_(CosStream *stream,
-                            const void *buffer,
-                            size_t count,
-                            CosError * COS_Nullable out_error)
-{
-    (void)stream;
-    (void)buffer;
-    (void)count;
-    (void)out_error;
-
-    return 0;
-}
-
-static void
-cos_ascii_hex_filter_close_(CosStream *stream)
-{
-    COS_IMPL_PARAM_CHECK(stream != NULL);
-
-    CosASCIIHexFilter * const ascii_hex_filter = (CosASCIIHexFilter *)stream;
-
-    free(ascii_hex_filter->context);
-
-    cos_filter_deinit(&(ascii_hex_filter->base));
-}
-
-static size_t
-cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
-                                  size_t count,
-                                  CosError * COS_Nullable error)
-{
-    COS_IMPL_PARAM_CHECK(ascii_hex_filter != NULL);
-
-    // Reset the internal buffer.
-    ascii_hex_filter->context->buffer_length = 0;
-    ascii_hex_filter->context->buffer_index = 0;
-
-    CosStream * const source_stream = ascii_hex_filter->base.source;
+    CosStream * const source_stream = filter->source;
     if (COS_UNLIKELY(!source_stream)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "No source stream"),
@@ -234,10 +99,9 @@ cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
         return 0;
     }
 
-    const size_t max_read_count = COS_MIN(count, COS_ARRAY_SIZE(ascii_hex_filter->context->buffer));
     size_t total_read = 0;
 
-    while (total_read < max_read_count) {
+    while (total_read < COS_FILTER_BUFFER_SIZE) {
         unsigned char in_block[COS_ASCII_HEX_BLOCK_SIZE] = {0};
         size_t block_length = 0;
         uint8_t ch;
@@ -246,7 +110,7 @@ cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
             size_t read_count = cos_stream_read(source_stream, &ch, 1, error);
             if (read_count == 0) {
                 // End of underlying stream reached unexpectedly.
-                ascii_hex_filter->context->eod = true;
+                filter->buffer.eod = true;
                 break;
             }
             if (cos_is_whitespace(ch)) {
@@ -255,7 +119,7 @@ cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
 
             // Check for the end marker ">"
             if (ch == '>') {
-                ascii_hex_filter->context->eod = true;
+                filter->buffer.eod = true;
                 break;
             }
 
@@ -272,13 +136,13 @@ cos_ascii_hex_fill_decode_buffer_(CosASCIIHexFilter *ascii_hex_filter,
         }
 
         if (!cos_ascii_hex_decode_(in_block,
-                                   ascii_hex_filter->context->buffer + total_read)) {
+                                   filter->buffer.data + total_read)) {
             break;
         }
         total_read++;
     }
 
-    ascii_hex_filter->context->buffer_length = total_read;
+    filter->buffer.length = total_read;
 
     return total_read;
 }

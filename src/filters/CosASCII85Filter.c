@@ -11,7 +11,6 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
@@ -45,30 +44,6 @@ enum CosASCII85Constants {
      * @brief Base of the encoding (number of possible values per character).
      */
     COS_ASCII85_RADIX = 85,
-
-    COS_ASCII85_BUFFER_SIZE = 256,
-};
-
-struct CosASCII85FilterContext {
-    /**
-     * @brief The buffer used to store decoded or encoded data.
-     */
-    unsigned char buffer[COS_ASCII85_BUFFER_SIZE];
-
-    /**
-     * @brief The number of valid bytes in @c buffer .
-     */
-    size_t buffer_size;
-
-    /**
-     * @brief The index of the next byte to read from @c buffer .
-     */
-    size_t buffer_index;
-
-    /**
-     * @brief Flag to indicate the end of the input stream.
-     */
-    bool eod;
 };
 
 // Private function prototypes
@@ -77,26 +52,11 @@ static bool
 cos_ascii85_filter_init_(CosASCII85Filter *ascii_85_filter);
 
 static size_t
-cos_ascii85_filter_read_(CosStream *stream,
-                         void *buffer,
-                         size_t size,
-                         CosError * COS_Nullable error);
-
-static size_t
-cos_ascii85_filter_write_(CosStream *stream,
-                          const void *buffer,
-                          size_t size,
-                          CosError * COS_Nullable error);
-
-static void
-cos_ascii85_filter_close_(CosStream *stream);
-
-static size_t
-cos_ascii85_fill_decode_buffer_(CosASCII85Filter *ascii_85_filter,
+cos_ascii85_fill_decode_buffer_(CosFilter *filter,
                                 CosError * COS_Nullable error);
 
 /**
- * @brief Decodes a block of ASCII base-85 encoded data.
+ * Decodes a block of ASCII base-85 encoded data.
  *
  * @param input The ASCII base-85 encoded input data.
  * @param input_count The number of bytes in the input data.
@@ -139,19 +99,14 @@ cos_ascii85_filter_init_(CosASCII85Filter *ascii_85_filter)
 {
     COS_IMPL_PARAM_CHECK(ascii_85_filter != NULL);
 
+    static const CosFilterFunctions ascii85_filter_functions_ = {
+        .decode_func = &cos_ascii85_fill_decode_buffer_,
+        .encode_func = NULL,
+        .close_func  = NULL,
+    };
+
     cos_filter_init(&(ascii_85_filter->base),
-                    &(CosStreamFunctions){
-                        .read_func = cos_ascii85_filter_read_,
-                        .write_func = cos_ascii85_filter_write_,
-                        .close_func = cos_ascii85_filter_close_,
-                    });
-
-    CosASCII85FilterContext *context = calloc(1, sizeof(CosASCII85FilterContext));
-    if (!context) {
-        return false;
-    }
-
-    ascii_85_filter->context = context;
+                    &ascii85_filter_functions_);
 
     return true;
 }
@@ -159,82 +114,12 @@ cos_ascii85_filter_init_(CosASCII85Filter *ascii_85_filter)
 // Function implementations
 
 static size_t
-cos_ascii85_filter_read_(CosStream *stream,
-                         void *buffer,
-                         size_t size,
-                         CosError * COS_Nullable error)
-{
-    CosASCII85Filter * const ascii_85_filter = (CosASCII85Filter *)stream;
-
-    unsigned char * const out_buffer = (unsigned char *)buffer;
-    size_t total_read = 0;
-
-    while (total_read < size) {
-        // Fill the buffer if necessary.
-        if (ascii_85_filter->context->buffer_index >= ascii_85_filter->context->buffer_size) {
-            if (ascii_85_filter->context->eod) {
-                // No more data to read.
-                break;
-            }
-
-            const size_t decoded_count = cos_ascii85_fill_decode_buffer_(ascii_85_filter, error);
-            if (decoded_count == 0) {
-                // No more data to read.
-                break;
-            }
-        }
-
-        // Copy as many bytes as possible from the filter's buffer.
-        while (total_read < size && ascii_85_filter->context->buffer_index < ascii_85_filter->context->buffer_size) {
-            out_buffer[total_read++] = ascii_85_filter->context->buffer[ascii_85_filter->context->buffer_index++];
-        }
-    }
-
-    return total_read;
-}
-
-static size_t
-cos_ascii85_filter_write_(CosStream *stream,
-                          const void *buffer,
-                          size_t size,
-                          CosError * COS_Nullable error)
-{
-    CosASCII85Filter * const ascii_85_filter = (CosASCII85Filter *)stream;
-
-    COS_ASSERT(false, "Not implemented yet");
-
-    (void)ascii_85_filter;
-    (void)buffer;
-    (void)size;
-    (void)error;
-
-    return 0;
-}
-
-static void
-cos_ascii85_filter_close_(CosStream *stream)
-{
-    COS_IMPL_PARAM_CHECK(stream != NULL);
-
-    CosASCII85Filter * const ascii_85_filter = (CosASCII85Filter *)stream;
-
-    free(ascii_85_filter->context);
-
-    // Deinitialize the base filter.
-    cos_filter_deinit(&(ascii_85_filter->base));
-}
-
-static size_t
-cos_ascii85_fill_decode_buffer_(CosASCII85Filter *ascii_85_filter,
+cos_ascii85_fill_decode_buffer_(CosFilter *filter,
                                 CosError * COS_Nullable error)
 {
-    COS_IMPL_PARAM_CHECK(ascii_85_filter != NULL);
+    COS_IMPL_PARAM_CHECK(filter != NULL);
 
-    // Reset the internal buffer.
-    ascii_85_filter->context->buffer_size = 0;
-    ascii_85_filter->context->buffer_index = 0;
-
-    CosStream * const source_stream = ascii_85_filter->base.source;
+    CosStream * const source_stream = filter->source;
     if (COS_UNLIKELY(!source_stream)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                            "No source stream"),
@@ -251,7 +136,7 @@ cos_ascii85_fill_decode_buffer_(CosASCII85Filter *ascii_85_filter,
         size_t read_count = cos_stream_read(source_stream, &ch, 1, error);
         if (read_count == 0) {
             // End of underlying stream reached unexpectedly.
-            ascii_85_filter->context->eod = true;
+            filter->buffer.eod = true;
             break;
         }
         if (cos_is_whitespace(ch)) {
@@ -267,18 +152,18 @@ cos_ascii85_fill_decode_buffer_(CosASCII85Filter *ascii_85_filter,
                                                    "Malformed end-of-data marker"),
                                     error);
             }
-            ascii_85_filter->context->eod = true;
+            filter->buffer.eod = true;
             break;
         }
 
         // Handle the special 'z' case which represents 4 zero bytes
         if (ch == COS_ASCII85_ZERO_CHAR && count == 0) {
             // Directly output four zero bytes
-            ascii_85_filter->context->buffer[0] = 0;
-            ascii_85_filter->context->buffer[1] = 0;
-            ascii_85_filter->context->buffer[2] = 0;
-            ascii_85_filter->context->buffer[3] = 0;
-            ascii_85_filter->context->buffer_size = 4;
+            filter->buffer.data[0] = 0;
+            filter->buffer.data[1] = 0;
+            filter->buffer.data[2] = 0;
+            filter->buffer.data[3] = 0;
+            filter->buffer.length = 4;
             return 4;
         }
 
@@ -292,8 +177,8 @@ cos_ascii85_fill_decode_buffer_(CosASCII85Filter *ascii_85_filter,
 
     const size_t decoded_bytes = cos_decode_ascii85_block_(in_block,
                                                            count,
-                                                           ascii_85_filter->context->buffer);
-    ascii_85_filter->context->buffer_size = decoded_bytes;
+                                                           filter->buffer.data);
+    filter->buffer.length = decoded_bytes;
     return decoded_bytes;
 }
 

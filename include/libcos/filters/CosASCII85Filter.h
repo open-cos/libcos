@@ -11,8 +11,6 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosASCII85FilterContext CosASCII85FilterContext;
-
 /**
  * @brief The ASCII base-85 filter.
  */
@@ -21,11 +19,6 @@ struct CosASCII85Filter {
      * @brief The inherited base filter.
      */
     CosFilter base;
-
-    /**
-     * @brief The private ASCII base-85 filter context.
-     */
-    CosASCII85FilterContext *context;
 };
 
 /**

@@ -72,6 +72,8 @@ typedef struct CosXrefTableParser CosXrefTableParser;
 
 typedef struct CosStream CosStream;
 typedef struct CosFilter CosFilter;
+typedef struct CosFilterBuffer CosFilterBuffer;
+typedef struct CosFilterFunctions CosFilterFunctions;
 typedef struct CosASCII85Filter CosASCII85Filter;
 typedef struct CosASCIIHexFilter CosASCIIHexFilter;
 typedef struct CosRunLengthFilter CosRunLengthFilter;

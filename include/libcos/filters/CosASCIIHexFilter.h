@@ -11,18 +11,11 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-typedef struct CosASCIIHexFilterContext CosASCIIHexFilterContext;
-
 struct CosASCIIHexFilter {
     /**
      * @brief The inherited filter.
      */
     CosFilter base;
-
-    /**
-     * @brief The private ASCII hexadecimal filter context.
-     */
-    CosASCIIHexFilterContext *context;
 };
 
 /**
