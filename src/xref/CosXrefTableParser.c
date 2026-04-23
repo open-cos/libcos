@@ -9,11 +9,9 @@
 
 #include "libcos/common/CosArray.h"
 #include "libcos/common/CosError.h"
-#include "libcos/common/CosMacros.h"
 #include "libcos/xref/table/CosXrefEntry.h"
 #include "libcos/xref/table/CosXrefSection.h"
 #include "libcos/xref/table/CosXrefSubsection.h"
-#include "libcos/xref/table/CosXrefTable.h"
 
 #include <libcos/syntax/tokenizer/CosToken.h>
 #include <libcos/syntax/tokenizer/CosTokenValue.h>
@@ -28,10 +26,6 @@ struct CosXrefTableParser {
 
 static void
 cos_xref_entry_release_callback_(void *item);
-
-static CosXrefSection * COS_Nullable
-cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
-                                     CosError * COS_Nullable out_error);
 
 static CosXrefSubsection * COS_Nullable
 cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
@@ -90,16 +84,14 @@ cos_xref_table_parser_destroy(CosXrefTableParser *parser)
     cos_base_parser_destroy(&(parser->base));
 }
 
-CosXrefTable *
-cos_xref_table_parser_parse(CosXrefTableParser *parser,
-                            CosError * COS_Nullable out_error)
+CosXrefSection *
+cos_xref_table_parser_parse_section(CosXrefTableParser *parser,
+                                    CosError * COS_Nullable out_error)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     if (COS_UNLIKELY(!parser)) {
         return NULL;
     }
-
-    CosXrefTable *table = NULL;
 
     // Expect the 'xref' keyword.
     if (!cos_base_parser_matches_next_token(&(parser->base),
@@ -108,39 +100,44 @@ cos_xref_table_parser_parse(CosXrefTableParser *parser,
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Expected 'xref' keyword"),
                             out_error);
-        goto failure;
+        return NULL;
     }
     cos_base_parser_advance(&(parser->base));
 
-    table = cos_xref_table_create();
-    if (COS_UNLIKELY(!table)) {
-        goto failure;
+    CosXrefSection *section = cos_xref_section_create();
+    if (COS_UNLIKELY(!section)) {
+        return NULL;
     }
 
-    // Parse sections until the 'trailer' keyword or EOF.
+    // Parse subsections until the 'trailer' keyword, EOF, or a non-integer token.
     while (!cos_base_parser_matches_next_token(&(parser->base),
                                                CosToken_Type_Trailer,
                                                out_error) &&
+           !cos_base_parser_matches_next_token(&(parser->base),
+                                               CosToken_Type_EOF,
+                                               out_error) &&
            cos_base_parser_has_next_token(&(parser->base))) {
-        CosXrefSection * const section = cos_xref_table_parser_parse_section_(parser,
-                                                                              out_error);
-        if (!section) {
-            goto failure;
+        if (!cos_base_parser_matches_next_token(&(parser->base),
+                                                CosToken_Type_Integer,
+                                                out_error)) {
+            break;
         }
 
-        if (!cos_xref_table_add_section(table, section, out_error)) {
+        CosXrefSubsection * const subsection =
+            cos_xref_table_parser_parse_subsection_(parser, out_error);
+        if (!subsection) {
             cos_xref_section_destroy(section);
-            goto failure;
+            return NULL;
+        }
+
+        if (!cos_xref_section_add_subsection(section, subsection, out_error)) {
+            cos_xref_subsection_destroy(subsection);
+            cos_xref_section_destroy(section);
+            return NULL;
         }
     }
 
-    return table;
-
-failure:
-    if (table) {
-        cos_xref_table_destroy(table);
-    }
-    return NULL;
+    return section;
 }
 
 // MARK: - Implementation
@@ -160,58 +157,6 @@ cos_xref_entry_release_callback_(void *item)
 static const CosArrayCallbacks cos_xref_entry_array_callbacks_ = {
     .release = cos_xref_entry_release_callback_,
 };
-
-static CosXrefSection *
-cos_xref_table_parser_parse_section_(CosXrefTableParser *parser,
-                                     CosError * COS_Nullable out_error)
-{
-    COS_IMPL_PARAM_CHECK(parser != NULL);
-    if (COS_UNLIKELY(!parser)) {
-        return NULL;
-    }
-
-    CosXrefSection *section = NULL;
-
-    section = cos_xref_section_create();
-    if (COS_UNLIKELY(!section)) {
-        goto failure;
-    }
-
-    // Parse subsections until the 'trailer' keyword or EOF.
-    while (!cos_base_parser_matches_next_token(&(parser->base),
-                                               CosToken_Type_Trailer,
-                                               out_error) &&
-           !cos_base_parser_matches_next_token(&(parser->base),
-                                               CosToken_Type_EOF,
-                                               out_error) &&
-           cos_base_parser_has_next_token(&(parser->base))) {
-        // A subsection header starts with an Integer token.
-        if (!cos_base_parser_matches_next_token(&(parser->base),
-                                                CosToken_Type_Integer,
-                                                out_error)) {
-            break;
-        }
-
-        CosXrefSubsection * const subsection = cos_xref_table_parser_parse_subsection_(parser,
-                                                                                       out_error);
-        if (!subsection) {
-            goto failure;
-        }
-
-        if (!cos_xref_section_add_subsection(section, subsection, out_error)) {
-            cos_xref_subsection_destroy(subsection);
-            goto failure;
-        }
-    }
-
-    return section;
-
-failure:
-    if (section) {
-        cos_xref_section_destroy(section);
-    }
-    return NULL;
-}
 
 static CosXrefSubsection *
 cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,

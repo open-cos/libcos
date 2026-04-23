@@ -16,7 +16,9 @@
 #include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosObjNode.h>
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
+#include <libcos/objects/CosIntObjNode.h>
 #include <libcos/xref/CosXrefTableParser.h>
+#include <libcos/xref/table/CosXrefSection.h>
 #include <libcos/xref/table/CosXrefTable.h>
 
 #include <stdlib.h>
@@ -352,71 +354,123 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     CosDoc * const doc = parser->base.doc;
     CosStream * const stream = parser->base.input_stream;
 
-    // Phase 3: Seek to the xref table and parse it.
-    if (!cos_stream_seek(stream, xref_offset, CosStreamOffsetWhence_Set, out_error)) {
-        return false;
-    }
-
-    // Reset the tokenizer so it reads from the new stream position.
-    cos_tokenizer_reset(parser->base.tokenizer);
-    // Also discard any stale tokens buffered in the obj_parser.
-    cos_obj_parser_flush_tokens_(parser->obj_parser);
-
-    CosXrefTableParser * const xtp = cos_xref_table_parser_create(doc,
-                                                                  parser->base.tokenizer);
-    if (!xtp) {
-        cos_error_propagate(out_error,
-                            cos_error_make(COS_ERROR_PARSE,
-                                           "Failed to create xref table parser"));
-        return false;
-    }
-
-    CosXrefTable * const table = cos_xref_table_parser_parse(xtp, out_error);
-    cos_xref_table_parser_destroy(xtp);
-
+    // Create the master xref table that will accumulate sections from all revisions.
+    CosXrefTable *table = cos_xref_table_create();
     if (!table) {
+        cos_error_propagate(out_error,
+                            cos_error_make(COS_ERROR_MEMORY,
+                                           "Failed to create xref table"));
         return false;
+    }
+
+    bool result = false;
+    // Whether the most-recent (first-encountered) trailer has been stored on the doc.
+    bool first_revision = true;
+
+    // Walk the Prev chain from newest to oldest, accumulating xref sections.
+    while (true) {
+        // Seek to the xref section and reset the tokenizer.
+        if (!cos_stream_seek(stream, xref_offset, CosStreamOffsetWhence_Set, out_error)) {
+            goto done;
+        }
+        cos_tokenizer_reset(parser->base.tokenizer);
+        cos_obj_parser_flush_tokens_(parser->obj_parser);
+
+        CosXrefTableParser * const xtp =
+            cos_xref_table_parser_create(doc, parser->base.tokenizer);
+        if (!xtp) {
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_PARSE,
+                                               "Failed to create xref table parser"));
+            goto done;
+        }
+
+        CosXrefSection * const section =
+            cos_xref_table_parser_parse_section(xtp, out_error);
+        cos_xref_table_parser_destroy(xtp);
+
+        if (!section) {
+            goto done;
+        }
+        if (!cos_xref_table_add_section(table, section, out_error)) {
+            cos_xref_section_destroy(section);
+            goto done;
+        }
+
+        // Parse the trailer dictionary.
+        //
+        // After cos_xref_table_parser_destroy(), the shared tokenizer is positioned
+        // immediately after the "trailer" keyword — the xref table parser peeked it
+        // to stop its loop, which caused the tokenizer to consume those bytes from the
+        // stream, and the token was released when the parser was destroyed. The next
+        // cos_obj_parser_next_object() call will therefore read the trailer dict "<<".
+        cos_obj_parser_flush_tokens_(parser->obj_parser);
+
+        CosObjNode * const trailer_obj =
+            cos_obj_parser_next_object(parser->obj_parser, out_error);
+        if (!trailer_obj) {
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_PARSE,
+                                               "Failed to parse trailer dictionary"));
+            goto done;
+        }
+        if (!cos_obj_node_is_dict(trailer_obj)) {
+            cos_obj_node_release(trailer_obj);
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_PARSE,
+                                               "Trailer is not a dictionary"));
+            goto done;
+        }
+        CosDictObjNode * const trailer_dict = (CosDictObjNode *)trailer_obj;
+
+        // We own trailer_dict unless we transfer it to the document.
+        // Only the most-recent trailer (first encountered) is stored on the doc.
+        const bool own_trailer = !first_revision;
+
+        if (first_revision) {
+            cos_doc_set_trailer_dict_(doc, trailer_dict); // transfers ownership
+            CosObjNode * COS_Nullable root_obj = NULL;
+            if (cos_dict_obj_node_get_value_with_string(trailer_dict, "Root",
+                                                        &root_obj, NULL) &&
+                root_obj != NULL) {
+                cos_doc_set_root_(doc, root_obj);
+            }
+            first_revision = false;
+        }
+
+        // Check /Prev to decide whether to continue traversing older revisions.
+        CosStreamOffset prev_offset = -1;
+        CosObjNode * COS_Nullable prev_obj = NULL;
+        if (cos_dict_obj_node_get_value_with_string(trailer_dict, "Prev",
+                                                    &prev_obj, NULL) &&
+            prev_obj != NULL &&
+            cos_obj_node_is_integer(COS_nonnull_cast(prev_obj))) {
+            const int prev_value = cos_int_obj_node_get_value((CosIntObjNode *)prev_obj);
+            if (prev_value >= 0) {
+                prev_offset = (CosStreamOffset)prev_value;
+            }
+        }
+
+        // Destroy older trailer dicts that were not transferred to the document.
+        if (own_trailer) {
+            cos_dict_obj_node_destroy(trailer_dict);
+        }
+
+        if (prev_offset < 0) {
+            break;
+        }
+        xref_offset = prev_offset;
     }
 
     cos_doc_set_xref_table_(doc, table);
+    table = NULL; // ownership transferred
+    result = true;
 
-    // Phase 4: Parse the trailer dictionary.
-    //
-    // After cos_xref_table_parser_destroy(), the shared tokenizer is positioned
-    // immediately after the "trailer" keyword — the xref table parser peeked it
-    // to stop its loop, which caused the tokenizer to consume those bytes from the
-    // stream, and the token was released when the parser was destroyed. The next
-    // cos_obj_parser_next_object() call will therefore read the trailer dict "<<".
-    cos_obj_parser_flush_tokens_(parser->obj_parser);
-
-    CosObjNode * const trailer_obj = cos_obj_parser_next_object(parser->obj_parser, out_error);
-    if (!trailer_obj) {
-        cos_error_propagate(out_error,
-                            cos_error_make(COS_ERROR_PARSE,
-                                           "Failed to parse trailer dictionary"));
-        return false;
+done:
+    if (table) {
+        cos_xref_table_destroy(table);
     }
-
-    if (!cos_obj_node_is_dict(trailer_obj)) {
-        cos_obj_node_release(trailer_obj);
-        cos_error_propagate(out_error,
-                            cos_error_make(COS_ERROR_PARSE,
-                                           "Trailer is not a dictionary"));
-        return false;
-    }
-
-    CosDictObjNode * const trailer_dict = (CosDictObjNode *)trailer_obj;
-    cos_doc_set_trailer_dict_(doc, trailer_dict);
-
-    // Phase 5: Extract the /Root reference for lazy object resolution.
-    CosObjNode * COS_Nullable root_obj = NULL;
-    if (cos_dict_obj_node_get_value_with_string(trailer_dict, "Root", &root_obj, NULL) &&
-        root_obj != NULL) {
-        // Store as a borrowed reference; trailer_dict owns the object.
-        cos_doc_set_root_(doc, root_obj);
-    }
-
-    return true;
+    return result;
 }
 
 COS_ASSUME_NONNULL_END

@@ -39,20 +39,23 @@ cos_xref_table_parser_create(CosDoc *document,
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_xref_table_parser_destroy);
 
 /**
- * @brief Parses a cross-reference table from the current position in the tokenizer.
+ * Parses one cross-reference section from the current tokenizer position.
  *
- * On entry, the tokenizer should be positioned such that the next token is
- * the @c xref keyword.
+ * Reads all subsections between the @c xref keyword and the @c trailer keyword
+ * and returns them as a single @c CosXrefSection. On success the tokenizer is
+ * positioned at the @c trailer keyword (not yet consumed), ready for the caller
+ * to read the trailer dictionary.
  *
- * @param parser The parser.
+ * @param parser    The parser.
  * @param out_error On input, a pointer to an error object, or @c NULL.
  *
- * @return The parsed cross-reference table, or @c NULL if an error occurred.
+ * @return The parsed section (caller takes ownership), or @c NULL on error.
  */
-CosXrefTable * COS_Nullable
-cos_xref_table_parser_parse(CosXrefTableParser *parser,
-                            CosError * COS_Nullable out_error)
-    COS_OWNERSHIP_RETURNS;
+CosXrefSection * COS_Nullable
+cos_xref_table_parser_parse_section(CosXrefTableParser *parser,
+                                    CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

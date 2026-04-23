@@ -41,6 +41,7 @@ parse_xref_from_string_(const char *input,
     CosTokenizer *tokenizer = NULL;
     CosXrefTableParser *parser = NULL;
     CosXrefTable *table = NULL;
+    CosXrefSection *section = NULL;
 
     doc = cos_doc_create(NULL);
     if (!doc) {
@@ -64,7 +65,25 @@ parse_xref_from_string_(const char *input,
         goto cleanup;
     }
 
-    table = cos_xref_table_parser_parse(parser, out_error);
+    section = cos_xref_table_parser_parse_section(parser, out_error);
+    if (!section) {
+        goto cleanup;
+    }
+
+    table = cos_xref_table_create();
+    if (!table) {
+        cos_xref_section_destroy(section);
+        section = NULL;
+        goto cleanup;
+    }
+
+    if (!cos_xref_table_add_section(table, section, out_error)) {
+        cos_xref_section_destroy(section);
+        cos_xref_table_destroy(table);
+        table = NULL;
+        goto cleanup;
+    }
+    section = NULL; // ownership transferred to table
 
 cleanup:
     if (parser) {
@@ -210,7 +229,7 @@ parse_twoSubsections_CorrectStructure(void)
 }
 
 static int
-parse_emptyXref_ReturnsTableWithNoSections(void)
+parse_emptyXref_ReturnsSectionWithNoSubsections(void)
 {
     const char *input =
         "xref\n"
@@ -219,7 +238,11 @@ parse_emptyXref_ReturnsTableWithNoSections(void)
     CosXrefTable * const table = parse_xref_from_string_(input, &error);
 
     TEST_EXPECT(table != NULL);
-    TEST_EXPECT(cos_xref_table_get_section_count(table) == 0);
+    TEST_EXPECT(cos_xref_table_get_section_count(table) == 1);
+
+    CosXrefSection * const section = cos_xref_table_get_section(table, 0, NULL);
+    TEST_EXPECT(section != NULL);
+    TEST_EXPECT(cos_xref_section_get_subsection_count(section) == 0);
 
     cos_xref_table_destroy(table);
     return EXIT_SUCCESS;
@@ -393,7 +416,7 @@ TEST_MAIN()
     TEST_EXPECT(parse_singleInUseEntry_CorrectValues() == EXIT_SUCCESS);
     TEST_EXPECT(parse_multipleEntries_CorrectCount() == EXIT_SUCCESS);
     TEST_EXPECT(parse_twoSubsections_CorrectStructure() == EXIT_SUCCESS);
-    TEST_EXPECT(parse_emptyXref_ReturnsTableWithNoSections() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_emptyXref_ReturnsSectionWithNoSubsections() == EXIT_SUCCESS);
 
     /* Lookup tests */
     TEST_EXPECT(findEntry_existingInUseObject_ReturnsEntry() == EXIT_SUCCESS);
