@@ -16,4 +16,5 @@ else ()
 endif ()
 cmake_pop_check_state()
 
+add_subdirectory(common)
 add_subdirectory(public-api-fixer)

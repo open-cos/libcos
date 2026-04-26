@@ -4,18 +4,20 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(public_api_fixer)
-
-target_sources(public_api_fixer PUBLIC
+add_executable(public_api_fixer
+    AnnotationCheckAction.cpp
+    MissingAnnotationCallback.cpp
     main.cpp
 )
 
 target_include_directories(public_api_fixer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${LLVM_INCLUDE_DIRS}
     ${CLANG_INCLUDE_DIRS}
 )
 
 target_link_libraries(public_api_fixer PRIVATE
+    libcos_tooling
     clangAST
     clangASTMatchers
     clangBasic
