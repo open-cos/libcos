@@ -16,7 +16,10 @@ target_include_directories(public_api_fixer PRIVATE
 )
 
 target_link_libraries(public_api_fixer PRIVATE
-    clangTooling
+    clangAST
     clangASTMatchers
-    clangRewrite
+    clangBasic
+    clangFrontend
+    clangLex
+    clangTooling
 )
