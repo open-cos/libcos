@@ -25,3 +25,10 @@ target_link_libraries(public_api_fixer PRIVATE
     clangLex
     clangTooling
 )
+
+add_test(
+    NAME public_api_fixer_basic
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/harness.sh
+            $<TARGET_FILE:public_api_fixer>
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixture.h
+)
