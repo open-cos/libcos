@@ -8,8 +8,10 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/StringRef.h"
 
+#include <map>
 #include <set>
 #include <string>
 #include <tuple>
@@ -32,10 +34,16 @@ namespace libcos::tooling::public_api_fixer {
 class MissingAnnotationCallback
     : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
+    /**
+     * @param FileReplacements  Optional pointer to a per-file Replacements
+     *   map. When non-null, every flagged declaration is recorded as an
+     *   insertion that can later be persisted via RefactoringTool.
+     */
     MissingAnnotationCallback(
         clang::DiagnosticsEngine &Diags,
         const std::vector<clang::SourceLocation> &Expansions,
-        llvm::StringRef Annotation);
+        llvm::StringRef Annotation,
+        std::map<std::string, clang::tooling::Replacements> *FileReplacements);
 
     void
     run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -47,6 +55,7 @@ private:
     clang::DiagnosticsEngine &Diags;
     const std::vector<clang::SourceLocation> &Expansions;
     std::string Annotation;
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements;
     unsigned DiagID = 0;
 
     static unsigned WarningCount;

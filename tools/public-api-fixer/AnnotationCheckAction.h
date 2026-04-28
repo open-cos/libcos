@@ -10,9 +10,11 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Tooling/Core/Replacement.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/StringRef.h"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -31,8 +33,10 @@ namespace libcos::tooling::public_api_fixer {
  */
 class AnnotationCheckAction : public clang::ASTFrontendAction {
 public:
-    AnnotationCheckAction(llvm::StringRef Annotation,
-                          llvm::StringRef HeaderFilter);
+    AnnotationCheckAction(
+        llvm::StringRef Annotation,
+        llvm::StringRef HeaderFilter,
+        std::map<std::string, clang::tooling::Replacements> *FileReplacements);
 
     bool BeginSourceFileAction(clang::CompilerInstance &CI) override;
 
@@ -43,6 +47,7 @@ public:
 private:
     std::string Annotation;
     std::string HeaderFilter;
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements;
     std::vector<clang::SourceLocation> Expansions;
     clang::ast_matchers::MatchFinder Finder;
     std::unique_ptr<MissingAnnotationCallback> Callback;
@@ -50,14 +55,17 @@ private:
 
 class AnnotationCheckActionFactory : public clang::tooling::FrontendActionFactory {
 public:
-    AnnotationCheckActionFactory(llvm::StringRef Annotation,
-                                 llvm::StringRef HeaderFilter);
+    AnnotationCheckActionFactory(
+        llvm::StringRef Annotation,
+        llvm::StringRef HeaderFilter,
+        std::map<std::string, clang::tooling::Replacements> *FileReplacements);
 
     std::unique_ptr<clang::FrontendAction> create() override;
 
 private:
     std::string Annotation;
     std::string HeaderFilter;
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements;
 };
 
 } // namespace libcos::tooling::public_api_fixer

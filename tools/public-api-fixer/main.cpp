@@ -8,6 +8,7 @@
 #include "HeaderCompilationDatabase.h"
 
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,8 +35,8 @@ llvm::cl::opt<std::string> HeaderFilterOpt(
 
 llvm::cl::opt<bool> FixOpt(
     "fix",
-    llvm::cl::desc("Apply fix-its to insert missing annotations (not yet "
-                   "implemented)."),
+    llvm::cl::desc("Rewrite headers in place to insert the missing "
+                   "annotations."),
     llvm::cl::init(false),
     llvm::cl::cat(ToolCategory));
 
@@ -54,17 +55,14 @@ main(int argc, const char **argv)
 
     libcos::tooling::HeaderCompilationDatabase HeaderDB(
         OptionsParser.getCompilations());
-    clang::tooling::ClangTool Tool(HeaderDB,
-                                   OptionsParser.getSourcePathList());
-
-    if (FixOpt) {
-        llvm::errs() << "warning: --fix is not yet implemented; running in "
-                        "report-only mode\n";
-    }
+    clang::tooling::RefactoringTool Tool(HeaderDB,
+                                         OptionsParser.getSourcePathList());
 
     libcos::tooling::public_api_fixer::AnnotationCheckActionFactory Factory(
-        AnnotationOpt, HeaderFilterOpt);
-    const int RunResult = Tool.run(&Factory);
+        AnnotationOpt, HeaderFilterOpt, &Tool.getReplacements());
+
+    const int RunResult =
+        FixOpt ? Tool.runAndSave(&Factory) : Tool.run(&Factory);
     if (RunResult != 0) {
         return RunResult;
     }

@@ -25,10 +25,13 @@ using clang::ast_matchers::isStaticStorageClass;
 using clang::ast_matchers::unless;
 using clang::ast_matchers::varDecl;
 
-AnnotationCheckAction::AnnotationCheckAction(llvm::StringRef Annotation,
-                                             llvm::StringRef HeaderFilter)
+AnnotationCheckAction::AnnotationCheckAction(
+    llvm::StringRef Annotation,
+    llvm::StringRef HeaderFilter,
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements)
     : Annotation(Annotation.str()),
-      HeaderFilter(HeaderFilter.str()) {}
+      HeaderFilter(HeaderFilter.str()),
+      FileReplacements(FileReplacements) {}
 
 bool
 AnnotationCheckAction::BeginSourceFileAction(CompilerInstance &CI)
@@ -43,7 +46,7 @@ std::unique_ptr<ASTConsumer>
 AnnotationCheckAction::CreateASTConsumer(CompilerInstance &CI, llvm::StringRef)
 {
     Callback = std::make_unique<MissingAnnotationCallback>(
-        CI.getDiagnostics(), Expansions, Annotation);
+        CI.getDiagnostics(), Expansions, Annotation, FileReplacements);
 
     Finder.addMatcher(
         functionDecl(
@@ -69,14 +72,18 @@ AnnotationCheckAction::CreateASTConsumer(CompilerInstance &CI, llvm::StringRef)
 
 AnnotationCheckActionFactory::AnnotationCheckActionFactory(
     llvm::StringRef Annotation,
-    llvm::StringRef HeaderFilter)
+    llvm::StringRef HeaderFilter,
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements)
     : Annotation(Annotation.str()),
-      HeaderFilter(HeaderFilter.str()) {}
+      HeaderFilter(HeaderFilter.str()),
+      FileReplacements(FileReplacements) {}
 
 std::unique_ptr<FrontendAction>
 AnnotationCheckActionFactory::create()
 {
-    return std::make_unique<AnnotationCheckAction>(Annotation, HeaderFilter);
+    return std::make_unique<AnnotationCheckAction>(Annotation,
+                                                   HeaderFilter,
+                                                   FileReplacements);
 }
 
 } // namespace libcos::tooling::public_api_fixer

@@ -6,6 +6,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/Error.h"
 
 #include <utility>
 
@@ -13,11 +14,14 @@ namespace libcos::tooling::public_api_fixer {
 
 using clang::DiagnosticsEngine;
 using clang::FileID;
+using clang::FixItHint;
 using clang::NamedDecl;
 using clang::PresumedLoc;
 using clang::SourceLocation;
 using clang::SourceManager;
 using clang::ast_matchers::MatchFinder;
+using clang::tooling::Replacement;
+using clang::tooling::Replacements;
 
 unsigned MissingAnnotationCallback::WarningCount = 0;
 std::set<std::tuple<std::string, unsigned, std::string>>
@@ -26,10 +30,12 @@ std::set<std::tuple<std::string, unsigned, std::string>>
 MissingAnnotationCallback::MissingAnnotationCallback(
     DiagnosticsEngine &Diags,
     const std::vector<SourceLocation> &Expansions,
-    llvm::StringRef Annotation)
+    llvm::StringRef Annotation,
+    std::map<std::string, Replacements> *FileReplacements)
     : Diags(Diags),
       Expansions(Expansions),
-      Annotation(Annotation.str())
+      Annotation(Annotation.str()),
+      FileReplacements(FileReplacements)
 {
     DiagID = Diags.getCustomDiagID(
         DiagnosticsEngine::Warning,
@@ -90,8 +96,32 @@ MissingAnnotationCallback::run(const MatchFinder::MatchResult &Result)
         return;
     }
 
-    Diags.Report(BeginExp, DiagID) << ND->getNameAsString() << Annotation;
+    const std::string InsertText = Annotation + " ";
+
+    // Emit the warning with a fix-it hint that's visible in the diagnostic
+    // output (regardless of whether --fix is set).
+    Diags.Report(BeginExp, DiagID)
+        << ND->getNameAsString()
+        << Annotation
+        << FixItHint::CreateInsertion(BeginExp, InsertText);
     ++WarningCount;
+
+    // Record a Replacement so RefactoringTool::runAndSave can persist the
+    // change when the caller wants edits applied. FixItHint above is purely
+    // cosmetic; this is the apply path.
+    if (FileReplacements != nullptr) {
+        const Replacement R(SM, BeginExp, /*Length=*/0, InsertText);
+        const llvm::StringRef Path = R.getFilePath();
+        if (Path.empty()) {
+            return;
+        }
+        Replacements &FileR = (*FileReplacements)[std::string(Path)];
+        if (auto Err = FileR.add(R)) {
+            // Conflicting/overlapping replacements should not occur because
+            // of the dedup above, but stay defensive: drop the error.
+            llvm::consumeError(std::move(Err));
+        }
+    }
 }
 
 unsigned

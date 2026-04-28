@@ -122,4 +122,42 @@ assert_contains "declaration annotated_function is" "case 3"
 assert_not_contains "declaration static_function is" "case 3"
 assert_not_contains "declaration static_inline_helper is" "case 3"
 
+# ---------------------------------------------------------------------------
+# Case 4: --fix rewrites the header and a subsequent run is clean.
+# ---------------------------------------------------------------------------
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+cp "$FIXTURE" "$WORK/fixture.h"
+
+# Apply fixes. Exit code is still 1 because warnings were emitted before
+# being applied; we don't assert on it here.
+run_tool \
+    --annotation=PUBLIC_API_TEST \
+    --header-filter='.*/fixture\.h$' \
+    --fix \
+    "$WORK/fixture.h" \
+    -- \
+    -x c-header
+
+# The previously-flagged decls should now wear the annotation.
+if ! grep -q '^PUBLIC_API_TEST int unannotated_function' "$WORK/fixture.h"; then
+    echo 'FAIL: case 4: PUBLIC_API_TEST not inserted before unannotated_function' >&2
+    cat "$WORK/fixture.h" >&2
+    exit 1
+fi
+if ! grep -q '^PUBLIC_API_TEST extern int unannotated_var' "$WORK/fixture.h"; then
+    echo 'FAIL: case 4: PUBLIC_API_TEST not inserted before unannotated_var' >&2
+    cat "$WORK/fixture.h" >&2
+    exit 1
+fi
+
+# Re-run on the modified file: should now be clean.
+run_tool \
+    --annotation=PUBLIC_API_TEST \
+    --header-filter='.*/fixture\.h$' \
+    "$WORK/fixture.h" \
+    -- \
+    -x c-header
+assert_eq 0 "$EXIT" "case 4: post-fix run should be clean"
+
 echo "public_api_fixer tests passed."
