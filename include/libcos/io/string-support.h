@@ -22,7 +22,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @return The number of characters copied, excluding the nul-terminator.
  */
-size_t
+COS_API size_t
 cos_strlcpy(char *dest,
             size_t dest_size,
             const char *src)
@@ -38,7 +38,7 @@ cos_strlcpy(char *dest,
  *
  * @return The formatted string, or @c NULL if an error occurred.
  */
-char * COS_Nullable
+COS_API char * COS_Nullable
 cos_asprintf(const char *fmt, ...)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT
@@ -52,7 +52,7 @@ cos_asprintf(const char *fmt, ...)
  *
  * @return The formatted string, or @c NULL if an error occurred.
  */
-char * COS_Nullable
+COS_API char * COS_Nullable
 cos_vasprintf(const char *format,
               va_list args)
     COS_ATTR_MALLOC
@@ -66,7 +66,7 @@ cos_vasprintf(const char *format,
  *
  * @return The duplicated string, or @c NULL if an error occurred.
  */
-char * COS_Nullable
+COS_API char * COS_Nullable
 cos_strdup(const char *str)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
@@ -79,7 +79,7 @@ cos_strdup(const char *str)
  *
  * @return  The duplicated string, or @c NULL if an error occurred.
  */
-char * COS_Nullable
+COS_API char * COS_Nullable
 cos_strndup(const char *str,
             size_t n)
     COS_ATTR_MALLOC

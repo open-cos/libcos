@@ -22,7 +22,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @param ring_buffer The ring buffer.
  */
-void
+COS_API void
 cos_ring_buffer_destroy(CosRingBuffer *ring_buffer)
     COS_DEALLOCATOR_FUNC;
 
@@ -34,7 +34,7 @@ cos_ring_buffer_destroy(CosRingBuffer *ring_buffer)
  *
  * @return The ring buffer, or @c NULL if memory allocation failed.
  */
-CosRingBuffer * COS_Nullable
+COS_API CosRingBuffer * COS_Nullable
 cos_ring_buffer_create(size_t element_size,
                        size_t capacity_hint)
     COS_ALLOCATOR_FUNC
@@ -51,7 +51,7 @@ cos_ring_buffer_create(size_t element_size,
  *
  * @return The number of items in the ring buffer.
  */
-size_t
+COS_API size_t
 cos_ring_buffer_get_count(const CosRingBuffer *ring_buffer);
 
 /**
@@ -61,7 +61,7 @@ cos_ring_buffer_get_count(const CosRingBuffer *ring_buffer);
  *
  * @return The capacity of the ring buffer.
  */
-size_t
+COS_API size_t
 cos_ring_buffer_get_capacity(const CosRingBuffer *ring_buffer);
 
 /**
@@ -74,7 +74,7 @@ cos_ring_buffer_get_capacity(const CosRingBuffer *ring_buffer);
  *
  * @return @c true if the item was retrieved, @c false if an error occurred.
  */
-bool
+COS_API bool
 cos_ring_buffer_get_item(const CosRingBuffer *ring_buffer,
                          size_t index,
                          void *out_item,
@@ -90,7 +90,7 @@ cos_ring_buffer_get_item(const CosRingBuffer *ring_buffer,
  *
  * @return @c true if the first item was retrieved, @c false if the ring buffer is empty.
  */
-bool
+COS_API bool
 cos_ring_buffer_get_first_item(const CosRingBuffer *ring_buffer,
                                void *out_item)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
@@ -103,7 +103,7 @@ cos_ring_buffer_get_first_item(const CosRingBuffer *ring_buffer,
  *
  * @return @c true if the last item was retrieved, @c false if the ring buffer is empty.
  */
-bool
+COS_API bool
 cos_ring_buffer_get_last_item(const CosRingBuffer *ring_buffer,
                               void *out_item)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
@@ -122,7 +122,7 @@ cos_ring_buffer_get_last_item(const CosRingBuffer *ring_buffer,
  *
  * @return @c true if the item was pushed successfully, @c false if an error occurred.
  */
-bool
+COS_API bool
 cos_ring_buffer_push_front(CosRingBuffer *ring_buffer,
                            const void *item,
                            CosError * COS_Nullable out_error)
@@ -138,7 +138,7 @@ cos_ring_buffer_push_front(CosRingBuffer *ring_buffer,
  *
  * @return @c true if the item was pushed successfully, @c false if an error occurred.
  */
-bool
+COS_API bool
 cos_ring_buffer_push_back(CosRingBuffer *ring_buffer,
                           const void *item,
                           CosError * COS_Nullable out_error)
@@ -153,7 +153,7 @@ cos_ring_buffer_push_back(CosRingBuffer *ring_buffer,
  *
  * @return @c true if the item was popped, @c false if the ring buffer is empty.
  */
-bool
+COS_API bool
 cos_ring_buffer_pop_front(CosRingBuffer *ring_buffer,
                           void *out_item)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
@@ -166,7 +166,7 @@ cos_ring_buffer_pop_front(CosRingBuffer *ring_buffer,
  *
  * @return @c true if the item was popped, @c false if the ring buffer is empty.
  */
-bool
+COS_API bool
 cos_ring_buffer_pop_back(CosRingBuffer *ring_buffer,
                          void *out_item)
     COS_ATTR_ACCESS_WRITE_ONLY(2);

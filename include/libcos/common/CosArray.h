@@ -25,11 +25,11 @@ typedef struct CosArrayCallbacks {
     CosArrayEqualItemsCallback COS_Nullable equal;
 } CosArrayCallbacks;
 
-void
+COS_API void
 cos_array_destroy(CosArray *array)
     COS_DEALLOCATOR_FUNC;
 
-CosArray * COS_Nullable
+COS_API CosArray * COS_Nullable
 cos_array_create(size_t element_size,
                  const CosArrayCallbacks * COS_Nullable callbacks,
                  size_t capacity_hint)
@@ -45,7 +45,7 @@ cos_array_create(size_t element_size,
  *
  * @return The number of items in the array.
  */
-size_t
+COS_API size_t
 cos_array_get_count(const CosArray *array);
 
 /**
@@ -55,7 +55,7 @@ cos_array_get_count(const CosArray *array);
  *
  * @return The capacity of the array.
  */
-size_t
+COS_API size_t
 cos_array_get_capacity(const CosArray *array);
 
 /**
@@ -68,7 +68,7 @@ cos_array_get_capacity(const CosArray *array);
  *
  * @return The item at the given index, or @c NULL if an error occurred.
  */
-bool
+COS_API bool
 cos_array_get_item(const CosArray *array,
                    size_t index,
                    void *out_item,
@@ -79,25 +79,25 @@ cos_array_get_item(const CosArray *array,
 /** @name Insertion */
 /** @{ **/
 
-bool
+COS_API bool
 cos_array_insert_item(CosArray *array,
                       size_t index,
                       const void *item,
                       CosError * COS_Nullable error);
 
-bool
+COS_API bool
 cos_array_append_item(CosArray *array,
                       const void *item,
                       CosError * COS_Nullable error);
 
-bool
+COS_API bool
 cos_array_insert_items(CosArray *array,
                        size_t index,
                        const void *items,
                        size_t count,
                        CosError * COS_Nullable error);
 
-bool
+COS_API bool
 cos_array_append_items(CosArray *array,
                        const void *items,
                        size_t count,
@@ -108,16 +108,16 @@ cos_array_append_items(CosArray *array,
 /** @name Removal */
 /** @{ **/
 
-bool
+COS_API bool
 cos_array_remove_item(CosArray *array,
                       size_t index,
                       CosError * COS_Nullable error);
 
-bool
+COS_API bool
 cos_array_remove_last_item(CosArray *array,
                            CosError * COS_Nullable error);
 
-bool
+COS_API bool
 cos_array_remove_items(CosArray *array,
                        size_t index,
                        size_t count,
@@ -130,14 +130,14 @@ cos_array_remove_items(CosArray *array,
  * @name Push and Pop Convenience Functions
  */
 
-bool
+COS_API bool
 cos_array_push_last_item(CosArray *array,
                          const void *item,
                          CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_READ_ONLY(2)
     COS_ATTR_ACCESS_WRITE_ONLY(3);
 
-bool
+COS_API bool
 cos_array_pop_last_item(CosArray *array,
                         void *out_item,
                         CosError * COS_Nullable out_error)

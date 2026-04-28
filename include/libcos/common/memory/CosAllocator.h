@@ -48,7 +48,7 @@ typedef struct CosAllocatorCallbacks {
  *
  * @param allocator The allocator.
  */
-void
+COS_API void
 cos_allocator_destroy(CosAllocator *allocator)
     COS_DEALLOCATOR_FUNC;
 
@@ -63,7 +63,7 @@ cos_allocator_destroy(CosAllocator *allocator)
  *
  * @return The new allocator, or @c NULL if the allocation failed.
  */
-CosAllocator * COS_Nullable
+COS_API CosAllocator * COS_Nullable
 cos_allocator_create(CosAllocator * COS_Nullable allocator,
                      const CosAllocatorCallbacks *callbacks,
                      void * COS_Nullable user_data)
@@ -86,7 +86,7 @@ cos_allocator_create(CosAllocator * COS_Nullable allocator,
  * @param ptr The pointer to the block of memory to deallocate. If the pointer is @c NULL, this
  * function does nothing.
  */
-void
+COS_API void
 cos_allocator_dealloc(CosAllocator *allocator,
                       void * COS_Nullable ptr)
     COS_DEALLOCATOR_FUNC_INDEX(2);
@@ -100,7 +100,7 @@ cos_allocator_dealloc(CosAllocator *allocator,
  * @return A pointer to the allocated block of memory, or @c NULL if the allocation failed.
  * The returned pointer must be deallocated using the same allocator that was used to allocate it.
  */
-void * COS_Nullable
+COS_API void * COS_Nullable
 cos_allocator_alloc(CosAllocator *allocator,
                     size_t size)
     COS_ALLOCATOR_FUNC_SIZE(2)
@@ -118,7 +118,7 @@ cos_allocator_alloc(CosAllocator *allocator,
  * @return A pointer to the reallocated block of memory, or @c NULL if the reallocation failed.
  * The returned pointer must be deallocated using the same allocator that was used to reallocate it.
  */
-void * COS_Nullable
+COS_API void * COS_Nullable
 cos_allocator_realloc(CosAllocator *allocator,
                       void * COS_Nullable ptr,
                       size_t size)
@@ -133,7 +133,7 @@ cos_allocator_realloc(CosAllocator *allocator,
  *
  * This allocator uses the standard C library functions for memory allocation.
  */
-extern CosAllocator * const CosAllocatorDefault;
+COS_API extern CosAllocator * const CosAllocatorDefault;
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

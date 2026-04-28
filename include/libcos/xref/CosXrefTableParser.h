@@ -18,7 +18,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @param parser The parser to deallocate.
  */
-void
+COS_API void
 cos_xref_table_parser_destroy(CosXrefTableParser *parser)
     COS_DEALLOCATOR_FUNC;
 
@@ -32,7 +32,7 @@ cos_xref_table_parser_destroy(CosXrefTableParser *parser)
  *
  * @return A new parser, or @c NULL if an error occurred.
  */
-CosXrefTableParser * COS_Nullable
+COS_API CosXrefTableParser * COS_Nullable
 cos_xref_table_parser_create(CosDoc *document,
                              CosTokenizer *tokenizer)
     COS_ALLOCATOR_FUNC
@@ -51,7 +51,7 @@ cos_xref_table_parser_create(CosDoc *document,
  *
  * @return The parsed section (caller takes ownership), or @c NULL on error.
  */
-CosXrefSection * COS_Nullable
+COS_API CosXrefSection * COS_Nullable
 cos_xref_table_parser_parse_section(CosXrefTableParser *parser,
                                     CosError * COS_Nullable out_error)
     COS_OWNERSHIP_RETURNS

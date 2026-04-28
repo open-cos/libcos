@@ -13,12 +13,12 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosBoolObjNode * COS_Nullable
+COS_API CosBoolObjNode * COS_Nullable
 cos_bool_obj_node_alloc(bool value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_bool_obj_node_free(CosBoolObjNode *bool_obj);
 
 /**
@@ -28,7 +28,7 @@ cos_bool_obj_node_free(CosBoolObjNode *bool_obj);
  *
  * @return The value of the boolean object.
  */
-bool
+COS_API bool
 cos_bool_obj_node_get_value(const CosBoolObjNode *bool_obj);
 
 /**
@@ -37,11 +37,11 @@ cos_bool_obj_node_get_value(const CosBoolObjNode *bool_obj);
  * @param bool_obj The boolean object.
  * @param value The new value.
  */
-void
+COS_API void
 cos_bool_obj_node_set_value(CosBoolObjNode *bool_obj,
                        bool value);
 
-void
+COS_API void
 cos_bool_obj_node_print_desc(const CosBoolObjNode *bool_obj);
 
 COS_ASSUME_NONNULL_END

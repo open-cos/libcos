@@ -14,13 +14,13 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosIndirectObjNode * COS_Nullable
+COS_API CosIndirectObjNode * COS_Nullable
 cos_indirect_obj_node_alloc(CosObjID id,
                        CosObjNode *value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_indirect_obj_node_free(CosIndirectObjNode *indirect_obj);
 
 /**
@@ -30,7 +30,7 @@ cos_indirect_obj_node_free(CosIndirectObjNode *indirect_obj);
  *
  * @return The identifier of the indirect object.
  */
-CosObjID
+COS_API CosObjID
 cos_indirect_obj_node_get_id(const CosIndirectObjNode *indirect_obj);
 
 /**
@@ -41,7 +41,7 @@ cos_indirect_obj_node_get_id(const CosIndirectObjNode *indirect_obj);
  * @return The value of the indirect object, or @c NULL if the object could not
  * be resolved.
  */
-CosObjNode * COS_Nullable
+COS_API CosObjNode * COS_Nullable
 cos_indirect_obj_node_get_value(const CosIndirectObjNode *indirect_obj)
     COS_WARN_UNUSED_RESULT;
 
@@ -53,11 +53,11 @@ cos_indirect_obj_node_get_value(const CosIndirectObjNode *indirect_obj)
  * @return The indirect object's type, or @c CosObjNodeValueType_Unknown if the object
  * could not be resolved.
  */
-CosObjNodeValueType
+COS_API CosObjNodeValueType
 cos_indirect_obj_node_get_type(const CosIndirectObjNode *indirect_obj)
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_indirect_obj_node_print_desc(const CosIndirectObjNode *indirect_obj);
 
 COS_ASSUME_NONNULL_END

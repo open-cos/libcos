@@ -12,24 +12,24 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosReferenceObjNode * COS_Nullable
+COS_API CosReferenceObjNode * COS_Nullable
 cos_reference_obj_node_alloc(CosObjID id,
                         CosDoc *document)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_reference_obj_node_free(CosReferenceObjNode *reference_obj);
 
-CosObjNodeValueType
+COS_API CosObjNodeValueType
 cos_reference_obj_node_get_type(CosReferenceObjNode *reference_obj)
     COS_WARN_UNUSED_RESULT;
 
-CosObjNode * COS_Nullable
+COS_API CosObjNode * COS_Nullable
 cos_reference_obj_node_get_value(CosReferenceObjNode *reference_obj)
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_reference_obj_node_print_desc(const CosReferenceObjNode *reference_obj);
 
 COS_ASSUME_NONNULL_END

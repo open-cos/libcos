@@ -36,7 +36,7 @@ struct CosObjID {
     unsigned int gen_number;
 };
 
-extern const CosObjID CosObjID_Invalid;
+COS_API extern const CosObjID CosObjID_Invalid;
 
 /**
  * @brief Creates an object ID.
@@ -48,11 +48,11 @@ extern const CosObjID CosObjID_Invalid;
  *
  * @pre @p obj_number must be greater than zero.
  */
-CosObjID
+COS_API CosObjID
 cos_obj_id_make(unsigned int obj_number,
                 unsigned int gen_number);
 
-bool
+COS_API bool
 cos_obj_id_is_valid(CosObjID obj_id)
     COS_ATTR_PURE;
 
@@ -65,7 +65,7 @@ cos_obj_id_is_valid(CosObjID obj_id)
  * @return An integer less than, equal to, or greater than zero if @p lhs is less than,
  * equal to, or greater than @p rhs, respectively.
  */
-int
+COS_API int
 cos_obj_id_compare(CosObjID lhs, CosObjID rhs)
     COS_ATTR_PURE
     COS_WARN_UNUSED_RESULT;

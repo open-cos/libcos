@@ -16,19 +16,19 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_xref_table_destroy(CosXrefTable *table)
     COS_DEALLOCATOR_FUNC;
 
-CosXrefTable * COS_Nullable
+COS_API CosXrefTable * COS_Nullable
 cos_xref_table_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_xref_table_destroy);
 
-size_t
+COS_API size_t
 cos_xref_table_get_section_count(const CosXrefTable *table);
 
-CosXrefSection * COS_Nullable
+COS_API CosXrefSection * COS_Nullable
 cos_xref_table_get_section(const CosXrefTable *table,
                            size_t index,
                            CosError * COS_Nullable out_error);
@@ -42,12 +42,12 @@ cos_xref_table_get_section(const CosXrefTable *table,
  *
  * @return @c true if the section was added, or @c false if an error occurred.
  */
-bool
+COS_API bool
 cos_xref_table_add_section(CosXrefTable *table,
                            CosXrefSection *section,
                            CosError * COS_Nullable out_error);
 
-const CosXrefEntry * COS_Nullable
+COS_API const CosXrefEntry * COS_Nullable
 cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
                                       CosObjNumber object_number,
                                       CosError * COS_Nullable out_error);

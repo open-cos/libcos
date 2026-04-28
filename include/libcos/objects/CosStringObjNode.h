@@ -14,24 +14,24 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_string_obj_node_free(CosStringObjNode *string_obj)
     COS_DEALLOCATOR_FUNC;
 
-CosStringObjNode * COS_Nullable
+COS_API CosStringObjNode * COS_Nullable
 cos_string_obj_node_alloc(CosData *data)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_string_obj_node_free)
     COS_OWNERSHIP_HOLDS(1);
 
-const CosData * COS_Nullable
+COS_API const CosData * COS_Nullable
 cos_string_obj_node_get_value(const CosStringObjNode *string_obj);
 
-void
+COS_API void
 cos_string_obj_node_set_value(CosStringObjNode *string_obj,
                          CosData *data);
 
-void
+COS_API void
 cos_string_obj_node_print_desc(const CosStringObjNode *string_obj);
 
 COS_ASSUME_NONNULL_END

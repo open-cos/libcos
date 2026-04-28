@@ -11,24 +11,24 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosIntObjNode * COS_Nullable
+COS_API CosIntObjNode * COS_Nullable
 cos_int_obj_node_alloc(int value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_int_obj_node_free(CosIntObjNode *int_obj);
 
 // MARK: - Value accessors
 
-int
+COS_API int
 cos_int_obj_node_get_value(const CosIntObjNode *int_obj);
 
-void
+COS_API void
 cos_int_obj_node_set_value(CosIntObjNode *int_obj,
                       int value);
 
-void
+COS_API void
 cos_int_obj_node_print_desc(const CosIntObjNode *int_obj);
 
 COS_ASSUME_NONNULL_END

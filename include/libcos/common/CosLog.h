@@ -39,7 +39,7 @@ typedef void (*CosLogFunc)(CosLogContext *log_context,
  *
  * @return The default log context.
  */
-CosLogContext *
+COS_API CosLogContext *
 cos_log_context_get_default(void);
 
 /**
@@ -47,7 +47,7 @@ cos_log_context_get_default(void);
  *
  * @param log_context The log context.
  */
-void
+COS_API void
 cos_log_context_destroy(CosLogContext *log_context)
     COS_DEALLOCATOR_FUNC;
 
@@ -60,7 +60,7 @@ cos_log_context_destroy(CosLogContext *log_context)
  *
  * @return A new log context, or @c NULL if allocation failed.
  */
-CosLogContext * COS_Nullable
+COS_API CosLogContext * COS_Nullable
 cos_log_context_create(CosLogLevel level,
                        CosLogFunc log_func,
                        void * COS_Nullable user_data)
@@ -74,7 +74,7 @@ cos_log_context_create(CosLogLevel level,
  *
  * @return The logging level.
  */
-CosLogLevel
+COS_API CosLogLevel
 cos_log_context_get_level(const CosLogContext *log_context);
 
 /**
@@ -83,7 +83,7 @@ cos_log_context_get_level(const CosLogContext *log_context);
  * @param log_context The log context.
  * @param level The logging level.
  */
-void
+COS_API void
 cos_log_context_set_level(CosLogContext *log_context,
                           CosLogLevel level);
 
@@ -95,7 +95,7 @@ cos_log_context_set_level(CosLogContext *log_context,
  * @param format The <tt>printf</tt>-style format string.
  * @param ... The format string arguments.
  */
-void
+COS_API void
 cos_log(CosLogContext *log_context,
         CosLogMessageLevel message_level,
         const char *format,
@@ -110,7 +110,7 @@ cos_log(CosLogContext *log_context,
  * @param format The <tt>printf</tt>-style format string.
  * @param args The format string arguments.
  */
-void
+COS_API void
 cos_logv(CosLogContext *log_context,
          CosLogMessageLevel message_level,
          const char *format,

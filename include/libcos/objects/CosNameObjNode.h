@@ -19,20 +19,20 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_name_obj_node_free(CosNameObjNode *name_obj)
     COS_DEALLOCATOR_FUNC;
 
-CosNameObjNode * COS_Nullable
+COS_API CosNameObjNode * COS_Nullable
 cos_name_obj_node_alloc(CosString *value)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_name_obj_node_free)
     COS_OWNERSHIP_HOLDS(1);
 
-const CosString * COS_Nullable
+COS_API const CosString * COS_Nullable
 cos_name_obj_node_get_value(const CosNameObjNode *name_obj);
 
-void
+COS_API void
 cos_name_obj_node_set_value(CosNameObjNode *name_obj,
                        CosString *value);
 
@@ -43,7 +43,7 @@ cos_name_obj_node_set_value(CosNameObjNode *name_obj,
  *
  * @return The hash value of the name object.
  */
-size_t
+COS_API size_t
 cos_name_obj_node_get_hash(const CosNameObjNode *name_obj);
 
 /**
@@ -54,11 +54,11 @@ cos_name_obj_node_get_hash(const CosNameObjNode *name_obj);
  *
  * @return @c true if the name objects are equal, otherwise @c false .
  */
-bool
+COS_API bool
 cos_name_obj_node_equal(const CosNameObjNode *name_obj1,
                    const CosNameObjNode *name_obj2);
 
-void
+COS_API void
 cos_name_obj_node_print_desc(const CosNameObjNode *name_obj);
 
 COS_ASSUME_NONNULL_END

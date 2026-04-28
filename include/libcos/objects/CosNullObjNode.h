@@ -18,10 +18,10 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @return The null object.
  */
-CosNullObjNode *
+COS_API CosNullObjNode *
 cos_null_obj_node_get(void);
 
-void
+COS_API void
 cos_null_obj_node_print_desc(const CosNullObjNode *null_obj);
 
 COS_ASSUME_NONNULL_END

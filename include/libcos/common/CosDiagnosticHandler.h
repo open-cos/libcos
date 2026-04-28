@@ -15,13 +15,13 @@ COS_ASSUME_NONNULL_BEGIN
 typedef void (*CosDiagnosticHandlerFunc)(CosDiagnosticHandler *handler,
                                          const CosDiagnostic *diagnostic);
 
-CosDiagnosticHandler * COS_Nullable
+COS_API CosDiagnosticHandler * COS_Nullable
 cos_diagnostic_handler_alloc(CosDiagnosticHandlerFunc handle_func,
                              void * COS_Nullable user_data)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_diagnostic_handler_free(CosDiagnosticHandler *handler);
 
 /**
@@ -29,24 +29,24 @@ cos_diagnostic_handler_free(CosDiagnosticHandler *handler);
  *
  * @return The default diagnostic handler.
  */
-CosDiagnosticHandler *
+COS_API CosDiagnosticHandler *
 cos_diagnostic_handler_get_default(void);
 
-void * COS_Nullable
+COS_API void * COS_Nullable
 cos_diagnostic_handler_get_user_data(const CosDiagnosticHandler *handler);
 
-void
+COS_API void
 cos_emit_diagnostic(CosDiagnosticHandler *handler,
                     const CosDiagnostic *diagnostic);
 
-void
+COS_API void
 cos_diagnose(CosDiagnosticHandler *handler,
              CosDiagnosticType type,
              const char *message);
 
 // MARK: - Diagnostic logger
 
-CosDiagnosticHandler * COS_Nullable
+COS_API CosDiagnosticHandler * COS_Nullable
 cos_diagnostic_handler_alloc_logger(CosLogContext *log_context)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;

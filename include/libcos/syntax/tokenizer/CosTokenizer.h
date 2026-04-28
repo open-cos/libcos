@@ -17,7 +17,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @param tokenizer The tokenizer.
  */
-void
+COS_API void
 cos_tokenizer_destroy(CosTokenizer *tokenizer)
     COS_DEALLOCATOR_FUNC;
 
@@ -28,7 +28,7 @@ cos_tokenizer_destroy(CosTokenizer *tokenizer)
  *
  * @return The new tokenizer, or @c NULL if an error occurred.
  */
-CosTokenizer * COS_Nullable
+COS_API CosTokenizer * COS_Nullable
 cos_tokenizer_create(CosStream *input_stream)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_destroy)
@@ -39,7 +39,7 @@ cos_tokenizer_create(CosStream *input_stream)
  *
  * @param tokenizer The tokenizer to reset.
  */
-void
+COS_API void
 cos_tokenizer_reset(CosTokenizer *tokenizer);
 
 /**
@@ -51,7 +51,7 @@ cos_tokenizer_reset(CosTokenizer *tokenizer);
  *
  * @return @c true if a token was successfully read, @c false otherwise.
  */
-bool
+COS_API bool
 cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
                              CosToken *out_token,
                              CosError * COS_Nullable out_error)

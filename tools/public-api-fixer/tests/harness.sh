@@ -129,8 +129,8 @@ WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 cp "$FIXTURE" "$WORK/fixture.h"
 
-# Apply fixes. Exit code is still 1 because warnings were emitted before
-# being applied; we don't assert on it here.
+# Apply fixes; expect a clean exit and a one-line summary instead of
+# per-decl warnings.
 run_tool \
     --annotation=PUBLIC_API_TEST \
     --header-filter='.*/fixture\.h$' \
@@ -138,6 +138,9 @@ run_tool \
     "$WORK/fixture.h" \
     -- \
     -x c-header
+assert_eq 0 "$EXIT" "case 4: --fix should exit 0 on success"
+assert_contains "applied 2 annotation" "case 4: --fix should print summary"
+assert_not_contains "warning: public declaration" "case 4: --fix should suppress per-decl warnings"
 
 # The previously-flagged decls should now wear the annotation.
 if ! grep -q '^PUBLIC_API_TEST int unannotated_function' "$WORK/fixture.h"; then

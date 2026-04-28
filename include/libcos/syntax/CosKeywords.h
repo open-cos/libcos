@@ -56,7 +56,7 @@ typedef enum CosKeywordType {
  * @return The keyword type, or @c CosKeywordType_Unknown if the string does not
  * represent a keyword.
  */
-CosKeywordType
+COS_API CosKeywordType
 cos_keyword_type_from_string(CosStringRef string);
 
 /**
@@ -67,7 +67,7 @@ cos_keyword_type_from_string(CosStringRef string);
  * @return The string representation of the keyword type, or @c NULL if the
  * keyword type is unknown.
  */
-const char * COS_Nullable
+COS_API const char * COS_Nullable
 cos_keyword_type_to_string(CosKeywordType keyword_type);
 
 COS_ASSUME_NONNULL_END

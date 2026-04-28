@@ -13,18 +13,18 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_free(CosAllocator * COS_Nullable allocator,
          void * COS_Nullable ptr)
     COS_DEALLOCATOR_FUNC_INDEX(2);
 
-void * COS_Nullable
+COS_API void * COS_Nullable
 cos_alloc(CosAllocator * COS_Nullable allocator,
           size_t size)
     COS_ALLOCATOR_FUNC_SIZE(2)
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC_INDEX(cos_free, 2);
 
-void * COS_Nullable
+COS_API void * COS_Nullable
 cos_realloc(CosAllocator * COS_Nullable allocator,
             void * COS_Nullable ptr,
             size_t size)

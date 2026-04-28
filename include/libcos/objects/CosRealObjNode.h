@@ -11,24 +11,24 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-CosRealObjNode * COS_Nullable
+COS_API CosRealObjNode * COS_Nullable
 cos_real_obj_node_alloc(double value)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_real_obj_node_free(CosRealObjNode *real_obj);
 
 // MARK: - Value accessors
 
-double
+COS_API double
 cos_real_obj_node_get_value(const CosRealObjNode *real_obj);
 
-void
+COS_API void
 cos_real_obj_node_set_value(CosRealObjNode *real_obj,
                        double value);
 
-void
+COS_API void
 cos_real_obj_node_print_desc(const CosRealObjNode *real_obj);
 
 COS_ASSUME_NONNULL_END

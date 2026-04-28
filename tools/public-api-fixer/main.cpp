@@ -58,14 +58,30 @@ main(int argc, const char **argv)
     clang::tooling::RefactoringTool Tool(HeaderDB,
                                          OptionsParser.getSourcePathList());
 
+    // Pass the replacements map only when --fix is requested. The callback
+    // uses its presence to decide between emitting a diagnostic and
+    // recording a fix-it.
+    auto *Replacements = FixOpt ? &Tool.getReplacements() : nullptr;
     libcos::tooling::public_api_fixer::AnnotationCheckActionFactory Factory(
-        AnnotationOpt, HeaderFilterOpt, &Tool.getReplacements());
+        AnnotationOpt, HeaderFilterOpt, Replacements);
 
     const int RunResult =
         FixOpt ? Tool.runAndSave(&Factory) : Tool.run(&Factory);
     if (RunResult != 0) {
         return RunResult;
     }
+
+    if (FixOpt) {
+        size_t NumFixes = 0;
+        for (const auto &Entry : Tool.getReplacements()) {
+            NumFixes += Entry.second.size();
+        }
+        llvm::outs() << "public_api_fixer: applied " << NumFixes
+                     << " annotation(s) across "
+                     << Tool.getReplacements().size() << " file(s).\n";
+        return 0;
+    }
+
     return libcos::tooling::public_api_fixer::MissingAnnotationCallback::
                        getWarningCount() > 0
                ? 1

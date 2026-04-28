@@ -18,14 +18,14 @@ COS_ASSUME_NONNULL_BEGIN
 /**
  * @brief The callbacks for arrays of objects.
  */
-extern const CosArrayCallbacks cos_array_obj_node_callbacks;
+COS_API extern const CosArrayCallbacks cos_array_obj_node_callbacks;
 
 /**
  * @brief Deallocates an array object.
  *
  * @param array_obj The array object to deallocate.
  */
-void
+COS_API void
 cos_array_obj_node_free(CosArrayObjNode *array_obj)
     COS_DEALLOCATOR_FUNC;
 
@@ -36,7 +36,7 @@ cos_array_obj_node_free(CosArrayObjNode *array_obj)
  *
  * @return The new array object, or @c NULL if an error occurred.
  */
-CosArrayObjNode * COS_Nullable
+COS_API CosArrayObjNode * COS_Nullable
 cos_array_obj_node_alloc(CosArray * COS_Nullable array)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_array_obj_node_free);
@@ -48,7 +48,7 @@ cos_array_obj_node_alloc(CosArray * COS_Nullable array)
  *
  * @return The number of objects in the array.
  */
-size_t
+COS_API size_t
 cos_array_obj_node_get_count(const CosArrayObjNode *array_obj);
 
 /**
@@ -60,7 +60,7 @@ cos_array_obj_node_get_count(const CosArrayObjNode *array_obj);
  *
  * @return The object at the specified index, or @c NULL if an error occurred.
  */
-CosObjNode * COS_Nullable
+COS_API CosObjNode * COS_Nullable
 cos_array_obj_node_get_at(const CosArrayObjNode *array_obj,
                      size_t index,
                      CosError * COS_Nullable out_error)
@@ -76,7 +76,7 @@ cos_array_obj_node_get_at(const CosArrayObjNode *array_obj,
  *
  * @return @c true if the object was inserted, @c false otherwise.
  */
-bool
+COS_API bool
 cos_array_obj_node_insert(CosArrayObjNode *array_obj,
                      size_t index,
                      CosObjNode *obj,
@@ -91,7 +91,7 @@ cos_array_obj_node_insert(CosArrayObjNode *array_obj,
  *
  * @return @c true if the object was appended, @c false otherwise.
  */
-bool
+COS_API bool
 cos_array_obj_node_append(CosArrayObjNode *array_obj,
                      CosObjNode *obj,
                      CosError * COS_Nullable error);
@@ -105,7 +105,7 @@ cos_array_obj_node_append(CosArrayObjNode *array_obj,
  *
  * @return @c true if the object was removed, @c false otherwise.
  */
-bool
+COS_API bool
 cos_array_obj_node_remove_at(CosArrayObjNode *array_obj,
                         size_t index,
                         CosError * COS_Nullable error);

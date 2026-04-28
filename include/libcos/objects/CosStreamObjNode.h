@@ -14,21 +14,21 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_stream_obj_node_destroy(CosStreamObjNode *stream_obj)
     COS_DEALLOCATOR_FUNC;
 
-CosStreamObjNode * COS_Nullable
+COS_API CosStreamObjNode * COS_Nullable
 cos_stream_obj_node_create(CosDictObjNode *dict,
                       CosData * COS_Nullable data)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_obj_node_destroy)
     COS_OWNERSHIP_TAKES(1, 2);
 
-CosDictObjNode * COS_Nullable
+COS_API CosDictObjNode * COS_Nullable
 cos_stream_obj_node_get_dict(const CosStreamObjNode *stream_obj);
 
-CosData * COS_Nullable
+COS_API CosData * COS_Nullable
 cos_stream_obj_node_get_data(const CosStreamObjNode *stream_obj);
 
 /**
@@ -38,7 +38,7 @@ cos_stream_obj_node_get_data(const CosStreamObjNode *stream_obj);
  *
  * @return The length in bytes of the encoded stream data.
  */
-size_t
+COS_API size_t
 cos_stream_obj_node_get_length(const CosStreamObjNode *stream_obj);
 
 /**
@@ -49,7 +49,7 @@ cos_stream_obj_node_get_length(const CosStreamObjNode *stream_obj);
  *
  * @return The filter names for the stream, or @c NULL if an error occurred.
  */
-CosArrayObjNode * COS_Nullable
+COS_API CosArrayObjNode * COS_Nullable
 cos_stream_obj_node_get_filter_names(const CosStreamObjNode *stream_obj,
                                 CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
@@ -63,7 +63,7 @@ cos_stream_obj_node_get_filter_names(const CosStreamObjNode *stream_obj,
  *
  * @return @c true if the length hint was successfully retrieved, @c false otherwise.
  */
-bool
+COS_API bool
 cos_stream_obj_node_get_decoded_length_hint(const CosStreamObjNode *stream_obj,
                                        size_t *out_length_hint,
                                        CosError * COS_Nullable out_error)

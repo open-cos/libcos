@@ -22,7 +22,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @param dict_obj The dictionary object.
  */
-void
+COS_API void
 cos_dict_obj_node_destroy(CosDictObjNode *dict_obj)
     COS_DEALLOCATOR_FUNC;
 
@@ -33,7 +33,7 @@ cos_dict_obj_node_destroy(CosDictObjNode *dict_obj)
  *
  * @return The dictionary object, or @c NULL if an error occurred.
  */
-CosDictObjNode * COS_Nullable
+COS_API CosDictObjNode * COS_Nullable
 cos_dict_obj_node_create(CosDict * COS_Nullable dict)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_dict_obj_node_destroy);
@@ -45,7 +45,7 @@ cos_dict_obj_node_create(CosDict * COS_Nullable dict)
  *
  * @return The number of entries in the dictionary object.
  */
-size_t
+COS_API size_t
 cos_dict_obj_node_get_count(const CosDictObjNode *dict_obj);
 
 /**
@@ -58,7 +58,7 @@ cos_dict_obj_node_get_count(const CosDictObjNode *dict_obj);
  *
  * @return @c true if the object value was found, otherwise @c false.
  */
-bool
+COS_API bool
 cos_dict_obj_node_get_value(const CosDictObjNode *dict_obj,
                        CosNameObjNode *key,
                        CosObjNode * COS_Nullable * COS_Nonnull out_value,
@@ -76,7 +76,7 @@ cos_dict_obj_node_get_value(const CosDictObjNode *dict_obj,
  *
  * @return @c true if the object value was found, otherwise @c false.
  */
-bool
+COS_API bool
 cos_dict_obj_node_get_value_with_string(const CosDictObjNode *dict_obj,
                                    const char *key,
                                    CosObjNode * COS_Nullable * COS_Nonnull out_value,
@@ -84,14 +84,14 @@ cos_dict_obj_node_get_value_with_string(const CosDictObjNode *dict_obj,
     COS_ATTR_ACCESS_WRITE_ONLY(3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
 
-bool
+COS_API bool
 cos_dict_obj_node_set(CosDictObjNode *dict_obj,
                  CosNameObjNode *key,
                  CosObjNode *value,
                  CosError * COS_Nullable error);
 
-extern const CosDictKeyCallbacks cos_dict_obj_node_key_callbacks;
-extern const CosDictValueCallbacks cos_dict_obj_node_value_callbacks;
+COS_API extern const CosDictKeyCallbacks cos_dict_obj_node_key_callbacks;
+COS_API extern const CosDictValueCallbacks cos_dict_obj_node_value_callbacks;
 
 // MARK: - Iterator
 
@@ -117,7 +117,7 @@ typedef struct CosDictObjNodeIterator {
  *
  * @return An iterator positioned before the first entry.
  */
-CosDictObjNodeIterator
+COS_API CosDictObjNodeIterator
 cos_dict_obj_node_iterator_init(CosDictObjNode *dict_obj);
 
 /**
@@ -130,7 +130,7 @@ cos_dict_obj_node_iterator_init(CosDictObjNode *dict_obj);
  * @return @c true if another entry was found, @c false when iteration is
  * complete.
  */
-bool
+COS_API bool
 cos_dict_obj_node_iterator_next(CosDictObjNodeIterator *iterator,
                            CosNameObjNode * COS_Nullable * COS_Nonnull out_key,
                            CosObjNode * COS_Nullable * COS_Nonnull out_value)

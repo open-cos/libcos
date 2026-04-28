@@ -42,7 +42,7 @@ typedef enum CosObjType {
  *
  * @param obj The object to destroy.
  */
-void
+COS_API void
 cos_obj_destroy(CosObj *obj)
     COS_DEALLOCATOR_FUNC;
 
@@ -57,7 +57,7 @@ cos_obj_destroy(CosObj *obj)
  *
  * @return The new object, or @c NULL on allocation failure.
  */
-CosObj * COS_Nullable
+COS_API CosObj * COS_Nullable
 cos_obj_create(CosObjNode *node)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_destroy);
@@ -75,7 +75,7 @@ cos_obj_create(CosObjNode *node)
  *
  * @return The resolved object type.
  */
-CosObjType
+COS_API CosObjType
 cos_obj_get_type(const CosObj *obj);
 
 /**
@@ -85,7 +85,7 @@ cos_obj_get_type(const CosObj *obj);
  *
  * @return @c true if the underlying node is a direct object.
  */
-bool
+COS_API bool
 cos_obj_is_direct(const CosObj *obj);
 
 /**
@@ -98,7 +98,7 @@ cos_obj_is_direct(const CosObj *obj);
  *
  * @return @c true if the underlying node is indirect.
  */
-bool
+COS_API bool
 cos_obj_is_indirect(const CosObj *obj);
 
 /**
@@ -108,7 +108,7 @@ cos_obj_is_indirect(const CosObj *obj);
  *
  * @return @c true if the resolved object is null.
  */
-bool
+COS_API bool
 cos_obj_is_null(const CosObj *obj);
 
 // MARK: - Scalar accessors
@@ -122,7 +122,7 @@ cos_obj_is_null(const CosObj *obj);
  *
  * @return The boolean value, or @c false on type mismatch.
  */
-bool
+COS_API bool
 cos_obj_get_bool_value(const CosObj *obj);
 
 /**
@@ -134,7 +134,7 @@ cos_obj_get_bool_value(const CosObj *obj);
  *
  * @return The integer value, or @c 0 on type mismatch.
  */
-int
+COS_API int
 cos_obj_get_int_value(const CosObj *obj);
 
 /**
@@ -146,7 +146,7 @@ cos_obj_get_int_value(const CosObj *obj);
  *
  * @return The real value, or @c 0.0 on type mismatch.
  */
-double
+COS_API double
 cos_obj_get_real_value(const CosObj *obj);
 
 // MARK: - String / Name accessors
@@ -160,7 +160,7 @@ cos_obj_get_real_value(const CosObj *obj);
  *
  * @return The string data (borrowed), or @c NULL on type mismatch.
  */
-const CosData * COS_Nullable
+COS_API const CosData * COS_Nullable
 cos_obj_get_string_value(const CosObj *obj);
 
 /**
@@ -172,7 +172,7 @@ cos_obj_get_string_value(const CosObj *obj);
  *
  * @return The name string (borrowed), or @c NULL on type mismatch.
  */
-const CosString * COS_Nullable
+COS_API const CosString * COS_Nullable
 cos_obj_get_name_value(const CosObj *obj);
 
 // MARK: - Array accessors
@@ -186,7 +186,7 @@ cos_obj_get_name_value(const CosObj *obj);
  *
  * @return The element count, or @c 0 on type mismatch.
  */
-size_t
+COS_API size_t
 cos_obj_get_array_count(const CosObj *obj);
 
 /**
@@ -203,7 +203,7 @@ cos_obj_get_array_count(const CosObj *obj);
  *
  * @return The element (owned), or @c NULL on failure.
  */
-CosObj * COS_Nullable
+COS_API CosObj * COS_Nullable
 cos_obj_get_object_at_index(const CosObj *obj,
                             size_t index,
                             CosError * COS_Nullable out_error)
@@ -220,7 +220,7 @@ cos_obj_get_object_at_index(const CosObj *obj,
  *
  * @return The entry count, or @c 0 on type mismatch.
  */
-size_t
+COS_API size_t
 cos_obj_get_dict_count(const CosObj *obj);
 
 /**
@@ -237,7 +237,7 @@ cos_obj_get_dict_count(const CosObj *obj);
  *
  * @return The value (owned), or @c NULL if the key was not found.
  */
-CosObj * COS_Nullable
+COS_API CosObj * COS_Nullable
 cos_obj_get_value_for_key(const CosObj *obj,
                           const char *key,
                           CosError * COS_Nullable out_error)
@@ -266,7 +266,7 @@ typedef struct CosObjDictIterator {
  *
  * @return An iterator positioned before the first entry.
  */
-CosObjDictIterator
+COS_API CosObjDictIterator
 cos_obj_dict_iterator_init(const CosObj *obj);
 
 /**
@@ -281,7 +281,7 @@ cos_obj_dict_iterator_init(const CosObj *obj);
  *
  * @return @c true if another entry was found, @c false when done.
  */
-bool
+COS_API bool
 cos_obj_dict_iterator_next(CosObjDictIterator *iterator,
                            const char * COS_Nullable * COS_Nonnull out_key,
                            CosObj * COS_Nullable * COS_Nonnull out_value)
@@ -302,7 +302,7 @@ cos_obj_dict_iterator_next(CosObjDictIterator *iterator,
  *
  * @return The stream dictionary (owned), or @c NULL on type mismatch.
  */
-CosObj * COS_Nullable
+COS_API CosObj * COS_Nullable
 cos_obj_get_stream_dict(const CosObj *obj);
 
 /**
@@ -314,7 +314,7 @@ cos_obj_get_stream_dict(const CosObj *obj);
  *
  * @return The stream data (borrowed), or @c NULL on type mismatch.
  */
-const CosData * COS_Nullable
+COS_API const CosData * COS_Nullable
 cos_obj_get_stream_data(const CosObj *obj);
 
 COS_ASSUME_NONNULL_END

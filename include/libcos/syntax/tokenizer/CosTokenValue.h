@@ -20,7 +20,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @param token_value The token value.
  */
-void
+COS_API void
 cos_token_value_reset(CosTokenValue *token_value);
 
 // MARK: - Getters
@@ -33,7 +33,7 @@ cos_token_value_reset(CosTokenValue *token_value);
  *
  * @return @c true if the token value is a string, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_get_string(const CosTokenValue *token_value,
                            const CosString * COS_Nullable * COS_Nonnull result);
 
@@ -45,7 +45,7 @@ cos_token_value_get_string(const CosTokenValue *token_value,
  *
  * @return @c true if the token value is a data, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_get_data(const CosTokenValue *token_value,
                          const CosData * COS_Nullable * COS_Nonnull result);
 
@@ -57,7 +57,7 @@ cos_token_value_get_data(const CosTokenValue *token_value,
  *
  * @return @c true if the token value is an integer number, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_get_integer_number(const CosTokenValue *token_value,
                                    int *result);
 
@@ -69,7 +69,7 @@ cos_token_value_get_integer_number(const CosTokenValue *token_value,
  *
  * @return @c true if the token value is a long integer number, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_get_long_integer_number(const CosTokenValue *token_value,
                                         long long *result);
 
@@ -81,7 +81,7 @@ cos_token_value_get_long_integer_number(const CosTokenValue *token_value,
  *
  * @return @c true if the token value is a real number, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_get_real_number(const CosTokenValue *token_value,
                                 double *result);
 
@@ -93,7 +93,7 @@ cos_token_value_get_real_number(const CosTokenValue *token_value,
  * @param token_value The token value.
  * @param value The string value.
  */
-void
+COS_API void
 cos_token_value_set_string(CosTokenValue *token_value,
                            CosString *value);
 
@@ -103,7 +103,7 @@ cos_token_value_set_string(CosTokenValue *token_value,
  * @param token_value The token value.
  * @param value The data value.
  */
-void
+COS_API void
 cos_token_value_set_data(CosTokenValue *token_value,
                          CosData *value);
 
@@ -113,7 +113,7 @@ cos_token_value_set_data(CosTokenValue *token_value,
  * @param token_value The token value.
  * @param value The integer number value.
  */
-void
+COS_API void
 cos_token_value_set_integer_number(CosTokenValue *token_value,
                                    int value);
 
@@ -123,7 +123,7 @@ cos_token_value_set_integer_number(CosTokenValue *token_value,
  * @param token_value The token value.
  * @param value The long integer number value.
  */
-void
+COS_API void
 cos_token_value_set_long_integer_number(CosTokenValue *token_value,
                                         long long value);
 
@@ -133,7 +133,7 @@ cos_token_value_set_long_integer_number(CosTokenValue *token_value,
  * @param token_value The token value.
  * @param value The real number value.
  */
-void
+COS_API void
 cos_token_value_set_real_number(CosTokenValue *token_value,
                                 double value);
 
@@ -147,7 +147,7 @@ cos_token_value_set_real_number(CosTokenValue *token_value,
  *
  * @return @c true if ownership of the string was transferred, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_take_string(CosTokenValue *token_value,
                             CosString * COS_Nullable * COS_Nonnull result);
 
@@ -159,7 +159,7 @@ cos_token_value_take_string(CosTokenValue *token_value,
  *
  * @return @c true if ownership of the data was transferred, @c false otherwise.
  */
-bool
+COS_API bool
 cos_token_value_take_data(CosTokenValue *token_value,
                           CosData * COS_Nullable * COS_Nonnull result);
 

@@ -117,15 +117,15 @@ struct CosToken {
 };
 
 /** True iff leading whitespace is exactly one SP (0x20) with no comment. */
-bool
+COS_API bool
 cos_token_whitespace_is_single_space(const CosTokenWhitespace *ws);
 
 /** True iff leading whitespace forms a single EOL: LF or CR+LF. */
-bool
+COS_API bool
 cos_token_whitespace_is_eol(const CosTokenWhitespace *ws);
 
 /** True iff leading whitespace is a single CR (bare, not followed by LF). */
-bool
+COS_API bool
 cos_token_whitespace_is_bare_cr(const CosTokenWhitespace *ws);
 
 /**
@@ -133,20 +133,20 @@ cos_token_whitespace_is_bare_cr(const CosTokenWhitespace *ws);
  *
  * @param token The token.
  */
-void
+COS_API void
 cos_token_reset(CosToken *token);
 
-bool
+COS_API bool
 cos_token_get_integer_value(const CosToken *token,
                             int *out_value)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
-CosData * COS_Nullable
+COS_API CosData * COS_Nullable
 cos_token_move_data_value(CosToken *token)
     COS_OWNERSHIP_RETURNS
     COS_ATTR_ACCESS_READ_WRITE(1);
 
-CosString * COS_Nullable
+COS_API CosString * COS_Nullable
 cos_token_move_string_value(CosToken *token)
     COS_OWNERSHIP_RETURNS
     COS_ATTR_ACCESS_READ_WRITE(1);

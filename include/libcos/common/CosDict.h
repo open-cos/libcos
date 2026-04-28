@@ -35,27 +35,27 @@ typedef struct CosDictValueCallbacks {
     CosDictEqualValuesCallback COS_Nullable equal;
 } CosDictValueCallbacks;
 
-void
+COS_API void
 cos_dict_destroy(CosDict *dict)
     COS_DEALLOCATOR_FUNC;
 
-CosDict * COS_Nullable
+COS_API CosDict * COS_Nullable
 cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
                 const CosDictValueCallbacks *value_callbacks,
                 size_t capacity_hint)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_dict_destroy);
 
-size_t
+COS_API size_t
 cos_dict_get_count(const CosDict *dict);
 
-bool
+COS_API bool
 cos_dict_get(CosDict *dict,
              void *key,
              void * COS_Nullable * COS_Nonnull out_value,
              CosError * COS_Nullable out_error);
 
-bool
+COS_API bool
 cos_dict_set(CosDict *dict,
              void *key,
              void *value,
@@ -91,7 +91,7 @@ typedef struct CosDictIterator {
  *
  * @return An iterator positioned before the first entry.
  */
-CosDictIterator
+COS_API CosDictIterator
 cos_dict_iterator_init(CosDict *dict);
 
 /**
@@ -104,7 +104,7 @@ cos_dict_iterator_init(CosDict *dict);
  * @return @c true if another entry was found, @c false when iteration is
  * complete.
  */
-bool
+COS_API bool
 cos_dict_iterator_next(CosDictIterator *iterator,
                        void * COS_Nullable * COS_Nonnull out_key,
                        void * COS_Nullable * COS_Nonnull out_value)

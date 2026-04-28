@@ -25,14 +25,14 @@ typedef struct CosMemoryStream {
 
 } CosMemoryStream;
 
-CosMemoryStream * COS_Nullable
+COS_API CosMemoryStream * COS_Nullable
 cos_memory_stream_create(void *buffer,
                          size_t size,
                          bool free_buffer)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);
 
-CosMemoryStream * COS_Nullable
+COS_API CosMemoryStream * COS_Nullable
 cos_memory_stream_create_readonly(const void *buffer,
                                   size_t size)
     COS_ALLOCATOR_FUNC

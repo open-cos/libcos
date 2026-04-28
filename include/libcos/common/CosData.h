@@ -40,7 +40,7 @@ struct CosData {
  *
  * @return A pointer to the allocated data object, or @c NULL if an error occurred.
  */
-CosData * COS_Nullable
+COS_API CosData * COS_Nullable
 cos_data_alloc(size_t capacity_hint)
     COS_MALLOC_LIKE
     COS_WARN_UNUSED_RESULT;
@@ -50,7 +50,7 @@ cos_data_alloc(size_t capacity_hint)
  *
  * @param data The data object to free.
  */
-void
+COS_API void
 cos_data_free(CosData *data);
 
 /**
@@ -62,7 +62,7 @@ cos_data_free(CosData *data);
  *
  * @return A pointer to the copied data object, or @c NULL if an error occurred.
  */
-CosData * COS_Nullable
+COS_API CosData * COS_Nullable
 cos_data_copy(const CosData *data,
               CosError * COS_Nullable error)
     COS_MALLOC_LIKE
@@ -79,7 +79,7 @@ cos_data_copy(const CosData *data,
  *
  * @return A reference to the range of bytes, or @c NULL if an error occurred.
  */
-CosDataRef
+COS_API CosDataRef
 cos_data_get_range(const CosData *data,
                    size_t offset,
                    size_t length,
@@ -95,7 +95,7 @@ cos_data_get_range(const CosData *data,
  *
  * @return @c true if the capacity was reserved, otherwise @c false.
  */
-bool
+COS_API bool
 cos_data_reserve(CosData *data,
                  size_t capacity,
                  CosError * COS_Nullable error);
@@ -107,7 +107,7 @@ cos_data_reserve(CosData *data,
  *
  * @return @c true if the data buffer was reset, otherwise @c false.
  */
-bool
+COS_API bool
 cos_data_reset(CosData *data);
 
 /**
@@ -121,7 +121,7 @@ cos_data_reset(CosData *data);
  *
  * @return @c true if the bytes were appended, otherwise @c false.
  */
-bool
+COS_API bool
 cos_data_append(CosData *data,
                 const unsigned char *bytes,
                 size_t count,
@@ -137,7 +137,7 @@ cos_data_append(CosData *data,
  *
  * @return @c true if the byte was appended, otherwise @c false.
  */
-bool
+COS_API bool
 cos_data_push_back(CosData *data,
                    unsigned char byte,
                    CosError * COS_Nullable error);
@@ -153,7 +153,7 @@ cos_data_push_back(CosData *data,
  *
  * @return A constant reference to the data object.
  */
-CosDataRef
+COS_API CosDataRef
 cos_data_get_ref(const CosData *data);
 
 COS_ASSUME_NONNULL_END

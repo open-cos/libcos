@@ -28,13 +28,13 @@ struct CosDiagnostic {
     const char *message;
 };
 
-CosDiagnostic * COS_Nullable
+COS_API CosDiagnostic * COS_Nullable
 cos_diagnostic_alloc(CosDiagnosticType type,
                      const char *message)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
 
-void
+COS_API void
 cos_diagnostic_free(CosDiagnostic *diagnostic);
 
 COS_ASSUME_NONNULL_END

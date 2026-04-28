@@ -77,7 +77,7 @@ struct CosFilter {
  * @param filter The filter to be initialized.
  * @param filter_functions The filter functions.
  */
-void
+COS_API void
 cos_filter_init(CosFilter *filter,
                 const CosFilterFunctions *filter_functions);
 
@@ -86,7 +86,7 @@ cos_filter_init(CosFilter *filter,
  *
  * @param filter The filter.
  */
-void
+COS_API void
 cos_filter_deinit(CosFilter *filter);
 
 /**
@@ -95,7 +95,7 @@ cos_filter_deinit(CosFilter *filter);
  * @param filter The filter.
  * @param source The source stream.
  */
-void
+COS_API void
 cos_filter_attach_source(CosFilter *filter,
                          CosStream *source)
     COS_OWNERSHIP_HOLDS(2);
@@ -105,7 +105,7 @@ cos_filter_attach_source(CosFilter *filter,
  *
  * @param filter The filter.
  */
-void
+COS_API void
 cos_filter_detach_source(CosFilter *filter);
 
 COS_ASSUME_NONNULL_END

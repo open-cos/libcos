@@ -23,7 +23,7 @@ COS_ASSUME_NONNULL_BEGIN
  *
  * @param parser The parser to deallocate.
  */
-void
+COS_API void
 cos_parser_destroy(CosParser *parser)
     COS_DEALLOCATOR_FUNC;
 
@@ -42,7 +42,7 @@ cos_parser_destroy(CosParser *parser)
  *
  * @return A borrowed reference to the new parser, or @c NULL if an error occurred.
  */
-CosParser * COS_Nullable
+COS_API CosParser * COS_Nullable
 cos_parser_create(CosDoc *document,
                   CosStream *input_stream)
     COS_OWNERSHIP_HOLDS(2);
@@ -58,7 +58,7 @@ cos_parser_create(CosDoc *document,
  *
  * @return @c true on success, @c false if a parse error occurred.
  */
-bool
+COS_API bool
 cos_parser_parse(CosParser *parser,
                  CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
@@ -74,7 +74,7 @@ cos_parser_parse(CosParser *parser,
  *
  * @return The parsed object (caller owns it), or @c NULL on error.
  */
-CosObjNode * COS_Nullable
+COS_API CosObjNode * COS_Nullable
 cos_parser_load_object(CosParser *parser,
                        CosStreamOffset byte_offset,
                        CosError * COS_Nullable out_error)

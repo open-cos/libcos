@@ -33,20 +33,20 @@ struct CosError {
 /**
  * The default empty error value.
  */
-extern const CosError CosErrorNone;
+COS_API extern const CosError CosErrorNone;
 
 #define COS_ERROR_PROPAGATE(source_error, destination_error) \
     cos_error_propagate_(source_error, destination_error)
 
-CosError
+COS_API CosError
 cos_error_none(void)
     COS_ATTR_PURE;
 
-CosError
+COS_API CosError
 cos_error_make(CosErrorCode code,
                const char *message);
 
-CosError
+COS_API CosError
 cos_error_make_invalid_argument(const char *message);
 
 /**
@@ -55,12 +55,12 @@ cos_error_make_invalid_argument(const char *message);
  * @param destination_error The destination error.
  * @param source_error The source error.
  */
-void
+COS_API void
 cos_error_propagate(CosError * COS_Nullable destination_error,
                     CosError source_error)
     COS_ATTR_ACCESS_WRITE_ONLY(1);
 
-void
+COS_API void
 cos_error_propagate_(CosError source_error,
                      CosError * COS_Nullable destination_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);

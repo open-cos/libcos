@@ -27,7 +27,7 @@ typedef struct CosFileStream {
     bool file_owner;
 } CosFileStream;
 
-CosStream * COS_Nullable
+COS_API CosStream * COS_Nullable
 cos_file_stream_create(const char *path,
                        const char *mode)
     COS_ALLOCATOR_FUNC
@@ -40,7 +40,7 @@ cos_file_stream_create(const char *path,
  * @param file The file pointer.
  * @param file_owner Whether the file pointer is owned by the stream.
  */
-void
+COS_API void
 cos_file_stream_init(CosFileStream *file_stream,
                      FILE *file,
                      bool file_owner);

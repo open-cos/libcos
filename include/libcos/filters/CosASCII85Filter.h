@@ -26,7 +26,7 @@ struct CosASCII85Filter {
  *
  * @return The new ASCII base-85 filter, or @c NULL if memory allocation failed.
  */
-CosASCII85Filter * COS_Nullable
+COS_API CosASCII85Filter * COS_Nullable
 cos_ascii85_filter_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);

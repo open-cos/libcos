@@ -14,11 +14,11 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_stream_reader_destroy(CosStreamReader *stream_reader)
     COS_DEALLOCATOR_FUNC;
 
-CosStreamReader * COS_Nullable
+COS_API CosStreamReader * COS_Nullable
 cos_stream_reader_create(CosStream *input_stream)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_reader_destroy);
@@ -31,7 +31,7 @@ cos_stream_reader_create(CosStream *input_stream)
  *
  * @param stream_reader The stream reader.
  */
-void
+COS_API void
 cos_stream_reader_reset(CosStreamReader *stream_reader);
 
 /**
@@ -41,7 +41,7 @@ cos_stream_reader_reset(CosStreamReader *stream_reader);
  *
  * @return The current position of the stream reader.
  */
-CosStreamOffset
+COS_API CosStreamOffset
 cos_stream_reader_get_position(CosStreamReader *stream_reader);
 
 /**
@@ -53,7 +53,7 @@ cos_stream_reader_get_position(CosStreamReader *stream_reader);
  *
  * @return The character read, or @c EOF if the end of the stream has been reached.
  */
-int
+COS_API int
 cos_stream_reader_getc(CosStreamReader *stream_reader);
 
 /**
@@ -65,7 +65,7 @@ cos_stream_reader_getc(CosStreamReader *stream_reader);
  *
  * @return The next character from the stream, or @c EOF if the end of the stream has been reached.
  */
-int
+COS_API int
 cos_stream_reader_peek(CosStreamReader *stream_reader);
 
 /**
@@ -77,7 +77,7 @@ cos_stream_reader_peek(CosStreamReader *stream_reader);
  *
  * @return @c true if the operation was successful, @c false otherwise.
  */
-bool
+COS_API bool
 cos_stream_reader_ungetc(CosStreamReader *stream_reader);
 
 COS_ASSUME_NONNULL_END

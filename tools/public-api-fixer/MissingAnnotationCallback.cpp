@@ -98,17 +98,12 @@ MissingAnnotationCallback::run(const MatchFinder::MatchResult &Result)
 
     const std::string InsertText = Annotation + " ";
 
-    // Emit the warning with a fix-it hint that's visible in the diagnostic
-    // output (regardless of whether --fix is set).
-    Diags.Report(BeginExp, DiagID)
-        << ND->getNameAsString()
-        << Annotation
-        << FixItHint::CreateInsertion(BeginExp, InsertText);
-    ++WarningCount;
-
-    // Record a Replacement so RefactoringTool::runAndSave can persist the
-    // change when the caller wants edits applied. FixItHint above is purely
-    // cosmetic; this is the apply path.
+    // Two modes, decided by whether the caller supplied a Replacements map:
+    //   - check mode (FileReplacements == nullptr): emit a diagnostic with
+    //     a fix-it hint so the user sees what's missing.
+    //   - fix mode  (FileReplacements != nullptr): record a Replacement for
+    //     RefactoringTool::runAndSave. Stay silent here - the fix itself is
+    //     the report, and main() prints a one-line summary at the end.
     if (FileReplacements != nullptr) {
         const Replacement R(SM, BeginExp, /*Length=*/0, InsertText);
         const llvm::StringRef Path = R.getFilePath();
@@ -121,7 +116,14 @@ MissingAnnotationCallback::run(const MatchFinder::MatchResult &Result)
             // of the dedup above, but stay defensive: drop the error.
             llvm::consumeError(std::move(Err));
         }
+        return;
     }
+
+    Diags.Report(BeginExp, DiagID)
+        << ND->getNameAsString()
+        << Annotation
+        << FixItHint::CreateInsertion(BeginExp, InsertText);
+    ++WarningCount;
 }
 
 unsigned

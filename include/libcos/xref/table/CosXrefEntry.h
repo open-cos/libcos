@@ -112,17 +112,17 @@ struct CosXrefEntry {
     } value;
 };
 
-void
+COS_API void
 cos_xref_entry_init_free(CosXrefEntry *entry,
                          unsigned int next_free_obj_number,
                          unsigned int gen_number);
 
-void
+COS_API void
 cos_xref_entry_init_in_use(CosXrefEntry *entry,
                            unsigned int byte_offset,
                            unsigned int gen_number);
 
-void
+COS_API void
 cos_xref_entry_init_compressed(CosXrefEntry *entry,
                                unsigned int obj_stream_number,
                                unsigned int obj_stream_index);

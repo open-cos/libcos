@@ -39,7 +39,7 @@ typedef enum CosObjNodeType {
  *
  * @return The retained object (same pointer as @p obj).
  */
-CosObjNode * COS_Nullable
+COS_API CosObjNode * COS_Nullable
 cos_obj_node_retain(CosObjNode * COS_Nullable obj);
 
 /**
@@ -49,13 +49,13 @@ cos_obj_node_retain(CosObjNode * COS_Nullable obj);
  *
  * @param obj The object to release.
  */
-void
+COS_API void
 cos_obj_node_release(CosObjNode * COS_Nullable obj);
 
 /** @name Object type **/
 /** @{ **/
 
-CosObjNodeType
+COS_API CosObjNodeType
 cos_obj_node_get_type(const CosObjNode *obj);
 
 /**
@@ -65,7 +65,7 @@ cos_obj_node_get_type(const CosObjNode *obj);
  *
  * @return @c true if the object is direct, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_direct(const CosObjNode *obj);
 
 /**
@@ -75,7 +75,7 @@ cos_obj_node_is_direct(const CosObjNode *obj);
  *
  * @return @c true if the object is indirect, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_indirect(const CosObjNode *obj);
 
 /**
@@ -86,7 +86,7 @@ cos_obj_node_is_indirect(const CosObjNode *obj);
  *
  * @return @c true if the object is of the specified type, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_type(const CosObjNode *obj,
                 CosObjNodeType type);
 
@@ -100,7 +100,7 @@ cos_obj_node_is_type(const CosObjNode *obj,
  *
  * @return The value type of the object.
  */
-CosObjNodeValueType
+COS_API CosObjNodeValueType
 cos_obj_node_get_value_type(CosObjNode *obj);
 
 /**
@@ -110,7 +110,7 @@ cos_obj_node_get_value_type(CosObjNode *obj);
  *
  * @return @c true if the object is a boolean, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_boolean(CosObjNode *obj);
 
 /**
@@ -120,7 +120,7 @@ cos_obj_node_is_boolean(CosObjNode *obj);
  *
  * @return @c true if the object is an integer, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_integer(CosObjNode *obj);
 
 /**
@@ -130,7 +130,7 @@ cos_obj_node_is_integer(CosObjNode *obj);
  *
  * @return @c true if the object is a real number, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_real(CosObjNode *obj);
 
 /**
@@ -140,7 +140,7 @@ cos_obj_node_is_real(CosObjNode *obj);
  *
  * @return @c true if the object is a string, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_string(CosObjNode *obj);
 
 /**
@@ -150,7 +150,7 @@ cos_obj_node_is_string(CosObjNode *obj);
  *
  * @return @c true if the object is a name, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_name(CosObjNode *obj);
 
 /**
@@ -160,7 +160,7 @@ cos_obj_node_is_name(CosObjNode *obj);
  *
  * @return @c true if the object is an array, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_array(CosObjNode *obj);
 
 /**
@@ -170,7 +170,7 @@ cos_obj_node_is_array(CosObjNode *obj);
  *
  * @return @c true if the object is a dictionary, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_dict(CosObjNode *obj);
 
 /**
@@ -180,7 +180,7 @@ cos_obj_node_is_dict(CosObjNode *obj);
  *
  * @return @c true if the object is a stream, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_stream(CosObjNode *obj);
 
 /**
@@ -190,7 +190,7 @@ cos_obj_node_is_stream(CosObjNode *obj);
  *
  * @return @c true if the object is null, @c false otherwise.
  */
-bool
+COS_API bool
 cos_obj_node_is_null(CosObjNode *obj);
 
 /** @} **/
@@ -198,7 +198,7 @@ cos_obj_node_is_null(CosObjNode *obj);
 /** @name Debugging **/
 /** @{ **/
 
-void
+COS_API void
 cos_obj_node_print_desc(const CosObjNode *obj);
 
 /** @} **/

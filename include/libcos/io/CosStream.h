@@ -138,7 +138,7 @@ struct CosStream {
     CosStreamFlags flags;
 };
 
-void
+COS_API void
 cos_stream_close(CosStream *stream)
     COS_DEALLOCATOR_FUNC;
 
@@ -148,7 +148,7 @@ cos_stream_close(CosStream *stream)
  * @param stream The stream to be initialized.
  * @param functions The functions to be used by the stream.
  */
-void
+COS_API void
 cos_stream_init(CosStream *stream,
                 const CosStreamFunctions *functions);
 
@@ -159,7 +159,7 @@ cos_stream_init(CosStream *stream,
  *
  * @return @c true if the stream can read, @c false otherwise.
  */
-bool
+COS_API bool
 cos_stream_can_read(const CosStream *stream);
 
 /**
@@ -172,7 +172,7 @@ cos_stream_can_read(const CosStream *stream);
  *
  * @return The number of bytes read, or @c 0 if an error occurred.
  */
-size_t
+COS_API size_t
 cos_stream_read(CosStream *stream,
                 COS_PARAM_SPEC(out, nonnull, sized_by(count)) void *buffer,
                 size_t count,
@@ -187,7 +187,7 @@ cos_stream_read(CosStream *stream,
  *
  * @return @c true if the stream can write, @c false otherwise.
  */
-bool
+COS_API bool
 cos_stream_can_write(const CosStream *stream);
 
 /**
@@ -200,7 +200,7 @@ cos_stream_can_write(const CosStream *stream);
  *
  * @return The number of bytes written, or @c 0 if an error occurred.
  */
-size_t
+COS_API size_t
 cos_stream_write(CosStream *stream,
                  COS_PARAM_SPEC(in, nonnull, sized_by(count)) const void *buffer,
                  size_t count,
@@ -215,7 +215,7 @@ cos_stream_write(CosStream *stream,
  *
  * @return @c true if the stream can seek, @c false otherwise.
  */
-bool
+COS_API bool
 cos_stream_can_seek(const CosStream *stream);
 
 /**
@@ -228,7 +228,7 @@ cos_stream_can_seek(const CosStream *stream);
  *
  * @return @c true if the adjustment was successful, @c false otherwise.
  */
-bool
+COS_API bool
 cos_stream_seek(CosStream *stream,
                 CosStreamOffset offset,
                 CosStreamOffsetWhence whence,
@@ -243,12 +243,12 @@ cos_stream_seek(CosStream *stream,
  *
  * @return The current position of the stream, or @c -1 if an error occurred.
  */
-CosStreamOffset
+COS_API CosStreamOffset
 cos_stream_get_position(CosStream *stream,
                         CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
-bool
+COS_API bool
 cos_stream_is_at_end(CosStream *stream,
                      CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(2);

@@ -14,11 +14,11 @@
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
-void
+COS_API void
 cos_doc_destroy(CosDoc *doc)
     COS_DEALLOCATOR_FUNC;
 
-CosDoc * COS_Nullable
+COS_API CosDoc * COS_Nullable
 cos_doc_create(CosAllocator * COS_Nullable allocator)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_doc_destroy);
@@ -34,13 +34,13 @@ COS_API CosAllocator * COS_Nullable
 cos_doc_get_allocator(const CosDoc *doc)
     COS_WARN_UNUSED_RESULT;
 
-int
+COS_API int
 cos_doc_get_version(CosDoc *doc);
 
-CosObjNode * COS_Nullable
+COS_API CosObjNode * COS_Nullable
 cos_doc_get_root(CosDoc *doc);
 
-void * COS_Nullable
+COS_API void * COS_Nullable
 cos_doc_get_object(CosDoc *doc,
                    CosObjID obj_id,
                    CosError * COS_Nullable error);
@@ -54,10 +54,10 @@ cos_doc_get_object(CosDoc *doc,
  *
  * @return The document's diagnostic handler, or @c NULL if no diagnostic handler is set.
  */
-CosDiagnosticHandler * COS_Nullable
+COS_API CosDiagnosticHandler * COS_Nullable
 cos_doc_get_diagnostic_handler(const CosDoc *doc);
 
-void
+COS_API void
 cos_doc_set_diagnostic_handler(CosDoc *doc,
                                CosDiagnosticHandler * COS_Nullable handler);
 

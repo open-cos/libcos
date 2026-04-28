@@ -24,7 +24,7 @@ COS_ASSUME_NONNULL_BEGIN
  * @note The returned string must be freed with @c cos_string_free().
  * @see cos_string_free()
  */
-CosString * COS_Nullable
+COS_API CosString * COS_Nullable
 cos_string_alloc(size_t capacity_hint)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT;
@@ -38,7 +38,7 @@ cos_string_alloc(size_t capacity_hint)
  * @note The returned string must be freed with @c cos_string_free().
  * @see cos_string_free()
  */
-CosString * COS_Nullable
+COS_API CosString * COS_Nullable
 cos_string_alloc_with_str(const char *str)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT
@@ -54,7 +54,7 @@ cos_string_alloc_with_str(const char *str)
  * @note The returned string must be freed with @c cos_string_free().
  * @see cos_string_free()
  */
-CosString * COS_Nullable
+COS_API CosString * COS_Nullable
 cos_string_alloc_with_strn(const char *str, size_t n)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT COS_ATTR_ACCESS_READ_ONLY_SIZE(1, 2);
@@ -66,7 +66,7 @@ cos_string_alloc_with_strn(const char *str, size_t n)
  *
  * @note The string must have been allocated with @c cos_string_alloc(), etc.
  */
-void
+COS_API void
 cos_string_free(CosString *string);
 
 // MARK: Initialization
@@ -78,7 +78,7 @@ cos_string_free(CosString *string);
  *
  * @return @c true if initialization succeeded, @c false otherwise.
  */
-bool
+COS_API bool
 cos_string_init(CosString *string);
 
 /**
@@ -89,7 +89,7 @@ cos_string_init(CosString *string);
  *
  * @return @c true if initialization succeeded, @c false otherwise.
  */
-bool
+COS_API bool
 cos_string_init_capacity(CosString *string, size_t capacity_hint);
 
 /**
@@ -99,7 +99,7 @@ cos_string_init_capacity(CosString *string, size_t capacity_hint);
  *
  * @return The nul-terminated character array, or @c NULL if the string is empty.
  */
-const char * COS_Nullable
+COS_API const char * COS_Nullable
 cos_string_get_data(const CosString *string)
     COS_ATTR_ACCESS_READ_ONLY(1);
 
@@ -110,7 +110,7 @@ cos_string_get_data(const CosString *string)
  *
  * @return The number of characters in the string.
  */
-size_t
+COS_API size_t
 cos_string_get_length(const CosString *string)
     COS_ATTR_ACCESS_READ_ONLY(1);
 
@@ -121,7 +121,7 @@ cos_string_get_length(const CosString *string)
  *
  * @return The number of characters that can be stored in the string.
  */
-size_t
+COS_API size_t
 cos_string_get_capacity(const CosString *string)
     COS_ATTR_ACCESS_READ_ONLY(1);
 
@@ -134,17 +134,17 @@ cos_string_get_capacity(const CosString *string)
  *
  * @note The returned string must be freed with @c cos_string_free().
  */
-CosString * COS_Nullable
+COS_API CosString * COS_Nullable
 cos_string_copy(const CosString *string)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READ_ONLY(1);
 
-bool
+COS_API bool
 cos_string_append_str(CosString *string, const char *str)
     COS_ATTR_ACCESS_READ_ONLY(2);
 
-bool
+COS_API bool
 cos_string_append_strn(CosString *string, const char *str, size_t n)
     COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3);
 
@@ -156,7 +156,7 @@ cos_string_append_strn(CosString *string, const char *str, size_t n)
  *
  * @return @c true if the character was appended, @c false otherwise.
  */
-bool
+COS_API bool
 cos_string_push_back(CosString *string, char c);
 
 /** @{ **/
@@ -168,7 +168,7 @@ cos_string_push_back(CosString *string, char c);
  *
  * @return The hash value of the string.
  */
-size_t
+COS_API size_t
 cos_string_get_hash(const CosString *string)
     COS_ATTR_ACCESS_READ_ONLY(1);
 
@@ -212,7 +212,7 @@ struct CosStringRef {
  *
  * @note The string reference is valid only as long as the string is valid.
  */
-CosStringRef
+COS_API CosStringRef
 cos_string_get_ref(const CosString *string)
     COS_ATTR_ACCESS_READ_ONLY(1);
 
@@ -226,7 +226,7 @@ cos_string_get_ref(const CosString *string)
  * @note The string reference is valid only as long as the C-string is valid.
  * @see @c cos_string_ref_make()
  */
-CosStringRef
+COS_API CosStringRef
 cos_string_ref_from_str(const char *str)
     COS_ATTR_ACCESS_READ_ONLY(1);
 
@@ -240,7 +240,7 @@ cos_string_ref_from_str(const char *str)
  *
  * @note The string reference is valid only as long as the C-string is valid.
  */
-CosStringRef
+COS_API CosStringRef
 cos_string_ref_make(const char *str, size_t n)
     COS_ATTR_ACCESS_READ_ONLY_SIZE(1, 2);
 
@@ -253,7 +253,7 @@ cos_string_ref_make(const char *str, size_t n)
  * @return An integer less than, equal to, or greater than zero if @p lhs is less than,
  * equal to, or greater than @p rhs, respectively.
  */
-int
+COS_API int
 cos_string_ref_cmp(CosStringRef lhs, CosStringRef rhs);
 
 COS_ASSUME_NONNULL_END

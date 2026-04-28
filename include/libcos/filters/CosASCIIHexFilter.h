@@ -23,7 +23,7 @@ struct CosASCIIHexFilter {
  *
  * @return The new ASCII hexadecimal filter, or @c NULL if memory allocation failed.
  */
-CosASCIIHexFilter * COS_Nullable
+COS_API CosASCIIHexFilter * COS_Nullable
 cos_ascii_hex_filter_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);

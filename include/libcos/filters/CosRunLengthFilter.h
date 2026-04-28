@@ -30,7 +30,7 @@ struct CosRunLengthFilter {
  *
  * @return The new run-length encoding filter, or @c NULL if memory allocation failed.
  */
-CosRunLengthFilter * COS_Nullable
+COS_API CosRunLengthFilter * COS_Nullable
 cos_run_length_filter_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_close);

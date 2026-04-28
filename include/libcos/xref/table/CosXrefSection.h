@@ -18,7 +18,7 @@ COS_ASSUME_NONNULL_BEGIN
  * @brief Frees a cross-reference section.
  * @param section The cross-reference section to free.
  */
-void
+COS_API void
 cos_xref_section_destroy(CosXrefSection *section)
     COS_DEALLOCATOR_FUNC;
 
@@ -27,7 +27,7 @@ cos_xref_section_destroy(CosXrefSection *section)
  *
  * @return A new cross-reference section, or @c NULL if an error occurred.
  */
-CosXrefSection * COS_Nullable
+COS_API CosXrefSection * COS_Nullable
 cos_xref_section_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_xref_section_destroy);
@@ -38,7 +38,7 @@ cos_xref_section_create(void)
  *
  * @return The number of subsections in the cross-reference section.
  */
-size_t
+COS_API size_t
 cos_xref_section_get_subsection_count(const CosXrefSection *section);
 
 /**
@@ -50,7 +50,7 @@ cos_xref_section_get_subsection_count(const CosXrefSection *section);
  *
  * @return The subsection at the specified index, or @c NULL if an error occurred.
  */
-CosXrefSubsection * COS_Nullable
+COS_API CosXrefSubsection * COS_Nullable
 cos_xref_section_get_subsection(const CosXrefSection *section,
                                 size_t index,
                                 CosError * COS_Nullable out_error);
@@ -64,7 +64,7 @@ cos_xref_section_get_subsection(const CosXrefSection *section,
  *
  * @return @c true if the subsection was added, or @c false if an error occurred.
  */
-bool
+COS_API bool
 cos_xref_section_add_subsection(CosXrefSection *section,
                                 CosXrefSubsection *subsection,
                                 CosError * COS_Nullable out_error);

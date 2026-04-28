@@ -26,7 +26,7 @@ struct CosDataRef {
  *
  * @return A data reference.
  */
-CosDataRef
+COS_API CosDataRef
 cos_data_ref_make(const unsigned char * COS_Nullable bytes,
                   size_t size);
 
