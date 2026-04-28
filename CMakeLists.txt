@@ -518,6 +518,13 @@ enable_testing()
 
 add_subdirectory(tools)
 
+# Public-API annotation checks for libcos. Only available on platforms
+# where the public-api-fixer tool was built (see tools/CMakeLists.txt).
+if (COMMAND add_public_api_check)
+    add_public_api_check(check-public-api TARGET libcos)
+    add_public_api_check(fix-public-api   TARGET libcos APPLY_FIXES)
+endif ()
+
 add_subdirectory(tests)
 add_clang_format(libcos-test)
 add_coverage(libcos-test)
