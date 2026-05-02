@@ -18,6 +18,8 @@ option(COS_BUILD_DOCUMENTATION "Build the documentation" OFF)
 
 option(COS_BUILD_FOR_FUZZING "Build for fuzzing" OFF)
 
+option(COS_USE_SYSTEM_ZLIB "Use the system zlib library for FlateDecode instead of the builtin implementation" OFF)
+
 cmake_dependent_option(COS_DETERMINISTIC_FUZZING "Enable deterministic fuzzing" OFF
     "COS_BUILD_FOR_FUZZING" OFF
 )
@@ -154,7 +156,9 @@ target_sources(libcos PRIVATE
     src/filters/CosASCII85Filter.c
     src/filters/CosASCIIHexFilter.c
     src/filters/CosFilter.c
+    src/filters/CosFlateFilter.c
     src/filters/CosRunLengthFilter.c
+    src/filters/flate/CosFlateDecoder.h
     src/io/CosFileStream.c
     src/io/CosMemoryStream.c
     src/io/CosStream.c
@@ -218,6 +222,7 @@ target_sources(libcos PUBLIC
     include/libcos/filters/CosASCII85Filter.h
     include/libcos/filters/CosASCIIHexFilter.h
     include/libcos/filters/CosFilter.h
+    include/libcos/filters/CosFlateFilter.h
     include/libcos/filters/CosRunLengthFilter.h
     include/libcos/io/CosFileStream.h
     include/libcos/io/CosMemoryStream.h
@@ -250,6 +255,23 @@ target_sources(libcos PUBLIC
     include/libcos/xref/table/CosXrefSubsection.h
     include/libcos/xref/table/CosXrefTable.h
 )
+
+# Select the FlateDecode provider: the system zlib library or the builtin
+# reference inflate implementation (the default).
+if (COS_USE_SYSTEM_ZLIB)
+    find_package(ZLIB REQUIRED)
+    target_sources(libcos PRIVATE
+        src/filters/flate/CosFlateDecoder_Zlib.c
+    )
+    target_link_libraries(libcos PRIVATE ZLIB::ZLIB)
+    add_flags(COS_COMPILE_DEFINITIONS
+        COS_USE_SYSTEM_ZLIB=1
+    )
+else ()
+    target_sources(libcos PRIVATE
+        src/filters/flate/CosFlateDecoder_Builtin.c
+    )
+endif ()
 
 add_clang_format(libcos)
 

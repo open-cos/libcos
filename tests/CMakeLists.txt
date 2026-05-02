@@ -4,6 +4,7 @@ set(LIBCOS_TESTS
     parser.c
     filters/ascii85.c
     filters/ascii-hex.c
+    filters/flate.c
     filters/run-length.c
     unit-tests/dict.c
     unit-tests/tokenizer.c
