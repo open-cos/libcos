@@ -7,6 +7,7 @@
 
 #include "common/CosDict.h"
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosString.h>
 #include <libcos/common/CosTypes.h>

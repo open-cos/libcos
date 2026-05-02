@@ -36,7 +36,9 @@ public:
     AnnotationCheckAction(
         llvm::StringRef Annotation,
         llvm::StringRef HeaderFilter,
-        std::map<std::string, clang::tooling::Replacements> *FileReplacements);
+        std::map<std::string, clang::tooling::Replacements> *FileReplacements,
+        llvm::StringRef AnnotationHeader,
+        bool IncludeIsAngled);
 
     bool BeginSourceFileAction(clang::CompilerInstance &CI) override;
 
@@ -48,6 +50,8 @@ private:
     std::string Annotation;
     std::string HeaderFilter;
     std::map<std::string, clang::tooling::Replacements> *FileReplacements;
+    std::string AnnotationHeader;
+    bool IncludeIsAngled;
     std::vector<clang::SourceLocation> Expansions;
     clang::ast_matchers::MatchFinder Finder;
     std::unique_ptr<MissingAnnotationCallback> Callback;
@@ -58,7 +62,9 @@ public:
     AnnotationCheckActionFactory(
         llvm::StringRef Annotation,
         llvm::StringRef HeaderFilter,
-        std::map<std::string, clang::tooling::Replacements> *FileReplacements);
+        std::map<std::string, clang::tooling::Replacements> *FileReplacements,
+        llvm::StringRef AnnotationHeader,
+        bool IncludeIsAngled);
 
     std::unique_ptr<clang::FrontendAction> create() override;
 
@@ -66,6 +72,8 @@ private:
     std::string Annotation;
     std::string HeaderFilter;
     std::map<std::string, clang::tooling::Replacements> *FileReplacements;
+    std::string AnnotationHeader;
+    bool IncludeIsAngled;
 };
 
 } // namespace libcos::tooling::public_api_fixer

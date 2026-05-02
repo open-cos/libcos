@@ -5,6 +5,7 @@
 #ifndef LIBCOS_XREF_COS_XREF_SECTION_H
 #define LIBCOS_XREF_COS_XREF_SECTION_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

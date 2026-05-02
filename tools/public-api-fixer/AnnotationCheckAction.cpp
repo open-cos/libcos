@@ -28,10 +28,14 @@ using clang::ast_matchers::varDecl;
 AnnotationCheckAction::AnnotationCheckAction(
     llvm::StringRef Annotation,
     llvm::StringRef HeaderFilter,
-    std::map<std::string, clang::tooling::Replacements> *FileReplacements)
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements,
+    llvm::StringRef AnnotationHeader,
+    bool IncludeIsAngled)
     : Annotation(Annotation.str()),
       HeaderFilter(HeaderFilter.str()),
-      FileReplacements(FileReplacements) {}
+      FileReplacements(FileReplacements),
+      AnnotationHeader(AnnotationHeader.str()),
+      IncludeIsAngled(IncludeIsAngled) {}
 
 bool
 AnnotationCheckAction::BeginSourceFileAction(CompilerInstance &CI)
@@ -46,7 +50,8 @@ std::unique_ptr<ASTConsumer>
 AnnotationCheckAction::CreateASTConsumer(CompilerInstance &CI, llvm::StringRef)
 {
     Callback = std::make_unique<MissingAnnotationCallback>(
-        CI.getDiagnostics(), Expansions, Annotation, FileReplacements);
+        CI.getDiagnostics(), Expansions, Annotation, FileReplacements,
+        AnnotationHeader, IncludeIsAngled);
 
     Finder.addMatcher(
         functionDecl(
@@ -73,17 +78,23 @@ AnnotationCheckAction::CreateASTConsumer(CompilerInstance &CI, llvm::StringRef)
 AnnotationCheckActionFactory::AnnotationCheckActionFactory(
     llvm::StringRef Annotation,
     llvm::StringRef HeaderFilter,
-    std::map<std::string, clang::tooling::Replacements> *FileReplacements)
+    std::map<std::string, clang::tooling::Replacements> *FileReplacements,
+    llvm::StringRef AnnotationHeader,
+    bool IncludeIsAngled)
     : Annotation(Annotation.str()),
       HeaderFilter(HeaderFilter.str()),
-      FileReplacements(FileReplacements) {}
+      FileReplacements(FileReplacements),
+      AnnotationHeader(AnnotationHeader.str()),
+      IncludeIsAngled(IncludeIsAngled) {}
 
 std::unique_ptr<FrontendAction>
 AnnotationCheckActionFactory::create()
 {
     return std::make_unique<AnnotationCheckAction>(Annotation,
                                                    HeaderFilter,
-                                                   FileReplacements);
+                                                   FileReplacements,
+                                                   AnnotationHeader,
+                                                   IncludeIsAngled);
 }
 
 } // namespace libcos::tooling::public_api_fixer

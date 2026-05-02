@@ -5,6 +5,7 @@
 #ifndef LIBCOS_IO_COS_STREAM_READER_H
 #define LIBCOS_IO_COS_STREAM_READER_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosBasicTypes.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>

@@ -6,6 +6,8 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Tooling/Inclusions/HeaderIncludes.h"
+#include "clang/Tooling/Inclusions/IncludeStyle.h"
 #include "llvm/Support/Error.h"
 
 #include <utility>
@@ -26,16 +28,21 @@ using clang::tooling::Replacements;
 unsigned MissingAnnotationCallback::WarningCount = 0;
 std::set<std::tuple<std::string, unsigned, std::string>>
     MissingAnnotationCallback::Reported;
+std::set<std::string> MissingAnnotationCallback::IncludesAlreadyConsidered;
 
 MissingAnnotationCallback::MissingAnnotationCallback(
     DiagnosticsEngine &Diags,
     const std::vector<SourceLocation> &Expansions,
     llvm::StringRef Annotation,
-    std::map<std::string, Replacements> *FileReplacements)
+    std::map<std::string, Replacements> *FileReplacements,
+    llvm::StringRef AnnotationHeader,
+    bool IncludeIsAngled)
     : Diags(Diags),
       Expansions(Expansions),
       Annotation(Annotation.str()),
-      FileReplacements(FileReplacements)
+      FileReplacements(FileReplacements),
+      AnnotationHeader(AnnotationHeader.str()),
+      IncludeIsAngled(IncludeIsAngled)
 {
     DiagID = Diags.getCustomDiagID(
         DiagnosticsEngine::Warning,
@@ -111,6 +118,27 @@ MissingAnnotationCallback::run(const MatchFinder::MatchResult &Result)
             return;
         }
         Replacements &FileR = (*FileReplacements)[std::string(Path)];
+
+        // First time we touch this file: also plant the include of the
+        // annotation's defining header, if requested. HeaderIncludes::insert
+        // is itself idempotent (returns nullopt when the spelling is
+        // already present), so a re-run of --fix won't add duplicates.
+        if (!AnnotationHeader.empty()
+            && IncludesAlreadyConsidered.insert(std::string(Path)).second) {
+            const llvm::StringRef Code = SM.getBufferData(DeclFile);
+            const clang::tooling::IncludeStyle Style{};
+            const clang::tooling::HeaderIncludes Includes(Path, Code, Style);
+            std::optional<Replacement> IncR = Includes.insert(
+                AnnotationHeader,
+                IncludeIsAngled,
+                clang::tooling::IncludeDirective::Include);
+            if (IncR) {
+                if (auto Err = FileR.add(*IncR)) {
+                    llvm::consumeError(std::move(Err));
+                }
+            }
+        }
+
         if (auto Err = FileR.add(R)) {
             // Conflicting/overlapping replacements should not occur because
             // of the dedup above, but stay defensive: drop the error.

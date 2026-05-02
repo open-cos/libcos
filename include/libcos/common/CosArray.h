@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COS_ARRAY_H
 #define LIBCOS_COS_ARRAY_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

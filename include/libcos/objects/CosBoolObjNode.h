@@ -5,6 +5,7 @@
 #ifndef LIBCOS_OBJECTS_COS_BOOL_OBJ_NODE_H
 #define LIBCOS_OBJECTS_COS_BOOL_OBJ_NODE_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

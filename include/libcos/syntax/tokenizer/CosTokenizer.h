@@ -5,6 +5,7 @@
 #ifndef LIBCOS_SYNTAX_TOKENIZER_COS_TOKENIZER_H
 #define LIBCOS_SYNTAX_TOKENIZER_COS_TOKENIZER_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 #include <libcos/syntax/tokenizer/CosToken.h>

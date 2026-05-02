@@ -13,6 +13,7 @@
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosTypes.h"
 
+#include <libcos/common/CosAPI.h>
 #include <stdbool.h>
 #include <stddef.h>
 

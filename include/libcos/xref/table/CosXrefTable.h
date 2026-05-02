@@ -7,6 +7,7 @@
 
 #include "common/CosBasicTypes.h"
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

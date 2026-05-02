@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COS_PARSER_H
 #define LIBCOS_COS_PARSER_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosBasicTypes.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>

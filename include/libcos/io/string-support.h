@@ -5,6 +5,7 @@
 #ifndef LIBCOS_STRING_SUPPORT_H
 #define LIBCOS_STRING_SUPPORT_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 
 #include <stdarg.h>

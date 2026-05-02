@@ -5,6 +5,7 @@
 #ifndef LIBCOS_FILTERS_COS_FILTER_H
 #define LIBCOS_FILTERS_COS_FILTER_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/io/CosStream.h>

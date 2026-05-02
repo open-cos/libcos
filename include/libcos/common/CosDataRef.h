@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COMMON_COS_DATA_REF_H
 #define LIBCOS_COMMON_COS_DATA_REF_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

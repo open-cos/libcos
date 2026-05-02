@@ -8,6 +8,7 @@
 #include "libcos/objects/CosObjNodeTypes.h"
 
 #include <libcos/CosObjID.h>
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

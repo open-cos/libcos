@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COS_DIAGNOSTIC_HANDLER_H
 #define LIBCOS_COS_DIAGNOSTIC_HANDLER_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosDiagnostic.h>
 #include <libcos/common/CosTypes.h>

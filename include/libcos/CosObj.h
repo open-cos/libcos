@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COS_OBJ_H
 #define LIBCOS_COS_OBJ_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 #include <libcos/objects/CosDictObjNode.h>

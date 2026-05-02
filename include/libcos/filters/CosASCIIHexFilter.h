@@ -5,6 +5,7 @@
 #ifndef LIBCOS_FILTERS_COS_ASCII_HEX_FILTER_H
 #define LIBCOS_FILTERS_COS_ASCII_HEX_FILTER_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/filters/CosFilter.h>
 

@@ -5,6 +5,7 @@
 #ifndef LIBCOS_COS_ERROR_H
 #define LIBCOS_COS_ERROR_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

@@ -521,8 +521,13 @@ add_subdirectory(tools)
 # Public-API annotation checks for libcos. Only available on platforms
 # where the public-api-fixer tool was built (see tools/CMakeLists.txt).
 if (COMMAND add_public_api_check)
-    add_public_api_check(check-public-api TARGET libcos)
-    add_public_api_check(fix-public-api   TARGET libcos APPLY_FIXES)
+    add_public_api_check(check-public-api
+        TARGET libcos
+        ANNOTATION_HEADER libcos/common/CosAPI.h)
+    add_public_api_check(fix-public-api
+        TARGET libcos
+        APPLY_FIXES
+        ANNOTATION_HEADER libcos/common/CosAPI.h)
 endif ()
 
 add_subdirectory(tests)

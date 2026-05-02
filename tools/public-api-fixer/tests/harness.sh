@@ -163,4 +163,54 @@ run_tool \
     -x c-header
 assert_eq 0 "$EXIT" "case 4: post-fix run should be clean"
 
+# ---------------------------------------------------------------------------
+# Case 5: --annotation-header inserts the supplying header once and is
+# idempotent across re-runs.
+# ---------------------------------------------------------------------------
+WORK5=$(mktemp -d)
+trap 'rm -rf "$WORK" "$WORK5"' EXIT
+cp "$FIXTURE" "$WORK5/fixture.h"
+# Stub header so the post-fix file still parses on re-run.
+echo '/* stub */' > "$WORK5/test_annotation.h"
+
+run_tool \
+    --annotation=PUBLIC_API_TEST \
+    --header-filter='.*/fixture\.h$' \
+    --fix \
+    --annotation-header=test_annotation.h \
+    --include-style=quoted \
+    "$WORK5/fixture.h" \
+    -- \
+    -x c-header \
+    -I "$WORK5"
+assert_eq 0 "$EXIT" "case 5: --fix with --annotation-header should exit 0"
+
+count=$(grep -c '^#include "test_annotation.h"' "$WORK5/fixture.h")
+if [[ $count -ne 1 ]]; then
+    echo "FAIL: case 5: expected exactly one '#include \"test_annotation.h\"', got $count" >&2
+    cat "$WORK5/fixture.h" >&2
+    exit 1
+fi
+
+# Re-run with the same args; HeaderIncludes::insert returns nullopt when
+# the spelling is already present, so no second include line should appear.
+run_tool \
+    --annotation=PUBLIC_API_TEST \
+    --header-filter='.*/fixture\.h$' \
+    --fix \
+    --annotation-header=test_annotation.h \
+    --include-style=quoted \
+    "$WORK5/fixture.h" \
+    -- \
+    -x c-header \
+    -I "$WORK5"
+assert_eq 0 "$EXIT" "case 5: re-run should exit 0"
+
+count=$(grep -c '^#include "test_annotation.h"' "$WORK5/fixture.h")
+if [[ $count -ne 1 ]]; then
+    echo "FAIL: case 5: re-run should not add a second include; got $count" >&2
+    cat "$WORK5/fixture.h" >&2
+    exit 1
+fi
+
 echo "public_api_fixer tests passed."

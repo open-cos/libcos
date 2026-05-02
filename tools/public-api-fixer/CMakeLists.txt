@@ -24,6 +24,7 @@ target_link_libraries(public_api_fixer PRIVATE
     clangFrontend
     clangLex
     clangTooling
+    clangToolingInclusions
 )
 
 add_test(
@@ -36,21 +37,28 @@ add_test(
 # add_public_api_check(<name>
 #                      TARGET <target>
 #                      [APPLY_FIXES]
-#                      [ANNOTATION <macro>])
+#                      [ANNOTATION <macro>]
+#                      [ANNOTATION_HEADER <path>]
+#                      [INCLUDE_STYLE angled|quoted])
 #
 # Creates a custom target <name> that runs public_api_fixer over the
 # default PUBLIC FILE_SET HEADERS of <target>. The custom target is not
 # part of ALL; build it explicitly (e.g. `cmake --build . --target <name>`).
 #
 # Options:
-#   APPLY_FIXES   Rewrite the headers in place to insert the missing
-#                 annotation. Without this, the tool only reports.
-#   ANNOTATION    Macro name considered the public-API marker. Defaults
-#                 to whatever the tool itself defaults to (COS_API).
+#   APPLY_FIXES        Rewrite the headers in place to insert the missing
+#                      annotation. Without this, the tool only reports.
+#   ANNOTATION         Macro name considered the public-API marker.
+#                      Defaults to whatever the tool itself defaults to
+#                      (COS_API).
+#   ANNOTATION_HEADER  Header path to also #include in any rewritten
+#                      file. Only effective with APPLY_FIXES.
+#   INCLUDE_STYLE      Quote style for inserted #includes: 'angled'
+#                      (default) or 'quoted'.
 function(add_public_api_check name)
     cmake_parse_arguments(arg
         "APPLY_FIXES"
-        "TARGET;ANNOTATION"
+        "TARGET;ANNOTATION;ANNOTATION_HEADER;INCLUDE_STYLE"
         ""
         ${ARGN})
 
@@ -82,6 +90,12 @@ function(add_public_api_check name)
     endif ()
     if (arg_ANNOTATION)
         list(APPEND _extra_args "--annotation=${arg_ANNOTATION}")
+    endif ()
+    if (arg_ANNOTATION_HEADER)
+        list(APPEND _extra_args "--annotation-header=${arg_ANNOTATION_HEADER}")
+    endif ()
+    if (arg_INCLUDE_STYLE)
+        list(APPEND _extra_args "--include-style=${arg_INCLUDE_STYLE}")
     endif ()
 
     add_custom_target(${name}

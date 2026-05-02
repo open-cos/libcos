@@ -5,6 +5,7 @@
 #ifndef LIBCOS_SYNTAX_COS_KEYWORDS_H
 #define LIBCOS_SYNTAX_COS_KEYWORDS_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 

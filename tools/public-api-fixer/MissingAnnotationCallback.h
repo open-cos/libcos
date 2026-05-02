@@ -35,15 +35,21 @@ class MissingAnnotationCallback
     : public clang::ast_matchers::MatchFinder::MatchCallback {
 public:
     /**
-     * @param FileReplacements  Optional pointer to a per-file Replacements
+     * @param FileReplacements   Optional pointer to a per-file Replacements
      *   map. When non-null, every flagged declaration is recorded as an
      *   insertion that can later be persisted via RefactoringTool.
+     * @param AnnotationHeader   Header path to also `#include` in any file
+     *   we touch in fix mode. Empty disables include insertion.
+     * @param IncludeIsAngled    If inserting includes, use angle brackets
+     *   (`<...>`) when true, double quotes (`"..."`) when false.
      */
     MissingAnnotationCallback(
         clang::DiagnosticsEngine &Diags,
         const std::vector<clang::SourceLocation> &Expansions,
         llvm::StringRef Annotation,
-        std::map<std::string, clang::tooling::Replacements> *FileReplacements);
+        std::map<std::string, clang::tooling::Replacements> *FileReplacements,
+        llvm::StringRef AnnotationHeader,
+        bool IncludeIsAngled);
 
     void
     run(const clang::ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -56,10 +62,13 @@ private:
     const std::vector<clang::SourceLocation> &Expansions;
     std::string Annotation;
     std::map<std::string, clang::tooling::Replacements> *FileReplacements;
+    std::string AnnotationHeader;
+    bool IncludeIsAngled;
     unsigned DiagID = 0;
 
     static unsigned WarningCount;
     static std::set<std::tuple<std::string, unsigned, std::string>> Reported;
+    static std::set<std::string> IncludesAlreadyConsidered;
 };
 
 } // namespace libcos::tooling::public_api_fixer

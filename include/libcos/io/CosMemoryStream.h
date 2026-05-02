@@ -5,6 +5,7 @@
 #ifndef LIBCOS_IO_COS_MEMORY_STREAM_H
 #define LIBCOS_IO_COS_MEMORY_STREAM_H
 
+#include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/io/CosStream.h>
 

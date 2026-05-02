@@ -7,6 +7,7 @@
 
 #include "HeaderCompilationDatabase.h"
 
+#include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
@@ -40,6 +41,26 @@ llvm::cl::opt<bool> FixOpt(
     llvm::cl::init(false),
     llvm::cl::cat(ToolCategory));
 
+llvm::cl::opt<std::string> AnnotationHeaderOpt(
+    "annotation-header",
+    llvm::cl::desc("In --fix mode, also #include this header in any file "
+                   "that gets a new annotation. Empty (default) skips "
+                   "include insertion."),
+    llvm::cl::value_desc("path"),
+    llvm::cl::init(""),
+    llvm::cl::cat(ToolCategory));
+
+enum class IncludeStyle { Angled, Quoted };
+
+llvm::cl::opt<IncludeStyle> IncludeStyleOpt(
+    "include-style",
+    llvm::cl::desc("Quote style for inserted #include directives:"),
+    llvm::cl::values(
+        clEnumValN(IncludeStyle::Angled, "angled", "<header>"),
+        clEnumValN(IncludeStyle::Quoted, "quoted", "\"header\"")),
+    llvm::cl::init(IncludeStyle::Angled),
+    llvm::cl::cat(ToolCategory));
+
 } // namespace
 
 int
@@ -58,12 +79,25 @@ main(int argc, const char **argv)
     clang::tooling::RefactoringTool Tool(HeaderDB,
                                          OptionsParser.getSourcePathList());
 
+    // If the user supplied --annotation-header, force-include it via
+    // `-include <header>` so the tool parses cleanly even on headers that
+    // do not yet include it themselves. clang resolves the path against
+    // the existing -I search list.
+    if (!AnnotationHeaderOpt.empty()) {
+        Tool.appendArgumentsAdjuster(
+            clang::tooling::getInsertArgumentAdjuster(
+                {"-include", AnnotationHeaderOpt},
+                clang::tooling::ArgumentInsertPosition::END));
+    }
+
     // Pass the replacements map only when --fix is requested. The callback
     // uses its presence to decide between emitting a diagnostic and
     // recording a fix-it.
     auto *Replacements = FixOpt ? &Tool.getReplacements() : nullptr;
+    const bool IncludeIsAngled = (IncludeStyleOpt == IncludeStyle::Angled);
     libcos::tooling::public_api_fixer::AnnotationCheckActionFactory Factory(
-        AnnotationOpt, HeaderFilterOpt, Replacements);
+        AnnotationOpt, HeaderFilterOpt, Replacements,
+        AnnotationHeaderOpt, IncludeIsAngled);
 
     const int RunResult =
         FixOpt ? Tool.runAndSave(&Factory) : Tool.run(&Factory);
