@@ -11,10 +11,9 @@
  * decoder so a suspended stream resumes exactly where it left off.
  */
 
-#include "filters/flate/CosFlateDecoder.h"
-
 #include "common/Assert.h"
 #include "common/CosError.h"
+#include "filters/flate/CosFlateDecoder.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -138,6 +137,23 @@ static const unsigned char cos_flate_dist_extra_[COS_FLATE_MAX_DIST] = {
 
 // Private function prototypes
 
+/**
+ * Emits one decoded byte: appends it to the sliding window, updates the running
+ * Adler-32, and writes it to the output cursor, advancing @p out_ptr in place.
+ */
+static void
+cos_flate_put_byte_(CosFlateDecoder *decoder,
+                    uint32_t byte_value,
+                    unsigned char **out_ptr);
+
+/**
+ * Consumes exactly @p bit_count bits (LSB-first) from the stream.
+ *
+ * Bits already buffered persist in the decoder across calls, so a @c false
+ * return (input exhausted before enough bits were buffered) leaves the decoder
+ * resumable: the bytes pulled into the bit buffer are retained and reported as
+ * consumed.
+ */
 static bool
 cos_flate_take_bits_(CosFlateDecoder *decoder,
                      const unsigned char **in_ptr,
@@ -145,17 +161,31 @@ cos_flate_take_bits_(CosFlateDecoder *decoder,
                      unsigned bit_count,
                      uint32_t *out_value);
 
+/**
+ * Decodes one canonical Huffman symbol, peeking bits so that an exhausted input
+ * (return value -1) consumes nothing and can be retried. Returns -2 on a code
+ * that is longer than the table allows.
+ */
 static int
 cos_flate_decode_symbol_(CosFlateDecoder *decoder,
                          const unsigned char **in_ptr,
                          const unsigned char *in_end,
                          const CosHuffman *table);
 
+/**
+ * Builds a canonical Huffman table from a list of code lengths. Returns 0 on a
+ * complete code, a positive value for an incomplete code, or a negative value
+ * for an over-subscribed (invalid) code.
+ */
 static int
 cos_flate_construct_(CosHuffman *table,
                      const unsigned char *lengths,
                      int count);
 
+/**
+ * Populates the fixed literal/length and distance Huffman tables (RFC 1951
+ * section 3.2.6).
+ */
 static void
 cos_flate_build_fixed_(CosFlateDecoder *decoder);
 
@@ -206,23 +236,6 @@ cos_flate_decoder_inflate(CosFlateDecoder *decoder,
 
     CosFlateStatus result;
     const char *error_message = NULL;
-
-#define COS_FLATE_PUT_BYTE(byte_value)                                                      \
-    do {                                                                                    \
-        const unsigned char b_ = (unsigned char)(byte_value);                               \
-        decoder->window[decoder->window_pos] = b_;                                          \
-        decoder->window_pos = (decoder->window_pos + 1u) & (unsigned)COS_FLATE_WINDOW_MASK; \
-        decoder->out_count += 1;                                                            \
-        decoder->adler_a += (uint32_t)b_;                                                   \
-        if (decoder->adler_a >= COS_FLATE_ADLER_MOD) {                                      \
-            decoder->adler_a -= COS_FLATE_ADLER_MOD;                                        \
-        }                                                                                   \
-        decoder->adler_b += decoder->adler_a;                                               \
-        if (decoder->adler_b >= COS_FLATE_ADLER_MOD) {                                      \
-            decoder->adler_b -= COS_FLATE_ADLER_MOD;                                        \
-        }                                                                                   \
-        *out_ptr++ = b_;                                                                    \
-    } while (0)
 
     for (;;) {
         switch (decoder->state) {
@@ -310,7 +323,7 @@ cos_flate_decoder_inflate(CosFlateDecoder *decoder,
                         result = CosFlateStatus_NeedInput;
                         goto suspend;
                     }
-                    COS_FLATE_PUT_BYTE(byte_value);
+                    cos_flate_put_byte_(decoder, byte_value, &out_ptr);
                     decoder->stored_remaining -= 1;
                 }
                 decoder->state = decoder->bfinal ? CosFlateState_Adler
@@ -461,7 +474,7 @@ cos_flate_decoder_inflate(CosFlateDecoder *decoder,
                     goto fail;
                 }
                 if (sym < 256) {
-                    COS_FLATE_PUT_BYTE(sym);
+                    cos_flate_put_byte_(decoder, (uint32_t)sym, &out_ptr);
                 }
                 else if (sym == 256) {
                     decoder->state = decoder->bfinal ? CosFlateState_Adler
@@ -532,7 +545,7 @@ cos_flate_decoder_inflate(CosFlateDecoder *decoder,
                     }
                     const unsigned src = (decoder->window_pos - decoder->copy_dist) &
                                          (unsigned)COS_FLATE_WINDOW_MASK;
-                    COS_FLATE_PUT_BYTE(decoder->window[src]);
+                    cos_flate_put_byte_(decoder, decoder->window[src], &out_ptr);
                     decoder->copy_remaining -= 1;
                 }
                 decoder->state = CosFlateState_LitLen;
@@ -588,20 +601,30 @@ suspend:
     *in_len = (size_t)(in_ptr - in);
     *out_len = (size_t)(out_ptr - out);
     return result;
-
-#undef COS_FLATE_PUT_BYTE
 }
 
 // Private function implementations
 
-/**
- * Consumes exactly @p bit_count bits (LSB-first) from the stream.
- *
- * Bits already buffered persist in the decoder across calls, so a @c false
- * return (input exhausted before enough bits were buffered) leaves the decoder
- * resumable: the bytes pulled into the bit buffer are retained and reported as
- * consumed.
- */
+static void
+cos_flate_put_byte_(CosFlateDecoder *decoder,
+                    uint32_t byte_value,
+                    unsigned char **out_ptr)
+{
+    const unsigned char byte = (unsigned char)byte_value;
+    decoder->window[decoder->window_pos] = byte;
+    decoder->window_pos = (decoder->window_pos + 1U) & (unsigned)COS_FLATE_WINDOW_MASK;
+    decoder->out_count += 1;
+    decoder->adler_a += (uint32_t)byte;
+    if (decoder->adler_a >= COS_FLATE_ADLER_MOD) {
+        decoder->adler_a -= COS_FLATE_ADLER_MOD;
+    }
+    decoder->adler_b += decoder->adler_a;
+    if (decoder->adler_b >= COS_FLATE_ADLER_MOD) {
+        decoder->adler_b -= COS_FLATE_ADLER_MOD;
+    }
+    *(*out_ptr)++ = byte;
+}
+
 static bool
 cos_flate_take_bits_(CosFlateDecoder *decoder,
                      const unsigned char **in_ptr,
@@ -626,11 +649,6 @@ cos_flate_take_bits_(CosFlateDecoder *decoder,
     return true;
 }
 
-/**
- * Decodes one canonical Huffman symbol, peeking bits so that an exhausted input
- * (return value -1) consumes nothing and can be retried. Returns -2 on a code
- * that is longer than the table allows.
- */
 static int
 cos_flate_decode_symbol_(CosFlateDecoder *decoder,
                          const unsigned char **in_ptr,
@@ -667,11 +685,6 @@ cos_flate_decode_symbol_(CosFlateDecoder *decoder,
     return -2;
 }
 
-/**
- * Builds a canonical Huffman table from a list of code lengths. Returns 0 on a
- * complete code, a positive value for an incomplete code, or a negative value
- * for an over-subscribed (invalid) code.
- */
 static int
 cos_flate_construct_(CosHuffman *table,
                      const unsigned char *lengths,
@@ -710,10 +723,6 @@ cos_flate_construct_(CosHuffman *table,
     return left;
 }
 
-/**
- * Populates the fixed literal/length and distance Huffman tables (RFC 1951
- * section 3.2.6).
- */
 static void
 cos_flate_build_fixed_(CosFlateDecoder *decoder)
 {
