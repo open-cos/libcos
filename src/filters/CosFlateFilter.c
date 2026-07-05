@@ -142,7 +142,6 @@ cos_flate_filter_close_(CosFilter *filter)
             cos_flate_decoder_destroy(flate_filter->context->decoder);
         }
         free(flate_filter->context);
-        flate_filter->context = NULL;
     }
 }
 

@@ -381,6 +381,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "Clang")
         -Wno-nullability-extension
         -Wno-switch-default
         -Wno-gcc-compat
+        -Wno-c++-compat
         
         -Wformat
         -Wformat=2
