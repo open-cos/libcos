@@ -439,4 +439,21 @@ cos_obj_get_stream_data(const CosObj *obj)
     return cos_stream_obj_node_get_data((CosStreamObjNode *)direct);
 }
 
+CosData *
+cos_obj_get_decoded_stream_data(const CosObj *obj,
+                                CosError * COS_Nullable out_error)
+{
+    COS_API_PARAM_CHECK(obj != NULL);
+    if (COS_UNLIKELY(!obj)) {
+        return NULL;
+    }
+
+    CosObjNode * const direct = cos_obj_get_direct_node_(obj);
+    if (!direct || cos_obj_node_get_type(direct) != CosObjNodeType_Stream) {
+        return NULL;
+    }
+
+    return cos_stream_obj_node_get_decoded_data((CosStreamObjNode *)direct, out_error);
+}
+
 COS_ASSUME_NONNULL_END

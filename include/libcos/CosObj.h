@@ -318,6 +318,25 @@ cos_obj_get_stream_dict(const CosObj *obj);
 COS_API const CosData * COS_Nullable
 cos_obj_get_stream_data(const CosObj *obj);
 
+/**
+ * Gets the decoded stream data.
+ *
+ * Applies the stream's @c /Filter chain to its encoded bytes.
+ *
+ * @pre @c cos_obj_get_type returns @c CosObjType_Stream.
+ *
+ * @param obj The object.
+ * @param out_error On failure, set to describe the error.
+ *
+ * @return The decoded data (owned; free with @c cos_data_free), or @c NULL on type
+ *   mismatch or decode error.
+ */
+COS_API CosData * COS_Nullable
+cos_obj_get_decoded_stream_data(const CosObj *obj,
+                                CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

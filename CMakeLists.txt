@@ -156,6 +156,8 @@ target_sources(libcos PRIVATE
     src/filters/CosASCII85Filter.c
     src/filters/CosASCIIHexFilter.c
     src/filters/CosFilter.c
+    src/filters/CosFilterFactory.c
+    src/filters/CosFilterFactory.h
     src/filters/CosFlateFilter.c
     src/filters/CosRunLengthFilter.c
     src/filters/flate/CosFlateDecoder.h

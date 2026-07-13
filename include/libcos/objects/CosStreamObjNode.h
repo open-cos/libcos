@@ -71,6 +71,46 @@ cos_stream_obj_node_get_decoded_length_hint(const CosStreamObjNode *stream_obj,
     COS_ATTR_ACCESS_WRITE_ONLY(2)
     COS_ATTR_ACCESS_WRITE_ONLY(3);
 
+/**
+ * @brief Creates a stream over the decoded contents of the stream object.
+ *
+ * Builds a chain of decode filters from the stream's @c /Filter entry (a single
+ * name or an array of names, in application order) over the encoded data. Reading
+ * from the returned stream yields the decoded bytes; the caller owns the stream
+ * and must close it with @c cos_stream_close.
+ *
+ * A stream with no @c /Filter yields its raw bytes. Unsupported filters, or a
+ * @c /DecodeParms predictor that cannot yet be applied, cause a @c NULL return
+ * with @p out_error set.
+ *
+ * @param stream_obj The stream object.
+ * @param out_error On failure, set to describe the error.
+ *
+ * @return A new decode stream (owned), or @c NULL on error.
+ */
+COS_API CosStream * COS_Nullable
+cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
+                                    CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+/**
+ * @brief Gets the fully decoded contents of the stream object.
+ *
+ * Convenience wrapper over @c cos_stream_obj_node_create_decode_stream that drains
+ * the decode chain into a single buffer.
+ *
+ * @param stream_obj The stream object.
+ * @param out_error On failure, set to describe the error.
+ *
+ * @return The decoded data (owned; free with @c cos_data_free), or @c NULL on error.
+ */
+COS_API CosData * COS_Nullable
+cos_stream_obj_node_get_decoded_data(const CosStreamObjNode *stream_obj,
+                                CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 
