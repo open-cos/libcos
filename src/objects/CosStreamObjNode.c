@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 #include "filters/CosFilterFactory.h"
+#include "filters/CosPredictorFilter.h"
 
 #include "libcos/common/CosError.h"
 
@@ -140,58 +141,53 @@ cos_stream_obj_node_get_decoded_length_hint(const CosStreamObjNode *stream_obj,
     return true;
 }
 
-// Returns true if a single /DecodeParms dictionary declares a /Predictor > 1.
-static bool
-cos_stream_obj_node_parms_has_predictor_(CosObjNode * COS_Nullable parms)
+// Reads an integer entry from a /DecodeParms dictionary, or returns the default
+// when the params are absent, not a dictionary, or the entry is not an integer.
+static int
+cos_stream_parms_int_(CosObjNode * COS_Nullable parms,
+                      const char *key,
+                      int default_value)
 {
     if (!parms || cos_obj_node_get_type(parms) != CosObjNodeType_Dict) {
-        return false;
+        return default_value;
     }
 
-    CosObjNode *predictor = NULL;
+    CosObjNode *value = NULL;
     if (!cos_dict_obj_node_get_value_with_string((CosDictObjNode *)parms,
-                                            "Predictor",
-                                            &predictor,
+                                            key,
+                                            &value,
                                             NULL)) {
-        return false;
+        return default_value;
     }
-    if (!predictor || !cos_obj_node_is_integer(predictor)) {
-        return false;
+    if (!value || !cos_obj_node_is_integer(value)) {
+        return default_value;
     }
 
-    return cos_int_obj_node_get_value((CosIntObjNode *)predictor) > 1;
+    return cos_int_obj_node_get_value((CosIntObjNode *)value);
 }
 
-// Returns true if the stream declares a /Predictor > 1 (in a /DecodeParms dict or
-// array of dicts) that this library cannot yet apply.
-static bool
-cos_stream_obj_node_has_unsupported_predictor_(const CosDictObjNode *dict)
+// Returns the /DecodeParms entry that applies to filter @p index: the i-th array
+// element when the params are an array, the single dictionary for the first
+// filter, or NULL.
+static CosObjNode * COS_Nullable
+cos_stream_parms_for_index_(CosObjNode * COS_Nullable parms_node,
+                            size_t index)
 {
-    CosObjNode *parms = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, "DecodeParms", &parms, NULL) &&
-        !cos_dict_obj_node_get_value_with_string(dict, "DP", &parms, NULL)) {
-        return false;
+    if (!parms_node) {
+        return NULL;
     }
-
-    if (parms && cos_obj_node_get_type(parms) == CosObjNodeType_Array) {
-        CosArrayObjNode * const array = (CosArrayObjNode *)parms;
-        const size_t count = cos_array_obj_node_get_count(array);
-        for (size_t i = 0; i < count; i++) {
-            CosObjNode * const element = cos_array_obj_node_get_at(array, i, NULL);
-            if (cos_stream_obj_node_parms_has_predictor_(element)) {
-                return true;
-            }
-        }
-        return false;
+    if (cos_obj_node_get_type(parms_node) == CosObjNodeType_Array) {
+        return cos_array_obj_node_get_at((CosArrayObjNode *)parms_node, index, NULL);
     }
-
-    return cos_stream_obj_node_parms_has_predictor_(parms);
+    return (index == 0) ? parms_node : NULL;
 }
 
-// Wraps a single filter name node around the source stream, closing the source on
-// failure. Returns the new top of the chain, or NULL on error.
+// Wraps a single filter (and, if its /DecodeParms requests one, a predictor)
+// around the source stream, closing the source on failure. Returns the new top
+// of the chain, or NULL on error.
 static CosStream * COS_Nullable
 cos_stream_obj_node_apply_filter_(CosObjNode *name_node,
+                                  CosObjNode * COS_Nullable parms_node,
                                   CosStream *source,
                                   CosError * COS_Nullable out_error)
 {
@@ -218,7 +214,31 @@ cos_stream_obj_node_apply_filter_(CosObjNode *name_node,
         goto failure;
     }
 
+    // From here the filter owns the source; failures must close the filter,
+    // which cascades to close its source chain.
     cos_filter_attach_source((CosFilter *)filter, source);
+
+    // Apply a predictor post-process if /DecodeParms requests one.
+    const int predictor = cos_stream_parms_int_(parms_node, "Predictor", 1);
+    if (predictor > 1) {
+        const int colors = cos_stream_parms_int_(parms_node, "Colors", 1);
+        const int bits_per_component = cos_stream_parms_int_(parms_node, "BitsPerComponent", 8);
+        const int columns = cos_stream_parms_int_(parms_node, "Columns", 1);
+
+        CosPredictorFilter * const predictor_filter =
+            cos_predictor_filter_create_(predictor,
+                                         (colors > 0) ? (size_t)colors : 1,
+                                         (bits_per_component > 0) ? (size_t)bits_per_component : 8,
+                                         (columns > 0) ? (size_t)columns : 1,
+                                         out_error);
+        if (!predictor_filter) {
+            cos_stream_close(filter);
+            return NULL;
+        }
+        cos_filter_attach_source((CosFilter *)predictor_filter, filter);
+        return (CosStream *)predictor_filter;
+    }
+
     return filter;
 
 failure:
@@ -234,13 +254,6 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
 {
     COS_API_PARAM_CHECK(stream_obj != NULL);
     if (COS_UNLIKELY(!stream_obj)) {
-        return NULL;
-    }
-
-    if (cos_stream_obj_node_has_unsupported_predictor_(stream_obj->dict_obj)) {
-        cos_error_propagate(out_error,
-                            cos_error_make(COS_ERROR_NOT_IMPLEMENTED,
-                                           "Predictor DecodeParms are not yet supported"));
         return NULL;
     }
 
@@ -269,9 +282,22 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
         return source;
     }
 
+    // The parallel /DecodeParms (or its abbreviation /DP) supplies predictor
+    // parameters per filter.
+    CosObjNode *parms_node = NULL;
+    if (!cos_dict_obj_node_get_value_with_string(stream_obj->dict_obj,
+                                            "DecodeParms",
+                                            &parms_node,
+                                            NULL)) {
+        (void)cos_dict_obj_node_get_value_with_string(stream_obj->dict_obj,
+                                                 "DP",
+                                                 &parms_node,
+                                                 NULL);
+    }
+
     const CosObjNodeType filter_type = cos_obj_node_get_type(filter_node);
     if (filter_type == CosObjNodeType_Name) {
-        return cos_stream_obj_node_apply_filter_(filter_node, source, out_error);
+        return cos_stream_obj_node_apply_filter_(filter_node, parms_node, source, out_error);
     }
     else if (filter_type == CosObjNodeType_Array) {
         CosArrayObjNode * const array = (CosArrayObjNode *)filter_node;
@@ -281,8 +307,9 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
             if (!element) {
                 goto failure;
             }
+            CosObjNode * const parms = cos_stream_parms_for_index_(parms_node, i);
             // On failure the filter helper has already closed the source.
-            source = cos_stream_obj_node_apply_filter_(element, source, out_error);
+            source = cos_stream_obj_node_apply_filter_(element, parms, source, out_error);
             if (!source) {
                 return NULL;
             }

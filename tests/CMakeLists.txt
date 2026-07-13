@@ -6,6 +6,7 @@ set(LIBCOS_TESTS
     filters/ascii-hex.c
     filters/decode-pipeline.c
     filters/flate.c
+    filters/predictor.c
     filters/run-length.c
     unit-tests/dict.c
     unit-tests/tokenizer.c

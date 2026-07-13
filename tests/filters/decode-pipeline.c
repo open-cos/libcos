@@ -47,6 +47,19 @@ static const unsigned char cascade_encoded[] = {
     0x24, 0x4e, 0x53, 0x46, 0x32, 0x30, 0x5e, 0x5c, 0x7e, 0x3e,
 };
 
+// FlateDecode of PNG-Up-predicted data: /DecodeParms << /Predictor 12 /Columns 8
+// /Colors 1 /BitsPerComponent 8 >>. Decodes to flate_predictor_plain.
+static const unsigned char flate_predictor_encoded[] = {
+    0x78, 0xda, 0x63, 0x62, 0xe6, 0x12, 0x94, 0x90, 0x57, 0xd3, 0x35, 0x61,
+    0xb2, 0x80, 0x02, 0x3c, 0x0c, 0x00, 0xa0, 0xe3, 0x07, 0xe7,
+};
+static const unsigned char flate_predictor_plain[] = {
+    0x03, 0x0a, 0x11, 0x18, 0x1f, 0x26, 0x2d, 0x34, 0x3b, 0x42, 0x49, 0x50,
+    0x57, 0x5e, 0x65, 0x6c, 0x73, 0x7a, 0x81, 0x88, 0x8f, 0x96, 0x9d, 0xa4,
+    0xab, 0xb2, 0xb9, 0xc0, 0xc7, 0xce, 0xd5, 0xdc, 0xe3, 0xea, 0xf1, 0xf8,
+    0xff, 0x06, 0x0d, 0x14,
+};
+
 // clang-format on
 
 // The shared plain text that both flate_encoded and cascade_encoded decode to.
@@ -109,6 +122,15 @@ make_stream(const unsigned char *encoded,
         cos_dict_obj_node_set(dict, make_name("Filter"), filter_value, NULL);
     }
     return cos_stream_obj_node_create(dict, make_data(encoded, encoded_size));
+}
+
+static void
+set_int_entry(CosDictObjNode *dict, const char *key, int value)
+{
+    cos_dict_obj_node_set(dict,
+                          make_name(key),
+                          (CosObjNode *)cos_int_obj_node_alloc(value),
+                          NULL);
 }
 
 static bool
@@ -229,15 +251,43 @@ TEST_CASE_BEGIN(decode_unsupported_filter)
 
 TEST_CASE_END
 
-// A /DecodeParms predictor cannot yet be applied, so decoding must be refused
-// rather than returning mis-decoded bytes.
-TEST_CASE_BEGIN(decode_predictor_guard)
+// FlateDecode followed by a PNG predictor declared in /DecodeParms is applied
+// end to end back to the original data.
+TEST_CASE_BEGIN(decode_flate_with_predictor)
 {
     CosDictObjNode * const parms = cos_dict_obj_node_create(NULL);
-    cos_dict_obj_node_set(parms,
-                          make_name("Predictor"),
-                          (CosObjNode *)cos_int_obj_node_alloc(12),
-                          NULL);
+    set_int_entry(parms, "Predictor", 12);
+    set_int_entry(parms, "Columns", 8);
+    set_int_entry(parms, "Colors", 1);
+    set_int_entry(parms, "BitsPerComponent", 8);
+
+    CosDictObjNode * const dict = cos_dict_obj_node_create(NULL);
+    cos_dict_obj_node_set(dict, make_name("Filter"), (CosObjNode *)make_name("FlateDecode"), NULL);
+    cos_dict_obj_node_set(dict, make_name("DecodeParms"), (CosObjNode *)parms, NULL);
+    fixture->node = cos_stream_obj_node_create(dict,
+                                               make_data(flate_predictor_encoded,
+                                                         sizeof(flate_predictor_encoded)));
+
+    fixture->decoded = cos_stream_obj_node_get_decoded_data(fixture->node, NULL);
+
+    if (!decoded_equals(fixture->decoded,
+                        (const char *)flate_predictor_plain,
+                        sizeof(flate_predictor_plain))) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+
+TEST_CASE_END
+
+// A predictor this library cannot apply (TIFF differencing at 16 bits) is
+// refused rather than returning mis-decoded bytes.
+TEST_CASE_BEGIN(decode_unsupported_predictor)
+{
+    CosDictObjNode * const parms = cos_dict_obj_node_create(NULL);
+    set_int_entry(parms, "Predictor", 2);
+    set_int_entry(parms, "BitsPerComponent", 16);
 
     CosDictObjNode * const dict = cos_dict_obj_node_create(NULL);
     cos_dict_obj_node_set(dict, make_name("Filter"), (CosObjNode *)make_name("FlateDecode"), NULL);
@@ -267,7 +317,8 @@ TEST_MAIN()
     TEST_RUN(decode_single_ascii_hex, &fixture);
     TEST_RUN(decode_cascade, &fixture);
     TEST_RUN(decode_unsupported_filter, &fixture);
-    TEST_RUN(decode_predictor_guard, &fixture);
+    TEST_RUN(decode_flate_with_predictor, &fixture);
+    TEST_RUN(decode_unsupported_predictor, &fixture);
 
     return EXIT_SUCCESS;
 }

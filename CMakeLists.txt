@@ -159,6 +159,8 @@ target_sources(libcos PRIVATE
     src/filters/CosFilterFactory.c
     src/filters/CosFilterFactory.h
     src/filters/CosFlateFilter.c
+    src/filters/CosPredictorFilter.c
+    src/filters/CosPredictorFilter.h
     src/filters/CosRunLengthFilter.c
     src/filters/flate/CosFlateDecoder.h
     src/io/CosFileStream.c
