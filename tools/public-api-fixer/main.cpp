@@ -79,6 +79,15 @@ main(int argc, const char **argv)
     clang::tooling::RefactoringTool Tool(HeaderDB,
                                          OptionsParser.getSourcePathList());
 
+    // Silence all of the compiler's own diagnostics (e.g. -Wunused-macros
+    // firing on the project's headers). We only care about this tool's
+    // public-api findings, which are emitted through a custom diagnostic ID;
+    // custom diagnostics bypass the warning-suppression mapping, so -w leaves
+    // them untouched while quieting everything else.
+    Tool.appendArgumentsAdjuster(
+        clang::tooling::getInsertArgumentAdjuster(
+            "-w", clang::tooling::ArgumentInsertPosition::END));
+
     // If the user supplied --annotation-header, force-include it via
     // `-include <header>` so the tool parses cleanly even on headers that
     // do not yet include it themselves. clang resolves the path against
