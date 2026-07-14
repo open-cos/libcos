@@ -7,14 +7,15 @@
 #include "common/Assert.h"
 #include "filters/CosFilterFactory.h"
 #include "filters/CosPredictorFilter.h"
+#include "objects/CosStreamObjNode-Private.h"
 
 #include "libcos/common/CosError.h"
 
 #include <libcos/common/CosData.h>
 #include <libcos/common/CosString.h>
 #include <libcos/filters/CosFilter.h>
-#include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/io/CosSubStream.h>
 #include <libcos/objects/CosArrayObjNode.h>
 #include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosIntObjNode.h>
@@ -29,23 +30,53 @@ struct CosStreamObjNode {
     CosObjNodeType type;
     unsigned int ref_count;
 
-    CosDictObjNode *dict_obj;
-    CosData * COS_Nullable data;
+    CosDictObjNode * COS_Nullable dict_obj;
+
+    // The raw (still-filtered) encoded bytes, owned and re-seekable.
+    CosStream *encoded;
+    size_t length;
+
+    // Lazily materialized copy of the encoded bytes, for the borrowed get_data API.
+    CosData * COS_Nullable materialized;
 };
 
 CosStreamObjNode *
 cos_stream_obj_node_create(CosDictObjNode *dict,
-                      CosData * COS_Nullable data)
+                      CosStream *encoded)
 {
+    COS_API_PARAM_CHECK(encoded != NULL);
+    if (COS_UNLIKELY(!encoded)) {
+        return NULL;
+    }
+
+    // The encoded bytes must be re-seekable so the node can be decoded more than once.
+    if (COS_UNLIKELY(!cos_stream_can_seek(encoded))) {
+        cos_stream_close(encoded);
+        return NULL;
+    }
+
+    // Determine the encoded length by seeking to the end, then rewind.
+    size_t length = 0;
+    if (cos_stream_seek(encoded, 0, CosStreamOffsetWhence_End, NULL)) {
+        const CosStreamOffset end = cos_stream_get_position(encoded, NULL);
+        if (end > 0) {
+            length = (size_t)end;
+        }
+    }
+    (void)cos_stream_seek(encoded, 0, CosStreamOffsetWhence_Set, NULL);
+
     CosStreamObjNode * const stream_obj = malloc(sizeof(CosStreamObjNode));
     if (!stream_obj) {
+        cos_stream_close(encoded);
         return NULL;
     }
 
     stream_obj->type = CosObjNodeType_Stream;
     stream_obj->ref_count = 1;
     stream_obj->dict_obj = dict;
-    stream_obj->data = data;
+    stream_obj->encoded = encoded;
+    stream_obj->length = length;
+    stream_obj->materialized = NULL;
 
     return stream_obj;
 }
@@ -57,11 +88,39 @@ cos_stream_obj_node_destroy(CosStreamObjNode *stream_obj)
         return;
     }
 
-    cos_dict_obj_node_destroy(stream_obj->dict_obj);
-    if (stream_obj->data) {
-        cos_data_free(COS_nonnull_cast(stream_obj->data));
+    if (stream_obj->dict_obj) {
+        cos_dict_obj_node_destroy(COS_nonnull_cast(stream_obj->dict_obj));
+    }
+    cos_stream_close(stream_obj->encoded);
+    if (stream_obj->materialized) {
+        cos_data_free(COS_nonnull_cast(stream_obj->materialized));
     }
     free(stream_obj);
+}
+
+CosDictObjNode *
+cos_stream_obj_node_take_dict_(CosStreamObjNode *stream_obj)
+{
+    COS_IMPL_PARAM_CHECK(stream_obj != NULL);
+
+    CosDictObjNode * const dict = stream_obj->dict_obj;
+    stream_obj->dict_obj = NULL;
+    return dict;
+}
+
+// Opens a fresh, non-owning read view over the encoded bytes. The decode chain closes whatever
+// source it is given, so handing it a throwaway view keeps @c encoded intact for re-decoding.
+static CosStream * COS_Nullable
+cos_stream_obj_node_open_encoded_(const CosStreamObjNode *stream_obj,
+                                  CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(stream_obj != NULL);
+
+    return cos_sub_stream_create(stream_obj->encoded,
+                                 0,
+                                 stream_obj->length,
+                                 false,
+                                 out_error);
 }
 
 CosDictObjNode *
@@ -83,7 +142,44 @@ cos_stream_obj_node_get_data(const CosStreamObjNode *stream_obj)
         return NULL;
     }
 
-    return stream_obj->data;
+    if (stream_obj->materialized) {
+        return stream_obj->materialized;
+    }
+
+    // Materialize the encoded bytes into an owned buffer, cached for subsequent calls.
+    CosStream * const source = cos_stream_obj_node_open_encoded_(stream_obj, NULL);
+    if (!source) {
+        return NULL;
+    }
+
+    CosData * const data = cos_data_alloc(stream_obj->length);
+    if (!data) {
+        cos_stream_close(source);
+        return NULL;
+    }
+
+    unsigned char buffer[4096];
+    bool ok = true;
+    for (;;) {
+        const size_t read_count = cos_stream_read(source, buffer, sizeof(buffer), NULL);
+        if (read_count == 0) {
+            break;
+        }
+        if (!cos_data_append(data, buffer, read_count, NULL)) {
+            ok = false;
+            break;
+        }
+    }
+
+    cos_stream_close(source);
+
+    if (!ok) {
+        cos_data_free(data);
+        return NULL;
+    }
+
+    ((CosStreamObjNode *)stream_obj)->materialized = data;
+    return data;
 }
 
 size_t
@@ -94,7 +190,7 @@ cos_stream_obj_node_get_length(const CosStreamObjNode *stream_obj)
         return 0;
     }
 
-    return stream_obj->data->size;
+    return stream_obj->length;
 }
 
 CosArrayObjNode *
@@ -257,18 +353,9 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
         return NULL;
     }
 
-    // Wrap the encoded bytes in a read-only source stream.
-    const unsigned char *bytes = (const unsigned char *)"";
-    size_t size = 0;
-    if (stream_obj->data) {
-        bytes = stream_obj->data->bytes;
-        size = stream_obj->data->size;
-    }
-    CosStream *source = (CosStream *)cos_memory_stream_create_readonly(bytes, size);
+    // Open a fresh read view over the encoded bytes as the decode source.
+    CosStream *source = cos_stream_obj_node_open_encoded_(stream_obj, out_error);
     if (COS_UNLIKELY(!source)) {
-        cos_error_propagate(out_error,
-                            cos_error_make(COS_ERROR_MEMORY,
-                                           "Failed to allocate stream"));
         return NULL;
     }
 
@@ -344,7 +431,7 @@ cos_stream_obj_node_get_decoded_data(const CosStreamObjNode *stream_obj,
 
     size_t hint = 0;
     if (!cos_stream_obj_node_get_decoded_length_hint(stream_obj, &hint, NULL) || hint == 0) {
-        hint = stream_obj->data ? stream_obj->data->size : 0;
+        hint = stream_obj->length;
     }
 
     CosData *data = cos_data_alloc(hint);

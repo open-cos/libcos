@@ -44,6 +44,16 @@ COS_API void
 cos_tokenizer_reset(CosTokenizer *tokenizer);
 
 /**
+ * @brief Gets the input stream that the tokenizer reads from.
+ *
+ * @param tokenizer The tokenizer.
+ *
+ * @return The (borrowed) input stream.
+ */
+COS_API CosStream *
+cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer);
+
+/**
  * @brief Gets the next token from the tokenizer.
  *
  * @param tokenizer The tokenizer.

@@ -122,6 +122,14 @@ cos_stream_reader_get_position(CosStreamReader *stream_reader)
     return stream_offset - buffer_offset;
 }
 
+CosStream *
+cos_stream_reader_get_input_stream(const CosStreamReader *stream_reader)
+{
+    COS_API_PARAM_CHECK(stream_reader != NULL);
+
+    return stream_reader->input_stream;
+}
+
 int
 cos_stream_reader_getc(CosStreamReader *stream_reader)
 {

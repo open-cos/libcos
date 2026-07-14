@@ -12,6 +12,8 @@
 #include <libcos/objects/CosIntObjNode.h>
 #include <libcos/objects/CosNameObjNode.h>
 #include <libcos/objects/CosStreamObjNode.h>
+#include <libcos/io/CosMemoryStream.h>
+#include <libcos/io/CosStream.h>
 
 #include <string.h>
 
@@ -100,14 +102,12 @@ make_name(const char *value)
     return cos_name_obj_node_alloc(cos_string_alloc_with_str(value));
 }
 
-static CosData *
-make_data(const unsigned char *bytes, size_t size)
+// Wraps static test bytes in a read-only memory stream to back a stream node. The bytes must
+// outlive the node; all callers pass static arrays.
+static CosStream *
+make_encoded(const unsigned char *bytes, size_t size)
 {
-    CosData * const data = cos_data_alloc(size);
-    if (data && size > 0) {
-        cos_data_append(data, bytes, size, NULL);
-    }
-    return data;
+    return (CosStream *)cos_memory_stream_create_readonly(bytes, size);
 }
 
 // Builds a stream node with the given encoded bytes and optional /Filter value
@@ -121,7 +121,7 @@ make_stream(const unsigned char *encoded,
     if (filter_value) {
         cos_dict_obj_node_set(dict, make_name("Filter"), filter_value, NULL);
     }
-    return cos_stream_obj_node_create(dict, make_data(encoded, encoded_size));
+    return cos_stream_obj_node_create(dict, make_encoded(encoded, encoded_size));
 }
 
 static void
@@ -265,8 +265,8 @@ TEST_CASE_BEGIN(decode_flate_with_predictor)
     cos_dict_obj_node_set(dict, make_name("Filter"), (CosObjNode *)make_name("FlateDecode"), NULL);
     cos_dict_obj_node_set(dict, make_name("DecodeParms"), (CosObjNode *)parms, NULL);
     fixture->node = cos_stream_obj_node_create(dict,
-                                               make_data(flate_predictor_encoded,
-                                                         sizeof(flate_predictor_encoded)));
+                                               make_encoded(flate_predictor_encoded,
+                                                            sizeof(flate_predictor_encoded)));
 
     fixture->decoded = cos_stream_obj_node_get_decoded_data(fixture->node, NULL);
 
@@ -293,7 +293,7 @@ TEST_CASE_BEGIN(decode_unsupported_predictor)
     cos_dict_obj_node_set(dict, make_name("Filter"), (CosObjNode *)make_name("FlateDecode"), NULL);
     cos_dict_obj_node_set(dict, make_name("DecodeParms"), (CosObjNode *)parms, NULL);
     fixture->node = cos_stream_obj_node_create(dict,
-                                               make_data(flate_encoded, sizeof(flate_encoded)));
+                                               make_encoded(flate_encoded, sizeof(flate_encoded)));
 
     CosError error = {COS_ERROR_NONE, NULL};
     fixture->decoded = cos_stream_obj_node_get_decoded_data(fixture->node, &error);

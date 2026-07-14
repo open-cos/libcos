@@ -27,8 +27,8 @@ cos_doc_set_xref_table_(CosDoc *doc,
     COS_OWNERSHIP_HOLDS(2);
 
 void
-cos_doc_set_trailer_dict_(CosDoc *doc,
-                          CosDictObjNode * COS_Nullable dict)
+cos_doc_set_trailer_(CosDoc *doc,
+                     CosTrailer * COS_Nullable trailer)
     COS_OWNERSHIP_HOLDS(2);
 
 void

@@ -174,6 +174,14 @@ cos_tokenizer_reset(CosTokenizer *tokenizer)
     cos_stream_reader_reset(tokenizer->stream_reader);
 }
 
+CosStream *
+cos_tokenizer_get_input_stream(const CosTokenizer *tokenizer)
+{
+    COS_API_PARAM_CHECK(tokenizer != NULL);
+
+    return cos_stream_reader_get_input_stream(tokenizer->stream_reader);
+}
+
 bool
 cos_tokenizer_get_next_token(CosTokenizer *tokenizer,
                              CosToken *out_token,

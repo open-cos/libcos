@@ -19,9 +19,20 @@ COS_API void
 cos_stream_obj_node_destroy(CosStreamObjNode *stream_obj)
     COS_DEALLOCATOR_FUNC;
 
+/**
+ * @brief Creates a stream object backed by its raw encoded bytes.
+ *
+ * @param dict The stream dictionary (ownership transferred).
+ * @param encoded The raw (still-filtered) encoded bytes as a seekable stream (ownership
+ *                transferred; closed with the node). In-memory callers can wrap a buffer with
+ *                @c cos_memory_stream_create_readonly ; a stream parsed from a file is typically
+ *                backed by a @c CosSubStream window over the file.
+ *
+ * @return A new stream object, or @c NULL on failure (in which case @p encoded is closed).
+ */
 COS_API CosStreamObjNode * COS_Nullable
 cos_stream_obj_node_create(CosDictObjNode *dict,
-                      CosData * COS_Nullable data)
+                      CosStream *encoded)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_stream_obj_node_destroy)
     COS_OWNERSHIP_TAKES(1, 2);

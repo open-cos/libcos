@@ -10,6 +10,7 @@
 
 #include <libcos/CosObjID.h>
 #include <libcos/CosParser.h>
+#include <libcos/CosTrailer.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/memory/CosAllocator.h>
 #include <libcos/common/memory/CosMemory.h>
@@ -30,7 +31,7 @@ struct CosDoc {
 
     CosParser * COS_Nullable parser;
     CosXrefTable * COS_Nullable xref_table;
-    CosDictObjNode * COS_Nullable trailer_dict;
+    CosTrailer * COS_Nullable trailer;
 
     CosObjCache * COS_Nullable obj_cache;
 
@@ -72,9 +73,9 @@ cos_doc_destroy(CosDoc *doc)
         doc->xref_table = NULL;
     }
 
-    if (doc->trailer_dict) {
-        cos_dict_obj_node_destroy(COS_nonnull_cast(doc->trailer_dict));
-        doc->trailer_dict = NULL;
+    if (doc->trailer) {
+        cos_trailer_destroy(COS_nonnull_cast(doc->trailer));
+        doc->trailer = NULL;
     }
 
     if (doc->obj_cache) {
@@ -264,18 +265,29 @@ cos_doc_set_xref_table_(CosDoc *doc,
 }
 
 void
-cos_doc_set_trailer_dict_(CosDoc *doc,
-                          CosDictObjNode * COS_Nullable dict)
+cos_doc_set_trailer_(CosDoc *doc,
+                     CosTrailer * COS_Nullable trailer)
 {
     if (!doc) {
         return;
     }
 
-    if (doc->trailer_dict) {
-        cos_dict_obj_node_destroy(COS_nonnull_cast(doc->trailer_dict));
+    if (doc->trailer) {
+        cos_trailer_destroy(COS_nonnull_cast(doc->trailer));
     }
 
-    doc->trailer_dict = dict;
+    doc->trailer = trailer;
+}
+
+CosTrailer *
+cos_doc_get_trailer(const CosDoc *doc)
+{
+    COS_API_PARAM_CHECK(doc != NULL);
+    if (COS_UNLIKELY(!doc)) {
+        return NULL;
+    }
+
+    return doc->trailer;
 }
 
 void

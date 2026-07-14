@@ -128,6 +128,7 @@ target_include_directories(libcos
 target_sources(libcos PRIVATE
     src/CosObj.c
     src/CosDoc.c
+    src/CosTrailer.c
     src/common/Assert.c
     src/common/Assert.h
     src/common/CharacterSet.c
@@ -166,6 +167,7 @@ target_sources(libcos PRIVATE
     src/io/CosFileStream.c
     src/io/CosMemoryStream.c
     src/io/CosStream.c
+    src/io/CosSubStream.c
     src/io/CosStreamReader.c
     src/io/string-support.c
     src/objects/CosArrayObjNode.c
@@ -182,16 +184,20 @@ target_sources(libcos PRIVATE
     src/objects/CosRealObjNode.c
     src/objects/CosReferenceObjNode.c
     src/objects/CosStreamObjNode.c
+    src/objects/CosStreamObjNode-Private.h
     src/objects/CosStringObjNode.c
     src/parse/CosBaseParser.c
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
     src/parse/CosParser.c
     src/CosDoc-Private.h
+    src/CosTrailer-Private.h
     src/syntax/CosKeywords.c
     src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosTokenValue.c
     src/syntax/tokenizer/CosTokenizer.c
+    src/xref/CosXrefStreamParser.c
+    src/xref/CosXrefStreamParser.h
     src/xref/CosXrefTableParser.c
     src/xref/table/CosXrefEntry.c
     src/xref/table/CosXrefSection.c
@@ -206,6 +212,7 @@ target_sources(libcos PUBLIC
     include/libcos/CosDoc.h
     include/libcos/CosObj.h
     include/libcos/CosObjID.h
+    include/libcos/CosTrailer.h
     include/libcos/common/CosAPI.h
     include/libcos/common/CosArray.h
     include/libcos/common/CosBasicTypes.h
@@ -232,6 +239,7 @@ target_sources(libcos PUBLIC
     include/libcos/io/CosMemoryStream.h
     include/libcos/io/CosStream.h
     include/libcos/io/CosStreamReader.h
+    include/libcos/io/CosSubStream.h
     include/libcos/io/string-support.h
     include/libcos/objects/CosArrayObjNode.h
     include/libcos/objects/CosBoolObjNode.h

@@ -18,6 +18,7 @@
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosLog.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/io/CosSubStream.h>
 #include <libcos/objects/CosArrayObjNode.h>
 #include <libcos/objects/CosBoolObjNode.h>
 #include <libcos/objects/CosDictObjNode.h>
@@ -797,53 +798,76 @@ cos_handle_stream_(CosObjParser *parser,
     if (cos_dict_obj_node_get_value_with_string(dict_obj,
                                            "Length",
                                            &length_obj,
-                                           NULL)) {
-        if (cos_obj_node_is_integer(length_obj)) {
-            CosIntObjNode * const int_obj = (CosIntObjNode *)length_obj;
-
-            stream_length = cos_int_obj_node_get_value(int_obj);
-        }
-        else {
-            // Error: The Length entry is not an integer.
-        }
+                                           NULL) &&
+        cos_obj_node_is_integer(length_obj)) {
+        stream_length = cos_int_obj_node_get_value((CosIntObjNode *)length_obj);
     }
 
-    printf("Stream length: %d\n", stream_length);
+    if (stream_length < 0) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Stream is missing a valid /Length"),
+                            out_error);
+        goto failure;
+    }
 
-    // Need to get the offset from the token.
-    //    const CosStreamOffset stream_position = cos_stream_get_position(parser->input_stream,
-    //                                                                    out_error);
-    //    if (stream_position < 0) {
-    //        goto failure;
-    //    }
+    const size_t length = (size_t)stream_length;
+
+    // The tokenizer's stream token stops at the "stream" keyword; the data begins after the
+    // end-of-line marker (CRLF or LF) that follows it. Only seekable inputs are supported.
+    // The object parser borrows the tokenizer, so obtain the input stream from it.
+    CosStream * const input_stream = cos_tokenizer_get_input_stream(parser->base.tokenizer);
+    if (!cos_stream_can_seek(input_stream)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_NOT_IMPLEMENTED,
+                                           "Parsing streams from a non-seekable input is not supported"),
+                            out_error);
+        goto failure;
+    }
+
+    if (!cos_stream_seek(input_stream, stream_start, CosStreamOffsetWhence_Set, out_error)) {
+        goto failure;
+    }
+
+    unsigned char eol[2] = {0, 0};
+    const size_t eol_read = cos_stream_read(input_stream, eol, sizeof(eol), NULL);
+    CosStreamOffset data_start = stream_start;
+    if (eol_read >= 2 && eol[0] == '\r' && eol[1] == '\n') {
+        data_start = stream_start + 2;
+    }
+    else if (eol_read >= 1 && (eol[0] == '\n' || eol[0] == '\r')) {
+        data_start = stream_start + 1;
+    }
+
+    // Capture the encoded bytes as a window over the input (no copy).
+    CosStream *encoded = cos_sub_stream_create(input_stream, data_start, length, false, out_error);
+    if (!encoded) {
+        goto failure;
+    }
 
     // TODO: Check for overflow.
-    CosStreamOffset stream_end_position = stream_start + stream_length;
+    const CosStreamOffset stream_end_position = data_start + (CosStreamOffset)length;
 
-    // Skip the stream data.
-    if (!cos_stream_seek(parser->base.input_stream,
+    // Seek past the stream data to the endstream keyword.
+    if (!cos_stream_seek(input_stream,
                          stream_end_position,
                          CosStreamOffsetWhence_Set,
                          out_error)) {
+        cos_stream_close(encoded);
         goto failure;
     }
 
     cos_tokenizer_reset(parser->base.tokenizer);
 
-    // Skip the endstream keyword.
+    // Skip the endstream keyword. The data is length-delimited, so a missing endstream is
+    // tolerated rather than fatal.
     if (cos_base_parser_matches_next_token(&(parser->base),
                                            CosToken_Type_EndStream,
                                            out_error)) {
         cos_base_parser_advance(&(parser->base));
     }
-    else {
-        // Error: Expected an endstream token.
-        printf("Expected an endstream token.\n");
-    }
 
-    CosStreamObjNode *stream_obj = cos_stream_obj_node_create(dict_obj,
-                                                     NULL);
+    CosStreamObjNode * const stream_obj = cos_stream_obj_node_create(dict_obj, encoded);
     if (!stream_obj) {
+        // cos_stream_obj_node_create closed `encoded` on failure.
         goto failure;
     }
 

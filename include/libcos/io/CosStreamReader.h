@@ -46,6 +46,16 @@ COS_API CosStreamOffset
 cos_stream_reader_get_position(CosStreamReader *stream_reader);
 
 /**
+ * @brief Returns the input stream that the reader reads from.
+ *
+ * @param stream_reader The stream reader.
+ *
+ * @return The (borrowed) input stream.
+ */
+COS_API CosStream *
+cos_stream_reader_get_input_stream(const CosStreamReader *stream_reader);
+
+/**
  * @brief Reads a character from the stream.
  *
  * This function reads a character from the stream and advances the stream reader's position.

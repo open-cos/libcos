@@ -41,6 +41,18 @@ cos_doc_get_version(CosDoc *doc);
 COS_API CosObjNode * COS_Nullable
 cos_doc_get_root(CosDoc *doc);
 
+/**
+ * Returns the document's newest cross-reference trailer.
+ *
+ * Older revisions are reached by walking @c cos_trailer_get_prev along the @c /Prev chain.
+ *
+ * @param doc The document.
+ *
+ * @return The newest trailer, or @c NULL if the document has not been parsed.
+ */
+COS_API CosTrailer * COS_Nullable
+cos_doc_get_trailer(const CosDoc *doc);
+
 COS_API void * COS_Nullable
 cos_doc_get_object(CosDoc *doc,
                    CosObjID obj_id,
