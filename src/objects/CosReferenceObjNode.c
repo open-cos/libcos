@@ -55,10 +55,8 @@ cos_reference_obj_node_free(CosReferenceObjNode *reference_obj)
         return;
     }
 
-    if (reference_obj->value) {
-        cos_obj_node_release(COS_nonnull_cast(reference_obj->value));
-    }
-
+    // reference_obj->value is a borrowed pointer owned by the document's object cache, so it is
+    // not released here (see cos_reference_obj_node_resolve_value_).
     free(reference_obj);
 }
 
@@ -115,7 +113,12 @@ cos_reference_obj_node_resolve_value_(CosReferenceObjNode *reference_obj)
                                                 reference_obj->id,
                                                 &error);
     if (obj_value) {
+        // The document's object cache owns the resolved object for the lifetime of the
+        // document. Hold a borrowed pointer and drop the reference returned by
+        // cos_doc_get_object, so that cyclic references (such as a page's /Parent pointing back
+        // to its /Pages node) do not form ownership cycles that outlive the cache and leak.
         reference_obj->value = obj_value;
+        cos_obj_node_release((CosObjNode *)obj_value);
     }
     else {
         // TODO: Log undefined object if strict.
