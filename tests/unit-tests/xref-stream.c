@@ -170,12 +170,14 @@ compressed_entry_is_populated(void)
     CosDoc *doc = parse_pdf_bytes_(xref_stream_pdf, sizeof(xref_stream_pdf), &stream);
     TEST_EXPECT(doc != NULL);
 
-    // Object 3 is a type-2 (compressed) entry: it must be recognized (proving the xref stream
-    // parsed the type field), and retrieval is not yet implemented.
+    // Object 3 is a type-2 (compressed) entry naming object stream 1 as its container. Object 1
+    // in this file is the catalog dictionary, not an object stream, so retrieval must recognize
+    // the type-2 entry (proving the xref stream parsed the type field) and then reject the
+    // malformed container.
     CosError error = cos_error_none();
     CosObjNode *obj = cos_doc_get_object(doc, cos_obj_id_make(3, 0), &error);
     TEST_EXPECT(obj == NULL);
-    TEST_EXPECT(error.code == COS_ERROR_NOT_IMPLEMENTED);
+    TEST_EXPECT(error.code == COS_ERROR_XREF);
 
     cos_doc_destroy(doc);
     cos_stream_close((CosStream *)stream);

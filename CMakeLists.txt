@@ -181,6 +181,7 @@ target_sources(libcos PRIVATE
     src/objects/CosObjCache.c
     src/objects/CosObjCache.h
     src/objects/CosObjID.c
+    src/objects/CosObjStream.c
     src/objects/CosRealObjNode.c
     src/objects/CosReferenceObjNode.c
     src/objects/CosStreamObjNode.c
@@ -250,6 +251,7 @@ target_sources(libcos PUBLIC
     include/libcos/objects/CosNullObjNode.h
     include/libcos/objects/CosObjNode.h
     include/libcos/objects/CosObjNodeTypes.h
+    include/libcos/objects/CosObjStream.h
     include/libcos/objects/CosRealObjNode.h
     include/libcos/objects/CosReferenceObjNode.h
     include/libcos/objects/CosStreamObjNode.h

@@ -45,6 +45,8 @@ typedef struct CosObjParser CosObjParser;
 
 typedef struct CosDoc CosDoc;
 
+typedef struct CosObjStream CosObjStream;
+
 typedef struct CosObjID CosObjID;
 
 typedef struct CosObjNode CosObjNode;

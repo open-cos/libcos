@@ -15,7 +15,10 @@
 #include <libcos/common/memory/CosAllocator.h>
 #include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosDictObjNode.h>
+#include <libcos/objects/CosIndirectObjNode.h>
 #include <libcos/objects/CosObjNode.h>
+#include <libcos/objects/CosObjStream.h>
+#include <libcos/objects/CosStreamObjNode.h>
 #include <libcos/xref/table/CosXrefEntry.h>
 #include <libcos/xref/table/CosXrefTable.h>
 
@@ -113,6 +116,12 @@ cos_doc_get_root(CosDoc *doc)
     return doc->root;
 }
 
+static CosObjNode * COS_Nullable
+cos_doc_load_compressed_(CosDoc *doc,
+                         CosObjID obj_id,
+                         const CosXrefEntry *entry,
+                         CosError * COS_Nullable error);
+
 void *
 cos_doc_get_object(CosDoc *doc,
                    CosObjID obj_id,
@@ -149,24 +158,29 @@ cos_doc_get_object(CosDoc *doc,
             return NULL;
 
         case CosXrefEntryType_Compressed:
-            cos_error_propagate(error,
-                                cos_error_make(COS_ERROR_NOT_IMPLEMENTED,
-                                               "Compressed objects are not yet supported"));
-            return NULL;
+            // Compressed objects always have generation number zero.
+            if (obj_id.gen_number != 0) {
+                cos_error_propagate(error,
+                                    cos_error_make(COS_ERROR_XREF,
+                                                   "Generation number mismatch"));
+                return NULL;
+            }
+            break;
 
         case CosXrefEntryType_InUse:
+            // Validate that the reference's generation number matches the xref entry.
+            if (entry->value.in_use.gen_number != obj_id.gen_number) {
+                cos_error_propagate(error,
+                                    cos_error_make(COS_ERROR_XREF,
+                                                   "Generation number mismatch"));
+                return NULL;
+            }
             break;
     }
 
-    // Validate that the reference's generation number matches the xref entry.
-    if (entry->value.in_use.gen_number != obj_id.gen_number) {
-        cos_error_propagate(error,
-                            cos_error_make(COS_ERROR_XREF,
-                                           "Generation number mismatch"));
-        return NULL;
-    }
-
-    // Check the cache for a previously loaded object.
+    // Check the cache for a previously loaded object. This serves both entry types, and is what
+    // makes eager object-stream population pay off: after the first compressed object of a
+    // stream is loaded, its siblings (and the object stream itself) are cache hits.
     if (doc->obj_cache) {
         CosObjNode * const cached = cos_obj_cache_get(COS_nonnull_cast(doc->obj_cache),
                                                   obj_id.obj_number);
@@ -175,7 +189,11 @@ cos_doc_get_object(CosDoc *doc,
         }
     }
 
-    // Parse the object from the file.
+    if (entry->type == CosXrefEntryType_Compressed) {
+        return cos_doc_load_compressed_(doc, obj_id, entry, error);
+    }
+
+    // Parse the in-use object from the file.
     CosObjNode * const obj = cos_parser_load_object(COS_nonnull_cast(doc->parser),
                                                 (CosStreamOffset)entry->value.in_use.byte_offset,
                                                 error);
@@ -194,6 +212,100 @@ cos_doc_get_object(CosDoc *doc,
     }
 
     return obj;
+}
+
+// Resolves a compressed (type-2) object by decoding its object stream, eagerly parsing every
+// object it contains into the document cache, and returning the requested one.
+static CosObjNode *
+cos_doc_load_compressed_(CosDoc *doc,
+                         CosObjID obj_id,
+                         const CosXrefEntry *entry,
+                         CosError * COS_Nullable error)
+{
+    COS_IMPL_PARAM_CHECK(doc != NULL);
+    COS_IMPL_PARAM_CHECK(entry != NULL);
+
+    const unsigned int stream_number = entry->value.compressed.obj_stream_number;
+
+    // The object stream is itself an ordinary in-use object; fetching it caches it and returns a
+    // retained reference.
+    CosObjNode * const objstm_obj =
+        cos_doc_get_object(doc, cos_obj_id_make(stream_number, 0), error);
+    if (!objstm_obj) {
+        return NULL;
+    }
+
+    if (!cos_obj_node_is_indirect(objstm_obj)) {
+        cos_obj_node_release(objstm_obj);
+        cos_error_propagate(error,
+                            cos_error_make(COS_ERROR_XREF,
+                                           "Compressed object's container is not an indirect object"));
+        return NULL;
+    }
+
+    CosObjNode * const value = cos_indirect_obj_node_get_value((CosIndirectObjNode *)objstm_obj);
+    if (!value || !cos_obj_node_is_stream(value)) {
+        cos_obj_node_release(objstm_obj);
+        cos_error_propagate(error,
+                            cos_error_make(COS_ERROR_XREF,
+                                           "Compressed object's container is not an object stream"));
+        return NULL;
+    }
+
+    // cos_obj_stream_create copies out the decoded bytes, so the object stream no longer depends
+    // on the container node once created; the cache keeps the container alive regardless.
+    CosObjStream * const obj_stream = cos_obj_stream_create((CosStreamObjNode *)value, doc, error);
+    cos_obj_node_release(objstm_obj);
+    if (!obj_stream) {
+        return NULL;
+    }
+
+    if (!doc->obj_cache) {
+        doc->obj_cache = cos_obj_cache_create(0);
+    }
+    if (!doc->obj_cache) {
+        cos_obj_stream_destroy(obj_stream);
+        cos_error_propagate(error,
+                            cos_error_make(COS_ERROR_MEMORY,
+                                           "Failed to create object cache"));
+        return NULL;
+    }
+
+    const size_t count = cos_obj_stream_get_count(obj_stream);
+    bool ok = true;
+    for (size_t i = 0; i < count; i++) {
+        unsigned int obj_number = 0;
+        if (!cos_obj_stream_get_obj_number_at(obj_stream, i, &obj_number, error)) {
+            ok = false;
+            break;
+        }
+
+        CosObjNode * const contained = cos_obj_stream_get_object_at(obj_stream, i, error);
+        if (!contained) {
+            ok = false;
+            break;
+        }
+
+        cos_obj_cache_insert(COS_nonnull_cast(doc->obj_cache), obj_number, contained);
+        cos_obj_node_release(contained);
+    }
+
+    cos_obj_stream_destroy(obj_stream);
+
+    if (!ok) {
+        return NULL;
+    }
+
+    CosObjNode * const result = cos_obj_cache_get(COS_nonnull_cast(doc->obj_cache),
+                                                  obj_id.obj_number);
+    if (!result) {
+        cos_error_propagate(error,
+                            cos_error_make(COS_ERROR_XREF,
+                                           "Compressed object was not found in its object stream"));
+        return NULL;
+    }
+
+    return cos_obj_node_retain(result);
 }
 
 // MARK: - Diagnostics

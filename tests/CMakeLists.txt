@@ -13,6 +13,7 @@ set(LIBCOS_TESTS
     unit-tests/tokenizer.c
     unit-tests/xref-table.c
     unit-tests/xref-stream.c
+    unit-tests/obj-stream.c
     unit-tests/trailer-chain.c
     unit-tests/file-structure.c
     unit-tests/indirect-obj.c
