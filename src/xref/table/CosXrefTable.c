@@ -20,6 +20,23 @@ struct CosXrefTable {
     CosArray *sections;
 };
 
+// Frees the section pointed to by an array element when the sections array is destroyed.
+static void
+cos_xref_section_release_callback_(void *item)
+{
+    COS_IMPL_PARAM_CHECK(item != NULL);
+    if (COS_UNLIKELY(!item)) {
+        return;
+    }
+
+    CosXrefSection * const section = *(CosXrefSection **)item;
+    cos_xref_section_destroy(section);
+}
+
+static const CosArrayCallbacks cos_xref_section_array_callbacks_ = {
+    .release = cos_xref_section_release_callback_,
+};
+
 CosXrefTable *
 cos_xref_table_create(void)
 {
@@ -31,7 +48,9 @@ cos_xref_table_create(void)
         goto failure;
     }
 
-    sections = cos_array_create(sizeof(CosXrefSection *), NULL, 0);
+    sections = cos_array_create(sizeof(CosXrefSection *),
+                                &cos_xref_section_array_callbacks_,
+                                0);
     if (COS_UNLIKELY(!sections)) {
         goto failure;
     }

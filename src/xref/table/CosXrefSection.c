@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 
 #include "libcos/common/CosArray.h"
+#include "libcos/xref/table/CosXrefSubsection.h"
 
 #include <stdlib.h>
 
@@ -14,6 +15,23 @@ COS_ASSUME_NONNULL_BEGIN
 
 struct CosXrefSection {
     CosArray *subsections;
+};
+
+// Frees the subsection pointed to by an array element when the subsections array is destroyed.
+static void
+cos_xref_subsection_release_callback_(void *item)
+{
+    COS_IMPL_PARAM_CHECK(item != NULL);
+    if (COS_UNLIKELY(!item)) {
+        return;
+    }
+
+    CosXrefSubsection * const subsection = *(CosXrefSubsection **)item;
+    cos_xref_subsection_destroy(subsection);
+}
+
+static const CosArrayCallbacks cos_xref_subsection_array_callbacks_ = {
+    .release = cos_xref_subsection_release_callback_,
 };
 
 CosXrefSection *
@@ -28,7 +46,7 @@ cos_xref_section_create(void)
     }
 
     subsections = cos_array_create(sizeof(CosXrefSubsection *),
-                                   NULL,
+                                   &cos_xref_subsection_array_callbacks_,
                                    0);
     if (COS_UNLIKELY(!subsections)) {
         goto failure;

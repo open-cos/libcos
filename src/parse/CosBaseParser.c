@@ -140,6 +140,10 @@ cos_base_parser_destroy(CosBaseParser *parser)
         cos_tokenizer_destroy(parser->tokenizer);
     }
 
+    if (parser->token_buffer) {
+        cos_free(parser->allocator, parser->token_buffer);
+    }
+
     cos_free(parser->allocator, parser);
 }
 
