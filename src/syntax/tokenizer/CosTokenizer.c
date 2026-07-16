@@ -360,6 +360,15 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
         } break;
 
         default: {
+            // A delimiter that begins no token of its own (")", "{" or "}")
+            // would make cos_tokenizer_read_token_() stop before consuming
+            // anything, leaving the stream position unchanged and any caller
+            // that loops until EOF spinning forever. Consume it instead.
+            if (cos_is_delimiter(c)) {
+                token->type = CosToken_Type_Unknown;
+                break;
+            }
+
             cos_stream_reader_ungetc(tokenizer->stream_reader);
 
             // This could be a keyword or an unknown token.

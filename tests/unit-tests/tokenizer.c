@@ -262,6 +262,51 @@ tokenize_fKeyword_RecognizedCorrectly(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Bare delimiter tests
+
+static int
+tokenize_bareCurlyBrackets_MakeProgress(void)
+{
+    /*
+     * "{" and "}" begin no token, but the tokenizer must still consume them:
+     * a zero-length token would leave the stream position unchanged and hang
+     * any caller that reads until EOF.
+     */
+    CosToken tokens[3] = {{0}, {0}, {0}};
+    TEST_EXPECT(get_tokens_("{}", tokens, 3));
+    TEST_EXPECT(tokens[0].type == CosToken_Type_Unknown);
+    TEST_EXPECT(tokens[0].length == 1);
+    TEST_EXPECT(tokens[1].type == CosToken_Type_Unknown);
+    TEST_EXPECT(tokens[1].length == 1);
+    TEST_EXPECT(tokens[2].type == CosToken_Type_EOF);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_bareRightParenthesis_MakesProgress(void)
+{
+    CosToken tokens[2] = {{0}, {0}};
+    TEST_EXPECT(get_tokens_(")", tokens, 2));
+    TEST_EXPECT(tokens[0].type == CosToken_Type_Unknown);
+    TEST_EXPECT(tokens[0].length == 1);
+    TEST_EXPECT(tokens[1].type == CosToken_Type_EOF);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_curlyBracketsAroundToken_Recognized(void)
+{
+    CosToken tokens[3] = {{0}, {0}, {0}};
+    TEST_EXPECT(get_tokens_("{ 1 }", tokens, 3));
+    TEST_EXPECT(tokens[0].type == CosToken_Type_Unknown);
+    TEST_EXPECT(tokens[1].type == CosToken_Type_Integer);
+    int value = 0;
+    TEST_EXPECT(cos_token_get_integer_value(&tokens[1], &value));
+    TEST_EXPECT(value == 1);
+    TEST_EXPECT(tokens[2].type == CosToken_Type_Unknown);
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Offset and length tests
 
 static int
@@ -473,6 +518,11 @@ TEST_MAIN()
     TEST_EXPECT(tokenize_startxrefKeyword_RecognizedCorrectly() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_nKeyword_RecognizedCorrectly() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_fKeyword_RecognizedCorrectly() == EXIT_SUCCESS);
+
+    /* Bare delimiter tests */
+    TEST_EXPECT(tokenize_bareCurlyBrackets_MakeProgress() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_bareRightParenthesis_MakesProgress() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_curlyBracketsAroundToken_Recognized() == EXIT_SUCCESS);
 
     /* Offset and length tests */
     TEST_EXPECT(tokenize_singleToken_OffsetIsZero() == EXIT_SUCCESS);
