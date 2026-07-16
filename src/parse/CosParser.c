@@ -14,6 +14,7 @@
 
 #include <libcos/CosDoc.h>
 #include <libcos/CosTrailer.h>
+#include <libcos/common/CosArray.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/memory/CosMemory.h>
 #include <libcos/io/CosStream.h>
@@ -36,6 +37,15 @@ struct CosParser {
     CosBaseParser base;       /**< Owns the tokenizer; borrows the stream. */
     CosObjParser *obj_parser; /**< Borrows base.tokenizer. Owned by this parser. */
 };
+
+/**
+ * The maximum number of revisions traversed when walking a cross-reference /Prev chain.
+ *
+ * This bounds chains that are long but acyclic, which the visited-offset set cannot detect: a
+ * malformed file can name thousands of distinct plausible offsets. It also bounds the visited
+ * set's linear membership scan.
+ */
+#define COS_XREF_MAX_REVISIONS 1024
 
 // MARK: - Forward declarations
 
@@ -64,6 +74,25 @@ cos_parser_xref_is_stream_(CosParser *parser,
                            CosError * COS_Nullable out_error)
     COS_ATTR_ACCESS_WRITE_ONLY(3)
     COS_ATTR_ACCESS_WRITE_ONLY(4);
+
+static CosXrefSection * COS_Nullable
+cos_parser_parse_xref_stream_at_(CosParser *parser,
+                                 CosStreamOffset offset,
+                                 CosDictObjNode * COS_Nullable * COS_Nullable out_dict,
+                                 CosError * COS_Nullable out_error)
+    COS_OWNERSHIP_RETURNS
+    COS_ATTR_ACCESS_WRITE_ONLY(3)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
+
+static bool
+cos_parser_offsets_contains_(const CosArray *offsets,
+                             CosStreamOffset offset);
+
+static bool
+cos_parser_offsets_add_(CosArray *offsets,
+                        CosStreamOffset offset,
+                        CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 // MARK: - Public API
 
@@ -383,26 +412,59 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     CosTrailer *head = NULL;
     CosTrailer *tail = NULL;
 
+    // The xref offsets already visited, to break /Prev cycles. A revisited /Prev offset is a hard
+    // error, while a revisited /XRefStm is merely skipped, so the two are tracked separately: one
+    // shared set would spuriously reject a file that reaches the same xref stream both as a
+    // revision's /XRefStm and as another revision's /Prev target.
+    CosArray *visited = cos_array_create(sizeof(CosStreamOffset), NULL, 8);
+    CosArray *visited_xref_stms = cos_array_create(sizeof(CosStreamOffset), NULL, 2);
+    size_t revision_count = 0;
+
+    if (!visited || !visited_xref_stms) {
+        cos_error_propagate(out_error,
+                            cos_error_make(COS_ERROR_MEMORY,
+                                           "Failed to create xref offset set"));
+        goto done;
+    }
+
     // Walk the Prev chain from newest to oldest, accumulating xref sections and trailers.
     while (true) {
+        if (cos_parser_offsets_contains_(visited, xref_offset)) {
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_XREF,
+                                               "Cross-reference /Prev chain contains a cycle"));
+            goto done;
+        }
+        if (!cos_parser_offsets_add_(visited, xref_offset, out_error)) {
+            goto done;
+        }
+        if (++revision_count > COS_XREF_MAX_REVISIONS) {
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_XREF,
+                                               "Cross-reference /Prev chain is too long"));
+            goto done;
+        }
+
         // Determine whether this revision uses a classic xref table or an xref stream.
         bool is_stream = false;
         if (!cos_parser_xref_is_stream_(parser, xref_offset, &is_stream, out_error)) {
             goto done;
         }
 
-        // Seek to the xref section and reset the tokenizer for the parse.
-        if (!cos_stream_seek(stream, xref_offset, CosStreamOffsetWhence_Set, out_error)) {
-            goto done;
-        }
-        cos_tokenizer_reset(parser->base.tokenizer);
-        cos_obj_parser_flush_tokens_(parser->obj_parser);
-
         CosXrefSection *section = NULL;
+        // The companion xref stream of a hybrid-reference file, if this revision declares one.
+        CosXrefSection *xref_stm_section = NULL;
         // The trailer dictionary for this revision, owned here until handed to a CosTrailer.
         CosDictObjNode *trailer_dict = NULL;
 
         if (!is_stream) {
+            // Seek to the xref section and reset the tokenizer for the parse.
+            if (!cos_stream_seek(stream, xref_offset, CosStreamOffsetWhence_Set, out_error)) {
+                goto done;
+            }
+            cos_tokenizer_reset(parser->base.tokenizer);
+            cos_obj_parser_flush_tokens_(parser->obj_parser);
+
             CosXrefTableParser * const xtp =
                 cos_xref_table_parser_create(doc, parser->base.tokenizer);
             if (!xtp) {
@@ -440,56 +502,77 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
                 goto done;
             }
             trailer_dict = (CosDictObjNode *)trailer_obj;
+
+            // A hybrid-reference file's classic trailer names a companion xref stream holding the
+            // entries for objects stored in object streams -- the very objects this classic table
+            // deliberately marks free so that readers without object-stream support ignore them.
+            // Its entries must therefore win over this revision's classic entries.
+            CosObjNode * COS_Nullable xref_stm_obj = NULL;
+            if (cos_dict_obj_node_get_value_with_string(trailer_dict, "XRefStm",
+                                                        &xref_stm_obj, NULL) &&
+                xref_stm_obj != NULL &&
+                cos_obj_node_is_integer(COS_nonnull_cast(xref_stm_obj))) {
+                const int xref_stm_value =
+                    cos_int_obj_node_get_value((CosIntObjNode *)xref_stm_obj);
+                const CosStreamOffset xref_stm_offset = (CosStreamOffset)xref_stm_value;
+
+                if (xref_stm_value >= 0 &&
+                    !cos_parser_offsets_contains_(visited_xref_stms, xref_stm_offset)) {
+                    if (!cos_parser_offsets_add_(visited_xref_stms, xref_stm_offset, out_error)) {
+                        cos_xref_section_destroy(section);
+                        cos_dict_obj_node_destroy(trailer_dict);
+                        goto done;
+                    }
+
+                    // The companion stream's dictionary is not a trailer: it must not join the
+                    // revision chain, contribute /Root, or have its own /Prev followed -- the
+                    // classic trailer's /Prev already covers this revision's predecessor.
+                    xref_stm_section = cos_parser_parse_xref_stream_at_(parser,
+                                                                        xref_stm_offset,
+                                                                        NULL,
+                                                                        out_error);
+                    if (!xref_stm_section) {
+                        cos_xref_section_destroy(section);
+                        cos_dict_obj_node_destroy(trailer_dict);
+                        goto done;
+                    }
+                }
+            }
         }
         else {
             // An xref stream is an indirect object whose value is a stream; its dictionary
-            // carries both the xref parameters and the trailer entries.
-            CosObjNode * const obj = cos_obj_parser_next_object(parser->obj_parser, out_error);
-            if (!obj) {
-                cos_error_propagate(out_error,
-                                    cos_error_make(COS_ERROR_PARSE,
-                                                   "Failed to parse xref stream object"));
-                goto done;
-            }
-            if (!cos_obj_node_is_indirect(obj)) {
-                cos_obj_node_release(obj);
-                cos_error_propagate(out_error,
-                                    cos_error_make(COS_ERROR_XREF,
-                                                   "Xref stream is not an indirect object"));
-                goto done;
-            }
-
-            CosObjNode * const value =
-                cos_indirect_obj_node_get_value((CosIndirectObjNode *)obj);
-            if (!value || !cos_obj_node_is_stream(value)) {
-                cos_obj_node_release(obj);
-                cos_error_propagate(out_error,
-                                    cos_error_make(COS_ERROR_XREF,
-                                                   "Xref stream object is not a stream"));
-                goto done;
-            }
-
-            CosStreamObjNode * const stream_obj = (CosStreamObjNode *)value;
-            section = cos_xref_stream_parse_section_(stream_obj, out_error);
+            // carries both the xref parameters and the trailer entries, so it is taken here and
+            // reused as this revision's trailer.
+            section = cos_parser_parse_xref_stream_at_(parser,
+                                                       xref_offset,
+                                                       &trailer_dict,
+                                                       out_error);
             if (!section) {
-                cos_obj_node_release(obj);
-                goto done;
-            }
-
-            // Reuse the stream's dictionary as the trailer: detach it so releasing the indirect
-            // object (and with it the stream node) does not destroy it.
-            trailer_dict = cos_stream_obj_node_take_dict_(stream_obj);
-            cos_obj_node_release(obj);
-            if (!trailer_dict) {
-                cos_xref_section_destroy(section);
-                cos_error_propagate(out_error,
-                                    cos_error_make(COS_ERROR_XREF,
-                                                   "Xref stream has no dictionary"));
                 goto done;
             }
         }
 
+        // Insertion order fixes precedence: cos_xref_table_find_entry_for_obj_num returns the
+        // first section whose subsection range covers the object number, so a revision's /XRefStm
+        // section must precede its classic section, and both must precede the older revisions
+        // appended on later iterations.
+        //
+        // A non-conforming /XRefStm that omits /Index (defaulting to [0, /Size)) contributes free
+        // entries for objects it does not own, which then shadow the classic table. Skipping free
+        // entries during lookup would not fix this and would break legitimate deletions: an object
+        // deleted in revision N is free in N and in-use in N-1, and the free entry must win.
+        if (xref_stm_section) {
+            if (!cos_xref_table_add_section(table, xref_stm_section, out_error)) {
+                cos_xref_section_destroy(xref_stm_section);
+                cos_xref_section_destroy(section);
+                cos_dict_obj_node_destroy(trailer_dict);
+                goto done;
+            }
+            xref_stm_section = NULL; // Ownership transferred to the table.
+        }
+
         if (!cos_xref_table_add_section(table, section, out_error)) {
+            // Any /XRefStm section is already owned by the table, so it must not be destroyed here.
             cos_xref_section_destroy(section);
             cos_dict_obj_node_destroy(trailer_dict);
             goto done;
@@ -509,6 +592,19 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
         if (!head) {
             head = trailer;
             tail = trailer;
+
+            // Encryption is not supported, so reject the document up front rather than letting the
+            // filter chain fail later on undecryptable stream data. /Encrypt is normally an
+            // indirect reference, so only its presence is checked.
+            CosObjNode * COS_Nullable encrypt_obj = NULL;
+            if (cos_dict_obj_node_get_value_with_string(cos_trailer_get_dict(trailer), "Encrypt",
+                                                        &encrypt_obj, NULL) &&
+                encrypt_obj != NULL) {
+                cos_error_propagate(out_error,
+                                    cos_error_make(COS_ERROR_NOT_IMPLEMENTED,
+                                                   "Encrypted documents are not supported"));
+                goto done;
+            }
 
             // Resolve /Root from the newest trailer.
             CosObjNode * COS_Nullable root_obj = NULL;
@@ -549,6 +645,12 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     result = true;
 
 done:
+    if (visited) {
+        cos_array_destroy(visited);
+    }
+    if (visited_xref_stms) {
+        cos_array_destroy(visited_xref_stms);
+    }
     if (head) {
         cos_trailer_destroy(head);
     }
@@ -556,6 +658,107 @@ done:
         cos_xref_table_destroy(table);
     }
     return result;
+}
+
+// Parses the cross-reference stream at @p offset into a section. When @p out_dict is non-NULL, the
+// stream's dictionary is detached and returned through it, transferring ownership to the caller;
+// otherwise the dictionary is released along with the stream object. Used both for stream-headed
+// revisions, which reuse the dictionary as the revision's trailer, and for the /XRefStm companion
+// stream of a hybrid-reference file, whose dictionary is not a trailer.
+static CosXrefSection * COS_Nullable
+cos_parser_parse_xref_stream_at_(CosParser *parser,
+                                 CosStreamOffset offset,
+                                 CosDictObjNode * COS_Nullable * COS_Nullable out_dict,
+                                 CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+
+    if (!cos_stream_seek(parser->base.input_stream, offset,
+                         CosStreamOffsetWhence_Set, out_error)) {
+        return NULL;
+    }
+    cos_tokenizer_reset(parser->base.tokenizer);
+    cos_obj_parser_flush_tokens_(parser->obj_parser);
+
+    CosObjNode * const obj = cos_obj_parser_next_object(parser->obj_parser, out_error);
+    if (!obj) {
+        cos_error_propagate(out_error,
+                            cos_error_make(COS_ERROR_PARSE,
+                                           "Failed to parse xref stream object"));
+        return NULL;
+    }
+    if (!cos_obj_node_is_indirect(obj)) {
+        cos_obj_node_release(obj);
+        cos_error_propagate(out_error,
+                            cos_error_make(COS_ERROR_XREF,
+                                           "Xref stream is not an indirect object"));
+        return NULL;
+    }
+
+    CosObjNode * const value = cos_indirect_obj_node_get_value((CosIndirectObjNode *)obj);
+    if (!value || !cos_obj_node_is_stream(value)) {
+        cos_obj_node_release(obj);
+        cos_error_propagate(out_error,
+                            cos_error_make(COS_ERROR_XREF,
+                                           "Xref stream object is not a stream"));
+        return NULL;
+    }
+
+    CosStreamObjNode * const stream_obj = (CosStreamObjNode *)value;
+    CosXrefSection * const section = cos_xref_stream_parse_section_(stream_obj, out_error);
+    if (!section) {
+        cos_obj_node_release(obj);
+        return NULL;
+    }
+
+    if (out_dict) {
+        // Detach the dictionary so that releasing the indirect object (and with it the stream
+        // node) does not destroy it.
+        CosDictObjNode * const dict = cos_stream_obj_node_take_dict_(stream_obj);
+        cos_obj_node_release(obj);
+        if (!dict) {
+            cos_xref_section_destroy(section);
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_XREF,
+                                               "Xref stream has no dictionary"));
+            return NULL;
+        }
+        *out_dict = dict;
+    }
+    else {
+        cos_obj_node_release(obj);
+    }
+
+    return section;
+}
+
+static bool
+cos_parser_offsets_contains_(const CosArray *offsets,
+                             CosStreamOffset offset)
+{
+    COS_IMPL_PARAM_CHECK(offsets != NULL);
+
+    const size_t count = cos_array_get_count(offsets);
+    for (size_t i = 0; i < count; i++) {
+        CosStreamOffset item = 0;
+        if (!cos_array_get_item(offsets, i, &item, NULL)) {
+            continue;
+        }
+        if (item == offset) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool
+cos_parser_offsets_add_(CosArray *offsets,
+                        CosStreamOffset offset,
+                        CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(offsets != NULL);
+
+    return cos_array_append_item(offsets, &offset, out_error);
 }
 
 // Determines whether the cross-reference data at @p offset is a cross-reference stream (an

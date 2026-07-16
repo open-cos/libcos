@@ -13,6 +13,9 @@ set(LIBCOS_TESTS
     unit-tests/tokenizer.c
     unit-tests/xref-table.c
     unit-tests/xref-stream.c
+    unit-tests/xref-cycle.c
+    unit-tests/xref-hybrid.c
+    unit-tests/encrypted-doc.c
     unit-tests/obj-stream.c
     unit-tests/trailer-chain.c
     unit-tests/file-structure.c
@@ -50,6 +53,9 @@ foreach (TEST_SOURCE ${LIBCOS_TESTS})
         COMMAND libcos-test ${TEST_NAME}
     )
 endforeach ()
+
+# A regression in /Prev cycle detection hangs instead of failing, so bound the run time.
+set_tests_properties(unit-tests/xref-cycle PROPERTIES TIMEOUT 30)
 
 target_include_directories(libcos-test
     PUBLIC ${PROJECT_SOURCE_DIR}/include/
