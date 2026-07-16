@@ -265,6 +265,122 @@ dictIterator_singleEntry_yieldsEntry(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Concrete type predicate tests
+
+/*
+ * The contract of the is_* predicates is that a true answer makes the cast to
+ * the matching node type safe. An indirect object holding a dictionary is not
+ * a dictionary node, so it must answer false -- casting it to CosDictObjNode
+ * and reading ->value would return the object ID reinterpreted as a pointer.
+ */
+
+static int
+isDict_dictNode_returnsTrue(void)
+{
+    CosDictObjNode *dict_node = cos_dict_obj_node_create(NULL);
+    TEST_EXPECT(dict_node != NULL);
+
+    TEST_EXPECT(cos_obj_node_is_dict((CosObjNode *)dict_node));
+    TEST_EXPECT(!cos_obj_node_is_integer((CosObjNode *)dict_node));
+
+    cos_obj_node_release((CosObjNode *)dict_node);
+    return EXIT_SUCCESS;
+}
+
+static int
+isDict_indirectNodeHoldingDict_returnsFalse(void)
+{
+    CosDictObjNode *dict_node = cos_dict_obj_node_create(NULL);
+    TEST_EXPECT(dict_node != NULL);
+
+    CosIndirectObjNode *indirect =
+        cos_indirect_obj_node_alloc(cos_obj_id_make(1, 0), (CosObjNode *)dict_node);
+    TEST_EXPECT(indirect != NULL);
+
+    /* The node is an indirect object, whatever it holds. */
+    TEST_EXPECT(!cos_obj_node_is_dict((CosObjNode *)indirect));
+    TEST_EXPECT(cos_obj_node_is_indirect((CosObjNode *)indirect));
+    TEST_EXPECT(!cos_obj_node_is_direct((CosObjNode *)indirect));
+
+    /* ... but it still resolves to one. */
+    TEST_EXPECT(cos_obj_node_get_value_type((CosObjNode *)indirect) ==
+                CosObjNodeValueType_Dict);
+
+    cos_obj_node_release((CosObjNode *)indirect);
+    return EXIT_SUCCESS;
+}
+
+static int
+isInteger_indirectNodeHoldingInt_returnsFalse(void)
+{
+    CosIntObjNode *int_node = cos_int_obj_node_alloc(42);
+    TEST_EXPECT(int_node != NULL);
+
+    CosIndirectObjNode *indirect =
+        cos_indirect_obj_node_alloc(cos_obj_id_make(2, 0), (CosObjNode *)int_node);
+    TEST_EXPECT(indirect != NULL);
+
+    TEST_EXPECT(!cos_obj_node_is_integer((CosObjNode *)indirect));
+    TEST_EXPECT(cos_obj_node_get_value_type((CosObjNode *)indirect) ==
+                CosObjNodeValueType_Integer);
+
+    cos_obj_node_release((CosObjNode *)indirect);
+    return EXIT_SUCCESS;
+}
+
+static int
+isName_nameNode_returnsTrue(void)
+{
+    CosNameObjNode *name_node = cos_name_obj_node_alloc(cos_string_alloc_with_str("Type"));
+    TEST_EXPECT(name_node != NULL);
+
+    TEST_EXPECT(cos_obj_node_is_name((CosObjNode *)name_node));
+    TEST_EXPECT(!cos_obj_node_is_dict((CosObjNode *)name_node));
+
+    cos_obj_node_release((CosObjNode *)name_node);
+    return EXIT_SUCCESS;
+}
+
+static int
+isNull_nullNode_returnsTrue(void)
+{
+    CosNullObjNode * const null_node = cos_null_obj_node_get();
+    TEST_EXPECT(null_node != NULL);
+
+    TEST_EXPECT(cos_obj_node_is_null((CosObjNode *)null_node));
+    TEST_EXPECT(!cos_obj_node_is_boolean((CosObjNode *)null_node));
+
+    return EXIT_SUCCESS;
+}
+
+static int
+predicates_eachNodeType_onlyItsOwnIsTrue(void)
+{
+    CosBoolObjNode * const bool_node = cos_bool_obj_node_alloc(true);
+    CosIntObjNode * const int_node = cos_int_obj_node_alloc(1);
+    CosRealObjNode * const real_node = cos_real_obj_node_alloc(1.5);
+    CosArrayObjNode * const array_node = cos_array_obj_node_alloc(NULL);
+    TEST_EXPECT(bool_node && int_node && real_node && array_node);
+
+    TEST_EXPECT(cos_obj_node_is_boolean((CosObjNode *)bool_node));
+    TEST_EXPECT(!cos_obj_node_is_integer((CosObjNode *)bool_node));
+
+    TEST_EXPECT(cos_obj_node_is_integer((CosObjNode *)int_node));
+    TEST_EXPECT(!cos_obj_node_is_real((CosObjNode *)int_node));
+
+    TEST_EXPECT(cos_obj_node_is_real((CosObjNode *)real_node));
+    TEST_EXPECT(!cos_obj_node_is_integer((CosObjNode *)real_node));
+
+    TEST_EXPECT(cos_obj_node_is_array((CosObjNode *)array_node));
+    TEST_EXPECT(!cos_obj_node_is_dict((CosObjNode *)array_node));
+
+    cos_obj_node_release((CosObjNode *)bool_node);
+    cos_obj_node_release((CosObjNode *)int_node);
+    cos_obj_node_release((CosObjNode *)real_node);
+    cos_obj_node_release((CosObjNode *)array_node);
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Test driver
 
 TEST_MAIN()
@@ -288,6 +404,14 @@ TEST_MAIN()
 
     /* Dict iterator */
     TEST_EXPECT(dictIterator_singleEntry_yieldsEntry() == EXIT_SUCCESS);
+
+    /* Concrete type predicates */
+    TEST_EXPECT(isDict_dictNode_returnsTrue() == EXIT_SUCCESS);
+    TEST_EXPECT(isDict_indirectNodeHoldingDict_returnsFalse() == EXIT_SUCCESS);
+    TEST_EXPECT(isInteger_indirectNodeHoldingInt_returnsFalse() == EXIT_SUCCESS);
+    TEST_EXPECT(isName_nameNode_returnsTrue() == EXIT_SUCCESS);
+    TEST_EXPECT(isNull_nullNode_returnsTrue() == EXIT_SUCCESS);
+    TEST_EXPECT(predicates_eachNodeType_onlyItsOwnIsTrue() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

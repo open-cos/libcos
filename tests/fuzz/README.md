@@ -66,27 +66,22 @@ the lexer.
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
 replay test would fail. Add them when the fix lands.
 
-### A trailer that is an indirect object is cast to a dictionary
+### An xref subsection count is trusted as an allocation size
 
-Reachable from the `parser` target; SEGV on a near-null address:
+An 86-byte file asks for a 4 GB allocation:
 
-    SUMMARY: AddressSanitizer: SEGV in cos_dict_hash_ CosDict.c
-      #1 cos_dict_get
-      #2 cos_dict_obj_node_get_value_with_string
-      #3 cos_parser_parse_xref_and_trailer_ CosParser.c
+    xref
+    0 268435456
 
-`cos_parser_parse_xref_and_trailer_()` guards the cast with
-`cos_obj_node_is_dict(trailer_obj)`, but that predicate reports the type of the
-*referenced* object: `cos_obj_node_get_value_type()` forwards an
-`CosObjNodeType_Indirect` node to `cos_indirect_obj_node_get_type()`. So an
-indirect object wrapping a dictionary answers true, and the following
-`(CosDictObjNode *)` cast reinterprets a `CosIndirectObjNode`. Reading
-`->value` off it yields the object ID: for `1 0 obj` the two `unsigned int`s
-read back as the pointer `0x1`.
+`cos_xref_table_parser_parse_subsection_()` (`src/xref/CosXrefTableParser.c`)
+passes the subsection header's entry count straight to `cos_array_create()` as
+the capacity hint, with nothing checking it against how much input is actually
+left. Each entry occupies 20 bytes on disc, so the count is bounded by the file
+size and could be validated against it, or simply clamped -- the array grows on
+demand, and the read loop already stops when the input runs out.
 
-The `is_*` predicates are a trap for any caller that casts on the answer. Worth
-checking the other call sites, and considering whether "is or references a
-dict" and "is a dict" should be separate questions.
+libFuzzer reports it as `out-of-memory (malloc(4294967296))` against the
+default 2 GB limit.
 
 ### The obj-parser target fuzzes slowly
 

@@ -254,92 +254,68 @@ cos_obj_node_get_value_type(CosObjNode *obj)
     return CosObjNodeValueType_Unknown;
 }
 
-bool
-cos_obj_node_is_boolean(CosObjNode *obj)
-{
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
+/*
+ * Each of these reports the node's own type, so that a true answer means the
+ * node can be cast to the matching Cos<X>ObjNode.
+ *
+ * They deliberately do not report the type an indirect object or a reference
+ * resolves to: that answer would be true for a node whose layout is nothing
+ * like the one the caller is about to cast to. Use cos_obj_node_get_value_type()
+ * to ask what an object resolves to.
+ */
 
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Boolean;
+bool
+cos_obj_node_is_boolean(const CosObjNode *obj)
+{
+    return cos_obj_node_is_type(obj, CosObjNodeType_Boolean);
 }
 
 bool
-cos_obj_node_is_integer(CosObjNode *obj)
+cos_obj_node_is_integer(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
-
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Integer;
+    return cos_obj_node_is_type(obj, CosObjNodeType_Integer);
 }
 
 bool
-cos_obj_node_is_real(CosObjNode *obj)
+cos_obj_node_is_real(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
-
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Real;
+    return cos_obj_node_is_type(obj, CosObjNodeType_Real);
 }
 
 bool
-cos_obj_node_is_string(CosObjNode *obj)
+cos_obj_node_is_string(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
-
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_String;
+    return cos_obj_node_is_type(obj, CosObjNodeType_String);
 }
 
 bool
-cos_obj_node_is_name(CosObjNode *obj)
+cos_obj_node_is_name(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
-
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Name;
+    return cos_obj_node_is_type(obj, CosObjNodeType_Name);
 }
 
 bool
-cos_obj_node_is_array(CosObjNode *obj)
+cos_obj_node_is_array(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
-
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Array;
+    return cos_obj_node_is_type(obj, CosObjNodeType_Array);
 }
 
 bool
-cos_obj_node_is_dict(CosObjNode *obj)
+cos_obj_node_is_dict(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
-
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Dict;
+    return cos_obj_node_is_type(obj, CosObjNodeType_Dict);
 }
 
 bool
-cos_obj_node_is_stream(CosObjNode *obj)
+cos_obj_node_is_stream(const CosObjNode *obj)
 {
-    COS_API_PARAM_CHECK(obj != NULL);
-    if (!obj) {
-        return false;
-    }
+    return cos_obj_node_is_type(obj, CosObjNodeType_Stream);
+}
 
-    return cos_obj_node_get_value_type(obj) == CosObjNodeValueType_Stream;
+bool
+cos_obj_node_is_null(const CosObjNode *obj)
+{
+    return cos_obj_node_is_type(obj, CosObjNodeType_Null);
 }
 
 static void

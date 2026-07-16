@@ -92,10 +92,13 @@ cos_obj_node_is_type(const CosObjNode *obj,
                 CosObjNodeType type);
 
 /**
- * @brief Gets the value type of an object.
+ * Gets the value type that an object resolves to.
  *
- * For indirect objects, this function will return the value type of the
- * resolved object.
+ * For an indirect object or a reference, this reports the type of the object
+ * it holds, resolving the reference if it has not been resolved yet. The node
+ * itself is still an indirect object or a reference, so this answer must not
+ * be used to decide whether a cast is safe -- see the @c cos_obj_node_is_ *
+ * functions for that.
  *
  * @param obj The object.
  *
@@ -105,94 +108,108 @@ COS_API CosObjNodeValueType
 cos_obj_node_get_value_type(CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is a boolean.
+ * @name Concrete type tests
+ *
+ * Each of these reports the type of @p obj itself, so that a @c true answer
+ * means @p obj can be cast to the matching @c Cos<X>ObjNode.
+ *
+ * An indirect object or a reference is neither, whatever it resolves to: for
+ * those, @c cos_obj_node_is_dict() and friends return @c false. Resolve the
+ * object first if the referenced value is what you need.
+ */
+/** @{ **/
+
+/**
+ * Determines whether an object is a boolean.
  *
  * @param obj The object.
  *
  * @return @c true if the object is a boolean, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_boolean(CosObjNode *obj);
+cos_obj_node_is_boolean(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is an integer.
+ * Determines whether an object is an integer.
  *
  * @param obj The object.
  *
  * @return @c true if the object is an integer, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_integer(CosObjNode *obj);
+cos_obj_node_is_integer(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is a real number.
+ * Determines whether an object is a real number.
  *
  * @param obj The object.
  *
  * @return @c true if the object is a real number, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_real(CosObjNode *obj);
+cos_obj_node_is_real(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is a string.
+ * Determines whether an object is a string.
  *
  * @param obj The object.
  *
  * @return @c true if the object is a string, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_string(CosObjNode *obj);
+cos_obj_node_is_string(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is a name.
+ * Determines whether an object is a name.
  *
  * @param obj The object.
  *
  * @return @c true if the object is a name, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_name(CosObjNode *obj);
+cos_obj_node_is_name(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is an array.
+ * Determines whether an object is an array.
  *
  * @param obj The object.
  *
  * @return @c true if the object is an array, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_array(CosObjNode *obj);
+cos_obj_node_is_array(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is a dictionary.
+ * Determines whether an object is a dictionary.
  *
  * @param obj The object.
  *
  * @return @c true if the object is a dictionary, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_dict(CosObjNode *obj);
+cos_obj_node_is_dict(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is a stream.
+ * Determines whether an object is a stream.
  *
  * @param obj The object.
  *
  * @return @c true if the object is a stream, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_stream(CosObjNode *obj);
+cos_obj_node_is_stream(const CosObjNode *obj);
 
 /**
- * @brief Determines whether an object is null.
+ * Determines whether an object is null.
  *
  * @param obj The object.
  *
  * @return @c true if the object is null, @c false otherwise.
  */
 COS_API bool
-cos_obj_node_is_null(CosObjNode *obj);
+cos_obj_node_is_null(const CosObjNode *obj);
+
+/** @} **/
 
 /** @} **/
 
