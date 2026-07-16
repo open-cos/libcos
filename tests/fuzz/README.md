@@ -63,34 +63,38 @@ the lexer.
 
 ## Open findings
 
-Found by the first instrumented run, not yet fixed. Their reproducers are
-deliberately **not** in `corpus/`, because the replay test would fail. Add them
-when the fix lands.
+Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
+replay test would fail. Add them when the fix lands.
 
-### Dictionary keys are not type-checked
+### A trailer that is an indirect object is cast to a dictionary
 
-`<< 1 2 >>` is a heap-buffer-overflow (a plain segfault in an uninstrumented
-build):
+Reachable from the `parser` target; SEGV on a near-null address:
 
-    ==ERROR: AddressSanitizer: heap-buffer-overflow
-    SUMMARY: ... in cos_name_obj_node_get_hash CosNameObjNode.c:95
+    SUMMARY: AddressSanitizer: SEGV in cos_dict_hash_ CosDict.c
+      #1 cos_dict_get
+      #2 cos_dict_obj_node_get_value_with_string
+      #3 cos_parser_parse_xref_and_trailer_ CosParser.c
 
-`cos_handle_dict_entry_()` (`src/parse/CosObjParser.c`) asks for a key with
-`key_context.flags = CosObjParserFlag_NameObj`, but `cos_next_object_()`
-dispatches on the token type alone and never enforces the flag. Any non-name
-key therefore reaches `cos_dict_obj_node_key_hash_()`
-(`src/objects/CosDictObjNode.c:33`), which casts it to `CosNameObjNode *` and
-reads `->value` past the end of a smaller node such as `CosIntObjNode`.
+`cos_parser_parse_xref_and_trailer_()` guards the cast with
+`cos_obj_node_is_dict(trailer_obj)`, but that predicate reports the type of the
+*referenced* object: `cos_obj_node_get_value_type()` forwards an
+`CosObjNodeType_Indirect` node to `cos_indirect_obj_node_get_type()`. So an
+indirect object wrapping a dictionary answers true, and the following
+`(CosDictObjNode *)` cast reinterprets a `CosIndirectObjNode`. Reading
+`->value` off it yields the object ID: for `1 0 obj` the two `unsigned int`s
+read back as the pointer `0x1`.
 
-Fixing it means deciding what a non-name key should do: reject the whole
-dictionary, or skip the entry.
+The `is_*` predicates are a trap for any caller that casts on the answer. Worth
+checking the other call sites, and considering whether "is or references a
+dict" and "is a dict" should be separate questions.
 
-### Leak in the indirect-object definition path
+### The obj-parser target fuzzes slowly
 
-A dictionary parsed by `cos_handle_indirect_def_()`
-(`src/parse/CosObjParser.c:1064`) is not freed on an error path. Reachable from
-the `obj-parser` target; LeakSanitizer reports it as a direct leak from
-`cos_dict_obj_node_create`.
+Roughly 4 exec/s once the corpus is seeded, against ~50k/s for the tokenizer,
+so it explores very little. Individual seeds parse in single-digit
+milliseconds, so it is specific inputs the mutator finds -- a large `/Length`
+is the obvious suspect. `-max_len` bounds it somewhat. Unrelated to
+correctness, but it limits what this target can find.
 
 ## Should assertions be on while fuzzing?
 
