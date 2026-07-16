@@ -60,6 +60,17 @@ cos_reference_obj_node_free(CosReferenceObjNode *reference_obj)
     free(reference_obj);
 }
 
+CosObjID
+cos_reference_obj_node_get_id(const CosReferenceObjNode *reference_obj)
+{
+    COS_API_PARAM_CHECK(reference_obj != NULL);
+    if (COS_UNLIKELY(!reference_obj)) {
+        return CosObjID_Invalid;
+    }
+
+    return reference_obj->id;
+}
+
 CosObjNode *
 cos_reference_obj_node_get_value(CosReferenceObjNode *reference_obj)
 {

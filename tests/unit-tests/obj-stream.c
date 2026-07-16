@@ -15,6 +15,8 @@
 #include <libcos/objects/CosIndirectObjNode.h>
 #include <libcos/objects/CosNameObjNode.h>
 #include <libcos/objects/CosObjNode.h>
+#include <libcos/objects/CosObjStream.h>
+#include <libcos/objects/CosStreamObjNode.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -110,8 +112,8 @@ static const unsigned char obj_stream_pdf[] = {
     0x36, 0x0a, 0x25, 0x25, 0x45, 0x4f, 0x46,
 };
 
-// As obj_stream_pdf, but the object stream carries an /Extends entry (99 0 R), which is not yet
-// supported.
+// As obj_stream_pdf, but the object stream carries an /Extends entry (99 0 R). The chain is not
+// followed, so object 99 need not exist; the entry is exposed as metadata only.
 // obj_stream_extends_pdf (431 bytes)
 static const unsigned char obj_stream_extends_pdf[] = {
     0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x35, 0x0a, 0x32, 0x20, 0x30,
@@ -175,6 +177,33 @@ dict_type_is_(CosObjNode *dict_node,
     const CosString * const name = cos_name_obj_node_get_value((CosNameObjNode *)type_node);
     const char * const name_str = name ? cos_string_get_data(name) : NULL;
     return name_str && strcmp(name_str, expected_type) == 0;
+}
+
+// Creates an object stream from the /ObjStm container object at obj_number. The object stream
+// copies out the decoded bytes, so the container is released here; the caller owns the result.
+static CosObjStream * COS_Nullable
+make_obj_stream_(CosDoc *doc,
+                 unsigned int obj_number)
+{
+    CosError error = cos_error_none();
+    CosObjNode * const container = cos_doc_get_object(doc,
+                                                      cos_obj_id_make(obj_number, 0),
+                                                      &error);
+    if (!container) {
+        return NULL;
+    }
+
+    CosObjStream *obj_stream = NULL;
+    if (cos_obj_node_get_type(container) == CosObjNodeType_Indirect) {
+        CosObjNode * const value =
+            cos_indirect_obj_node_get_value((CosIndirectObjNode *)container);
+        if (value && cos_obj_node_is_stream(value)) {
+            obj_stream = cos_obj_stream_create((CosStreamObjNode *)value, doc, &error);
+        }
+    }
+
+    cos_obj_node_release(container);
+    return obj_stream;
 }
 
 static int
@@ -259,18 +288,50 @@ repeat_fetch_hits_cache(void)
 }
 
 static int
-extends_is_not_implemented(void)
+extends_is_exposed_as_metadata(void)
 {
     CosMemoryStream *stream = NULL;
     CosDoc *doc = parse_pdf_bytes_(obj_stream_extends_pdf, sizeof(obj_stream_extends_pdf), &stream);
     TEST_EXPECT(doc != NULL);
 
-    // The object stream carries /Extends, so resolving a compressed object fails cleanly.
+    // The object stream carries /Extends, which does not prevent its objects from resolving.
     CosError error = cos_error_none();
-    CosObjNode *obj = cos_doc_get_object(doc, cos_obj_id_make(1, 0), &error);
-    TEST_EXPECT(obj == NULL);
-    TEST_EXPECT(error.code == COS_ERROR_NOT_IMPLEMENTED);
+    CosObjNode *indirect = cos_doc_get_object(doc, cos_obj_id_make(1, 0), &error);
+    TEST_EXPECT(indirect != NULL);
+    TEST_EXPECT(error.code == COS_ERROR_NONE);
 
+    CosObjNode *value = cos_indirect_obj_node_get_value((CosIndirectObjNode *)indirect);
+    TEST_EXPECT(dict_type_is_(value, "Catalog"));
+
+    // The /Extends entry (99 0 R) is reported as metadata, without being followed.
+    CosObjStream *obj_stream = make_obj_stream_(doc, 2);
+    TEST_EXPECT(obj_stream != NULL);
+
+    const CosObjID extends_id = cos_obj_stream_get_extends(obj_stream);
+    TEST_EXPECT(cos_obj_id_is_valid(extends_id));
+    TEST_EXPECT(extends_id.obj_number == 99);
+    TEST_EXPECT(extends_id.gen_number == 0);
+
+    cos_obj_stream_destroy(obj_stream);
+    cos_obj_node_release(indirect);
+    cos_doc_destroy(doc);
+    cos_stream_close((CosStream *)stream);
+    return EXIT_SUCCESS;
+}
+
+static int
+missing_extends_is_invalid_id(void)
+{
+    CosMemoryStream *stream = NULL;
+    CosDoc *doc = parse_pdf_bytes_(obj_stream_pdf, sizeof(obj_stream_pdf), &stream);
+    TEST_EXPECT(doc != NULL);
+
+    // Object stream 2 has no /Extends entry, so no reference is reported.
+    CosObjStream *obj_stream = make_obj_stream_(doc, 2);
+    TEST_EXPECT(obj_stream != NULL);
+    TEST_EXPECT(!cos_obj_id_is_valid(cos_obj_stream_get_extends(obj_stream)));
+
+    cos_obj_stream_destroy(obj_stream);
     cos_doc_destroy(doc);
     cos_stream_close((CosStream *)stream);
     return EXIT_SUCCESS;
@@ -284,7 +345,8 @@ TEST_MAIN()
     TEST_EXPECT(resolves_compressed_pages() == EXIT_SUCCESS);
     TEST_EXPECT(resolves_compressed_root() == EXIT_SUCCESS);
     TEST_EXPECT(repeat_fetch_hits_cache() == EXIT_SUCCESS);
-    TEST_EXPECT(extends_is_not_implemented() == EXIT_SUCCESS);
+    TEST_EXPECT(extends_is_exposed_as_metadata() == EXIT_SUCCESS);
+    TEST_EXPECT(missing_extends_is_invalid_id() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

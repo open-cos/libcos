@@ -23,8 +23,12 @@ COS_ASSUME_NONNULL_BEGIN
  * @c obj / @c endobj wrapper; their generation number is always zero).
  *
  * A @c CosObjStream decodes such a stream once and provides random access to the objects it
- * contains by index. It does not follow the @c /Extends chain: an object stream carrying an
- * @c /Extends entry is rejected at creation with @c COS_ERROR_NOT_IMPLEMENTED .
+ * contains by index.
+ *
+ * An object stream may carry an @c /Extends entry referring to another object stream that it
+ * extends. This is treated as metadata only: it is exposed via @c cos_obj_stream_get_extends ,
+ * but the chain is not followed. Following it is unnecessary for resolving objects, because a
+ * cross-reference entry for a compressed object names the object stream containing it directly.
  */
 
 COS_API void
@@ -61,6 +65,22 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
  */
 COS_API size_t
 cos_obj_stream_get_count(const CosObjStream *obj_stream);
+
+/**
+ * Gets the reference to the object stream that @p obj_stream extends (its @c /Extends entry).
+ *
+ * The @c /Extends chain is not followed; the reference is reported as metadata for callers
+ * that want it.
+ *
+ * @param obj_stream The object stream.
+ *
+ * @return The referenced object stream's identifier, or @c CosObjID_Invalid if @p obj_stream
+ *         has no (valid) @c /Extends entry. Test with @c cos_obj_id_is_valid .
+ */
+COS_API CosObjID
+cos_obj_stream_get_extends(const CosObjStream *obj_stream)
+    COS_ATTR_PURE
+    COS_WARN_UNUSED_RESULT;
 
 /**
  * Gets the object number of the contained object at @p index.

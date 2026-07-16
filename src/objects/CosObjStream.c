@@ -18,6 +18,7 @@
 #include <libcos/objects/CosIntObjNode.h>
 #include <libcos/objects/CosNameObjNode.h>
 #include <libcos/objects/CosObjNode.h>
+#include <libcos/objects/CosReferenceObjNode.h>
 #include <libcos/objects/CosStreamObjNode.h>
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
 
@@ -42,6 +43,9 @@ struct CosObjStream {
 
     size_t count; // /N
     size_t first; // /First
+
+    // /Extends: the object stream this one extends, or CosObjID_Invalid if there is none.
+    CosObjID extends_id;
 
     CosObjStreamEntry *entries; // Owned; count elements.
 };
@@ -75,7 +79,7 @@ cos_obj_stream_dict_int_(CosDictObjNode *dict,
     return true;
 }
 
-// Verifies the stream dictionary declares /Type /ObjStm and does not carry /Extends.
+// Verifies the stream dictionary declares /Type /ObjStm.
 static bool
 cos_obj_stream_check_dict_(CosDictObjNode *dict,
                            CosError * COS_Nullable out_error)
@@ -99,17 +103,23 @@ cos_obj_stream_check_dict_(CosDictObjNode *dict,
         return false;
     }
 
-    // /Extends (object-stream chaining) is not yet supported.
+    return true;
+}
+
+// Reads the optional /Extends entry: the reference to the object stream that this one extends.
+// It is a hint only -- the chain is not followed -- so a missing or malformed entry is not an
+// error and yields CosObjID_Invalid.
+static CosObjID
+cos_obj_stream_read_extends_(CosDictObjNode *dict)
+{
     CosObjNode *extends_node = NULL;
-    if (cos_dict_obj_node_get_value_with_string(dict, "Extends", &extends_node, NULL) &&
-        extends_node != NULL) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_NOT_IMPLEMENTED,
-                                           "Object streams with /Extends are not yet supported"),
-                            out_error);
-        return false;
+    if (!cos_dict_obj_node_get_value_with_string(dict, "Extends", &extends_node, NULL) ||
+        !extends_node ||
+        cos_obj_node_get_type(extends_node) != CosObjNodeType_Reference) {
+        return CosObjID_Invalid;
     }
 
-    return true;
+    return cos_reference_obj_node_get_id((CosReferenceObjNode *)extends_node);
 }
 
 // Parses the @p count header pairs (object number and First-relative offset) into @p entries.
@@ -200,6 +210,8 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
         return NULL;
     }
 
+    const CosObjID extends_id = cos_obj_stream_read_extends_(dict);
+
     CosObjStream *obj_stream = NULL;
     CosData *decoded = NULL;
     CosStream *mem_stream = NULL;
@@ -279,6 +291,7 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
     obj_stream->obj_parser = obj_parser;
     obj_stream->count = count;
     obj_stream->first = first;
+    obj_stream->extends_id = extends_id;
     obj_stream->entries = entries;
 
     return obj_stream;
@@ -338,6 +351,17 @@ cos_obj_stream_get_count(const CosObjStream *obj_stream)
     }
 
     return obj_stream->count;
+}
+
+CosObjID
+cos_obj_stream_get_extends(const CosObjStream *obj_stream)
+{
+    COS_API_PARAM_CHECK(obj_stream != NULL);
+    if (COS_UNLIKELY(!obj_stream)) {
+        return CosObjID_Invalid;
+    }
+
+    return obj_stream->extends_id;
 }
 
 bool
