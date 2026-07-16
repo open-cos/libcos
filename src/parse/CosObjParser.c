@@ -881,7 +881,7 @@ cos_handle_stream_(CosObjParser *parser,
 
     CosStreamObjNode * const stream_obj = cos_stream_obj_node_create(dict_obj, encoded);
     if (!stream_obj) {
-        // cos_stream_obj_node_create closed `encoded` on failure.
+        // cos_stream_obj_node_create closed `encoded` but not `dict_obj`.
         goto failure;
     }
 
@@ -891,6 +891,9 @@ cos_handle_stream_(CosObjParser *parser,
     return (CosObjNode *)stream_obj;
 
 failure:
+    // Ownership of the dictionary transferred in with the call; only a
+    // successful cos_stream_obj_node_create() takes it over.
+    cos_obj_node_release((CosObjNode *)dict_obj);
 
     return NULL;
 }
