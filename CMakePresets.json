@@ -20,6 +20,16 @@
             "toolchainFile": "${sourceDir}/cmake/toolchains/llvm.cmake"
         },
         {
+            "name": "fuzz",
+            "displayName": "Fuzzing",
+            "description": "Build the fuzz targets with LibFuzzer and AddressSanitizer instrumentation.",
+            "inherits": "llvm",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "COS_BUILD_FOR_FUZZING": "ON"
+            }
+        },
+        {
             "name": "emscripten",
             "displayName": "Emscripten",
             "description": "Target WebAssembly with the Emscripten development environment.",

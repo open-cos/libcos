@@ -77,6 +77,8 @@ target_link_libraries(libcos-test
     PUBLIC libcos libcos++
 )
 
-if (COS_BUILD_FOR_FUZZING)
+# The fuzz targets are built by default so that they cannot rot, but the fuzzer
+# itself is never run by CTest. Building for fuzzing implies building them.
+if (COS_BUILD_FUZZERS OR COS_BUILD_FOR_FUZZING)
     add_subdirectory(fuzz)
 endif ()

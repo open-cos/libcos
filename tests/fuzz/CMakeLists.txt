@@ -1,27 +1,74 @@
+# The fuzz targets.
+#
+# By default these link a standalone main() (CosFuzzDriver.c) so that they build
+# with any compiler and can replay a corpus. When COS_BUILD_FOR_FUZZING is ON,
+# libFuzzer supplies main() instead and the library is instrumented.
 
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    message(STATUS "Fuzzing with LibFuzzer requires a Clang compiler. Fuzzer will not be built.")
-    return()
-endif ()
-
-add_executable(libcos-fuzz)
-
-target_sources(libcos-fuzz PRIVATE
-    fuzz.c
+set(LIBCOS_FUZZ_TARGETS
+    filter
+    obj-parser
+    parser
+    tokenizer
 )
 
-target_compile_features(libcos-fuzz PRIVATE
-    c_std_99
-)
+foreach (FUZZ_TARGET ${LIBCOS_FUZZ_TARGETS})
 
-target_compile_options(libcos-fuzz PRIVATE
-    -fsanitize=fuzzer
-)
+    set(FUZZ_TARGET_NAME libcos-fuzz-${FUZZ_TARGET})
 
-target_link_options(libcos-fuzz PRIVATE
-    -fsanitize=fuzzer
-)
+    add_executable(${FUZZ_TARGET_NAME}
+        ${FUZZ_TARGET}.c
+        CosFuzz.h
+    )
 
-target_link_libraries(libcos-fuzz PRIVATE
-    libcos
-)
+    target_compile_features(${FUZZ_TARGET_NAME} PRIVATE
+        c_std_99
+    )
+
+    target_include_directories(${FUZZ_TARGET_NAME}
+        PUBLIC ${PROJECT_SOURCE_DIR}/include/
+        PRIVATE ${PROJECT_SOURCE_DIR}/src/ ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    target_compile_definitions(${FUZZ_TARGET_NAME} PRIVATE
+        ${COS_COMPILE_DEFINITIONS}
+        $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
+    )
+
+    target_compile_options(${FUZZ_TARGET_NAME} PRIVATE
+        $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
+    )
+
+    target_link_libraries(${FUZZ_TARGET_NAME} PRIVATE
+        libcos
+    )
+
+    if (COS_BUILD_FOR_FUZZING)
+        # libcos already supplies -fsanitize=fuzzer-no-link and the coverage
+        # flags through its PUBLIC compile options; this links the driver that
+        # provides main() and feeds the target.
+        target_link_options(${FUZZ_TARGET_NAME} PRIVATE -fsanitize=fuzzer)
+    else ()
+        # Stands in for the main() that LibFuzzer would otherwise provide.
+        target_sources(${FUZZ_TARGET_NAME} PRIVATE CosFuzzDriver.c)
+    endif ()
+
+    # Replay the seed corpus as a regression test. This runs each seed exactly
+    # once and exits; it is not a fuzzing session. Both the standalone driver
+    # and libFuzzer accept the same file-argument form.
+    #
+    # CONFIGURE_DEPENDS re-globs when the directory changes, so that adding or
+    # removing a seed does not leave the test running a stale file list.
+    file(GLOB FUZZ_CORPUS_FILES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/corpus/${FUZZ_TARGET}/*"
+    )
+
+    if (FUZZ_CORPUS_FILES)
+        add_test(NAME fuzz/${FUZZ_TARGET}
+            COMMAND ${FUZZ_TARGET_NAME} ${FUZZ_CORPUS_FILES}
+        )
+        set_tests_properties(fuzz/${FUZZ_TARGET} PROPERTIES TIMEOUT 30)
+    else ()
+        message(STATUS "No fuzz corpus for '${FUZZ_TARGET}'; skipping its replay test.")
+    endif ()
+
+endforeach ()

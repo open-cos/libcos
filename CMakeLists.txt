@@ -16,6 +16,8 @@ include(ClangFormat)
 
 option(COS_BUILD_DOCUMENTATION "Build the documentation" OFF)
 
+option(COS_BUILD_FUZZERS "Build the fuzz targets (does not run them)" ON)
+
 option(COS_BUILD_FOR_FUZZING "Build for fuzzing" OFF)
 
 option(COS_USE_SYSTEM_ZLIB "Use the system zlib library for FlateDecode instead of the builtin implementation" OFF)
@@ -63,7 +65,7 @@ if (COS_BUILD_FOR_FUZZING)
     endif ()
     
     if (CMAKE_C_COMPILER_VERSION VERSION_LESS "6.0.0")
-        message(FATAL_ERROR "Clang ≥ 6.0.0 is required for fuzzing with LibFuzzer.")
+        message(FATAL_ERROR "Clang >= 6.0.0 is required for fuzzing with LibFuzzer.")
     endif ()
     
     add_flags(COS_COMPILE_DEFINITIONS
@@ -87,8 +89,11 @@ if (COS_BUILD_FOR_FUZZING)
         -fsanitize-coverage=edge,indirect-calls
     )
     
+    # Only the fuzz harnesses link the LibFuzzer driver (-fsanitize=fuzzer);
+    # it is added per-target in tests/fuzz/. Putting it here would give every
+    # executable that links libcos a second main().
     add_flags(COS_LINKER_FLAGS
-        -fsanitize=fuzzer
+        -fsanitize=address
     )
 
 endif ()
@@ -512,6 +517,12 @@ target_compile_definitions(libcos PRIVATE
 target_compile_options(libcos PRIVATE
     $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>
+)
+# PUBLIC: instrumentation (sanitizers, coverage) has to reach everything that
+# links libcos, not just libcos itself. Empty unless building for fuzzing.
+target_compile_options(libcos PUBLIC
+    $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS}>
 )
 target_link_options(libcos PUBLIC
     ${COS_LINKER_FLAGS}

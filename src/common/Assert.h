@@ -46,11 +46,20 @@
 
 #else
 
+    /*
+     * Assertions disabled: the condition is still evaluated and discarded, so
+     * that parameters used only by a check do not become unused.
+     */
+
     #define COS_ASSERT(condition, ...) ((void)0)
 
     #define COS_PARAMETER_ASSERT(condition) ((void)0)
 
     #define COS_PARAM_ASSERT_INTERNAL(condition) ((void)0)
+
+    #define COS_API_PARAM_CHECK(condition) ((void)(condition))
+
+    #define COS_IMPL_PARAM_CHECK(condition) ((void)(condition))
 
 #endif
 
