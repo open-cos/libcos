@@ -187,7 +187,10 @@ cos_dict_set(CosDict *dict,
         dict->count++;
     }
 
-    const CosDictReleaseCallback retain_key = dict->key_callbacks.retain;
+    void * const old_key = entry->key;
+    void * const old_value = entry->value;
+
+    const CosDictRetainCallback retain_key = dict->key_callbacks.retain;
     if (retain_key) {
         retain_key(key);
     }
@@ -198,6 +201,24 @@ cos_dict_set(CosDict *dict,
 
     entry->key = key;
     entry->value = value;
+
+    /*
+     * Replacing an entry: the dictionary owns what it holds, so the displaced
+     * key and value have to be released or they leak. Retaining the incoming
+     * pair first, and skipping the release when it aliases the outgoing one,
+     * keeps this safe for callbacks that transfer ownership (retain == NULL).
+     */
+    if (!is_new) {
+        const CosDictReleaseCallback release_key = dict->key_callbacks.release;
+        if (release_key && old_key && old_key != key) {
+            release_key(COS_nonnull_cast(old_key));
+        }
+
+        const CosDictReleaseCallback release_value = dict->value_callbacks.release;
+        if (release_value && old_value && old_value != value) {
+            release_value(COS_nonnull_cast(old_value));
+        }
+    }
 
     return true;
 }
