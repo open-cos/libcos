@@ -730,6 +730,20 @@ cos_handle_dict_entry_(CosObjParser *parser,
         goto failure;
     }
 
+    /*
+     * cos_next_object_() dispatches on the token type and does not enforce
+     * key_context's flags, so a malformed dictionary such as "<< 1 2 >>"
+     * yields a non-name key. The key callbacks in CosDictObjNode cast keys to
+     * CosNameObjNode without checking, so letting one through reads past the
+     * end of a smaller node. Reject it here, where the type is still known.
+     */
+    if (cos_obj_node_get_type(key) != CosObjNodeType_Name) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Dictionary key is not a name object"),
+                            out_error);
+        goto failure;
+    }
+
     value = cos_next_object_(parser,
                              &value_context,
                              out_error);
