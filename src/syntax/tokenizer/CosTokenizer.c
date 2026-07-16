@@ -345,6 +345,12 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                     cos_token_value_set_integer_number(&token->value,
                                                        number_value.value.integer);
                 }
+                else if (number_value.type == CosNumberType_LongInteger) {
+                    // Still an integer token; only the value is wider.
+                    token->type = CosToken_Type_Integer;
+                    cos_token_value_set_long_integer_number(&token->value,
+                                                            number_value.value.long_integer);
+                }
                 else {
                     token->type = CosToken_Type_Real;
                     cos_token_value_set_real_number(&token->value,
@@ -876,7 +882,14 @@ cos_read_number_(CosTokenizer *tokenizer,
     unsigned int fractional_digit_count = 0;
     double fractional_scale = 0.1;
 
-    int int_value = 0;
+    /*
+     * The magnitude of the integer part, accumulated unsigned; the sign is
+     * applied at the end so that COS_INT_MIN can be reached without overflow.
+     * Once the magnitude no longer fits, accumulation continues in real_value
+     * and the result is reported as a real.
+     */
+    long long int_value = 0;
+    bool int_overflowed = false;
     double real_value = 0.0;
 
     /*
@@ -895,7 +908,19 @@ cos_read_number_(CosTokenizer *tokenizer,
                 fractional_scale *= 0.1;
             }
             else {
-                int_value = (int_value * 10) + digit_value;
+                if (!int_overflowed &&
+                    int_value > (LLONG_MAX - digit_value) / 10) {
+                    // The integer part no longer fits; carry on as a real.
+                    int_overflowed = true;
+                    real_value = (double)int_value;
+                }
+
+                if (int_overflowed) {
+                    real_value = (real_value * 10.0) + digit_value;
+                }
+                else {
+                    int_value = (int_value * 10) + digit_value;
+                }
             }
         }
         else if ((c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) &&
@@ -906,7 +931,9 @@ cos_read_number_(CosTokenizer *tokenizer,
         else if (c == CosCharacterSet_FullStop && !has_decimal_point) {
             // Switch to reading the fractional part of a real number.
             has_decimal_point = true;
-            real_value = (double)int_value;
+            if (!int_overflowed) {
+                real_value = (double)int_value;
+            }
         }
         else {
             // This is the end of the number.
@@ -931,11 +958,19 @@ cos_read_number_(CosTokenizer *tokenizer,
         return false;
     }
 
-    if (has_decimal_point) {
+    if (has_decimal_point || int_overflowed) {
         *out_number = cos_number_make_real(is_negative ? -real_value : real_value);
     }
     else {
-        *out_number = cos_number_make_integer(is_negative ? -int_value : int_value);
+        // int_value holds the magnitude, so negating cannot overflow.
+        const long long signed_value = is_negative ? -int_value : int_value;
+
+        if (signed_value >= COS_INT_MIN && signed_value <= COS_INT_MAX) {
+            *out_number = cos_number_make_integer((int)signed_value);
+        }
+        else {
+            *out_number = cos_number_make_long_integer(signed_value);
+        }
     }
 
     return true;

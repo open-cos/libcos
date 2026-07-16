@@ -6,6 +6,7 @@
 
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/syntax/CosLimits.h>
 #include <libcos/syntax/tokenizer/CosToken.h>
 #include <libcos/syntax/tokenizer/CosTokenValue.h>
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
@@ -259,6 +260,119 @@ tokenize_fKeyword_RecognizedCorrectly(void)
     CosToken tok = {0};
     TEST_EXPECT(get_tokens_("f", &tok, 1));
     TEST_EXPECT(tok.type == CosToken_Type_F);
+    return EXIT_SUCCESS;
+}
+
+// MARK: - Integer range tests
+
+static int
+tokenize_intMax_IsInteger(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("2147483647", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    int value = 0;
+    TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
+    TEST_EXPECT(value == COS_INT_MAX);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_intMin_IsInteger(void)
+{
+    /*
+     * The magnitude 2147483648 does not fit an int, so it is accumulated
+     * unsigned and negated only once the sign is known.
+     */
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("-2147483648", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    int value = 0;
+    TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
+    TEST_EXPECT(value == COS_INT_MIN);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_pastIntMax_IsLongInteger(void)
+{
+    /* Past COS_INT_MAX the token stays an integer; only the value widens. */
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("2147483648", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+
+    int narrow = 0;
+    TEST_EXPECT(!cos_token_get_integer_value(&tok, &narrow));
+
+    long long value = 0;
+    TEST_EXPECT(cos_token_value_get_long_integer_number(&tok.value, &value));
+    TEST_EXPECT(value == 2147483648LL);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_negativePastIntMin_IsLongInteger(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("-2147483649", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    long long value = 0;
+    TEST_EXPECT(cos_token_value_get_long_integer_number(&tok.value, &value));
+    TEST_EXPECT(value == -2147483649LL);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_longLongMax_IsLongInteger(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("9223372036854775807", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    long long value = 0;
+    TEST_EXPECT(cos_token_value_get_long_integer_number(&tok.value, &value));
+    TEST_EXPECT(value == 9223372036854775807LL);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_pastLongLongMax_IsReal(void)
+{
+    /*
+     * Beyond the widest integer the value is reported as a real rather than
+     * wrapping.  Precision is lost, which is why the comparison is
+     * approximate.
+     */
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("99999999999999999999", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Real);
+    double value = 0.0;
+    TEST_EXPECT(cos_token_value_get_real_number(&tok.value, &value));
+    TEST_EXPECT(value > 9.9e19 && value < 1.1e20);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_negativePastLongLongMax_IsReal(void)
+{
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("-99999999999999999999", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Real);
+    double value = 0.0;
+    TEST_EXPECT(cos_token_value_get_real_number(&tok.value, &value));
+    TEST_EXPECT(value < -9.9e19 && value > -1.1e20);
+    return EXIT_SUCCESS;
+}
+
+static int
+tokenize_leadingZeros_DoNotOverflow(void)
+{
+    /* Many digits, small value: digit count alone must not force a real. */
+    CosToken tok = {0};
+    TEST_EXPECT(get_tokens_("00000000000000000042", &tok, 1));
+    TEST_EXPECT(tok.type == CosToken_Type_Integer);
+    int value = 0;
+    TEST_EXPECT(cos_token_get_integer_value(&tok, &value));
+    TEST_EXPECT(value == 42);
     return EXIT_SUCCESS;
 }
 
@@ -518,6 +632,16 @@ TEST_MAIN()
     TEST_EXPECT(tokenize_startxrefKeyword_RecognizedCorrectly() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_nKeyword_RecognizedCorrectly() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_fKeyword_RecognizedCorrectly() == EXIT_SUCCESS);
+
+    /* Integer range tests */
+    TEST_EXPECT(tokenize_intMax_IsInteger() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_intMin_IsInteger() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_pastIntMax_IsLongInteger() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_negativePastIntMin_IsLongInteger() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_longLongMax_IsLongInteger() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_pastLongLongMax_IsReal() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_negativePastLongLongMax_IsReal() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_leadingZeros_DoNotOverflow() == EXIT_SUCCESS);
 
     /* Bare delimiter tests */
     TEST_EXPECT(tokenize_bareCurlyBrackets_MakeProgress() == EXIT_SUCCESS);
