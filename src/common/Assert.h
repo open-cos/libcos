@@ -17,10 +17,6 @@
 
     #define COS_ASSERT(condition, ...) ((void)(condition))
 
-    #define COS_PARAMETER_ASSERT(condition) ((void)(condition))
-
-    #define COS_PARAM_ASSERT_INTERNAL(condition) ((void)(condition))
-
     #define COS_API_PARAM_CHECK(condition) ((void)(condition))
 
     #define COS_IMPL_PARAM_CHECK(condition) ((void)(condition))
@@ -29,14 +25,6 @@
 
     #define COS_ASSERT(condition, ...) \
         COS_ASSERT_FATAL_(condition, #condition, __VA_ARGS__)
-
-    #define COS_PARAMETER_ASSERT(condition) \
-        COS_ASSERT_(condition, #condition, "invalid parameter")
-
-    #pragma clang deprecated(COS_PARAMETER_ASSERT, "Use COS_API_PARAM_CHECK or COS_IMPL_PARAM_CHECK instead")
-
-    #define COS_PARAM_ASSERT_INTERNAL(condition) \
-        COS_ASSERT_FATAL_(condition, #condition, "invalid parameter")
 
     #define COS_API_PARAM_CHECK(condition) \
         COS_ASSERT_(condition, #condition, "invalid parameter")
@@ -47,15 +35,12 @@
 #else
 
     /*
-     * Assertions disabled: the condition is still evaluated and discarded, so
-     * that parameters used only by a check do not become unused.
+     * Assertions disabled: COS_ASSERT compiles out entirely. The parameter
+     * checks still evaluate and discard their condition, so a parameter
+     * validated only by a check does not become unused.
      */
 
     #define COS_ASSERT(condition, ...) ((void)0)
-
-    #define COS_PARAMETER_ASSERT(condition) ((void)0)
-
-    #define COS_PARAM_ASSERT_INTERNAL(condition) ((void)0)
 
     #define COS_API_PARAM_CHECK(condition) ((void)(condition))
 

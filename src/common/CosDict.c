@@ -272,8 +272,8 @@ bool
 cos_dict_grow_(CosDict *dict,
                size_t new_capacity)
 {
-    COS_PARAM_ASSERT_INTERNAL(dict != NULL);
-    COS_PARAM_ASSERT_INTERNAL(new_capacity > dict->capacity);
+    COS_IMPL_PARAM_CHECK(dict != NULL);
+    COS_IMPL_PARAM_CHECK(new_capacity > dict->capacity);
 
     CosDictEntry *new_entries = NULL;
 
@@ -323,8 +323,8 @@ cos_dict_find_entry_(const CosDict *dict,
                      void *key,
                      size_t hash)
 {
-    COS_PARAM_ASSERT_INTERNAL(dict != NULL);
-    COS_PARAM_ASSERT_INTERNAL(key != NULL);
+    COS_IMPL_PARAM_CHECK(dict != NULL);
+    COS_IMPL_PARAM_CHECK(key != NULL);
 
     const size_t capacity = dict->capacity;
     const CosDictEqualValuesCallback key_equal = dict->key_callbacks.equal;
@@ -347,8 +347,8 @@ size_t
 cos_dict_hash_(const CosDict *dict,
                void *key)
 {
-    COS_PARAM_ASSERT_INTERNAL(dict != NULL);
-    COS_PARAM_ASSERT_INTERNAL(key != NULL);
+    COS_IMPL_PARAM_CHECK(dict != NULL);
+    COS_IMPL_PARAM_CHECK(key != NULL);
 
     if (dict->key_callbacks.hash) {
         return dict->key_callbacks.hash(key);

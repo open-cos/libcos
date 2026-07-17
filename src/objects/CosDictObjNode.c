@@ -24,7 +24,7 @@ struct CosDictObjNode {
 static size_t
 cos_dict_obj_node_key_hash_(void *key)
 {
-    COS_PARAM_ASSERT_INTERNAL(key != NULL);
+    COS_IMPL_PARAM_CHECK(key != NULL);
 
     // The key is a pointer to a name object (pointer).
     CosNameObjNode * const name_obj = (CosNameObjNode *)key;
@@ -48,8 +48,8 @@ static bool
 cos_dict_obj_node_keys_equal_(void *key1,
                          void *key2)
 {
-    COS_PARAM_ASSERT_INTERNAL(key1 != NULL);
-    COS_PARAM_ASSERT_INTERNAL(key2 != NULL);
+    COS_IMPL_PARAM_CHECK(key1 != NULL);
+    COS_IMPL_PARAM_CHECK(key2 != NULL);
 
     CosNameObjNode * const name_obj1 = (CosNameObjNode *)key1;
     CosNameObjNode * const name_obj2 = (CosNameObjNode *)key2;
