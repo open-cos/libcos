@@ -202,6 +202,10 @@ cos_parser_load_object(CosParser *parser,
     cos_tokenizer_reset(parser->base.tokenizer);
     cos_obj_parser_flush_tokens_(parser->obj_parser);
 
+    // An xref entry points at an indirect object definition.
+    cos_obj_parser_set_top_level_flags_(parser->obj_parser,
+                                        CosObjParserFlag_IndirectObjDef);
+
     return cos_obj_parser_next_object(parser->obj_parser, out_error);
 }
 
@@ -484,6 +488,10 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
             // immediately after the "trailer" keyword, so the next object is the trailer dict.
             cos_obj_parser_flush_tokens_(parser->obj_parser);
 
+            // The trailer is a bare dictionary.
+            cos_obj_parser_set_top_level_flags_(parser->obj_parser,
+                                                CosObjParserFlag_DictObj);
+
             CosObjNode * const trailer_obj =
                 cos_obj_parser_next_object(parser->obj_parser, out_error);
             if (!trailer_obj) {
@@ -679,6 +687,10 @@ cos_parser_parse_xref_stream_at_(CosParser *parser,
     }
     cos_tokenizer_reset(parser->base.tokenizer);
     cos_obj_parser_flush_tokens_(parser->obj_parser);
+
+    // An xref stream is an indirect object definition.
+    cos_obj_parser_set_top_level_flags_(parser->obj_parser,
+                                        CosObjParserFlag_IndirectObjDef);
 
     CosObjNode * const obj = cos_obj_parser_next_object(parser->obj_parser, out_error);
     if (!obj) {

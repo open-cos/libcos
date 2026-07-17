@@ -41,35 +41,6 @@
 
 COS_ASSUME_NONNULL_BEGIN
 
-typedef enum CosObjParserFlags {
-    CosObjParserFlag_None = 0,
-
-    CosObjParserFlag_BoolObj = 1 << 0,
-    CosObjParserFlag_IntObj = 1 << 1,
-    CosObjParserFlag_RealObj = 1 << 2,
-    CosObjParserFlag_StringObj = 1 << 3,
-    CosObjParserFlag_NameObj = 1 << 4,
-    CosObjParserFlag_ArrayObj = 1 << 5,
-    CosObjParserFlag_DictObj = 1 << 6,
-    CosObjParserFlag_NullObj = 1 << 7,
-    CosObjParserFlag_StreamObj = 1 << 8,
-    CosObjParserFlag_IndirectObjDef = 1 << 9,
-    CosObjParserFlag_IndirectObjRef = 1 << 10,
-
-    CosObjParserFlag_NumberObj = (CosObjParserFlag_IntObj |
-                                  CosObjParserFlag_RealObj),
-
-    CosObjParserFlag_DirectObj = (CosObjParserFlag_BoolObj |
-                                  CosObjParserFlag_IntObj |
-                                  CosObjParserFlag_RealObj |
-                                  CosObjParserFlag_StringObj |
-                                  CosObjParserFlag_NameObj |
-                                  CosObjParserFlag_ArrayObj |
-                                  CosObjParserFlag_DictObj |
-                                  CosObjParserFlag_NullObj),
-
-} COS_ATTR_FLAG_ENUM CosObjParserFlags;
-
 typedef struct CosObjParserContext {
     CosObjParserFlags flags;
 } CosObjParserContext;
@@ -81,10 +52,20 @@ cos_parser_context_allows_(const CosObjParserContext *context,
     return (context->flags & flags) == flags;
 }
 
+/**
+ * The default top-level context: a bare direct object or an indirect object
+ * definition. Notably excludes indirect references, which are legal only as a
+ * direct-object value, never on their own.
+ */
+#define COS_OBJ_PARSER_DEFAULT_TOP_LEVEL_FLAGS \
+    (CosObjParserFlag_DirectObj | CosObjParserFlag_IndirectObjDef)
+
 struct CosObjParser {
     CosBaseParser base;
 
     CosObjNode * COS_Nullable peeked_node;
+
+    CosObjParserFlags top_level_flags;
 };
 
 static bool
@@ -100,10 +81,12 @@ cos_next_object_(CosObjParser *parser,
 
 static CosObjNode * COS_Nullable
 cos_parse_string_(CosObjParser *parser,
+                  const CosObjParserContext *context,
                   CosError * COS_Nullable error);
 
 static CosObjNode * COS_Nullable
 cos_parse_name_(CosObjParser *parser,
+                const CosObjParserContext *context,
                 CosError * COS_Nullable error)
     COS_OWNERSHIP_RETURNS;
 
@@ -164,6 +147,8 @@ cos_obj_parser_init_(CosObjParser * const self,
         return false;
     }
 
+    self->top_level_flags = COS_OBJ_PARSER_DEFAULT_TOP_LEVEL_FLAGS;
+
     return cos_base_parser_init(&(self->base),
                                 document,
                                 input_stream);
@@ -188,6 +173,8 @@ cos_obj_parser_create_with_tokenizer(CosDoc *document,
         free(parser);
         return NULL;
     }
+
+    parser->top_level_flags = COS_OBJ_PARSER_DEFAULT_TOP_LEVEL_FLAGS;
 
     return parser;
 }
@@ -220,6 +207,18 @@ cos_obj_parser_flush_tokens_(CosObjParser *parser)
     base->token_count = 0;
 }
 
+void
+cos_obj_parser_set_top_level_flags_(CosObjParser *parser,
+                                    CosObjParserFlags flags)
+{
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    if (!parser) {
+        return;
+    }
+
+    parser->top_level_flags = flags;
+}
+
 bool
 cos_obj_parser_has_next_object(CosObjParser *parser)
 {
@@ -247,7 +246,7 @@ cos_obj_parser_peek_object(CosObjParser *parser,
     }
 
     const CosObjParserContext context = {
-        .flags = CosObjParserFlag_IndirectObjDef,
+        .flags = parser->top_level_flags,
     };
 
     // Otherwise, parse the next obj and push it to the queue.
@@ -281,7 +280,7 @@ cos_obj_parser_next_object(CosObjParser *parser,
     }
 
     const CosObjParserContext context = {
-        .flags = CosObjParserFlag_IndirectObjDef,
+        .flags = parser->top_level_flags,
     };
 
     return cos_next_object_(parser,
@@ -364,11 +363,11 @@ cos_next_object_(CosObjParser *parser,
 
         case CosToken_Type_Literal_String:
         case CosToken_Type_Hex_String: {
-            return cos_parse_string_(parser, out_error);
+            return cos_parse_string_(parser, context, out_error);
         }
 
         case CosToken_Type_Name: {
-            return cos_parse_name_(parser, out_error);
+            return cos_parse_name_(parser, context, out_error);
         }
 
         case CosToken_Type_Integer: {
@@ -505,6 +504,14 @@ cos_handle_integer_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
 
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_IntObj)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid integer object"),
+                            out_error);
+        goto failure;
+    }
+
     CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Integer)) {
@@ -542,6 +549,14 @@ cos_handle_array_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
 
     CosArray *array = NULL;
+
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_ArrayObj)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid array object"),
+                            out_error);
+        goto failure;
+    }
 
     CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
@@ -645,10 +660,18 @@ cos_handle_dict_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
 
+    CosDict *new_dict = NULL;
+
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_DictObj)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid dictionary object"),
+                            out_error);
+        goto failure;
+    }
+
     // Consume the dictionary start token.
     cos_base_parser_advance(&(parser->base));
-
-    CosDict *new_dict = NULL;
 
     new_dict = cos_dict_create(&cos_dict_obj_node_key_callbacks,
                                &cos_dict_obj_node_value_callbacks,
@@ -731,11 +754,11 @@ cos_handle_dict_entry_(CosObjParser *parser,
     }
 
     /*
-     * cos_next_object_() dispatches on the token type and does not enforce
-     * key_context's flags, so a malformed dictionary such as "<< 1 2 >>"
-     * yields a non-name key. The key callbacks in CosDictObjNode cast keys to
-     * CosNameObjNode without checking, so letting one through reads past the
-     * end of a smaller node. Reject it here, where the type is still known.
+     * key_context permits only name objects, so a malformed dictionary such as
+     * "<< 1 2 >>" already fails in cos_next_object_() above. This check is
+     * belt-and-suspenders on the unchecked cast to CosNameObjNode in the
+     * CosDictObjNode key callbacks: a non-name key would read past the end of a
+     * smaller node, so reject it here too, where the type is still known.
      */
     if (cos_obj_node_get_type(key) != CosObjNodeType_Name) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
@@ -779,6 +802,14 @@ cos_handle_stream_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
     COS_IMPL_PARAM_CHECK(dict_obj != NULL);
+
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_StreamObj)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid stream object"),
+                            out_error);
+        goto failure;
+    }
 
     CosToken * const stream_token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!stream_token ||
@@ -908,8 +939,8 @@ cos_handle_bool_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
 
     // Is a boolean object allowed in the current context?
-    if (cos_parser_context_allows_(context,
-                                   CosObjParserFlag_BoolObj)) {
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_BoolObj)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid boolean object"),
                             out_error);
@@ -934,8 +965,8 @@ cos_handle_null_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(context != NULL);
 
     // Is a null object allowed in the current context?
-    if (cos_parser_context_allows_(context,
-                                   CosObjParserFlag_NullObj)) {
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_NullObj)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid null object"),
                             out_error);
@@ -1120,9 +1151,19 @@ failure:
 
 static CosObjNode *
 cos_parse_string_(CosObjParser *parser,
+                  const CosObjParserContext *context,
                   CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
+
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_StringObj)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid string object"),
+                            error);
+        goto failure;
+    }
 
     CosToken *token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
@@ -1153,9 +1194,19 @@ failure:
 
 static CosObjNode *
 cos_parse_name_(CosObjParser *parser,
+                const CosObjParserContext *context,
                 CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
+
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_NameObj)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
+                                           "Invalid name object"),
+                            error);
+        goto failure;
+    }
 
     CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
@@ -1186,9 +1237,10 @@ cos_handle_real_(CosObjParser *parser,
                  CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(context != NULL);
 
-    if (cos_parser_context_allows_(context,
-                                   CosObjParserFlag_RealObj)) {
+    if (!cos_parser_context_allows_(context,
+                                    CosObjParserFlag_RealObj)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid real object"),
                             error);

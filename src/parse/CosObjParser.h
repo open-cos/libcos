@@ -15,6 +15,41 @@ COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
 
 /**
+ * The object types permitted in a given parsing position.
+ *
+ * A context carries a bitmask of these flags; a handler rejects its object
+ * unless the corresponding flag is set. See @c cos_obj_parser_set_top_level_flags_.
+ */
+typedef enum CosObjParserFlags {
+    CosObjParserFlag_None = 0,
+
+    CosObjParserFlag_BoolObj = 1 << 0,
+    CosObjParserFlag_IntObj = 1 << 1,
+    CosObjParserFlag_RealObj = 1 << 2,
+    CosObjParserFlag_StringObj = 1 << 3,
+    CosObjParserFlag_NameObj = 1 << 4,
+    CosObjParserFlag_ArrayObj = 1 << 5,
+    CosObjParserFlag_DictObj = 1 << 6,
+    CosObjParserFlag_NullObj = 1 << 7,
+    CosObjParserFlag_StreamObj = 1 << 8,
+    CosObjParserFlag_IndirectObjDef = 1 << 9,
+    CosObjParserFlag_IndirectObjRef = 1 << 10,
+
+    CosObjParserFlag_NumberObj = (CosObjParserFlag_IntObj |
+                                  CosObjParserFlag_RealObj),
+
+    CosObjParserFlag_DirectObj = (CosObjParserFlag_BoolObj |
+                                  CosObjParserFlag_IntObj |
+                                  CosObjParserFlag_RealObj |
+                                  CosObjParserFlag_StringObj |
+                                  CosObjParserFlag_NameObj |
+                                  CosObjParserFlag_ArrayObj |
+                                  CosObjParserFlag_DictObj |
+                                  CosObjParserFlag_NullObj),
+
+} COS_ATTR_FLAG_ENUM CosObjParserFlags;
+
+/**
  * Frees an object parser.
  *
  * @param parser The object parser.
@@ -64,6 +99,23 @@ cos_obj_parser_create_with_tokenizer(CosDoc *document,
  */
 void
 cos_obj_parser_flush_tokens_(CosObjParser *parser);
+
+/**
+ * Sets the object types permitted for the top-level object.
+ *
+ * The parser applies these flags to the object returned by
+ * @c cos_obj_parser_peek_object and @c cos_obj_parser_next_object. Callers that
+ * expect a specific shape at the top level -- an indirect definition, a trailer
+ * dictionary, a bare direct object -- narrow the default with this before
+ * parsing. The default is @c CosObjParserFlag_DirectObj combined with
+ * @c CosObjParserFlag_IndirectObjDef.
+ *
+ * @param parser The object parser.
+ * @param flags The permitted object types.
+ */
+void
+cos_obj_parser_set_top_level_flags_(CosObjParser *parser,
+                                    CosObjParserFlags flags);
 
 /**
  * Checks if there is a next object or if the end of the input stream has been reached.

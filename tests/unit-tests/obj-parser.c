@@ -10,6 +10,8 @@
 #include <libcos/common/CosData.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/objects/CosArrayObjNode.h>
+#include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosObjNode.h>
 #include <libcos/objects/CosStringObjNode.h>
 
@@ -146,14 +148,10 @@ parse_mixedScalars_EachConsumedOnce(void)
 static int
 parse_nullInsideArray_Terminates(void)
 {
-    /*
-     * The array rejects the null and stops, leaving the token for the caller.
-     * It must still be consumed there rather than offered again forever.
-     */
+    /* The array accepts the null, then terminates cleanly at the closing "]". */
     CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
     const size_t count = parse_objects_("[ null ]", types);
-    TEST_EXPECT(count < MAX_OBJECTS);
-    TEST_EXPECT(count > 0);
+    TEST_EXPECT(count == 1);
     TEST_EXPECT(types[0] == CosObjNodeType_Array);
     return EXIT_SUCCESS;
 }
@@ -306,6 +304,185 @@ parse_stringsAreConsumed(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Context enforcement tests
+
+enum {
+    /** Returned by the container helpers when the first object is the wrong type. */
+    NOT_A_CONTAINER = (size_t)-1,
+};
+
+/**
+ * Parses the first object of @p input. If it is an array, copies each element's
+ * type into @p out_types (up to @c MAX_OBJECTS) and returns the element count;
+ * otherwise returns @c NOT_A_CONTAINER.
+ */
+static size_t
+parse_array_element_types_(const char *input,
+                           CosObjNodeType *out_types)
+{
+    CosDoc *doc = NULL;
+    CosMemoryStream *stream = NULL;
+    CosObjParser *parser = NULL;
+    size_t count = NOT_A_CONTAINER;
+
+    doc = cos_doc_create(NULL);
+    if (!doc) {
+        goto cleanup;
+    }
+    stream = cos_memory_stream_create_readonly(input, strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+    parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    if (!parser) {
+        goto cleanup;
+    }
+
+    CosObjNode * const obj = cos_obj_parser_next_object(parser, NULL);
+    if (obj) {
+        if (cos_obj_node_get_type(obj) == CosObjNodeType_Array) {
+            const CosArrayObjNode * const array = (const CosArrayObjNode *)obj;
+            count = cos_array_obj_node_get_count(array);
+            for (size_t i = 0; i < count && i < MAX_OBJECTS; i++) {
+                CosObjNode * const element = cos_array_obj_node_get_at(array, i, NULL);
+                out_types[i] = element ? cos_obj_node_get_type(element) : CosObjNodeType_Unknown;
+            }
+        }
+        cos_obj_node_release(obj);
+    }
+
+cleanup:
+    if (parser) {
+        cos_obj_parser_destroy(parser);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
+    return count;
+}
+
+/**
+ * Parses the first object of @p input and returns its entry count if it is a
+ * dictionary, or @c NOT_A_CONTAINER otherwise.
+ */
+static size_t
+parse_dict_entry_count_(const char *input)
+{
+    CosDoc *doc = NULL;
+    CosMemoryStream *stream = NULL;
+    CosObjParser *parser = NULL;
+    size_t count = NOT_A_CONTAINER;
+
+    doc = cos_doc_create(NULL);
+    if (!doc) {
+        goto cleanup;
+    }
+    stream = cos_memory_stream_create_readonly(input, strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+    parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    if (!parser) {
+        goto cleanup;
+    }
+
+    CosObjNode * const obj = cos_obj_parser_next_object(parser, NULL);
+    if (obj) {
+        if (cos_obj_node_get_type(obj) == CosObjNodeType_Dict) {
+            count = cos_dict_obj_node_get_count((const CosDictObjNode *)obj);
+        }
+        cos_obj_node_release(obj);
+    }
+
+cleanup:
+    if (parser) {
+        cos_obj_parser_destroy(parser);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
+    return count;
+}
+
+static int
+parse_realInArray_IsElement(void)
+{
+    /* The inverted context check used to reject this, leaving the array empty. */
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+    TEST_EXPECT(parse_array_element_types_("[ 3.14 ]", types) == 1);
+    TEST_EXPECT(types[0] == CosObjNodeType_Real);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_nullInArray_IsElement(void)
+{
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+    TEST_EXPECT(parse_array_element_types_("[ null ]", types) == 1);
+    TEST_EXPECT(types[0] == CosObjNodeType_Null);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_boolInArray_IsElement(void)
+{
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+    TEST_EXPECT(parse_array_element_types_("[ true ]", types) == 1);
+    TEST_EXPECT(types[0] == CosObjNodeType_Boolean);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_mixedArray_KeepsOrder(void)
+{
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+    TEST_EXPECT(parse_array_element_types_("[ 1 3.14 2 ]", types) == 3);
+    TEST_EXPECT(types[0] == CosObjNodeType_Integer);
+    TEST_EXPECT(types[1] == CosObjNodeType_Real);
+    TEST_EXPECT(types[2] == CosObjNodeType_Integer);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_referenceInArray_IsElement(void)
+{
+    /* A reference IS legal as an array element. */
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+    TEST_EXPECT(parse_array_element_types_("[ 1 0 R ]", types) == 1);
+    TEST_EXPECT(types[0] == CosObjNodeType_Reference);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_bareReference_DoesNotParse(void)
+{
+    /* A reference is NOT legal on its own at the top level -- only definitions. */
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+    TEST_EXPECT(parse_objects_("1 0 R", types) == 0);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_dictWithNameKey_HasEntry(void)
+{
+    TEST_EXPECT(parse_dict_entry_count_("<< /A 1 >>") == 1);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_dictWithNonNameKey_DropsEntry(void)
+{
+    /* A non-name key is rejected; the entry never enters the dictionary. */
+    TEST_EXPECT(parse_dict_entry_count_("<< 1 2 >>") == 0);
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Test driver
 
 TEST_MAIN()
@@ -326,6 +503,16 @@ TEST_MAIN()
     TEST_EXPECT(parse_stringWithEmbeddedNul_KeepsAllBytes() == EXIT_SUCCESS);
     TEST_EXPECT(parse_stringInArray_IsAnElement() == EXIT_SUCCESS);
     TEST_EXPECT(parse_stringsAreConsumed() == EXIT_SUCCESS);
+
+    /* Context enforcement */
+    TEST_EXPECT(parse_realInArray_IsElement() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_nullInArray_IsElement() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_boolInArray_IsElement() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_mixedArray_KeepsOrder() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_referenceInArray_IsElement() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_bareReference_DoesNotParse() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_dictWithNameKey_HasEntry() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_dictWithNonNameKey_DropsEntry() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

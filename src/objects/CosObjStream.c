@@ -255,6 +255,11 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
         goto failure;
     }
 
+    // An object stream holds bare direct objects: the integer header pairs and
+    // the compressed members. Never an indirect definition or reference.
+    cos_obj_parser_set_top_level_flags_(obj_parser,
+                                        CosObjParserFlag_DirectObj);
+
     if (count > 0) {
         entries = calloc(count, sizeof(CosObjStreamEntry));
         if (!entries) {
