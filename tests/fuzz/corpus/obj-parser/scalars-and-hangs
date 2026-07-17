@@ -1,0 +1,9 @@
+null
+true
+false
+null null null
+[ null ]
+[true false null]
+1 0 obj
+[ 1 [2 [3 null] >> ]
+endobj

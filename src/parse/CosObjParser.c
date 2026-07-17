@@ -916,6 +916,8 @@ cos_handle_bool_(CosObjParser *parser,
         goto failure;
     }
 
+    cos_base_parser_advance(&(parser->base));
+
     CosBoolObjNode * const bool_obj = cos_bool_obj_node_alloc(value);
     return (CosObjNode *)bool_obj;
 
@@ -939,6 +941,8 @@ cos_handle_null_(CosObjParser *parser,
                             out_error);
         goto failure;
     }
+
+    cos_base_parser_advance(&(parser->base));
 
     CosNullObjNode * const null_obj = cos_null_obj_node_get();
     return (CosObjNode *)null_obj;

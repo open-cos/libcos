@@ -21,6 +21,7 @@ set(LIBCOS_TESTS
     unit-tests/file-structure.c
     unit-tests/indirect-obj.c
     unit-tests/obj.c
+    unit-tests/obj-parser.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
