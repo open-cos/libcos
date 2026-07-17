@@ -20,6 +20,10 @@ option(COS_BUILD_FUZZERS "Build the fuzz targets (does not run them)" ON)
 
 option(COS_BUILD_FOR_FUZZING "Build for fuzzing" OFF)
 
+set(COS_FUZZING_ENGINE "libfuzzer" CACHE STRING
+    "Fuzzing engine to build the harnesses against when COS_BUILD_FOR_FUZZING is ON (libfuzzer or afl)")
+set_property(CACHE COS_FUZZING_ENGINE PROPERTY STRINGS libfuzzer afl)
+
 option(COS_USE_SYSTEM_ZLIB "Use the system zlib library for FlateDecode instead of the builtin implementation" OFF)
 
 cmake_dependent_option(COS_DETERMINISTIC_FUZZING "Enable deterministic fuzzing" OFF
@@ -58,14 +62,18 @@ endif ()
 
 if (COS_BUILD_FOR_FUZZING)
     
-    if (NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
-        message(FATAL_ERROR "Fuzzing is only supported with Clang.")
-    else ()
-        message(STATUS "Building for fuzzing with LibFuzzer.")
+    if (NOT COS_FUZZING_ENGINE MATCHES "^(libfuzzer|afl)$")
+        message(FATAL_ERROR "COS_FUZZING_ENGINE must be 'libfuzzer' or 'afl', got '${COS_FUZZING_ENGINE}'.")
     endif ()
-    
+
+    if (NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        message(FATAL_ERROR "Fuzzing is only supported with Clang (the afl engine uses afl-clang-lto/afl-clang-fast).")
+    else ()
+        message(STATUS "Building for fuzzing with the '${COS_FUZZING_ENGINE}' engine.")
+    endif ()
+
     if (CMAKE_C_COMPILER_VERSION VERSION_LESS "6.0.0")
-        message(FATAL_ERROR "Clang >= 6.0.0 is required for fuzzing with LibFuzzer.")
+        message(FATAL_ERROR "Clang >= 6.0.0 is required for fuzzing.")
     endif ()
     
     # Assertions stay ON while fuzzing: a failed COS_IMPL_PARAM_CHECK aborts and
@@ -83,14 +91,27 @@ if (COS_BUILD_FOR_FUZZING)
         )
     endif ()
     
-    add_flags(COS_C_FLAGS
-        -fsanitize=address,fuzzer-no-link
-        -fsanitize-coverage=edge,indirect-calls
-    )
-    add_flags(COS_CXX_FLAGS
-        -fsanitize=address,fuzzer-no-link
-        -fsanitize-coverage=edge,indirect-calls
-    )
+    if (COS_FUZZING_ENGINE STREQUAL "libfuzzer")
+        # libFuzzer supplies SanitizerCoverage; fuzzer-no-link keeps its main()
+        # out of the library (the harnesses add -fsanitize=fuzzer themselves).
+        add_flags(COS_C_FLAGS
+            -fsanitize=address,fuzzer-no-link
+            -fsanitize-coverage=edge,indirect-calls
+        )
+        add_flags(COS_CXX_FLAGS
+            -fsanitize=address,fuzzer-no-link
+            -fsanitize-coverage=edge,indirect-calls
+        )
+    else () # afl
+        # afl-clang-lto/afl-clang-fast (the afl toolchain) inject AFL's own
+        # coverage instrumentation; only AddressSanitizer needs adding here.
+        add_flags(COS_C_FLAGS
+            -fsanitize=address
+        )
+        add_flags(COS_CXX_FLAGS
+            -fsanitize=address
+        )
+    endif ()
     
     # Only the fuzz harnesses link the LibFuzzer driver (-fsanitize=fuzzer);
     # it is added per-target in tests/fuzz/. Putting it here would give every

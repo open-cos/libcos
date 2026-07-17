@@ -42,6 +42,52 @@ the repository.
 
 `-DCOS_BUILD_FUZZERS=OFF` skips the targets entirely.
 
+## Run targets and engines
+
+An instrumented build adds a `fuzz_<target>` target per harness that launches a
+session with the corpus, dictionary, and artifact paths already wired. The
+engine is chosen at configure time by `COS_FUZZING_ENGINE`; the harness is
+otherwise identical (one `LLVMFuzzerTestOneInput`, the engine linked in like
+OSS-Fuzz's `$LIB_FUZZING_ENGINE`):
+
+```sh
+cmake --preset fuzz -B cmake-build-fuzz          # libFuzzer (default engine)
+cmake --build cmake-build-fuzz --target fuzz_parser
+```
+
+Findings land under the build tree, per engine and target:
+
+```
+<build>/fuzzing/
+  corpus/libfuzzer/<target>/   # libFuzzer live corpus
+  corpus/afl/<target>/         # AFL output dir (queue/ crashes/ hangs/)
+  crashes/libfuzzer/<target>/  # libFuzzer crash/timeout artifacts
+```
+
+These are build-tree artifacts, not committed. Promoting interesting finds back
+into `corpus/<target>/` (corpus minimization / merge) is a manual, future step.
+
+### AFL++
+
+The `afl` preset builds the same harnesses with AFL++ instrumentation, via
+`cmake/toolchains/afl.cmake` (which selects `afl-clang-lto`/`afl-clang-fast`):
+
+```sh
+cmake --preset afl -B cmake-build-afl
+cmake --build cmake-build-afl --target fuzz_parser          # fresh run
+cmake --build cmake-build-afl --target fuzz_parser_resume   # resume
+```
+
+The AFL `fuzz_<target>` and `fuzz_<target>_resume` targets appear only when
+`afl-fuzz` is found. AFL manages its own `queue/`, `crashes/`, and `hangs/`
+inside its output dir; do not pre-create it.
+
+### Tuning
+
+`FUZZ_TIMEOUT_S` / `FUZZ_MAX_TOTAL_TIME` (libFuzzer), `FUZZ_TIMEOUT_MS` (AFL),
+and `FUZZ_DICT_PATH` are cache variables, e.g. `-DFUZZ_MAX_TOTAL_TIME=60` caps a
+CI run.
+
 ## Corpus
 
 `corpus/<target>/` holds seed inputs, replayed by CTest as `fuzz/<target>`:

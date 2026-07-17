@@ -2,7 +2,11 @@
 #
 # By default these link a standalone main() (CosFuzzDriver.c) so that they build
 # with any compiler and can replay a corpus. When COS_BUILD_FOR_FUZZING is ON,
-# libFuzzer supplies main() instead and the library is instrumented.
+# the selected engine (COS_FUZZING_ENGINE) supplies main() instead and the
+# library is instrumented.
+
+# Shared corpus/dictionary paths and the fuzz_<name> run targets.
+include(FuzzTargets)
 
 set(LIBCOS_FUZZ_TARGETS
     filter
@@ -42,13 +46,17 @@ foreach (FUZZ_TARGET ${LIBCOS_FUZZ_TARGETS})
         libcos
     )
 
-    if (COS_BUILD_FOR_FUZZING)
+    # Link the driver that provides main() -- the $LIB_FUZZING_ENGINE analog.
+    if (COS_BUILD_FOR_FUZZING AND COS_FUZZING_ENGINE STREQUAL "libfuzzer")
         # libcos already supplies -fsanitize=fuzzer-no-link and the coverage
-        # flags through its PUBLIC compile options; this links the driver that
-        # provides main() and feeds the target.
+        # flags through its PUBLIC compile options; this links libFuzzer's main().
         target_link_options(${FUZZ_TARGET_NAME} PRIVATE -fsanitize=fuzzer)
+    elseif (COS_BUILD_FOR_FUZZING AND COS_FUZZING_ENGINE STREQUAL "afl" AND AFL_DRIVER_LIBRARY)
+        # AFL++'s persistent driver (fork-server main loop), when it is installed.
+        target_link_libraries(${FUZZ_TARGET_NAME} PRIVATE ${AFL_DRIVER_LIBRARY})
     else ()
-        # Stands in for the main() that LibFuzzer would otherwise provide.
+        # Standalone main(): corpus replay, and the AFL fallback -- it reads the
+        # file AFL passes as @@.
         target_sources(${FUZZ_TARGET_NAME} PRIVATE CosFuzzDriver.c)
     endif ()
 
@@ -70,5 +78,7 @@ foreach (FUZZ_TARGET ${LIBCOS_FUZZ_TARGETS})
     else ()
         message(STATUS "No fuzz corpus for '${FUZZ_TARGET}'; skipping its replay test.")
     endif ()
+
+    cos_add_fuzz_run_targets(${FUZZ_TARGET})
 
 endforeach ()
