@@ -28,7 +28,7 @@
 #elif !defined(COS_DISABLE_ASSERTIONS)
 
     #define COS_ASSERT(condition, ...) \
-        COS_ASSERT_(condition, #condition, __VA_ARGS__)
+        COS_ASSERT_FATAL_(condition, #condition, __VA_ARGS__)
 
     #define COS_PARAMETER_ASSERT(condition) \
         COS_ASSERT_(condition, #condition, "invalid parameter")

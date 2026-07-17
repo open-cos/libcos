@@ -82,7 +82,7 @@ crashes, assertion faults, and/or memory leaks", and "most of the findings from
 AFL have been assert() statements where the conditional was false under obscure
 circumstances".
 
-Note that `COS_ASSERT` is deliberately non-fatal here (it logs and continues),
-so an internal-invariant violation surfaces during fuzzing only if it leads to
-an ASan-visible fault. Precondition checks (`COS_IMPL_PARAM_CHECK`) are fatal and
-do surface directly.
+Both `COS_ASSERT` (internal invariants) and `COS_IMPL_PARAM_CHECK` (internal
+preconditions) abort, so libFuzzer surfaces either directly. Only
+`COS_API_PARAM_CHECK` -- public-API argument validation -- logs and continues,
+since the public function reports the error to its caller instead.
