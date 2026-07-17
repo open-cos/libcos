@@ -10,9 +10,13 @@
 /*
  * COS_ASSERT(condition, message, ...)
  *
- * The message is required: a short description of the invariant, optionally a
- * printf-style format string with trailing arguments. Omitting it is a compile
- * error at the call site rather than a confusing diagnostic from the handler.
+ * The message -- a short description of the invariant, optionally a printf-style
+ * format string with trailing arguments -- is passed as the leading variadic
+ * argument, not a named parameter. A named `message` would need `, ##__VA_ARGS__`
+ * comma elision to drop the empty tail when there are no format arguments, which
+ * is a GNU extension MSVC does not support; portability across compilers is a
+ * project goal, so keep the message inside the variadic. Omitting it entirely
+ * still fails to compile, just without a message naming the call site.
  */
 
 #if defined(COS_BUILD_COVERAGE)
@@ -23,7 +27,7 @@
      * Modelled after SQLite's coverage testing approach.
      */
 
-    #define COS_ASSERT(condition, message, ...) ((void)(condition))
+    #define COS_ASSERT(condition, ...) ((void)(condition))
 
     #define COS_API_PARAM_CHECK(condition) ((void)(condition))
 
@@ -31,8 +35,8 @@
 
 #elif !defined(COS_DISABLE_ASSERTIONS)
 
-    #define COS_ASSERT(condition, message, ...) \
-        COS_ASSERT_FATAL_(condition, #condition, message, ##__VA_ARGS__)
+    #define COS_ASSERT(condition, ...) \
+        COS_ASSERT_FATAL_(condition, #condition, __VA_ARGS__)
 
     #define COS_API_PARAM_CHECK(condition) \
         COS_ASSERT_(condition, #condition, "invalid parameter")
@@ -48,7 +52,7 @@
      * validated only by a check does not become unused.
      */
 
-    #define COS_ASSERT(condition, message, ...) ((void)0)
+    #define COS_ASSERT(condition, ...) ((void)0)
 
     #define COS_API_PARAM_CHECK(condition) ((void)(condition))
 
