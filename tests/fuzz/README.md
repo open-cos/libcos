@@ -68,18 +68,21 @@ replay test would fail. Add them when the fix lands.
 
 None outstanding.
 
-## Should assertions be on while fuzzing?
+## Assertions while fuzzing
 
-Currently no: `COS_BUILD_FOR_FUZZING` also defines `COS_DISABLE_ASSERTIONS=1`,
-making every `COS_IMPL_PARAM_CHECK` a no-op, so only ASan-visible faults are
-reported.
+Yes: `COS_BUILD_FOR_FUZZING` leaves assertions on, so a failed
+`COS_IMPL_PARAM_CHECK` aborts and libFuzzer reports it as a finding.
 
-This is worth revisiting, because the SQLite precedent it appears to follow
-actually points the other way. SQLite disables assertions for its *coverage*
-build -- which is what `src/common/Assert.h` cites SQLite for, and models
-correctly. For *fuzzing*, SQLite does the opposite: its OSS-Fuzz build script
-compiles with `-DSQLITE_DEBUG=1` and never defines `NDEBUG`, so assertions are
-on. Their rationale, from "How SQLite Is Tested": fuzzcheck "is looking for
+This follows SQLite. It disables assertions only for its *coverage* build --
+which is what `src/common/Assert.h` cites SQLite for, and models correctly via
+`COS_BUILD_COVERAGE`. For *fuzzing*, SQLite does the opposite: its OSS-Fuzz build
+script compiles with `-DSQLITE_DEBUG=1` and never defines `NDEBUG`, so assertions
+are on. Their rationale, from "How SQLite Is Tested": fuzzcheck "is looking for
 crashes, assertion faults, and/or memory leaks", and "most of the findings from
 AFL have been assert() statements where the conditional was false under obscure
 circumstances".
+
+Note that `COS_ASSERT` is deliberately non-fatal here (it logs and continues),
+so an internal-invariant violation surfaces during fuzzing only if it leads to
+an ASan-visible fault. Precondition checks (`COS_IMPL_PARAM_CHECK`) are fatal and
+do surface directly.

@@ -68,9 +68,12 @@ if (COS_BUILD_FOR_FUZZING)
         message(FATAL_ERROR "Clang >= 6.0.0 is required for fuzzing with LibFuzzer.")
     endif ()
     
+    # Assertions stay ON while fuzzing: a failed COS_IMPL_PARAM_CHECK aborts and
+    # libFuzzer reports it as a finding. This mirrors SQLite, whose OSS-Fuzz build
+    # keeps assertions on (-DSQLITE_DEBUG=1); assertions are disabled only for a
+    # coverage build (see COS_BUILD_COVERAGE in src/common/Assert.h).
     add_flags(COS_COMPILE_DEFINITIONS
         COS_BUILD_FOR_FUZZING=1
-        COS_DISABLE_ASSERTIONS=1
     )
     
     if (COS_DETERMINISTIC_FUZZING)
