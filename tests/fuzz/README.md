@@ -66,20 +66,9 @@ the lexer.
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
 replay test would fail. Add them when the fix lands.
 
-These are correctness bugs rather than crashes, so no fuzz target will catch
-them: the parser quietly returns the wrong answer instead of falling over.
-Both were found while fixing the obj-parser hang.
-
-### Literal and hex strings never parse
-
-`cos_parse_string_()` (`src/parse/CosObjParser.c`) guards with
-
-    token->type != CosToken_Type_Literal_String ||
-    token->type != CosToken_Type_Hex_String
-
-which is true for every token, since no token is both. The operator wants to
-be `&&`. Every string fails to parse, so `[ (s) ]` yields an array of no
-elements rather than one.
+A correctness bug rather than a crash, so no fuzz target will catch it: the
+parser quietly returns the wrong answer instead of falling over. Found while
+fixing the obj-parser hang.
 
 ### Three context checks are inverted
 

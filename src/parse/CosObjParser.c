@@ -1126,8 +1126,8 @@ cos_parse_string_(CosObjParser *parser,
 
     CosToken *token = cos_base_parser_get_current_token(&(parser->base));
     if (COS_UNLIKELY(!token ||
-                     token->type != CosToken_Type_Literal_String ||
-                     token->type != CosToken_Type_Hex_String)) {
+                     (token->type != CosToken_Type_Literal_String &&
+                      token->type != CosToken_Type_Hex_String))) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Failed to parse string object"),
                             error);
