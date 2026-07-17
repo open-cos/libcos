@@ -199,6 +199,13 @@ cos_obj_parser_flush_tokens_(CosObjParser *parser)
         return;
     }
 
+    // A peeked node was parsed at the previous stream position; a flush follows
+    // a seek, so it is stale. Drop it along with the buffered tokens.
+    if (parser->peeked_node) {
+        cos_obj_node_release(COS_nonnull_cast(parser->peeked_node));
+        parser->peeked_node = NULL;
+    }
+
     CosBaseParser * const base = &parser->base;
     for (size_t i = 0; i < base->token_count; i++) {
         cos_token_reset(&(base->token_buffer[i]));

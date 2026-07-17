@@ -93,7 +93,8 @@ cos_obj_parser_create_with_tokenizer(CosDoc *document,
  * @brief Flushes the token buffer of the object parser.
  *
  * Call this after seeking the stream and resetting the tokenizer, to discard
- * any tokens that were buffered from the previous stream position.
+ * any tokens that were buffered from the previous stream position, along with a
+ * peeked object parsed there.
  *
  * @param parser The object parser.
  */

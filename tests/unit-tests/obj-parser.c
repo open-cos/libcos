@@ -11,9 +11,11 @@
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/objects/CosArrayObjNode.h>
+#include <libcos/objects/CosBoolObjNode.h>
 #include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosObjNode.h>
 #include <libcos/objects/CosStringObjNode.h>
+#include <libcos/syntax/tokenizer/CosTokenizer.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -483,6 +485,81 @@ parse_dictWithNonNameKey_DropsEntry(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Flush tests
+
+static int
+flush_DiscardsPeekedObject(void)
+{
+    /*
+     * A peeked object belongs to the stream position it was parsed at. After a
+     * seek and tokenizer reset, flushing must drop it, or next_object() would
+     * hand back the stale peek instead of parsing at the new position. Input is
+     * "true" at offset 0 and "false" at offset 5.
+     */
+    CosDoc *doc = NULL;
+    CosMemoryStream *stream = NULL;
+    CosTokenizer *tokenizer = NULL;
+    CosObjParser *parser = NULL;
+    int result = EXIT_FAILURE;
+
+    doc = cos_doc_create(NULL);
+    stream = cos_memory_stream_create_readonly("true false", strlen("true false"));
+    if (!doc || !stream) {
+        goto cleanup;
+    }
+
+    tokenizer = cos_tokenizer_create((CosStream *)stream);
+    if (!tokenizer) {
+        goto cleanup;
+    }
+
+    parser = cos_obj_parser_create_with_tokenizer(doc, tokenizer);
+    if (!parser) {
+        goto cleanup;
+    }
+
+    // Peek the first object ("true") at offset 0; the parser caches it.
+    CosObjNode * const peeked = cos_obj_parser_peek_object(parser, NULL);
+    if (!peeked ||
+        cos_obj_node_get_type(peeked) != CosObjNodeType_Boolean ||
+        cos_bool_obj_node_get_value((CosBoolObjNode *)peeked) != true) {
+        goto cleanup;
+    }
+
+    // Reposition to "false" and flush, exactly as cos_parser_load_object does.
+    if (!cos_stream_seek((CosStream *)stream, 5, CosStreamOffsetWhence_Set, NULL)) {
+        goto cleanup;
+    }
+    cos_tokenizer_reset(tokenizer);
+    cos_obj_parser_flush_tokens_(parser);
+
+    // Without the flush fix this returns the stale "true".
+    CosObjNode * const obj = cos_obj_parser_next_object(parser, NULL);
+    if (obj &&
+        cos_obj_node_get_type(obj) == CosObjNodeType_Boolean &&
+        cos_bool_obj_node_get_value((CosBoolObjNode *)obj) == false) {
+        result = EXIT_SUCCESS;
+    }
+    if (obj) {
+        cos_obj_node_release(obj);
+    }
+
+cleanup:
+    if (parser) {
+        cos_obj_parser_destroy(parser);
+    }
+    if (tokenizer) {
+        cos_tokenizer_destroy(tokenizer);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
+    return result;
+}
+
 // MARK: - Test driver
 
 TEST_MAIN()
@@ -513,6 +590,9 @@ TEST_MAIN()
     TEST_EXPECT(parse_bareReference_DoesNotParse() == EXIT_SUCCESS);
     TEST_EXPECT(parse_dictWithNameKey_HasEntry() == EXIT_SUCCESS);
     TEST_EXPECT(parse_dictWithNonNameKey_DropsEntry() == EXIT_SUCCESS);
+
+    /* Flush */
+    TEST_EXPECT(flush_DiscardsPeekedObject() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }
