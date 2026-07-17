@@ -66,13 +66,40 @@ the lexer.
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
 replay test would fail. Add them when the fix lands.
 
-### The obj-parser target fuzzes slowly
+These are correctness bugs rather than crashes, so no fuzz target will catch
+them: the parser quietly returns the wrong answer instead of falling over.
+Both were found while fixing the obj-parser hang.
 
-Roughly 4 exec/s once the corpus is seeded, against ~50k/s for the tokenizer,
-so it explores very little. Individual seeds parse in single-digit
-milliseconds, so it is specific inputs the mutator finds -- a large `/Length`
-is the obvious suspect. `-max_len` bounds it somewhat. Unrelated to
-correctness, but it limits what this target can find.
+### Literal and hex strings never parse
+
+`cos_parse_string_()` (`src/parse/CosObjParser.c`) guards with
+
+    token->type != CosToken_Type_Literal_String ||
+    token->type != CosToken_Type_Hex_String
+
+which is true for every token, since no token is both. The operator wants to
+be `&&`. Every string fails to parse, so `[ (s) ]` yields an array of no
+elements rather than one.
+
+### Three context checks are inverted
+
+`cos_handle_bool_()`, `cos_handle_null_()` and `cos_handle_real_()` reject the
+object when the context *allows* it:
+
+    if (cos_parser_context_allows_(context, CosObjParserFlag_RealObj)) {
+        ... "Invalid real object" ...
+    }
+
+`cos_handle_indirect_ref_()` and `cos_handle_indirect_def_()` have the `!` that
+these are missing. The effect is silent data loss wherever the type is legal:
+an array element context allows all the direct types, so `[ 3.14 ]` and
+`[ null ]` both come back empty.
+
+Worth settling what the context flags are for at the same time. They are only
+consulted by five of the handlers -- dictionaries, arrays, names and integers
+ignore them entirely -- so the top-level context of `CosObjParserFlag_Indirect-
+ObjDef` is not enforced today. Correcting the polarity without deciding that
+question would start rejecting bare top-level values that currently parse.
 
 ## Should assertions be on while fuzzing?
 
