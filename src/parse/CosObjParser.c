@@ -35,7 +35,6 @@
 #include <libcos/syntax/tokenizer/CosTokenValue.h>
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1127,7 +1126,9 @@ cos_handle_indirect_def_(CosObjParser *parser,
         cos_base_parser_advance(&(parser->base));
     }
     else {
-        printf("Expected endobj token\n");
+        // A missing endobj is tolerated: the object was already parsed.
+        COS_LOG_WARNING(cos_log_context_get_default(),
+                        "Expected endobj token");
     }
 
     CosIndirectObjNode * const indirect_obj = cos_indirect_obj_node_alloc(obj_id,
