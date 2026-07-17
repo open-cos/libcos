@@ -7,6 +7,14 @@
 
 #include <libcos/common/CosDefines.h>
 
+/*
+ * COS_ASSERT(condition, message, ...)
+ *
+ * The message is required: a short description of the invariant, optionally a
+ * printf-style format string with trailing arguments. Omitting it is a compile
+ * error at the call site rather than a confusing diagnostic from the handler.
+ */
+
 #if defined(COS_BUILD_COVERAGE)
 
     /*
@@ -15,7 +23,7 @@
      * Modelled after SQLite's coverage testing approach.
      */
 
-    #define COS_ASSERT(condition, ...) ((void)(condition))
+    #define COS_ASSERT(condition, message, ...) ((void)(condition))
 
     #define COS_API_PARAM_CHECK(condition) ((void)(condition))
 
@@ -23,8 +31,8 @@
 
 #elif !defined(COS_DISABLE_ASSERTIONS)
 
-    #define COS_ASSERT(condition, ...) \
-        COS_ASSERT_FATAL_(condition, #condition, __VA_ARGS__)
+    #define COS_ASSERT(condition, message, ...) \
+        COS_ASSERT_FATAL_(condition, #condition, message, ##__VA_ARGS__)
 
     #define COS_API_PARAM_CHECK(condition) \
         COS_ASSERT_(condition, #condition, "invalid parameter")
@@ -40,7 +48,7 @@
      * validated only by a check does not become unused.
      */
 
-    #define COS_ASSERT(condition, ...) ((void)0)
+    #define COS_ASSERT(condition, message, ...) ((void)0)
 
     #define COS_API_PARAM_CHECK(condition) ((void)(condition))
 
