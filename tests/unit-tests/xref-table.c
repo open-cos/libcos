@@ -272,6 +272,130 @@ findEntry_existingInUseObject_ReturnsEntry(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Subsection range tests
+
+/*
+ * True when the range check is what rejected the input. Asserting only that
+ * the parse failed would prove nothing: it fails anyway once the promised
+ * entries turn out not to be there, just after allocating for all of them.
+ */
+static bool
+rejected_by_range_check_(const CosError *error)
+{
+    return error->code == COS_ERROR_XREF &&
+           error->message != NULL &&
+           strstr(error->message, "impossible range") != NULL;
+}
+
+/*
+ * The subsection header is a claim by the file. A count that no document could
+ * use is rejected before it is used to size or bound anything: "xref 0
+ * 268435456" used to ask for a 4 GB array from an 86-byte input.
+ */
+
+static int
+parse_countBeyondMaxObjectNumber_Fails(void)
+{
+    const char *input =
+        "xref\n"
+        "0 268435456\n"
+        "0000000000 65535 f \n"
+        "trailer\n";
+    CosError error = cos_error_none();
+    CosXrefTable * const table = parse_xref_from_string_(input, &error);
+    TEST_EXPECT(table == NULL);
+    TEST_EXPECT(rejected_by_range_check_(&error));
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_countAtMaxObjectNumber_FailsOnMissingEntries(void)
+{
+    /*
+     * This count is legal, so the range check passes; the parse still fails
+     * because the entries are not there. It must fail promptly and without
+     * allocating for the entries it was promised.
+     */
+    const char *input =
+        "xref\n"
+        "0 8388608\n"
+        "0000000000 65535 f \n"
+        "trailer\n";
+    CosXrefTable * const table = parse_xref_from_string_(input, NULL);
+    TEST_EXPECT(table == NULL);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_firstObjectNumberBeyondMax_Fails(void)
+{
+    /* One past the largest object number, and still small enough to be an int. */
+    const char *input =
+        "xref\n"
+        "8388608 1\n"
+        "0000000000 65535 f \n"
+        "trailer\n";
+    CosError error = cos_error_none();
+    CosXrefTable * const table = parse_xref_from_string_(input, &error);
+    TEST_EXPECT(table == NULL);
+    TEST_EXPECT(rejected_by_range_check_(&error));
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_firstObjectNumberTooWideForInt_Fails(void)
+{
+    /*
+     * Rejected before the range check even runs: the header reader wants an
+     * int, and a value this wide tokenizes to a long integer.
+     */
+    const char *input =
+        "xref\n"
+        "4294967295 1\n"
+        "0000000000 65535 f \n"
+        "trailer\n";
+    CosXrefTable * const table = parse_xref_from_string_(input, NULL);
+    TEST_EXPECT(table == NULL);
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_rangeEndBeyondMax_Fails(void)
+{
+    /* first + count runs past the largest object number, without overflowing. */
+    const char *input =
+        "xref\n"
+        "8388600 100\n"
+        "0000000000 65535 f \n"
+        "trailer\n";
+    CosError error = cos_error_none();
+    CosXrefTable * const table = parse_xref_from_string_(input, &error);
+    TEST_EXPECT(table == NULL);
+    TEST_EXPECT(rejected_by_range_check_(&error));
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_rangeEndExactlyAtMax_Succeeds(void)
+{
+    /* The last usable object number, 8388607, must still be accepted. */
+    const char *input =
+        "xref\n"
+        "8388607 1\n"
+        "0000000100 00000 n \n"
+        "trailer\n";
+    CosXrefTable * const table = parse_xref_from_string_(input, NULL);
+    TEST_EXPECT(table != NULL);
+
+    const CosXrefEntry * const entry =
+        cos_xref_table_find_entry_for_obj_num(table, 8388607, NULL);
+    TEST_EXPECT(entry != NULL);
+    TEST_EXPECT(entry->type == CosXrefEntryType_InUse);
+
+    cos_xref_table_destroy(table);
+    return EXIT_SUCCESS;
+}
+
 static int
 findEntry_freeObjectZero_ReturnsFreeEntry(void)
 {
@@ -420,6 +544,14 @@ TEST_MAIN()
 
     /* Lookup tests */
     TEST_EXPECT(findEntry_existingInUseObject_ReturnsEntry() == EXIT_SUCCESS);
+    /* Subsection range */
+    TEST_EXPECT(parse_countBeyondMaxObjectNumber_Fails() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_countAtMaxObjectNumber_FailsOnMissingEntries() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_firstObjectNumberBeyondMax_Fails() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_firstObjectNumberTooWideForInt_Fails() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_rangeEndBeyondMax_Fails() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_rangeEndExactlyAtMax_Succeeds() == EXIT_SUCCESS);
+
     TEST_EXPECT(findEntry_freeObjectZero_ReturnsFreeEntry() == EXIT_SUCCESS);
     TEST_EXPECT(findEntry_objectNotInTable_ReturnsNull() == EXIT_SUCCESS);
     TEST_EXPECT(findEntry_objectInSecondSubsection_ReturnsEntry() == EXIT_SUCCESS);

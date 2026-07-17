@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 #include "parse/CosBaseParser.h"
+#include "xref/CosXrefValidation.h"
 
 #include "libcos/common/CosArray.h"
 #include "libcos/common/CosError.h"
@@ -158,6 +159,7 @@ static const CosArrayCallbacks cos_xref_entry_array_callbacks_ = {
     .release = cos_xref_entry_release_callback_,
 };
 
+
 static CosXrefSubsection *
 cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
                                         CosError * COS_Nullable out_error)
@@ -181,11 +183,29 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
         goto failure;
     }
 
-    // The entries array uses a release callback so that cos_array_destroy
-    // frees each CosXrefEntry on cleanup.
+    if (!cos_xref_validate_subsection_range_(first_object_number,
+                                             entry_count,
+                                             out_error)) {
+        goto failure;
+    }
+
+    /*
+     * The entries array is deliberately not sized from entry_count. Even a
+     * count this side of the object-number limit can be far more than the
+     * entries the file actually holds, and sizing the array up front would
+     * allocate for all of them: "xref 0 268435456" is a 4 GB request from an
+     * 86-byte file, since the capacity is rounded up to a power of two.
+     *
+     * Growing on demand instead keeps the allocation in step with the entries
+     * that are really there, because the loop below stops at the first one it
+     * cannot read. The growth is geometric, so this costs a handful of
+     * reallocations on a genuine table.
+     *
+     * The release callback lets cos_array_destroy free each CosXrefEntry.
+     */
     entries = cos_array_create(sizeof(CosXrefEntry *),
                                &cos_xref_entry_array_callbacks_,
-                               entry_count);
+                               0);
     if (COS_UNLIKELY(!entries)) {
         goto failure;
     }

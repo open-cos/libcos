@@ -204,6 +204,7 @@ target_sources(libcos PRIVATE
     src/syntax/tokenizer/CosTokenizer.c
     src/xref/CosXrefStreamParser.c
     src/xref/CosXrefStreamParser.h
+    src/xref/CosXrefValidation.h
     src/xref/CosXrefTableParser.c
     src/xref/table/CosXrefEntry.c
     src/xref/table/CosXrefSection.c

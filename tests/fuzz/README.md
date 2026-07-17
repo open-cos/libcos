@@ -66,23 +66,6 @@ the lexer.
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
 replay test would fail. Add them when the fix lands.
 
-### An xref subsection count is trusted as an allocation size
-
-An 86-byte file asks for a 4 GB allocation:
-
-    xref
-    0 268435456
-
-`cos_xref_table_parser_parse_subsection_()` (`src/xref/CosXrefTableParser.c`)
-passes the subsection header's entry count straight to `cos_array_create()` as
-the capacity hint, with nothing checking it against how much input is actually
-left. Each entry occupies 20 bytes on disc, so the count is bounded by the file
-size and could be validated against it, or simply clamped -- the array grows on
-demand, and the read loop already stops when the input runs out.
-
-libFuzzer reports it as `out-of-memory (malloc(4294967296))` against the
-default 2 GB limit.
-
 ### The obj-parser target fuzzes slowly
 
 Roughly 4 exec/s once the corpus is seeded, against ~50k/s for the tokenizer,

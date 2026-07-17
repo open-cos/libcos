@@ -5,6 +5,7 @@
 #include "CosXrefStreamParser.h"
 
 #include "common/Assert.h"
+#include "xref/CosXrefValidation.h"
 
 #include <libcos/common/CosArray.h>
 #include <libcos/common/CosData.h>
@@ -156,9 +157,32 @@ cos_xref_stream_add_subsection_(CosXrefSection *section,
 {
     const size_t entry_width = (size_t)w[0] + w[1] + w[2];
 
+    if (!cos_xref_validate_subsection_range_(first_object_number, count, out_error)) {
+        return false;
+    }
+
+    /*
+     * A zero-width entry consumes no data, so the per-entry check below could
+     * never stop the loop and /Index alone would decide how many entries get
+     * allocated. No field at all is meaningless in any case.
+     */
+    if (entry_width == 0) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
+                                           "Xref stream /W describes a zero-width entry"),
+                            out_error);
+        return false;
+    }
+
+    /*
+     * The array is deliberately not sized from count: it is what /Index claims,
+     * not what the stream holds, and rounding the capacity up to a power of two
+     * turns "/Index [0 268435456]" into a 4 GB request from a 211-byte file.
+     * Growing on demand keeps the allocation in step with the entries actually
+     * read, which the loop below stops at as soon as the data runs out.
+     */
     CosArray *entries = cos_array_create(sizeof(CosXrefEntry *),
                                          &cos_xref_stream_entry_array_callbacks_,
-                                         count);
+                                         0);
     if (COS_UNLIKELY(!entries)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                            "Failed to allocate xref entries"),
