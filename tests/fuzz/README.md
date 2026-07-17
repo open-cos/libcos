@@ -66,29 +66,7 @@ the lexer.
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
 replay test would fail. Add them when the fix lands.
 
-A correctness bug rather than a crash, so no fuzz target will catch it: the
-parser quietly returns the wrong answer instead of falling over. Found while
-fixing the obj-parser hang.
-
-### Three context checks are inverted
-
-`cos_handle_bool_()`, `cos_handle_null_()` and `cos_handle_real_()` reject the
-object when the context *allows* it:
-
-    if (cos_parser_context_allows_(context, CosObjParserFlag_RealObj)) {
-        ... "Invalid real object" ...
-    }
-
-`cos_handle_indirect_ref_()` and `cos_handle_indirect_def_()` have the `!` that
-these are missing. The effect is silent data loss wherever the type is legal:
-an array element context allows all the direct types, so `[ 3.14 ]` and
-`[ null ]` both come back empty.
-
-Worth settling what the context flags are for at the same time. They are only
-consulted by five of the handlers -- dictionaries, arrays, names and integers
-ignore them entirely -- so the top-level context of `CosObjParserFlag_Indirect-
-ObjDef` is not enforced today. Correcting the polarity without deciding that
-question would start rejecting bare top-level values that currently parse.
+None outstanding.
 
 ## Should assertions be on while fuzzing?
 
