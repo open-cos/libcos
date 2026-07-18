@@ -4,8 +4,6 @@
 
 #include "libcos/common/CosError.h"
 
-#include "common/Assert.h"
-
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
@@ -29,7 +27,11 @@ void
 cos_error_propagate(CosError * COS_Nullable destination_error,
                     CosError source_error)
 {
-    COS_API_PARAM_CHECK(destination_error != NULL);
+    /*
+     * A NULL destination is the documented way to discard an error, not a
+     * misuse: the parameter is nullable and most callers pass NULL when they
+     * only care whether an operation failed.
+     */
     if (!destination_error) {
         return;
     }
