@@ -137,14 +137,21 @@ cos_mutator_relex_(CosMutator *mutator)
 {
     COS_IMPL_PARAM_CHECK(mutator != NULL);
 
-    if (!mutator->spans || mutator->buffer.length == 0 || !mutator->buffer.data) {
+    /*
+     * Bind both to locals: the checks below do not narrow the nullability of a
+     * struct member as far as the compiler is concerned.
+     */
+    CosMutSpan * const spans = mutator->spans;
+    const unsigned char * const data = mutator->buffer.data;
+
+    if (!spans || !data || mutator->buffer.length == 0) {
         mutator->span_count = 0;
         return false;
     }
 
-    mutator->span_count = cos_mut_lex_scan_(mutator->buffer.data,
+    mutator->span_count = cos_mut_lex_scan_(data,
                                             mutator->buffer.length,
-                                            mutator->spans,
+                                            spans,
                                             mutator->span_capacity);
 
     if (mutator->span_count == 0) {
@@ -152,9 +159,9 @@ cos_mutator_relex_(CosMutator *mutator)
     }
 
     cos_mut_view_build_(&mutator->view,
-                        mutator->buffer.data,
+                        data,
                         mutator->buffer.length,
-                        mutator->spans,
+                        spans,
                         mutator->span_count);
 
     return true;
