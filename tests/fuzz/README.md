@@ -177,6 +177,37 @@ Caveat when measuring: libFuzzer treats its **first** directory argument as
 writable. Always give it a scratch directory first and `corpus/<target>/` second,
 or it will write thousands of generated inputs into the committed seeds.
 
+### Stream decoding
+
+The `obj-parser` target decodes stream objects. Parsing one only records where
+its data begins and ends -- the filter chain runs on the first read -- so until
+the harness drove a read, the whole of `src/filters/` was unreachable from it and
+`CosPredictorFilter.c` was unreachable from *anywhere*: it is not in
+`CosFilterFactory.c`, and its only constructor is `CosStreamObjNode.c`, behind
+`/DecodeParms /Predictor`.
+
+Driving the decode, plus the `stream-*` seeds carrying valid payloads for each
+filter and a spread of predictor geometries, moved this a long way:
+
+| | before | after |
+|---|---|---|
+| `CosPredictorFilter.c` | 0% / 0% | 100% / 83.9% |
+| `CosStreamObjNode.c` | 14.3% / 10.2% | 85.7% / 66.1% |
+| filters reached via streams | 0% | 100% lines each |
+
+(lines / branches, from the `obj-parser` target.)
+
+Almost all of that came from harness reach and seeds rather than from mutation:
+the seeds alone, replayed with no fuzzing at all, already take the predictor to
+87.5% of lines. No stream-specific mutation operator was needed, and the four
+decoders were already saturated by byte mutation before any of this work --
+100% of lines each, 85-98% of branches -- so codec-aware mutation was considered
+and deliberately not built.
+
+The decoded output is drained in fixed-size chunks. A valid FlateDecode stream
+can expand without bound, so fetching it in one buffer would turn every
+decompression bomb into an out-of-memory rather than a finding.
+
 ## Open findings
 
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the
