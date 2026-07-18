@@ -107,6 +107,76 @@ so the replay test covers it from then on.
 via `-dict=` as shown above; libFuzzer uses it to build inputs that reach past
 the lexer.
 
+## Structure-aware mutation
+
+`mutator/` holds a COS-aware custom mutator, used by the `tokenizer`,
+`obj-parser` and `parser` targets under libFuzzer. It lexes an input into token
+spans, applies grammar-respecting operators (swap, duplicate or delete a token,
+substitute numeric boundary values, retype a keyword, nest a value in containers),
+and then -- for the `parser` target only -- optionally repairs the file so that
+`startxref` again names the `xref` keyword and the header is well formed.
+
+The repair is what makes structural mutation worth anything on whole files:
+`cos_parser_find_startxref_` scans the last 1024 bytes for the last `%%EOF` and
+accepts only space, tab, CR and LF between it, the offset digits, and
+`startxref`, so almost any structural edit otherwise fails in phase 2 and never
+reaches the xref or trailer code. It runs on 75% of mutants by default
+(`cos_mutator_set_repair_percent`), leaving the rest inconsistent so the
+rejection paths keep getting exercised.
+
+The mutator is engine-neutral, with the libFuzzer half in
+`mutator/adapters/CosLibFuzzerMutator.c`. AFL++ takes a custom mutator as a
+runtime shared object (`AFL_CUSTOM_MUTATOR_LIBRARY`) rather than a linked-in
+symbol, so it is not wired up yet; the core avoids `LLVMFuzzerMutate` and every
+other engine symbol so that adapter stays a thin addition.
+
+Confirm it is active -- a missing custom mutator is not a link error, libFuzzer
+just falls back:
+
+```
+INFO: found LLVMFuzzerCustomMutator (0x...). Disabling -len_control by default.
+```
+
+Build with `-DCOS_FUZZ_STRUCTURE_AWARE=OFF` to compare against the engine's own
+byte mutator.
+
+### Measured benefit, as of 2026-07-18
+
+300k-run sessions on `parser`, each from the committed seeds into its own scratch
+corpus, measured with `llvm-cov` over `src/parse/` and `src/xref/`:
+
+| | parse+xref lines | parse+xref branches | aggregate `cov:` | exec/s |
+|---|---|---|---|---|
+| structure-aware, `-len_control=100` | **71.98%** | **62.69%** | 1363 | 14285 |
+| structure-aware, default | 71.22% | 62.35% | 1348 | 3703 |
+| byte mutator | 69.24% | 60.86% | **1397** | 16666 |
+
+On the code the repair pass aims at, the structure-aware mutator is ahead by
+about 2.7 points of line coverage at comparable throughput. On *aggregate*
+coverage the byte mutator stays slightly ahead, because it spreads into the
+filter and stream code the parser corpus reaches only incidentally. Both effects
+are real; neither is large.
+
+The `-len_control` row matters. libFuzzer disables length control as soon as it
+finds a custom mutator, and left alone that inflates the corpus (625Kb against
+233Kb) and costs roughly a fourfold slowdown for slightly worse coverage. The
+run targets pass `-len_control=100` explicitly to undo it; keep that in mind when
+running a harness by hand.
+
+Mutant quality is where the effect is unambiguous: with repair forced on, 55% of
+mutants of `corpus/parser/xref-table.pdf` parse end to end, against 18% with it
+off. `unit-tests/fuzz-mutator` asserts that ratio, so a regression in the repair
+pass fails the ordinary test suite.
+
+Re-measure before building out the deferred work -- structural operators over
+whole indirect objects, `/Length` and xref-entry repair, cross-over, and the
+AFL++ adapter. The gain here is modest enough that it should be re-earned rather
+than assumed.
+
+Caveat when measuring: libFuzzer treats its **first** directory argument as
+writable. Always give it a scratch directory first and `corpus/<target>/` second,
+or it will write thousands of generated inputs into the committed seeds.
+
 ## Open findings
 
 Not yet fixed. Reproducers are deliberately **not** in `corpus/`, because the

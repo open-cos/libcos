@@ -1,5 +1,10 @@
 include(TestUtils)
 
+# The mutator core, which libcos-test exercises directly. It builds in every
+# configuration -- it has no libcos or fuzzing-engine dependency -- so it lives
+# outside the COS_BUILD_FUZZERS guard that gates the harnesses below.
+add_subdirectory(fuzz/mutator)
+
 set(LIBCOS_TESTS
     parser.c
     filters/ascii85.c
@@ -22,6 +27,7 @@ set(LIBCOS_TESTS
     unit-tests/indirect-obj.c
     unit-tests/obj.c
     unit-tests/obj-parser.c
+    unit-tests/fuzz-mutator.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
@@ -58,6 +64,14 @@ endforeach ()
 # A regression in /Prev cycle detection hangs instead of failing, so bound the run time.
 set_tests_properties(unit-tests/xref-cycle PROPERTIES TIMEOUT 30)
 
+# The mutator test reads seeds from the committed fuzz corpus. APPEND, because
+# the loop above sets COMPILE_DEFINITIONS rather than appending to it, so a
+# plain set_property here would drop TEST_NAME and break the test driver.
+set_property(SOURCE unit-tests/fuzz-mutator.c APPEND
+    PROPERTY COMPILE_DEFINITIONS
+    COS_FUZZ_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus"
+)
+
 target_include_directories(libcos-test
     PUBLIC ${PROJECT_SOURCE_DIR}/include/
     PRIVATE ${PROJECT_SOURCE_DIR}/src/ ${CMAKE_CURRENT_SOURCE_DIR}
@@ -76,6 +90,7 @@ target_compile_options(libcos-test PRIVATE
 
 target_link_libraries(libcos-test
     PUBLIC libcos libcos++
+    PRIVATE libcos-fuzz-mutator
 )
 
 # The fuzz targets are built by default so that they cannot rot, but the fuzzer

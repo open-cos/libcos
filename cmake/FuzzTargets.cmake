@@ -30,6 +30,20 @@ set(FUZZ_CRASHES_DIR "${CMAKE_BINARY_DIR}/fuzzing/crashes")
 find_program(AFL_FUZZ afl-fuzz)
 find_library(AFL_DRIVER_LIBRARY NAMES AFLDriver aflpp_driver afl_driver)
 
+# cos_mutator_target_enum(<out_var> <fuzz-target-name>) maps a harness name onto
+# the CosMutatorTarget enumerator that selects its grammar surface.
+function(cos_mutator_target_enum OUT_VAR FUZZ_TARGET)
+    if (FUZZ_TARGET STREQUAL "parser")
+        set(${OUT_VAR} "CosMutatorTarget_Parser" PARENT_SCOPE)
+    elseif (FUZZ_TARGET STREQUAL "obj-parser")
+        set(${OUT_VAR} "CosMutatorTarget_ObjParser" PARENT_SCOPE)
+    elseif (FUZZ_TARGET STREQUAL "tokenizer")
+        set(${OUT_VAR} "CosMutatorTarget_Tokenizer" PARENT_SCOPE)
+    else ()
+        set(${OUT_VAR} "CosMutatorTarget_Generic" PARENT_SCOPE)
+    endif ()
+endfunction()
+
 # cos_add_fuzz_run_targets(<name>) defines fuzz_<name> (and, for AFL,
 # fuzz_<name>_resume) for the harness libcos-fuzz-<name>.
 function(cos_add_fuzz_run_targets FUZZ_TARGET)
@@ -55,6 +69,12 @@ function(cos_add_fuzz_run_targets FUZZ_TARGET)
                 -artifact_prefix=${crashes}/
                 -timeout=${FUZZ_TIMEOUT_S}
                 -max_total_time=${FUZZ_MAX_TOTAL_TIME}
+                # libFuzzer turns length control off as soon as it finds a
+                # custom mutator. That is the wrong default here: without it
+                # inputs balloon (a 625Kb corpus against 233Kb) and throughput
+                # drops roughly fourfold for slightly worse coverage. Harmless
+                # when no custom mutator is linked.
+                -len_control=100
             DEPENDS ${target_name}
             USES_TERMINAL
             VERBATIM

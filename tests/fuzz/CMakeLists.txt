@@ -60,6 +60,30 @@ foreach (FUZZ_TARGET ${LIBCOS_FUZZ_TARGETS})
         target_sources(${FUZZ_TARGET_NAME} PRIVATE CosFuzzDriver.c)
     endif ()
 
+    # The structure-aware mutator, for the targets that consume COS syntax.
+    #
+    # 'filter' is excluded: its first byte selects a codec and the rest is that
+    # codec's binary payload, so there is no COS structure to preserve and the
+    # engine's own byte mutator is the better tool.
+    #
+    # AFL++ takes a custom mutator as a runtime shared object rather than a
+    # linked-in symbol, so it is not wired up here yet.
+    if (COS_BUILD_FOR_FUZZING AND
+        COS_FUZZING_ENGINE STREQUAL "libfuzzer" AND
+        COS_FUZZ_STRUCTURE_AWARE AND
+        NOT FUZZ_TARGET STREQUAL "filter")
+
+        cos_mutator_target_enum(MUTATOR_TARGET_ENUM ${FUZZ_TARGET})
+
+        target_sources(${FUZZ_TARGET_NAME} PRIVATE
+            mutator/adapters/CosLibFuzzerMutator.c
+        )
+        target_link_libraries(${FUZZ_TARGET_NAME} PRIVATE libcos-fuzz-mutator)
+        target_compile_definitions(${FUZZ_TARGET_NAME} PRIVATE
+            COS_FUZZ_MUTATOR_TARGET=${MUTATOR_TARGET_ENUM}
+        )
+    endif ()
+
     # Replay the seed corpus as a regression test. This runs each seed exactly
     # once and exits; it is not a fuzzing session. Both the standalone driver
     # and libFuzzer accept the same file-argument form.

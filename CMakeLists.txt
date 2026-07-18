@@ -24,6 +24,10 @@ set(COS_FUZZING_ENGINE "libfuzzer" CACHE STRING
     "Fuzzing engine to build the harnesses against when COS_BUILD_FOR_FUZZING is ON (libfuzzer or afl)")
 set_property(CACHE COS_FUZZING_ENGINE PROPERTY STRINGS libfuzzer afl)
 
+# Turn this OFF to measure the structure-aware mutator against the engine's own
+# byte mutator; the harnesses are otherwise identical.
+option(COS_FUZZ_STRUCTURE_AWARE "Use the structure-aware COS mutator when fuzzing" ON)
+
 option(COS_USE_SYSTEM_ZLIB "Use the system zlib library for FlateDecode instead of the builtin implementation" OFF)
 
 cmake_dependent_option(COS_DETERMINISTIC_FUZZING "Enable deterministic fuzzing" OFF
