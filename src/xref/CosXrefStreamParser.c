@@ -137,6 +137,21 @@ cos_xref_stream_read_w_(CosDictObjNode *dict,
                                 out_error);
             return false;
         }
+        /*
+         * A field is accumulated into a uint64_t by cos_xref_stream_read_be_,
+         * so anything past eight bytes has its high bytes silently shifted
+         * away -- /W [1 9 2] would misparse rather than be rejected. Bounding
+         * the width here also keeps the sum of the three from overflowing the
+         * size_t it is accumulated into where size_t is 32 bits; a wrapped
+         * entry width would pass the remaining-length check below while
+         * read_be_ still walked the full declared width off the end.
+         */
+        if (width > (int)sizeof(uint64_t)) {
+            COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
+                                               "Xref stream /W entry is wider than eight bytes"),
+                                out_error);
+            return false;
+        }
         out_w[i] = (unsigned int)width;
     }
 

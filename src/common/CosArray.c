@@ -5,6 +5,7 @@
 #include "libcos/common/CosArray.h"
 
 #include "common/Assert.h"
+#include "common/CosCheckedArith.h"
 #include "common/CosContainerUtils.h"
 
 #include <libcos/common/CosError.h>
@@ -403,8 +404,17 @@ cos_array_insert_items_(CosArray *array,
         return false;
     }
 
-    // Ensure that the array has enough capacity to hold the new items.
-    const size_t required_capacity = current_count + count;
+    // Ensure that the array has enough capacity to hold the new items. A
+    // wrapped total would understate what is needed, skip the resize and leave
+    // the loop below writing past the end of the buffer.
+    size_t required_capacity;
+    if (cos_ckd_add_size_(&required_capacity, current_count, count)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
+                                           "Array item count is too large to represent"),
+                            error);
+        return false;
+    }
+
     if (required_capacity > array->capacity && !cos_array_resize_(array, required_capacity)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                            "Failed to resize array"),
@@ -519,8 +529,14 @@ cos_array_resize_(CosArray *array,
 
     const size_t new_capacity = cos_container_round_capacity_(required_capacity);
 
-    unsigned char * const new_data = realloc(array->data,
-                                             new_capacity * array->element_size);
+    // A wrapped allocation size would hand back a buffer smaller than the
+    // capacity recorded below, which is the shape of MuPDF's CVE-2026-3308.
+    size_t allocation_size;
+    if (cos_ckd_mul_size_(&allocation_size, new_capacity, array->element_size)) {
+        return false;
+    }
+
+    unsigned char * const new_data = realloc(array->data, allocation_size);
     if (!new_data) {
         return false;
     }

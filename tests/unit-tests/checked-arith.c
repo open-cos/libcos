@@ -5,9 +5,11 @@
 #include "CosTest.h"
 
 #include "common/CosCheckedArith.h"
+#include "common/CosContainerUtils.h"
 
 #include <libcos/common/CosBasicTypes.h>
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -324,6 +326,52 @@ sizeToOff_boundary_Detected(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Container capacity rounding
+
+/*
+ * Not part of CosCheckedArith.h, but the same failure mode: rounding a
+ * capacity up used to compute 1 << fls(x), which is undefined once the shift
+ * reaches the width of the type and returned 1. A container that rounded a
+ * large request down to 1 reported the resize as successful and was then
+ * written past the end of its buffer.
+ */
+static int
+roundCapacity_neverReturnsLessThanRequested(void)
+{
+    const size_t highest_pow2 = ((size_t)1) << ((sizeof(size_t) * CHAR_BIT) - 1);
+
+    const size_t cases[] = {
+        0,
+        4,
+        100,
+        highest_pow2 / 2,
+        highest_pow2 - 2,
+        highest_pow2 - 1,
+        highest_pow2,
+        SIZE_MAX - 1,
+        SIZE_MAX,
+    };
+
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        const size_t rounded = cos_container_round_capacity_(cases[i]);
+
+        // The invariant every caller depends on.
+        TEST_EXPECT(rounded >= cases[i]);
+        TEST_EXPECT(rounded >= 4);
+    }
+
+    // Ordinary values still round up to a power of two.
+    TEST_EXPECT(cos_container_round_capacity_(100) == 128);
+    TEST_EXPECT(cos_container_round_capacity_(128) == 256);
+
+    // Beyond the largest representable power of two, it saturates rather than
+    // wrapping, so the caller's allocation is what fails.
+    TEST_EXPECT(cos_container_round_capacity_(SIZE_MAX) == SIZE_MAX);
+    TEST_EXPECT(cos_container_round_capacity_(highest_pow2) == SIZE_MAX);
+
+    return EXIT_SUCCESS;
+}
+
 TEST_MAIN()
 {
     /* Offset addition */
@@ -349,6 +397,9 @@ TEST_MAIN()
     TEST_EXPECT(offToSize_negative_Fails() == EXIT_SUCCESS);
     TEST_EXPECT(offToSize_aboveSizeMax_Fails() == EXIT_SUCCESS);
     TEST_EXPECT(sizeToOff_boundary_Detected() == EXIT_SUCCESS);
+
+    /* Container capacity rounding */
+    TEST_EXPECT(roundCapacity_neverReturnsLessThanRequested() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

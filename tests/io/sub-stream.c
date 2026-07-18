@@ -287,6 +287,42 @@ TEST_CASE_BEGIN(memory_seek_current_allows_end_of_stream)
 
 TEST_CASE_END
 
+TEST_CASE_BEGIN(window_seek_rejects_extreme_offsets)
+{
+    /*
+     * The same two defects the memory stream had: negating
+     * COS_STREAM_OFFSET_MIN is undefined and traps, and narrowing the offset
+     * before range-checking it turns a seek far past the end into a small
+     * in-range one wherever size_t is 32 bits.
+     */
+    CosStream * const window = cos_sub_stream_create(fixture->source, 5, 10, false, NULL);
+    if (!window) {
+        TEST_FAILURE();
+    }
+
+    const CosStreamOffset huge = ((CosStreamOffset)1 << 32) + 5;
+    bool ok = true;
+
+    ok = ok && !cos_stream_seek(window, COS_STREAM_OFFSET_MIN, CosStreamOffsetWhence_Current, NULL);
+    ok = ok && !cos_stream_seek(window, COS_STREAM_OFFSET_MIN, CosStreamOffsetWhence_End, NULL);
+    ok = ok && !cos_stream_seek(window, huge, CosStreamOffsetWhence_Set, NULL);
+    ok = ok && !cos_stream_seek(window, huge, CosStreamOffsetWhence_Current, NULL);
+    ok = ok && !cos_stream_seek(window, -huge, CosStreamOffsetWhence_End, NULL);
+
+    /* A rejected seek must leave the window where it was. */
+    ok = ok && (cos_stream_get_position(window, NULL) == 0);
+
+    cos_stream_close(window);
+
+    if (!ok) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+
+TEST_CASE_END
+
 TEST_MAIN()
 {
     TestFixture fixture = {0};
@@ -298,6 +334,7 @@ TEST_MAIN()
     TEST_RUN(disjoint_windows_share_source, &fixture);
     TEST_RUN(memory_seek_rejects_huge_offset, &fixture);
     TEST_RUN(memory_seek_rejects_extreme_negative_offset, &fixture);
+    TEST_RUN(window_seek_rejects_extreme_offsets, &fixture);
     TEST_RUN(memory_seek_current_allows_end_of_stream, &fixture);
 
     return EXIT_SUCCESS;
