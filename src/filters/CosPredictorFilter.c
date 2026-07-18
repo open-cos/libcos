@@ -25,6 +25,20 @@ enum {
     COS_PREDICTOR_PNG_MAX = 15,
 };
 
+/*
+ * An upper bound on a decoded row, in bytes.
+ *
+ * The row geometry comes straight from /DecodeParms, so /Colors, /Columns and
+ * /BitsPerComponent are all attacker-controlled. The overflow checks below stop
+ * the arithmetic wrapping, but on a 64-bit host they still admit combinations
+ * whose product is merely enormous: /Colors 2147483647 with /Columns 4 asks for
+ * an 8.6 GB row, and two of them are allocated. A row is one scanline of image
+ * data or one xref-stream entry group -- a very large real one runs to a few
+ * hundred kilobytes -- so this leaves several orders of magnitude of headroom
+ * while keeping the allocation bounded.
+ */
+#define COS_PREDICTOR_MAX_ROW_LENGTH ((size_t)(64 * 1024 * 1024))
+
 // PNG per-row filter-type tags (RFC 2083 section 6).
 enum {
     COS_PNG_NONE = 0,
@@ -115,6 +129,16 @@ cos_predictor_filter_create_(int predictor,
         return NULL;
     }
 
+    // /BitsPerComponent is restricted to this set by the specification.
+    if (bits_per_component != 1 && bits_per_component != 2 &&
+        bits_per_component != 4 && bits_per_component != 8 &&
+        bits_per_component != 16) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Invalid /BitsPerComponent value"),
+                            out_error);
+        return NULL;
+    }
+
     // Overflow-checked row geometry.
     if (bits_per_component > SIZE_MAX / colors) {
         goto overflow;
@@ -125,6 +149,14 @@ cos_predictor_filter_create_(int predictor,
     }
     const size_t row_bits = bits_per_pixel * columns;
     const size_t row_len = (row_bits / 8) + ((row_bits % 8) != 0 ? 1 : 0);
+
+    // Bound the allocation, not just the arithmetic. See the note on the limit.
+    if (row_len > COS_PREDICTOR_MAX_ROW_LENGTH) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Predictor row length exceeds the limit"),
+                            out_error);
+        return NULL;
+    }
     size_t bpp = (bits_per_pixel / 8) + ((bits_per_pixel % 8) != 0 ? 1 : 0);
     if (bpp == 0) {
         bpp = 1;
