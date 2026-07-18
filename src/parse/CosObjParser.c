@@ -5,6 +5,7 @@
 #include "CosObjParser.h"
 
 #include "common/Assert.h"
+#include "common/CosCheckedArith.h"
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
 #include "parse/CosBaseParser.h"
@@ -894,8 +895,18 @@ cos_handle_stream_(CosObjParser *parser,
         goto failure;
     }
 
-    // TODO: Check for overflow.
-    const CosStreamOffset stream_end_position = data_start + (CosStreamOffset)length;
+    // Both operands come from the file. The sum cannot actually overflow today,
+    // because /Length is parsed into an int and rejected when negative, so it
+    // caps at INT_MAX; the check is here so that widening that parse later
+    // cannot silently reintroduce the overflow this replaces.
+    CosStreamOffset stream_end_position;
+    if (cos_ckd_add_off_(&stream_end_position, data_start, (CosStreamOffset)length)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Stream length overflows the stream offset range"),
+                            out_error);
+        cos_stream_close(encoded);
+        goto failure;
+    }
 
     // Seek past the stream data to the endstream keyword.
     if (!cos_stream_seek(input_stream,

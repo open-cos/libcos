@@ -5,6 +5,7 @@
 #include "libcos/io/CosMemoryStream.h"
 
 #include "common/Assert.h"
+#include "common/CosCheckedArith.h"
 
 #include <libcos/common/CosError.h>
 
@@ -202,54 +203,86 @@ cos_memory_stream_seek_(CosStream *stream,
     const size_t size = memory_stream->size;
     const size_t position = memory_stream->position;
 
+    /*
+     * The offset is a 64-bit signed value while the position is a size_t, so
+     * its magnitude is range-checked before being narrowed. Casting first
+     * truncates wherever size_t is the narrower type, which silently turns an
+     * out-of-range seek into a small in-range one. Negating the offset is
+     * likewise routed through the checked helper, because negating
+     * COS_STREAM_OFFSET_MIN would itself overflow.
+     */
     switch (whence) {
         case CosStreamOffsetWhence_Set: {
+            size_t magnitude;
+
             if (offset < 0) {
                 COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                                    "Invalid negative offset"),
                                     out_error);
                 return false;
             }
-            else if ((size_t)offset > size) {
+            else if (cos_ckd_off_to_size_(&magnitude, offset) ||
+                     magnitude > size) {
                 COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
                                                    "Stream offset out of range"),
                                     out_error);
                 return false;
             }
 
-            memory_stream->position = (size_t)offset;
+            memory_stream->position = magnitude;
         } break;
         case CosStreamOffsetWhence_Current: {
-            if (offset < 0 && (position < (size_t)-offset)) {
-                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
-                                                   "Invalid negative stream position"),
-                                    out_error);
-                return false;
-            }
-            else if (offset > 0 && ((position + (size_t)offset) >= size)) {
-                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
-                                                   "Stream offset out of range"),
-                                    out_error);
-                return false;
-            }
+            CosStreamOffset negated;
+            size_t magnitude;
 
-            memory_stream->position += (size_t)offset;
+            if (offset < 0) {
+                if (cos_ckd_sub_off_(&negated, 0, offset) ||
+                    cos_ckd_off_to_size_(&magnitude, negated) ||
+                    magnitude > position) {
+                    COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
+                                                       "Invalid negative stream position"),
+                                        out_error);
+                    return false;
+                }
+
+                memory_stream->position = position - magnitude;
+            }
+            else {
+                // Compared by subtraction, so the sum cannot wrap before it is
+                // tested. position <= size is an invariant of this stream.
+                // Seeking to exactly end-of-stream is legal, matching
+                // Whence_Set above and cos_sub_stream_seek.
+                if (cos_ckd_off_to_size_(&magnitude, offset) ||
+                    magnitude > size - position) {
+                    COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
+                                                       "Stream offset out of range"),
+                                        out_error);
+                    return false;
+                }
+
+                memory_stream->position = position + magnitude;
+            }
         } break;
         case CosStreamOffsetWhence_End: {
+            CosStreamOffset negated;
+            size_t magnitude;
+
             if (offset > 0) {
                 COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
                                                    "Invalid positive offset"),
                                     out_error);
                 return false;
             }
-            else if ((size_t)-offset > size) {
+            else if (cos_ckd_sub_off_(&negated, 0, offset) ||
+                     cos_ckd_off_to_size_(&magnitude, negated) ||
+                     magnitude > size) {
                 COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_OUT_OF_RANGE,
                                                    "Stream offset out of range"),
                                     out_error);
                 return false;
             }
 
-            memory_stream->position = (size_t)(size + (size_t)offset);
+            memory_stream->position = size - magnitude;
         } break;
     }
 

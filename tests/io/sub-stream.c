@@ -4,10 +4,13 @@
 
 #include "CosTest.h"
 
+#include <libcos/common/CosBasicTypes.h>
+#include <libcos/common/CosError.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/io/CosSubStream.h>
 
+#include <stdint.h>
 #include <string.h>
 
 static const char g_source_bytes[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -182,6 +185,108 @@ TEST_CASE_BEGIN(disjoint_windows_share_source)
 
 TEST_CASE_END
 
+TEST_CASE_BEGIN(memory_seek_rejects_huge_offset)
+{
+    /*
+     * A seek far past the end of a 26-byte stream. The offset is chosen so
+     * that its low 32 bits are a small in-range value: narrowing it to size_t
+     * before the range check turns this into a successful seek to byte 5
+     * wherever size_t is 32 bits.
+     */
+    const CosStreamOffset huge = ((CosStreamOffset)1 << 32) + 5;
+
+    if (!cos_stream_seek(fixture->source, 5, CosStreamOffsetWhence_Set, NULL)) {
+        TEST_FAILURE();
+    }
+
+    CosError error = cos_error_none();
+    if (cos_stream_seek(fixture->source, huge, CosStreamOffsetWhence_Current, &error)) {
+        TEST_FAILURE();
+    }
+    if (cos_stream_seek(fixture->source, huge, CosStreamOffsetWhence_Set, &error)) {
+        TEST_FAILURE();
+    }
+    if (cos_stream_seek(fixture->source, -huge, CosStreamOffsetWhence_End, &error)) {
+        TEST_FAILURE();
+    }
+
+    /* A rejected seek must not have moved the position. */
+    if (cos_stream_get_position(fixture->source, NULL) != 5) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+
+TEST_CASE_END
+
+TEST_CASE_BEGIN(memory_seek_rejects_extreme_negative_offset)
+{
+    /*
+     * Negating COS_STREAM_OFFSET_MIN overflows, so the magnitude of this
+     * offset cannot be taken the obvious way. It must be rejected, not
+     * turned into a positive seek.
+     */
+    if (!cos_stream_seek(fixture->source, 5, CosStreamOffsetWhence_Set, NULL)) {
+        TEST_FAILURE();
+    }
+
+    CosError error = cos_error_none();
+    if (cos_stream_seek(fixture->source,
+                        COS_STREAM_OFFSET_MIN,
+                        CosStreamOffsetWhence_Current,
+                        &error)) {
+        TEST_FAILURE();
+    }
+    if (cos_stream_seek(fixture->source,
+                        COS_STREAM_OFFSET_MIN,
+                        CosStreamOffsetWhence_End,
+                        &error)) {
+        TEST_FAILURE();
+    }
+
+    if (cos_stream_get_position(fixture->source, NULL) != 5) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+
+TEST_CASE_END
+
+TEST_CASE_BEGIN(memory_seek_current_allows_end_of_stream)
+{
+    /*
+     * Seeking to exactly end-of-stream is legal -- Whence_Set already permits
+     * it, and cos_sub_stream_seek does too. The relative path used >= and so
+     * rejected it.
+     */
+    if (!cos_stream_seek(fixture->source, 0, CosStreamOffsetWhence_Set, NULL)) {
+        TEST_FAILURE();
+    }
+
+    CosError error = cos_error_none();
+    if (!cos_stream_seek(fixture->source,
+                         (CosStreamOffset)SOURCE_SIZE,
+                         CosStreamOffsetWhence_Current,
+                         &error)) {
+        TEST_FAILURE();
+    }
+
+    if (cos_stream_get_position(fixture->source, NULL) != (CosStreamOffset)SOURCE_SIZE) {
+        TEST_FAILURE();
+    }
+
+    /* One past the end is still rejected. */
+    if (cos_stream_seek(fixture->source, 1, CosStreamOffsetWhence_Current, NULL)) {
+        TEST_FAILURE();
+    }
+
+    TEST_SUCCESS();
+}
+
+TEST_CASE_END
+
 TEST_MAIN()
 {
     TestFixture fixture = {0};
@@ -191,6 +296,9 @@ TEST_MAIN()
     TEST_RUN(seek_within_window, &fixture);
     TEST_RUN(eof_at_length, &fixture);
     TEST_RUN(disjoint_windows_share_source, &fixture);
+    TEST_RUN(memory_seek_rejects_huge_offset, &fixture);
+    TEST_RUN(memory_seek_rejects_extreme_negative_offset, &fixture);
+    TEST_RUN(memory_seek_current_allows_end_of_stream, &fixture);
 
     return EXIT_SUCCESS;
 }

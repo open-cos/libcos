@@ -167,6 +167,7 @@ target_sources(libcos PRIVATE
     src/common/CharacterSet.c
     src/common/CharacterSet.h
     src/common/CosArray.c
+    src/common/CosCheckedArith.h
     src/common/CosContainerUtils.h
     src/common/CosData.c
     src/common/CosDataRef.c

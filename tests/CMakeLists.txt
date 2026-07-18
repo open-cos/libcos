@@ -14,6 +14,7 @@ set(LIBCOS_TESTS
     filters/predictor.c
     filters/run-length.c
     io/sub-stream.c
+    unit-tests/checked-arith.c
     unit-tests/dict.c
     unit-tests/tokenizer.c
     unit-tests/xref-table.c

@@ -19,6 +19,7 @@ COS_ASSUME_NONNULL_BEGIN
 typedef signed long long CosStreamOffset;
 
 #define COS_STREAM_OFFSET_MAX LLONG_MAX
+#define COS_STREAM_OFFSET_MIN LLONG_MIN
 
 /**
  * @brief The object number of an indirect object.
