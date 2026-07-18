@@ -360,8 +360,23 @@ cos_parser_find_startxref_(CosParser *parser,
         const int int_start = pos + 1;
 
         // Parse the integer (iterate forwards through the digits).
+        //
+        // The digit run is unbounded, so the accumulation is checked against
+        // the file size rather than left to overflow: an offset past the end of
+        // the file cannot name an xref section, and overflowing CosStreamOffset
+        // is undefined behaviour that traps under -ftrapv and silently wraps to
+        // a plausible-looking offset otherwise.
         for (int j = int_start; j <= int_end; j++) {
-            xref_offset = xref_offset * 10 + (CosStreamOffset)(buffer[j] - '0');
+            const CosStreamOffset digit = (CosStreamOffset)(buffer[j] - '0');
+
+            if (xref_offset > ((file_size - digit) / 10)) {
+                cos_error_propagate(out_error,
+                                    cos_error_make(COS_ERROR_SYNTAX,
+                                                   "startxref offset out of range"));
+                goto cleanup;
+            }
+
+            xref_offset = (xref_offset * 10) + digit;
         }
 
         // Skip whitespace between integer and "startxref".
