@@ -107,8 +107,51 @@ typedef enum CosStrictGroup {
     CosStrictGroup_CompressedObjGen,
 } CosStrictGroup;
 
+/*
+ * Behaviour selectors.
+ *
+ * A strict level answers "how loudly should this be reported"; it cannot say
+ * what the parser should actually do when a construct has more than one
+ * defensible reading. Where real implementations disagree, the reading is
+ * chosen by a selector of its own, independent of the level:
+ *
+ *   - the selector decides which value the parser produces;
+ *   - the group's @c CosStrictLevel decides whether that is silent, reported,
+ *     or rejected outright.
+ *
+ * At @c CosStrictLevel_Error the construct is rejected whichever reading is
+ * selected, so the two axes stay orthogonal.
+ */
+
 /**
- * Controls how strictly the parser judges its input.
+ * How a sign that appears after a number's digits have started is read.
+ *
+ * Governed for reporting purposes by @c CosStrictGroup_NumberSigns .
+ */
+typedef enum CosInteriorSignBehaviour {
+    /**
+     * The number ends at the sign, and the remaining input is tokenized
+     * separately: "1.2-3" is 1.2 followed by -3.
+     *
+     * This is what Ghostscript's @c pdfi_read_num does, and what libcos did
+     * before the reading became selectable.
+     */
+    CosInteriorSignBehaviour_Terminate,
+
+    /**
+     * The sign is dropped and the digits run together, so "1.2-3" is 1.23 and
+     * "-12.-1" is -12.1. If only zeros precede the sign it is taken as the
+     * number's sign instead, so "0.00000-33917698" is negative and "--16.33"
+     * is -16.33.
+     *
+     * This is what PDFBox's @c COSFloat does.
+     */
+    CosInteriorSignBehaviour_Merge,
+} CosInteriorSignBehaviour;
+
+/**
+ * Controls how strictly the parser judges its input, and which reading it
+ * takes where implementations legitimately differ.
  *
  * Every function that accepts these options copies them, so an options value
  * does not need to outlive the parser or tokenizer it is passed to.
@@ -118,11 +161,16 @@ typedef struct CosParserOptions {
      * The level for each group, indexed by @c CosStrictGroup .
      */
     CosStrictLevel strict_levels[COS_STRICT_GROUP_COUNT];
+
+    /**
+     * How a sign in the middle of a number is read.
+     */
+    CosInteriorSignBehaviour interior_sign_behaviour;
 } CosParserOptions;
 
 /**
- * Returns the default options, which report every group at
- * @c CosStrictLevel_Warn .
+ * Returns the default options: every group at @c CosStrictLevel_Warn , and
+ * @c CosInteriorSignBehaviour_Merge .
  *
  * These are the options used when a @c NULL options pointer is passed.
  *
@@ -155,6 +203,28 @@ cos_parser_options_set_strict_level(CosParserOptions *options,
 COS_API CosStrictLevel
 cos_parser_options_get_strict_level(const CosParserOptions *options,
                                     CosStrictGroup group);
+
+// MARK: - Behaviour selectors
+
+/**
+ * Sets how a sign in the middle of a number is read.
+ *
+ * @param options The options to modify.
+ * @param behaviour The reading to take.
+ */
+COS_API void
+cos_parser_options_set_interior_sign_behaviour(CosParserOptions *options,
+                                               CosInteriorSignBehaviour behaviour);
+
+/**
+ * Gets how a sign in the middle of a number is read.
+ *
+ * @param options The options to query.
+ *
+ * @return The selected reading, or the default if @p options is @c NULL .
+ */
+COS_API CosInteriorSignBehaviour
+cos_parser_options_get_interior_sign_behaviour(const CosParserOptions *options);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

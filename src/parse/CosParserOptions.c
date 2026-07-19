@@ -32,6 +32,8 @@ cos_parser_options_make_default(void)
         options.strict_levels[i] = CosStrictLevel_Warn;
     }
 
+    options.interior_sign_behaviour = CosInteriorSignBehaviour_Merge;
+
     return options;
 }
 
@@ -71,6 +73,29 @@ cos_parser_options_get_strict_level(const CosParserOptions *options,
     }
 
     return options->strict_levels[(unsigned int)group];
+}
+
+void
+cos_parser_options_set_interior_sign_behaviour(CosParserOptions *options,
+                                               CosInteriorSignBehaviour behaviour)
+{
+    COS_API_PARAM_CHECK(options != NULL);
+    if (COS_UNLIKELY(!options)) {
+        return;
+    }
+
+    options->interior_sign_behaviour = behaviour;
+}
+
+CosInteriorSignBehaviour
+cos_parser_options_get_interior_sign_behaviour(const CosParserOptions *options)
+{
+    COS_API_PARAM_CHECK(options != NULL);
+    if (COS_UNLIKELY(!options)) {
+        return CosInteriorSignBehaviour_Merge;
+    }
+
+    return options->interior_sign_behaviour;
 }
 
 bool

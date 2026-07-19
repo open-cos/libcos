@@ -5,20 +5,33 @@
 Most of the items that were here are done. Each implemented one is gated on a
 `CosStrictGroup` (see `include/libcos/parse/CosParserOptions.h`): the lenient,
 Adobe-compatible behaviour applies at `CosStrictLevel_Off` and
-`CosStrictLevel_Warn`, and `CosStrictLevel_Error` restores the strict reading.
+`CosStrictLevel_Warn`, and `CosStrictLevel_Error` rejects the construct.
+
+Where implementations legitimately disagree about what a malformed construct
+*means*, the level is not enough: it says how loudly to complain, not which
+value to produce. Those get a **behaviour selector** of their own, an enum
+naming each real implementation's reading. The two axes are independent -- the
+selector picks the reading, the group's level decides whether that is silent,
+reported, or rejected.
 
 #### Done
 
-- Ignore minus signs in the middle of numbers -- `CosStrictGroup_NumberSigns`.
-  `1.2-3` reads as `1.23` and `-12.-1` as `-12.1`. When only zeros precede the
-  sign it is taken as the number's sign instead, so `0.00000-33917698` is
-  negative and `--16.33` is `-16.33`.
+- Ignore minus signs in the middle of numbers -- selector
+  `CosInteriorSignBehaviour`, reported under `CosStrictGroup_NumberSigns`.
 
-  This follows PDFBox's `COSFloat`, which special-cases these exact shapes
-  (PDFBOX-2990, PDFBOX-4289, PDFBOX-5829). **Ghostscript does the opposite**:
-  `pdfi_read_num` flags `E_PDF_MALFORMEDNUMBER` and ignores everything from the
-  interior sign onward, so it reads `123-56` as `123`. That is also what libcos
-  did before, and it is what `CosStrictLevel_Error` still does.
+  The two implementations disagree, so both readings are available:
+
+  | Value | Reading | `1.2-3` | `-12.-1` | Matches |
+  |---|---|---|---|---|
+  | `_Merge` (default) | signs dropped, digits run together | `1.23` | `-12.1` | PDFBox `COSFloat` |
+  | `_Terminate` | number ends at the sign | `1.2`, then `-3` | `-12`, then `-1` | Ghostscript `pdfi_read_num` |
+
+  Under `_Merge`, a sign preceded only by zeros becomes the number's sign
+  rather than being dropped, so `0.00000-33917698` is negative and `--16.33` is
+  `-16.33`; PDFBox special-cases both shapes (PDFBOX-2990, PDFBOX-4289,
+  PDFBOX-5829). Ghostscript instead flags `E_PDF_MALFORMEDNUMBER` and discards
+  everything from the sign onward. `_Terminate` is what libcos did before the
+  reading became selectable.
 
 - Adobe looks in the first 1024 bytes of a file for the "%PDF-" header --
   `CosStrictGroup_HeaderPosition`. `COS_HEADER_SCAN_SIZE` in
@@ -63,10 +76,12 @@ Adobe-compatible behaviour applies at `CosStrictLevel_Off` and
   implementations disagree, and none of them treats "678" as a feature to
   preserve.
 
-  If a conformance mode is wanted later, the useful shape is a group that
-  rejects an out-of-range real at `CosStrictLevel_Error` while leaving the
-  correct parse in place at the lower levels -- not one that reproduces the
-  truncation.
+  This is the obvious next behaviour selector, since the three readings are
+  already known: accurate (libcos today), clamp to the largest representable
+  real (PDFBox, and what ISO 32000-1 Annex C suggests), and truncate on
+  overflow (Ghostscript, which also raises `E_PDF_NUMBEROVERFLOW`). A
+  `CosRealOverflowBehaviour` with those three values, reported under a group of
+  its own, would cover the item without making corruption the default.
 
 #### Not actionable
 

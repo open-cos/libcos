@@ -722,10 +722,11 @@ strict_fractionalDigitsWithinLimit_AlwaysAccepted(void)
 }
 
 /**
- * Reads the first token of @p input with the number-signs group at @p level .
+ * Reads the first token of @p input under a given sign reading and level.
  */
 static bool
 tokenize_signs_at_level_(const char *input,
+                         CosInteriorSignBehaviour behaviour,
                          CosStrictLevel level,
                          CosToken_Type *out_type,
                          double *out_real,
@@ -748,6 +749,7 @@ tokenize_signs_at_level_(const char *input,
     cos_parser_options_set_strict_level(&options,
                                         CosStrictGroup_NumberSigns,
                                         level);
+    cos_parser_options_set_interior_sign_behaviour(&options, behaviour);
     // Keep the fractional-digit check out of the way of these inputs.
     cos_parser_options_set_strict_level(&options,
                                         CosStrictGroup_NumberSyntax,
@@ -780,23 +782,33 @@ cleanup:
 }
 
 /**
- * An interior sign is skipped and the digits run together.
+ * Merge: the interior sign is dropped and the digits run together.
  *
  * Matches PDFBox, which special-cases these exact shapes (PDFBOX-5829 has
- * "-12.-1"). Note this differs from Ghostscript, which stops at the sign.
+ * "-12.-1").
  */
 static int
-signs_interiorSign_DigitsRunTogether(void)
+signs_merge_DigitsRunTogether(void)
 {
     CosToken_Type type = CosToken_Type_Unknown;
     double real = 0.0;
     int integer = 0;
 
-    TEST_EXPECT(tokenize_signs_at_level_("1.2-3", CosStrictLevel_Off, &type, &real, &integer));
+    TEST_EXPECT(tokenize_signs_at_level_("1.2-3",
+                                         CosInteriorSignBehaviour_Merge,
+                                         CosStrictLevel_Off,
+                                         &type,
+                                         &real,
+                                         &integer));
     TEST_EXPECT(type == CosToken_Type_Real);
     TEST_EXPECT(real > 1.2299 && real < 1.2301);
 
-    TEST_EXPECT(tokenize_signs_at_level_("-12.-1", CosStrictLevel_Off, &type, &real, &integer));
+    TEST_EXPECT(tokenize_signs_at_level_("-12.-1",
+                                         CosInteriorSignBehaviour_Merge,
+                                         CosStrictLevel_Off,
+                                         &type,
+                                         &real,
+                                         &integer));
     TEST_EXPECT(type == CosToken_Type_Real);
     TEST_EXPECT(real < -12.0999 && real > -12.1001);
 
@@ -804,25 +816,32 @@ signs_interiorSign_DigitsRunTogether(void)
 }
 
 /**
- * With nothing but zeros before it, the interior sign is the number's sign.
+ * Merge: with nothing but zeros before it, the sign is the number's sign.
  *
- * PDFBOX-2990 has "0.00000-33917698", which means a small negative number.
+ * PDFBOX-2990 has "0.00000-33917698"; PDFBOX-4289 has "--16.33".
  */
 static int
-signs_beforeSignificantDigit_SetsTheSign(void)
+signs_merge_BeforeSignificantDigit_SetsTheSign(void)
 {
     CosToken_Type type = CosToken_Type_Unknown;
     double real = 0.0;
     int integer = 0;
 
     TEST_EXPECT(tokenize_signs_at_level_("0.00000-33917698",
+                                         CosInteriorSignBehaviour_Merge,
                                          CosStrictLevel_Off,
-                                         &type, &real, &integer));
+                                         &type,
+                                         &real,
+                                         &integer));
     TEST_EXPECT(type == CosToken_Type_Real);
     TEST_EXPECT(real < 0.0);
 
-    // A repeated leading sign, as in PDFBOX-4289's "--16.33".
-    TEST_EXPECT(tokenize_signs_at_level_("--16.33", CosStrictLevel_Off, &type, &real, &integer));
+    TEST_EXPECT(tokenize_signs_at_level_("--16.33",
+                                         CosInteriorSignBehaviour_Merge,
+                                         CosStrictLevel_Off,
+                                         &type,
+                                         &real,
+                                         &integer));
     TEST_EXPECT(type == CosToken_Type_Real);
     TEST_EXPECT(real < -16.32 && real > -16.34);
 
@@ -830,24 +849,74 @@ signs_beforeSignificantDigit_SetsTheSign(void)
 }
 
 /**
- * At Error the sign terminates the number, which is the pre-existing behaviour.
+ * Terminate: the number ends at the sign, which starts the next token.
+ *
+ * This is Ghostscript's reading, and libcos's before it became selectable.
  */
 static int
-signs_strictLevel_TerminatesTheNumber(void)
+signs_terminate_NumberEndsAtTheSign(void)
 {
     CosToken_Type type = CosToken_Type_Unknown;
     double real = 0.0;
     int integer = 0;
 
-    TEST_EXPECT(tokenize_signs_at_level_("1.2-3", CosStrictLevel_Error, &type, &real, &integer));
+    TEST_EXPECT(tokenize_signs_at_level_("1.2-3",
+                                         CosInteriorSignBehaviour_Terminate,
+                                         CosStrictLevel_Off,
+                                         &type,
+                                         &real,
+                                         &integer));
     TEST_EXPECT(type == CosToken_Type_Real);
     TEST_EXPECT(real > 1.1999 && real < 1.2001);
+
+    TEST_EXPECT(tokenize_signs_at_level_("-12.-1",
+                                         CosInteriorSignBehaviour_Terminate,
+                                         CosStrictLevel_Off,
+                                         &type,
+                                         &real,
+                                         &integer));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(real < -11.999 && real > -12.001);
 
     return EXIT_SUCCESS;
 }
 
 /**
- * Well-formed numbers are unaffected at every level.
+ * The level rejects the number whichever reading is selected.
+ *
+ * This is what keeps the two axes independent: the input is malformed either
+ * way, so Error does not depend on the selector.
+ */
+static int
+signs_errorLevel_RejectsUnderEitherReading(void)
+{
+    CosToken_Type type = CosToken_Type_Unknown;
+    double real = 0.0;
+    int integer = 0;
+
+    // A rejected number yields an Unknown token rather than a read failure,
+    // matching how the tokenizer reports every other malformed number.
+    TEST_EXPECT(tokenize_signs_at_level_("1.2-3",
+                                         CosInteriorSignBehaviour_Merge,
+                                         CosStrictLevel_Error,
+                                         &type,
+                                         &real,
+                                         &integer));
+    TEST_EXPECT(type == CosToken_Type_Unknown);
+
+    TEST_EXPECT(tokenize_signs_at_level_("1.2-3",
+                                         CosInteriorSignBehaviour_Terminate,
+                                         CosStrictLevel_Error,
+                                         &type,
+                                         &real,
+                                         &integer));
+    TEST_EXPECT(type == CosToken_Type_Unknown);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * Well-formed numbers are unaffected by either axis.
  */
 static int
 signs_wellFormedNumbers_Unaffected(void)
@@ -856,15 +925,35 @@ signs_wellFormedNumbers_Unaffected(void)
     double real = 0.0;
     int integer = 0;
 
-    for (int level = CosStrictLevel_Off; level <= CosStrictLevel_Error; level++) {
-        TEST_EXPECT(tokenize_signs_at_level_("-7", (CosStrictLevel)level, &type, &real, &integer));
-        TEST_EXPECT(type == CosToken_Type_Integer);
-        TEST_EXPECT(integer == -7);
+    const CosInteriorSignBehaviour behaviours[] = {
+        CosInteriorSignBehaviour_Terminate,
+        CosInteriorSignBehaviour_Merge,
+    };
 
-        TEST_EXPECT(tokenize_signs_at_level_("-1.5", (CosStrictLevel)level, &type, &real, &integer));
-        TEST_EXPECT(type == CosToken_Type_Real);
-        TEST_EXPECT(real < -1.49 && real > -1.51);
+    for (size_t b = 0; b < (sizeof(behaviours) / sizeof(behaviours[0])); b++) {
+        for (int level = CosStrictLevel_Off; level <= CosStrictLevel_Error; level++) {
+            TEST_EXPECT(tokenize_signs_at_level_("-7", behaviours[b], (CosStrictLevel)level, &type, &real, &integer));
+            TEST_EXPECT(type == CosToken_Type_Integer);
+            TEST_EXPECT(integer == -7);
+
+            TEST_EXPECT(tokenize_signs_at_level_("-1.5", behaviours[b], (CosStrictLevel)level, &type, &real, &integer));
+            TEST_EXPECT(type == CosToken_Type_Real);
+            TEST_EXPECT(real < -1.49 && real > -1.51);
+        }
     }
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * The default reading is Merge, and a NULL options pointer agrees.
+ */
+static int
+signs_defaultBehaviour_IsMerge(void)
+{
+    const CosParserOptions options = cos_parser_options_make_default();
+    TEST_EXPECT(cos_parser_options_get_interior_sign_behaviour(&options) ==
+                CosInteriorSignBehaviour_Merge);
 
     return EXIT_SUCCESS;
 }
@@ -941,9 +1030,11 @@ TEST_MAIN()
     TEST_EXPECT(strict_fractionalDigitsWithinLimit_AlwaysAccepted() == EXIT_SUCCESS);
 
     /* Interior signs */
-    TEST_EXPECT(signs_interiorSign_DigitsRunTogether() == EXIT_SUCCESS);
-    TEST_EXPECT(signs_beforeSignificantDigit_SetsTheSign() == EXIT_SUCCESS);
-    TEST_EXPECT(signs_strictLevel_TerminatesTheNumber() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_defaultBehaviour_IsMerge() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_merge_DigitsRunTogether() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_merge_BeforeSignificantDigit_SetsTheSign() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_terminate_NumberEndsAtTheSign() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_errorLevel_RejectsUnderEitherReading() == EXIT_SUCCESS);
     TEST_EXPECT(signs_wellFormedNumbers_Unaffected() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;

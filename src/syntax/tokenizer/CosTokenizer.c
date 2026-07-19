@@ -914,12 +914,14 @@ cos_read_number_(CosTokenizer *tokenizer,
     unsigned int fractional_digit_count = 0;
     double fractional_scale = 0.1;
 
-    // A sign that appears once digits have started is not legal PDF, but real
-    // producers emit it ("0.00000-33917698", "-12.-1"). Whether it terminates
-    // the number or is skipped over is decided by CosStrictGroup_NumberSigns.
-    const CosStrictLevel sign_level =
-        cos_parser_options_get_strict_level(&(tokenizer->options),
-                                            CosStrictGroup_NumberSigns);
+    /*
+     * A sign that appears once digits have started is not legal PDF, but real
+     * producers emit it ("0.00000-33917698", "-12.-1"), and implementations
+     * disagree on what it means. Which reading to take is a behaviour
+     * selector; how loudly to complain is CosStrictGroup_NumberSigns.
+     */
+    const CosInteriorSignBehaviour sign_behaviour =
+        cos_parser_options_get_interior_sign_behaviour(&(tokenizer->options));
 
     /*
      * The magnitude of the integer part, accumulated unsigned; the sign is
@@ -971,13 +973,14 @@ cos_read_number_(CosTokenizer *tokenizer,
                 has_sign = true;
                 is_negative = (c == CosCharacterSet_HyphenMinus);
             }
-            else if (sign_level == CosStrictLevel_Error) {
-                // Strict: the sign is not part of this number.
-                cos_stream_reader_ungetc(tokenizer->stream_reader);
-                break;
-            }
             else {
                 has_interior_sign = true;
+
+                if (sign_behaviour == CosInteriorSignBehaviour_Terminate) {
+                    // The number ends here; the sign starts the next token.
+                    cos_stream_reader_ungetc(tokenizer->stream_reader);
+                    break;
+                }
 
                 if (!has_significant_digit) {
                     /*
@@ -1016,13 +1019,18 @@ cos_read_number_(CosTokenizer *tokenizer,
     }
 
     if (has_interior_sign) {
-        // Never escalates: the Error case already terminated the number above,
-        // so reaching here means the sign was accepted.
-        (void)cos_options_report_(&(tokenizer->options),
-                                  tokenizer->diagnostic_handler,
-                                  CosStrictGroup_NumberSigns,
-                                  "Sign in the middle of a number was ignored",
-                                  NULL);
+        /*
+         * Reported whichever reading was taken, and rejected outright at
+         * CosStrictLevel_Error, so that the level stays independent of the
+         * selector: the input is malformed either way.
+         */
+        if (!cos_options_report_(&(tokenizer->options),
+                                 tokenizer->diagnostic_handler,
+                                 CosStrictGroup_NumberSigns,
+                                 "Sign in the middle of a number",
+                                 out_error)) {
+            return false;
+        }
     }
 
     if (fractional_digit_count > COS_REAL_MAX_SIG_FRAC_DIG) {
