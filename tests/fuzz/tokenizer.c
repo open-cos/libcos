@@ -29,7 +29,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
         return 0;
     }
 
-    CosTokenizer * const tokenizer = cos_tokenizer_create((CosStream *)stream);
+    CosTokenizer * const tokenizer = cos_tokenizer_create((CosStream *)stream, NULL);
     if (!tokenizer) {
         cos_stream_close((CosStream *)stream);
         return 0;

@@ -41,7 +41,7 @@ parse_pdf_bytes_(const unsigned char *bytes,
         goto failure;
     }
 
-    parser = cos_parser_create(doc, (CosStream *)stream);
+    parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         goto failure;
     }
@@ -258,7 +258,7 @@ xrefStream_fieldWidthBeyondEightBytes_Fails(void)
                                                sizeof(xref_stream_w_too_wide_pdf));
     TEST_EXPECT(stream != NULL);
 
-    parser = cos_parser_create(doc, (CosStream *)stream);
+    parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     TEST_EXPECT(parser != NULL);
 
     if (!cos_parser_parse(parser, &error) && rejected_by_field_width_(&error)) {

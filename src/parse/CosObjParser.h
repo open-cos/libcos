@@ -8,6 +8,7 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/parse/CosParserOptions.h>
 
 #include <stdbool.h>
 
@@ -61,14 +62,18 @@ cos_obj_parser_destroy(CosObjParser *parser)
 /**
  * @brief Allocate a new object parser.
  *
+ * The options are copied, so @p options does not need to outlive the parser.
+ *
  * @param document The document.
  * @param input_stream The input stream.
+ * @param options The parser options, or @c NULL to use the defaults.
  *
  * @return The object parser, or @c NULL if an error occurred.
  */
 CosObjParser * COS_Nullable
 cos_obj_parser_create(CosDoc *document,
-                      CosStream *input_stream)
+                      CosStream *input_stream,
+                      const CosParserOptions * COS_Nullable options)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_parser_destroy);
 
@@ -78,14 +83,19 @@ cos_obj_parser_create(CosDoc *document,
  * The parser does not take ownership of the tokenizer; the caller retains ownership.
  * This allows sharing a single tokenizer across multiple parsers.
  *
+ * The options are copied, so @p options does not need to outlive the parser.
+ * The tokenizer keeps the options it was created with.
+ *
  * @param document The document.
  * @param tokenizer The tokenizer to use. Not owned by the parser.
+ * @param options The parser options, or @c NULL to use the defaults.
  *
  * @return The object parser, or @c NULL if an error occurred.
  */
 CosObjParser * COS_Nullable
 cos_obj_parser_create_with_tokenizer(CosDoc *document,
-                                     CosTokenizer *tokenizer)
+                                     CosTokenizer *tokenizer,
+                                     const CosParserOptions * COS_Nullable options)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_obj_parser_destroy);
 

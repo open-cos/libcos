@@ -121,7 +121,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
         return 0;
     }
 
-    CosObjParser * const parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    CosObjParser * const parser = cos_obj_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         cos_doc_destroy(doc);
         cos_stream_close((CosStream *)stream);

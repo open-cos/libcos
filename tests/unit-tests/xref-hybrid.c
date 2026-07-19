@@ -205,7 +205,7 @@ hybrid_parse_(unsigned char *buffer,
         goto failure;
     }
 
-    parser = cos_parser_create(doc, (CosStream *)stream);
+    parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         goto failure;
     }

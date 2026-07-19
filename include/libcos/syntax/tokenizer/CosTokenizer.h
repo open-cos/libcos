@@ -8,6 +8,7 @@
 #include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/parse/CosParserOptions.h>
 #include <libcos/syntax/tokenizer/CosToken.h>
 
 COS_DECLS_BEGIN
@@ -25,12 +26,16 @@ cos_tokenizer_destroy(CosTokenizer *tokenizer)
 /**
  * @brief Creates a new tokenizer.
  *
+ * The options are copied, so @p options does not need to outlive the tokenizer.
+ *
  * @param input_stream The input stream to tokenize.
+ * @param options The parser options, or @c NULL to use the defaults.
  *
  * @return The new tokenizer, or @c NULL if an error occurred.
  */
 COS_API CosTokenizer * COS_Nullable
-cos_tokenizer_create(CosStream *input_stream)
+cos_tokenizer_create(CosStream *input_stream,
+                     const CosParserOptions * COS_Nullable options)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_tokenizer_destroy)
     COS_OWNERSHIP_HOLDS(1);

@@ -9,6 +9,7 @@
 
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/parse/CosParserOptions.h>
 #include <libcos/syntax/tokenizer/CosToken.h>
 
 COS_DECLS_BEGIN
@@ -64,6 +65,11 @@ struct CosBaseParser {
     CosDiagnosticHandler * COS_Nullable diagnostic_handler;
 
     /**
+     * How strictly the parser judges its input.
+     */
+    CosParserOptions options;
+
+    /**
      * Whether the parser owns the tokenizer.
      *
      * If @c true, the parser will destroy the tokenizer when it is destroyed.
@@ -72,10 +78,23 @@ struct CosBaseParser {
     bool owns_tokenizer;
 };
 
+/**
+ * @brief Initializes a parser over an input stream.
+ *
+ * The options are copied, so @p options does not need to outlive the parser.
+ *
+ * @param parser The parser to initialize.
+ * @param document The document being parsed.
+ * @param input_stream The input stream to read from.
+ * @param options The parser options, or @c NULL to use the defaults.
+ *
+ * @return @c true if the parser was initialized successfully, otherwise @c false.
+ */
 COS_API bool
 cos_base_parser_init(CosBaseParser *parser,
                      CosDoc *document,
-                     CosStream *input_stream)
+                     CosStream *input_stream,
+                     const CosParserOptions * COS_Nullable options)
     COS_OWNERSHIP_HOLDS(3)
     COS_WARN_UNUSED_RESULT;
 
@@ -85,16 +104,22 @@ cos_base_parser_init(CosBaseParser *parser,
  * The parser does not take ownership of the tokenizer; the caller is
  * responsible for its lifetime.
  *
+ * The options are copied, so @p options does not need to outlive the parser.
+ * The tokenizer keeps the options it was created with; this parameter governs
+ * only the checks the parser itself performs.
+ *
  * @param parser The parser to initialize.
  * @param document The document being parsed.
  * @param tokenizer The tokenizer to use. Not owned by the parser.
+ * @param options The parser options, or @c NULL to use the defaults.
  *
  * @return @c true if the parser was initialized successfully, otherwise @c false.
  */
 COS_API bool
 cos_base_parser_init_with_tokenizer(CosBaseParser *parser,
                                     CosDoc *document,
-                                    CosTokenizer *tokenizer)
+                                    CosTokenizer *tokenizer,
+                                    const CosParserOptions * COS_Nullable options)
     COS_WARN_UNUSED_RESULT;
 
 COS_API void

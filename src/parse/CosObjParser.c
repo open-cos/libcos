@@ -9,6 +9,7 @@
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
 #include "parse/CosBaseParser.h"
+#include "parse/CosParserOptions-Private.h"
 
 #include "libcos/common/CosMacros.h"
 
@@ -71,7 +72,27 @@ struct CosObjParser {
 static bool
 cos_obj_parser_init_(CosObjParser *self,
                      CosDoc *document,
-                     CosStream *input_stream);
+                     CosStream *input_stream,
+                     const CosParserOptions * COS_Nullable options);
+
+/**
+ * Reports a deviation from the specification under a strict-mode group.
+ *
+ * @param parser The parser whose options and diagnostic handler to use.
+ * @param group The group governing this deviation.
+ * @param message The message to report. Must be a string literal or otherwise
+ * outlive the call, as diagnostics do not copy it.
+ * @param out_error Set to a @c COS_ERROR_SYNTAX error if the group escalates.
+ *
+ * @return @c true if parsing may continue, @c false if the group's level is
+ * @c CosStrictLevel_Error and the caller must abort.
+ */
+static bool
+cos_report_deviation_(CosBaseParser *parser,
+                      CosStrictGroup group,
+                      const char *message,
+                      CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
 
 static CosObjNode * COS_Nullable
 cos_next_object_(CosObjParser *parser,
@@ -105,9 +126,44 @@ cos_handle_real_(CosObjParser *parser,
                  const CosObjParserContext *context,
                  CosError * COS_Nullable error);
 
+static bool
+cos_report_deviation_(CosBaseParser *parser,
+                      CosStrictGroup group,
+                      const char *message,
+                      CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    COS_IMPL_PARAM_CHECK(message != NULL);
+    if (!parser || !message) {
+        return true;
+    }
+
+    const CosStrictLevel level =
+        cos_parser_options_get_strict_level(&(parser->options), group);
+    if (level == CosStrictLevel_Off) {
+        return true;
+    }
+
+    if (parser->diagnostic_handler) {
+        cos_diagnose(parser->diagnostic_handler,
+                     (level == CosStrictLevel_Error) ? CosDiagnosticLevel_Error
+                                                     : CosDiagnosticLevel_Warning,
+                     message);
+    }
+
+    if (level == CosStrictLevel_Error) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX, message),
+                            out_error);
+        return false;
+    }
+
+    return true;
+}
+
 CosObjParser *
 cos_obj_parser_create(CosDoc *document,
-                      CosStream *input_stream)
+                      CosStream *input_stream,
+                      const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(document != NULL);
     COS_API_PARAM_CHECK(input_stream != NULL);
@@ -122,7 +178,8 @@ cos_obj_parser_create(CosDoc *document,
 
     if (!cos_obj_parser_init_(parser,
                               document,
-                              input_stream)) {
+                              input_stream,
+                              options)) {
         goto failure;
     }
 
@@ -138,7 +195,8 @@ failure:
 static bool
 cos_obj_parser_init_(CosObjParser * const self,
                      CosDoc *document,
-                     CosStream *input_stream)
+                     CosStream *input_stream,
+                     const CosParserOptions * COS_Nullable options)
 {
     COS_IMPL_PARAM_CHECK(self != NULL);
     COS_IMPL_PARAM_CHECK(document != NULL);
@@ -151,12 +209,14 @@ cos_obj_parser_init_(CosObjParser * const self,
 
     return cos_base_parser_init(&(self->base),
                                 document,
-                                input_stream);
+                                input_stream,
+                                options);
 }
 
 CosObjParser *
 cos_obj_parser_create_with_tokenizer(CosDoc *document,
-                                     CosTokenizer *tokenizer)
+                                     CosTokenizer *tokenizer,
+                                     const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(document != NULL);
     COS_API_PARAM_CHECK(tokenizer != NULL);
@@ -169,7 +229,7 @@ cos_obj_parser_create_with_tokenizer(CosDoc *document,
         return NULL;
     }
 
-    if (!cos_base_parser_init_with_tokenizer(&(parser->base), document, tokenizer)) {
+    if (!cos_base_parser_init_with_tokenizer(&(parser->base), document, tokenizer, options)) {
         free(parser);
         return NULL;
     }
@@ -829,7 +889,8 @@ cos_handle_stream_(CosObjParser *parser,
 
     const CosStreamOffset stream_start = (CosStreamOffset)(stream_token->offset + stream_token->length);
 
-    // TODO: Validate the stream keyword token.
+    // The keyword's type was checked above; the end-of-line marker that must
+    // follow it is checked once the data offset has been sniffed below.
     // Consume the stream keyword.
     cos_base_parser_advance(&(parser->base));
 
@@ -889,6 +950,25 @@ cos_handle_stream_(CosObjParser *parser,
         data_start = stream_start + 1;
     }
 
+    // The data offset above stays deliberately lenient. These only report what
+    // it silently accepted: ISO 32000-1 allows LF or CRLF here, nothing else.
+    if (data_start == stream_start) {
+        if (!cos_report_deviation_(&(parser->base),
+                                   CosStrictGroup_EolMarkers,
+                                   "Missing end-of-line marker after the stream keyword",
+                                   out_error)) {
+            goto failure;
+        }
+    }
+    else if (eol[0] == '\r' && data_start == (stream_start + 1)) {
+        if (!cos_report_deviation_(&(parser->base),
+                                   CosStrictGroup_EolMarkers,
+                                   "Bare carriage return after the stream keyword",
+                                   out_error)) {
+            goto failure;
+        }
+    }
+
     // Capture the encoded bytes as a window over the input (no copy).
     CosStream *encoded = cos_sub_stream_create(input_stream, data_start, length, false, out_error);
     if (!encoded) {
@@ -924,7 +1004,30 @@ cos_handle_stream_(CosObjParser *parser,
     if (cos_base_parser_matches_next_token(&(parser->base),
                                            CosToken_Type_EndStream,
                                            out_error)) {
+        // "The keyword endstream shall be preceded by an end-of-line marker."
+        const CosToken * const endstream_token =
+            cos_base_parser_get_current_token(&(parser->base));
+        if (endstream_token &&
+            !cos_token_whitespace_is_eol(&(endstream_token->leading_whitespace))) {
+            if (!cos_report_deviation_(&(parser->base),
+                                       CosStrictGroup_EolMarkers,
+                                       "Missing end-of-line marker before the endstream keyword",
+                                       out_error)) {
+                cos_stream_close(encoded);
+                goto failure;
+            }
+        }
+
         cos_base_parser_advance(&(parser->base));
+    }
+    else {
+        if (!cos_report_deviation_(&(parser->base),
+                                   CosStrictGroup_RequiredKeywords,
+                                   "Expected an endstream keyword",
+                                   out_error)) {
+            cos_stream_close(encoded);
+            goto failure;
+        }
     }
 
     CosStreamObjNode * const stream_obj = cos_stream_obj_node_create(dict_obj, encoded);
@@ -999,6 +1102,92 @@ failure:
     return NULL;
 }
 
+/**
+ * Checks the whitespace separating the three tokens of an "N G R" or
+ * "N G obj" header.
+ *
+ * ISO 19005-1:2005(E), Section 6.1.8: the object number and generation number
+ * shall be separated by a single white-space character, as shall the
+ * generation number and the keyword that follows it.
+ *
+ * The whitespace predicates are used rather than offset arithmetic because a
+ * comment between two tokens is excluded from the character count.
+ *
+ * @param parser The parser holding the three header tokens.
+ * @param out_error Set if the deviation is escalated to an error.
+ *
+ * @return @c true if parsing may continue, otherwise @c false.
+ */
+static bool
+cos_check_obj_header_spacing_(CosBaseParser *parser,
+                              CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
+
+static bool
+cos_check_obj_header_spacing_(CosBaseParser *parser,
+                              CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(parser != NULL);
+    if (!parser) {
+        return true;
+    }
+
+    if (!cos_token_whitespace_is_single_space(&(parser->token_buffer[1].leading_whitespace))) {
+        if (!cos_report_deviation_(parser,
+                                   CosStrictGroup_ObjHeaderSpacing,
+                                   "Expected a single space between the object and generation numbers",
+                                   out_error)) {
+            return false;
+        }
+    }
+
+    if (!cos_token_whitespace_is_single_space(&(parser->token_buffer[2].leading_whitespace))) {
+        if (!cos_report_deviation_(parser,
+                                   CosStrictGroup_ObjHeaderSpacing,
+                                   "Expected a single space before the object header keyword",
+                                   out_error)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Rejects a negative object or generation number.
+ *
+ * Deliberately not governed by a strict-mode group. Both numbers are cast to
+ * unsigned when the object ID is built, so a negative value would silently
+ * become a very large one; that is a correctness problem rather than a
+ * conformance preference, and must not be suppressible.
+ *
+ * @param obj_num The parsed object number.
+ * @param gen_num The parsed generation number.
+ * @param out_error Set if either number is negative.
+ *
+ * @return @c true if both numbers are usable, otherwise @c false.
+ */
+static bool
+cos_check_obj_id_numbers_(int obj_num,
+                          int gen_num,
+                          CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
+static bool
+cos_check_obj_id_numbers_(int obj_num,
+                          int gen_num,
+                          CosError * COS_Nullable out_error)
+{
+    if (obj_num < 0 || gen_num < 0) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Negative object or generation number"),
+                            out_error);
+        return false;
+    }
+
+    return true;
+}
+
 static CosObjNode * COS_Nullable
 cos_handle_indirect_ref_(CosObjParser *parser,
                          const CosObjParserContext *context,
@@ -1022,7 +1211,10 @@ cos_handle_indirect_ref_(CosObjParser *parser,
     COS_ASSERT(parser->base.token_buffer[2].type == CosToken_Type_R,
                "Expected an 'R' keyword token");
 
-    // TODO: Validate the indirect reference tokens and whitespace.
+    if (!cos_check_obj_header_spacing_(&(parser->base), out_error)) {
+        goto failure;
+    }
+
     const CosToken * const obj_num_token = &parser->base.token_buffer[0];
     const CosToken * const gen_num_token = &parser->base.token_buffer[1];
 
@@ -1041,6 +1233,10 @@ cos_handle_indirect_ref_(CosObjParser *parser,
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid generation number token"),
                             out_error);
+        goto failure;
+    }
+
+    if (!cos_check_obj_id_numbers_(obj_num, gen_num, out_error)) {
         goto failure;
     }
 
@@ -1093,6 +1289,10 @@ cos_handle_indirect_def_(CosObjParser *parser,
     // "The object number and endobj keyword shall each be preceded by an EOL marker."
     // "The obj and endobj keywords shall each be followed by an EOL marker.
 
+    if (!cos_check_obj_header_spacing_(&(parser->base), out_error)) {
+        goto failure;
+    }
+
     int obj_num = 0;
     int gen_num = 0;
 
@@ -1108,6 +1308,10 @@ cos_handle_indirect_def_(CosObjParser *parser,
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid generation number token"),
                             out_error);
+        goto failure;
+    }
+
+    if (!cos_check_obj_id_numbers_(obj_num, gen_num, out_error)) {
         goto failure;
     }
 
@@ -1140,19 +1344,37 @@ cos_handle_indirect_def_(CosObjParser *parser,
     if (cos_base_parser_matches_next_token(&(parser->base),
                                            CosToken_Type_EndObj,
                                            out_error)) {
-        // TODO: Validate endobj token.
+        // "The object number and endobj keyword shall each be preceded by an
+        // EOL marker."
+        const CosToken * const endobj_token =
+            cos_base_parser_get_current_token(&(parser->base));
+        if (endobj_token &&
+            !cos_token_whitespace_is_eol(&(endobj_token->leading_whitespace))) {
+            if (!cos_report_deviation_(&(parser->base),
+                                       CosStrictGroup_EolMarkers,
+                                       "Missing end-of-line marker before the endobj keyword",
+                                       out_error)) {
+                goto obj_failure;
+            }
+        }
+
         cos_base_parser_advance(&(parser->base));
     }
     else {
-        // A missing endobj is tolerated: the object was already parsed.
-        COS_LOG_WARNING(cos_log_context_get_default(),
-                        "Expected endobj token");
+        // A missing endobj is tolerated by default: the object was already
+        // parsed. Reported so that callers can choose to reject it.
+        if (!cos_report_deviation_(&(parser->base),
+                                   CosStrictGroup_RequiredKeywords,
+                                   "Expected an endobj keyword",
+                                   out_error)) {
+            goto obj_failure;
+        }
     }
 
     CosIndirectObjNode * const indirect_obj = cos_indirect_obj_node_alloc(obj_id,
                                                                  obj);
     if (!indirect_obj) {
-        goto failure;
+        goto obj_failure;
     }
 
     COS_LOG_TRACE(cos_log_context_get_default(),
@@ -1161,6 +1383,11 @@ cos_handle_indirect_def_(CosObjParser *parser,
                   obj_id.gen_number);
 
     return (CosObjNode *)indirect_obj;
+
+obj_failure:
+    // Reached only after cos_next_object_ succeeded, so the object is owned
+    // here until cos_indirect_obj_node_alloc() takes it over.
+    cos_obj_node_release(obj);
 
 failure:
     return NULL;

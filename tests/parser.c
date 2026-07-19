@@ -41,7 +41,7 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
     }
 
     CosObjParser * const parser = cos_obj_parser_create(doc,
-                                                        input_stream);
+                                                        input_stream, NULL);
     if (!parser) {
         goto failure;
     }

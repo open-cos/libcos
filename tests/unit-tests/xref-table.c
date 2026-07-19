@@ -55,12 +55,12 @@ parse_xref_from_string_(const char *input,
         goto cleanup;
     }
 
-    tokenizer = cos_tokenizer_create((CosStream *)stream);
+    tokenizer = cos_tokenizer_create((CosStream *)stream, NULL);
     if (!tokenizer) {
         goto cleanup;
     }
 
-    parser = cos_xref_table_parser_create(doc, tokenizer);
+    parser = cos_xref_table_parser_create(doc, tokenizer, NULL);
     if (!parser) {
         goto cleanup;
     }

@@ -341,7 +341,7 @@ parse_bytes_(const unsigned char *data,
     bool result = false;
 
     /* The document owns the parser; the parser only borrows the stream. */
-    CosParser * const parser = cos_parser_create(doc, (CosStream *)stream);
+    CosParser * const parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     if (parser) {
         result = cos_parser_parse(parser, NULL);
     }

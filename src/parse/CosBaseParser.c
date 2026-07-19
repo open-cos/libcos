@@ -6,6 +6,8 @@
 
 #include "common/Assert.h"
 #include "common/CosDiagnosticHandler.h"
+#include "parse/CosParserOptions-Private.h"
+#include "syntax/tokenizer/CosTokenizer-Private.h"
 
 #include "libcos/CosDoc.h"
 #include "libcos/common/memory/CosMemory.h"
@@ -19,7 +21,8 @@ COS_ASSUME_NONNULL_BEGIN
 bool
 cos_base_parser_init(CosBaseParser *parser,
                      CosDoc *document,
-                     CosStream *input_stream)
+                     CosStream *input_stream,
+                     const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     COS_API_PARAM_CHECK(document != NULL);
@@ -36,7 +39,7 @@ cos_base_parser_init(CosBaseParser *parser,
     CosTokenizer *tokenizer = NULL;
     CosToken *token_buffer = NULL;
 
-    tokenizer = cos_tokenizer_create(input_stream);
+    tokenizer = cos_tokenizer_create(input_stream, options);
     if (!tokenizer) {
         goto failure;
     }
@@ -59,6 +62,8 @@ cos_base_parser_init(CosBaseParser *parser,
     parser->token_count = 0;
     parser->owns_tokenizer = true;
 
+    parser->options = cos_parser_options_resolve_(options);
+
     CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
     if (diagnostic_handler) {
         parser->diagnostic_handler = diagnostic_handler;
@@ -66,6 +71,11 @@ cos_base_parser_init(CosBaseParser *parser,
     else {
         parser->diagnostic_handler = cos_diagnostic_handler_get_default();
     }
+
+    // The parser owns this tokenizer, so its diagnostics belong on the same
+    // handler as the parser's own.
+    cos_tokenizer_set_diagnostic_handler_(tokenizer,
+                                          parser->diagnostic_handler);
 
     return true;
 
@@ -82,7 +92,8 @@ failure:
 bool
 cos_base_parser_init_with_tokenizer(CosBaseParser *parser,
                                     CosDoc *document,
-                                    CosTokenizer *tokenizer)
+                                    CosTokenizer *tokenizer,
+                                    const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     COS_API_PARAM_CHECK(document != NULL);
@@ -110,6 +121,11 @@ cos_base_parser_init_with_tokenizer(CosBaseParser *parser,
     parser->token_buffer_size = COS_BASE_PARSER_TOKEN_BUFFER_SIZE;
     parser->token_count = 0;
     parser->owns_tokenizer = false;
+
+    parser->options = cos_parser_options_resolve_(options);
+
+    // The tokenizer is borrowed, so its options and handler stay as its owner
+    // configured them; only the parser's own checks are governed here.
 
     CosDiagnosticHandler *diagnostic_handler = cos_doc_get_diagnostic_handler(document);
     if (diagnostic_handler) {

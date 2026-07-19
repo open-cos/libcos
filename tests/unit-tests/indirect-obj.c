@@ -54,7 +54,7 @@ parse_pdf_(const char *input,
         goto failure;
     }
 
-    parser = cos_parser_create(doc, (CosStream *)stream);
+    parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         goto failure;
     }

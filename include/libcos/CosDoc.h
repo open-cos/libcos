@@ -11,6 +11,7 @@
 #include <libcos/common/CosAPI.h>
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/parse/CosParserOptions.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -73,6 +74,21 @@ cos_doc_get_diagnostic_handler(const CosDoc *doc);
 COS_API void
 cos_doc_set_diagnostic_handler(CosDoc *doc,
                                CosDiagnosticHandler * COS_Nullable handler);
+
+// MARK: - Parser options
+
+/**
+ * @brief Gets the options the document is being parsed with.
+ *
+ * Set by @c cos_parser_create() . Consumers that resolve objects without a
+ * parser in scope read the options from here.
+ *
+ * @param doc The document.
+ *
+ * @return The document's parser options, or the defaults if @p doc is @c NULL .
+ */
+COS_API CosParserOptions
+cos_doc_get_parser_options(const CosDoc *doc);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

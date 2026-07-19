@@ -7,6 +7,7 @@
 #include "CosDoc-Private.h"
 #include "common/Assert.h"
 #include "objects/CosObjCache.h"
+#include "parse/CosParserOptions-Private.h"
 
 #include <libcos/CosObjID.h>
 #include <libcos/CosParser.h>
@@ -19,6 +20,7 @@
 #include <libcos/objects/CosObjNode.h>
 #include <libcos/objects/CosObjStream.h>
 #include <libcos/objects/CosStreamObjNode.h>
+#include <libcos/parse/CosParserOptions.h>
 #include <libcos/xref/table/CosXrefEntry.h>
 #include <libcos/xref/table/CosXrefTable.h>
 
@@ -39,6 +41,14 @@ struct CosDoc {
     CosObjCache * COS_Nullable obj_cache;
 
     CosDiagnosticHandler * COS_Nullable diagnostic_handler;
+
+    /**
+     * The options the document was parsed with.
+     *
+     * Held here for consumers that have a document but no parser in scope,
+     * such as reference resolution.
+     */
+    CosParserOptions parser_options;
 };
 
 CosDoc *
@@ -55,6 +65,10 @@ cos_doc_create(CosAllocator * COS_Nullable allocator)
     memset(doc, 0, sizeof(CosDoc));
 
     doc->allocator = doc_allocator;
+
+    // Not left zeroed: an all-zero CosParserOptions would silence every group,
+    // whereas the documented default is to warn.
+    doc->parser_options = cos_parser_options_make_default();
 
     return doc;
 }
@@ -333,7 +347,32 @@ cos_doc_set_diagnostic_handler(CosDoc *doc,
     doc->diagnostic_handler = handler;
 }
 
+// MARK: - Parser options
+
+CosParserOptions
+cos_doc_get_parser_options(const CosDoc *doc)
+{
+    COS_API_PARAM_CHECK(doc != NULL);
+    if (COS_UNLIKELY(!doc)) {
+        return cos_parser_options_make_default();
+    }
+
+    return doc->parser_options;
+}
+
 // MARK: - Private setters
+
+void
+cos_doc_set_parser_options_(CosDoc *doc,
+                            const CosParserOptions * COS_Nullable options)
+{
+    COS_IMPL_PARAM_CHECK(doc != NULL);
+    if (!doc) {
+        return;
+    }
+
+    doc->parser_options = cos_parser_options_resolve_(options);
+}
 
 void
 cos_doc_set_version_(CosDoc *doc,

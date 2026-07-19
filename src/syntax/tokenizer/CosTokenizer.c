@@ -5,8 +5,11 @@
 #include "common/Assert.h"
 #include "common/CharacterSet.h"
 #include "io/CosStreamReader.h"
+#include "parse/CosParserOptions-Private.h"
+#include "syntax/tokenizer/CosTokenizer-Private.h"
 
 #include "libcos/common/CosData.h"
+#include "libcos/common/CosDiagnosticHandler.h"
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosNumber.h"
 #include "libcos/common/CosString.h"
@@ -24,7 +27,15 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosTokenizer {
     CosStreamReader *stream_reader;
 
-    bool strict;
+    CosParserOptions options;
+
+    /**
+     * Where deviations are reported.
+     *
+     * Defaults to the shared default handler; a parser that owns this
+     * tokenizer replaces it with the document's handler.
+     */
+    CosDiagnosticHandler *diagnostic_handler;
 };
 
 static bool
@@ -119,7 +130,8 @@ cos_keyword_token_type_from_string_(CosStringRef string);
 // MARK: - Public
 
 CosTokenizer *
-cos_tokenizer_create(CosStream *input_stream)
+cos_tokenizer_create(CosStream *input_stream,
+                     const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(input_stream != NULL);
 
@@ -137,6 +149,11 @@ cos_tokenizer_create(CosStream *input_stream)
     }
 
     tokenizer->stream_reader = stream_reader;
+
+    // Resolved here rather than stored as a pointer, so the caller's options
+    // do not need to outlive the tokenizer.
+    tokenizer->options = cos_parser_options_resolve_(options);
+    tokenizer->diagnostic_handler = cos_diagnostic_handler_get_default();
 
     return tokenizer;
 
@@ -172,6 +189,19 @@ cos_tokenizer_reset(CosTokenizer *tokenizer)
     }
 
     cos_stream_reader_reset(tokenizer->stream_reader);
+}
+
+void
+cos_tokenizer_set_diagnostic_handler_(CosTokenizer *tokenizer,
+                                      CosDiagnosticHandler *handler)
+{
+    COS_IMPL_PARAM_CHECK(tokenizer != NULL);
+    COS_IMPL_PARAM_CHECK(handler != NULL);
+    if (!tokenizer || !handler) {
+        return;
+    }
+
+    tokenizer->diagnostic_handler = handler;
 }
 
 CosStream *
@@ -950,12 +980,23 @@ cos_read_number_(CosTokenizer *tokenizer,
         return false;
     }
 
-    if (tokenizer->strict && fractional_digit_count > COS_REAL_MAX_SIG_FRAC_DIG) {
-        if (out_error) {
-            *out_error = cos_error_make(COS_ERROR_SYNTAX,
-                                        "Too many fractional digits");
+    if (fractional_digit_count > COS_REAL_MAX_SIG_FRAC_DIG) {
+        const CosStrictLevel level =
+            cos_parser_options_get_strict_level(&(tokenizer->options),
+                                                CosStrictGroup_NumberSyntax);
+        if (level != CosStrictLevel_Off) {
+            cos_diagnose(tokenizer->diagnostic_handler,
+                         (level == CosStrictLevel_Error) ? CosDiagnosticLevel_Error
+                                                         : CosDiagnosticLevel_Warning,
+                         "Too many fractional digits");
         }
-        return false;
+        if (level == CosStrictLevel_Error) {
+            if (out_error) {
+                *out_error = cos_error_make(COS_ERROR_SYNTAX,
+                                            "Too many fractional digits");
+            }
+            return false;
+        }
     }
 
     if (has_decimal_point || int_overflowed) {

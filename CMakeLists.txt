@@ -225,12 +225,15 @@ target_sources(libcos PRIVATE
     src/parse/CosObjParser.c
     src/parse/CosObjParser.h
     src/parse/CosParser.c
+    src/parse/CosParserOptions.c
+    src/parse/CosParserOptions-Private.h
     src/CosDoc-Private.h
     src/CosTrailer-Private.h
     src/syntax/CosKeywords.c
     src/syntax/tokenizer/CosToken.c
     src/syntax/tokenizer/CosTokenValue.c
     src/syntax/tokenizer/CosTokenizer.c
+    src/syntax/tokenizer/CosTokenizer-Private.h
     src/xref/CosXrefStreamParser.c
     src/xref/CosXrefStreamParser.h
     src/xref/CosXrefValidation.h
@@ -293,6 +296,7 @@ target_sources(libcos PUBLIC
     include/libcos/objects/CosStringObjNode.h
     include/libcos/CosParser.h
     include/libcos/parse/CosBaseParser.h
+    include/libcos/parse/CosParserOptions.h
     include/libcos/syntax/CosKeywords.h
     include/libcos/syntax/CosLimits.h
     include/libcos/syntax/tokenizer/CosToken.h

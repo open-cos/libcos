@@ -10,6 +10,7 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/parse/CosParserOptions.h>
 
 #include <stdbool.h>
 
@@ -38,14 +39,20 @@ cos_parser_destroy(CosParser *parser)
  * The parser borrows @p input_stream; the caller retains ownership and must
  * keep the stream alive until the document is destroyed.
  *
+ * The options are copied, so @p options does not need to outlive the parser.
+ * They are also recorded on @p document , so that object resolution applies the
+ * same rules.
+ *
  * @param document The document to parse into.
  * @param input_stream The input stream to read PDF data from.
+ * @param options The parser options, or @c NULL to use the defaults.
  *
  * @return A borrowed reference to the new parser, or @c NULL if an error occurred.
  */
 COS_API CosParser * COS_Nullable
 cos_parser_create(CosDoc *document,
-                  CosStream *input_stream)
+                  CosStream *input_stream,
+                  const CosParserOptions * COS_Nullable options)
     COS_OWNERSHIP_HOLDS(2);
 
 /**

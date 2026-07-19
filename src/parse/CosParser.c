@@ -98,7 +98,8 @@ cos_parser_offsets_add_(CosArray *offsets,
 
 CosParser *
 cos_parser_create(CosDoc *document,
-                  CosStream *input_stream)
+                  CosStream *input_stream,
+                  const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(document != NULL);
     COS_API_PARAM_CHECK(input_stream != NULL);
@@ -114,17 +115,24 @@ cos_parser_create(CosDoc *document,
         goto failure;
     }
 
-    if (!cos_base_parser_init(&(parser->base), document, input_stream)) {
+    if (!cos_base_parser_init(&(parser->base), document, input_stream, options)) {
         goto failure;
     }
 
+    // The same options must reach the object parser: it shares this tokenizer,
+    // and objects loaded through it are judged by the same rules.
     obj_parser = cos_obj_parser_create_with_tokenizer(document,
-                                                      parser->base.tokenizer);
+                                                      parser->base.tokenizer,
+                                                      options);
     if (!obj_parser) {
         goto failure;
     }
 
     parser->obj_parser = obj_parser;
+
+    // Recorded on the document so that consumers without a parser in scope,
+    // such as reference resolution, see the same options.
+    cos_doc_set_parser_options_(document, options);
 
     cos_doc_set_parser_(document, parser);
 
@@ -485,7 +493,9 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
             cos_obj_parser_flush_tokens_(parser->obj_parser);
 
             CosXrefTableParser * const xtp =
-                cos_xref_table_parser_create(doc, parser->base.tokenizer);
+                cos_xref_table_parser_create(doc,
+                                             parser->base.tokenizer,
+                                             &(parser->base.options));
             if (!xtp) {
                 cos_error_propagate(out_error,
                                     cos_error_make(COS_ERROR_PARSE,

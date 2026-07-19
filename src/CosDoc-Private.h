@@ -35,6 +35,16 @@ void
 cos_doc_set_root_(CosDoc *doc,
                   CosObjNode * COS_Nullable root);
 
+/**
+ * Records the options the document is being parsed with.
+ *
+ * @param doc The document.
+ * @param options The options, or @c NULL for the defaults.
+ */
+void
+cos_doc_set_parser_options_(CosDoc *doc,
+                            const CosParserOptions * COS_Nullable options);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

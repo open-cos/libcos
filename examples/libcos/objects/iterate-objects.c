@@ -263,7 +263,7 @@ EXAMPLE_MAIN()
 
     /* Create the parser and parse the document.
      * The parser is owned by the document after creation. */
-    CosParser *parser = cos_parser_create(doc, (CosStream *)stream);
+    CosParser *parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         fprintf(stderr, "Failed to create parser\n");
         goto cleanup;

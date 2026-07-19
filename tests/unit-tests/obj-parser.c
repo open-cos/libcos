@@ -8,6 +8,8 @@
 
 #include <libcos/CosDoc.h>
 #include <libcos/common/CosData.h>
+#include <libcos/common/CosDiagnostic.h>
+#include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/objects/CosArrayObjNode.h>
@@ -65,7 +67,7 @@ parse_objects_(const char *input,
         goto cleanup;
     }
 
-    parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    parser = cos_obj_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         goto cleanup;
     }
@@ -196,7 +198,7 @@ parse_string_value_(const char *input,
     }
     *out_stream = stream;
 
-    CosObjParser * const parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    CosObjParser * const parser = cos_obj_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         return NULL;
     }
@@ -335,7 +337,7 @@ parse_array_element_types_(const char *input,
     if (!stream) {
         goto cleanup;
     }
-    parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    parser = cos_obj_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         goto cleanup;
     }
@@ -386,7 +388,7 @@ parse_dict_entry_count_(const char *input)
     if (!stream) {
         goto cleanup;
     }
-    parser = cos_obj_parser_create(doc, (CosStream *)stream);
+    parser = cos_obj_parser_create(doc, (CosStream *)stream, NULL);
     if (!parser) {
         goto cleanup;
     }
@@ -508,12 +510,12 @@ flush_DiscardsPeekedObject(void)
         goto cleanup;
     }
 
-    tokenizer = cos_tokenizer_create((CosStream *)stream);
+    tokenizer = cos_tokenizer_create((CosStream *)stream, NULL);
     if (!tokenizer) {
         goto cleanup;
     }
 
-    parser = cos_obj_parser_create_with_tokenizer(doc, tokenizer);
+    parser = cos_obj_parser_create_with_tokenizer(doc, tokenizer, NULL);
     if (!parser) {
         goto cleanup;
     }
@@ -560,6 +562,312 @@ cleanup:
     return result;
 }
 
+// MARK: - Strict mode helpers
+
+/**
+ * Counts the diagnostics emitted during a parse.
+ */
+typedef struct DiagnosticCounter {
+    size_t warnings;
+    size_t errors;
+} DiagnosticCounter;
+
+static void
+count_diagnostic_(CosDiagnosticHandler *handler,
+                  const CosDiagnostic *diagnostic)
+{
+    DiagnosticCounter * const counter =
+        (DiagnosticCounter *)cos_diagnostic_handler_get_user_data(handler);
+    if (!counter) {
+        return;
+    }
+
+    if (diagnostic->type == CosDiagnosticLevel_Error) {
+        counter->errors++;
+    }
+    else {
+        counter->warnings++;
+    }
+}
+
+/**
+ * Parses @p input with every strict group set to @p level .
+ *
+ * @param input The NUL-terminated input.
+ * @param level The level to apply to every group, or a negative value to pass
+ *   a @c NULL options pointer instead.
+ * @param out_counter Receives the diagnostic counts.
+ * @param out_object_count Receives the number of objects parsed.
+ *
+ * @return @c true if the parse ran, @c false if the fixture could not be built.
+ */
+static bool
+parse_at_level_(const char *input,
+                int level,
+                DiagnosticCounter *out_counter,
+                size_t *out_object_count)
+{
+    CosDoc *doc = NULL;
+    CosMemoryStream *stream = NULL;
+    CosObjParser *parser = NULL;
+    CosDiagnosticHandler *handler = NULL;
+    bool result = false;
+
+    out_counter->warnings = 0;
+    out_counter->errors = 0;
+    *out_object_count = 0;
+
+    doc = cos_doc_create(NULL);
+    if (!doc) {
+        goto cleanup;
+    }
+
+    handler = cos_diagnostic_handler_alloc(&count_diagnostic_, out_counter);
+    if (!handler) {
+        goto cleanup;
+    }
+    cos_doc_set_diagnostic_handler(doc, handler);
+
+    stream = cos_memory_stream_create_readonly(input, strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+
+    CosParserOptions options = cos_parser_options_make_default();
+    for (unsigned int i = 0; i < COS_STRICT_GROUP_COUNT; i++) {
+        cos_parser_options_set_strict_level(&options,
+                                            (CosStrictGroup)i,
+                                            (CosStrictLevel)level);
+    }
+
+    parser = cos_obj_parser_create(doc,
+                                   (CosStream *)stream,
+                                   (level < 0) ? NULL : &options);
+    if (!parser) {
+        goto cleanup;
+    }
+
+    size_t count = 0;
+    while (count < MAX_OBJECTS && cos_obj_parser_has_next_object(parser)) {
+        CosObjNode * const obj = cos_obj_parser_next_object(parser, NULL);
+        if (!obj) {
+            break;
+        }
+
+        count++;
+        cos_obj_node_release(obj);
+    }
+
+    *out_object_count = count;
+    result = true;
+
+cleanup:
+    if (parser) {
+        cos_obj_parser_destroy(parser);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
+    if (handler) {
+        cos_diagnostic_handler_free(handler);
+    }
+    return result;
+}
+
+/**
+ * Asserts that @p input is silent at Off, warns at Warn, and fails at Error.
+ *
+ * @param input The NUL-terminated input containing one deviation.
+ *
+ * @return @c EXIT_SUCCESS if the input behaves as expected at all three levels.
+ */
+static int
+expect_deviation_(const char *input)
+{
+    DiagnosticCounter counter = {0, 0};
+    size_t object_count = 0;
+
+    TEST_EXPECT(parse_at_level_(input, CosStrictLevel_Off, &counter, &object_count));
+    TEST_EXPECT(counter.warnings == 0);
+    TEST_EXPECT(counter.errors == 0);
+    TEST_EXPECT(object_count > 0);
+
+    TEST_EXPECT(parse_at_level_(input, CosStrictLevel_Warn, &counter, &object_count));
+    TEST_EXPECT(counter.warnings > 0);
+    TEST_EXPECT(counter.errors == 0);
+    // Warning must not change the outcome.
+    TEST_EXPECT(object_count > 0);
+
+    TEST_EXPECT(parse_at_level_(input, CosStrictLevel_Error, &counter, &object_count));
+    TEST_EXPECT(counter.errors > 0);
+
+    return EXIT_SUCCESS;
+}
+
+// MARK: - Strict mode tests
+
+static int
+strict_refWithDoubleSpace_IsDeviation(void)
+{
+    return expect_deviation_("[ 1  0 R ]");
+}
+
+static int
+strict_refWithNewline_IsDeviation(void)
+{
+    return expect_deviation_("[ 1\n0 R ]");
+}
+
+static int
+strict_objHeaderWithDoubleSpace_IsDeviation(void)
+{
+    return expect_deviation_("1  0 obj\nnull\nendobj\n");
+}
+
+static int
+strict_endObjWithoutEol_IsDeviation(void)
+{
+    return expect_deviation_("1 0 obj\nnull endobj\n");
+}
+
+static int
+strict_missingEndObj_IsDeviation(void)
+{
+    return expect_deviation_("1 0 obj\nnull\n");
+}
+
+static int
+strict_streamWithBareCr_IsDeviation(void)
+{
+    // A bare CR after the stream keyword: ISO 32000-1 allows only LF or CRLF.
+    return expect_deviation_("1 0 obj\n<< /Length 3 >>\nstream\rabc\nendstream\nendobj\n");
+}
+
+static int
+strict_streamWithoutEol_IsDeviation(void)
+{
+    // No end-of-line marker at all after the stream keyword; the space that
+    // ends the keyword token becomes the first byte of the 4-byte payload.
+    return expect_deviation_("1 0 obj\n<< /Length 4 >>\nstream abc\nendstream\nendobj\n");
+}
+
+static int
+strict_endStreamWithoutEol_IsDeviation(void)
+{
+    return expect_deviation_("1 0 obj\n<< /Length 3 >>\nstream\nabcendstream\nendobj\n");
+}
+
+/**
+ * A negative object number must be rejected at every level, including Off.
+ *
+ * The numbers are cast to unsigned when the object ID is built, so accepting
+ * "-1 0 R" would silently produce object 4294967295.
+ */
+static int
+strict_negativeObjNumber_AlwaysRejected(void)
+{
+    CosObjNodeType types[MAX_OBJECTS] = {CosObjNodeType_Unknown};
+
+    // A well-formed reference is still an element.
+    TEST_EXPECT(parse_array_element_types_("[ 1 0 R ]", types) == 1);
+    TEST_EXPECT(types[0] == CosObjNodeType_Reference);
+
+    // A negative object or generation number yields no element at all, rather
+    // than a reference to object 4294967295.
+    TEST_EXPECT(parse_array_element_types_("[ -1 0 R ]", types) == 0);
+    TEST_EXPECT(parse_array_element_types_("[ 1 -1 R ]", types) == 0);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * Well-formed input must not trip any of the new checks.
+ */
+static int
+strict_conformingInput_IsSilent(void)
+{
+    DiagnosticCounter counter = {0, 0};
+    size_t object_count = 0;
+
+    TEST_EXPECT(parse_at_level_("1 0 obj\nnull\nendobj\n",
+                                CosStrictLevel_Warn,
+                                &counter,
+                                &object_count));
+    TEST_EXPECT(counter.warnings == 0);
+    TEST_EXPECT(counter.errors == 0);
+
+    TEST_EXPECT(parse_at_level_("[ 1 0 R ]",
+                                CosStrictLevel_Warn,
+                                &counter,
+                                &object_count));
+    TEST_EXPECT(counter.warnings == 0);
+    TEST_EXPECT(counter.errors == 0);
+
+    TEST_EXPECT(parse_at_level_("1 0 obj\n<< /Length 3 >>\nstream\nabc\nendstream\nendobj\n",
+                                CosStrictLevel_Warn,
+                                &counter,
+                                &object_count));
+    TEST_EXPECT(counter.warnings == 0);
+    TEST_EXPECT(counter.errors == 0);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * A NULL options pointer must behave exactly like the defaults.
+ *
+ * This is what the call sites that pass NULL are relying on.
+ */
+static int
+strict_nullOptions_MatchesDefaults(void)
+{
+    DiagnosticCounter null_counter = {0, 0};
+    DiagnosticCounter default_counter = {0, 0};
+    size_t null_count = 0;
+    size_t default_count = 0;
+
+    const char * const inputs[] = {
+        "1 0 obj\nnull\nendobj\n",
+        "1  0 obj\nnull\nendobj\n",
+    };
+
+    for (size_t i = 0; i < (sizeof(inputs) / sizeof(inputs[0])); i++) {
+        TEST_EXPECT(parse_at_level_(inputs[i], -1, &null_counter, &null_count));
+        TEST_EXPECT(parse_at_level_(inputs[i],
+                                    CosStrictLevel_Warn,
+                                    &default_counter,
+                                    &default_count));
+
+        TEST_EXPECT(null_counter.warnings == default_counter.warnings);
+        TEST_EXPECT(null_counter.errors == default_counter.errors);
+        TEST_EXPECT(null_count == default_count);
+    }
+
+    return EXIT_SUCCESS;
+}
+
+static int
+strict_defaultOptions_WarnForEveryGroup(void)
+{
+    const CosParserOptions options = cos_parser_options_make_default();
+
+    for (unsigned int i = 0; i < COS_STRICT_GROUP_COUNT; i++) {
+        TEST_EXPECT(cos_parser_options_get_strict_level(&options,
+                                                        (CosStrictGroup)i) ==
+                    CosStrictLevel_Warn);
+    }
+
+    // An out-of-range group must not read past the array.
+    TEST_EXPECT(cos_parser_options_get_strict_level(&options,
+                                                    (CosStrictGroup)COS_STRICT_GROUP_COUNT) ==
+                CosStrictLevel_Off);
+
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Test driver
 
 TEST_MAIN()
@@ -593,6 +901,20 @@ TEST_MAIN()
 
     /* Flush */
     TEST_EXPECT(flush_DiscardsPeekedObject() == EXIT_SUCCESS);
+
+    /* Strict mode */
+    TEST_EXPECT(strict_defaultOptions_WarnForEveryGroup() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_conformingInput_IsSilent() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_nullOptions_MatchesDefaults() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_refWithDoubleSpace_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_refWithNewline_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_objHeaderWithDoubleSpace_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_endObjWithoutEol_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_missingEndObj_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_streamWithBareCr_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_streamWithoutEol_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_endStreamWithoutEol_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_negativeObjNumber_AlwaysRejected() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

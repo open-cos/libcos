@@ -45,7 +45,8 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
 
 CosXrefTableParser *
 cos_xref_table_parser_create(CosDoc *document,
-                             CosTokenizer *tokenizer)
+                             CosTokenizer *tokenizer,
+                             const CosParserOptions * COS_Nullable options)
 {
     COS_API_PARAM_CHECK(document != NULL);
     COS_API_PARAM_CHECK(tokenizer != NULL);
@@ -62,7 +63,8 @@ cos_xref_table_parser_create(CosDoc *document,
 
     if (!cos_base_parser_init_with_tokenizer(&(parser->base),
                                              document,
-                                             tokenizer)) {
+                                             tokenizer,
+                                             options)) {
         goto failure;
     }
 

@@ -8,6 +8,7 @@
 
 #include "libcos/CosDoc.h"
 #include "libcos/CosObjID.h"
+#include "libcos/common/CosDiagnosticHandler.h"
 #include "libcos/common/CosError.h"
 #include "libcos/objects/CosNullObjNode.h"
 #include "libcos/objects/CosObjNode.h"
@@ -132,8 +133,28 @@ cos_reference_obj_node_resolve_value_(CosReferenceObjNode *reference_obj)
         cos_obj_node_release((CosObjNode *)obj_value);
     }
     else {
-        // TODO: Log undefined object if strict.
+        const CosParserOptions options =
+            cos_doc_get_parser_options(reference_obj->doc);
+        const CosStrictLevel level =
+            cos_parser_options_get_strict_level(&options,
+                                                CosStrictGroup_UndefinedRefs);
+        if (level != CosStrictLevel_Off) {
+            CosDiagnosticHandler *handler =
+                cos_doc_get_diagnostic_handler(reference_obj->doc);
+            if (!handler) {
+                handler = cos_diagnostic_handler_get_default();
+            }
 
+            cos_diagnose(handler,
+                         (level == CosStrictLevel_Error) ? CosDiagnosticLevel_Error
+                                                         : CosDiagnosticLevel_Warning,
+                         "Indirect reference does not resolve to an object");
+        }
+
+        // Resolution stays total even at CosStrictLevel_Error: this function
+        // returns void and has no error channel, so the level can change how
+        // loudly the deviation is reported but not whether it fails. Callers
+        // that need to reject an unresolved reference watch the diagnostic.
         reference_obj->value = (CosObjNode *)cos_null_obj_node_get();
     }
 }

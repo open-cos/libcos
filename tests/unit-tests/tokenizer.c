@@ -4,6 +4,7 @@
 
 #include "CosTest.h"
 
+#include <libcos/common/CosError.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/syntax/CosLimits.h>
@@ -40,7 +41,7 @@ get_tokens_(const char *input,
         goto cleanup;
     }
 
-    tokenizer = cos_tokenizer_create((CosStream *)stream);
+    tokenizer = cos_tokenizer_create((CosStream *)stream, NULL);
     if (!tokenizer) {
         goto cleanup;
     }
@@ -607,6 +608,119 @@ whitespace_multipleSpaces_NotSingleSpace(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Strict mode tests
+
+/**
+ * Tokenizes @p input with the number-syntax group set to @p level .
+ *
+ * A rejected number does not make @c cos_tokenizer_get_next_token() fail: the
+ * tokenizer's convention is to yield an Unknown token and propagate the error,
+ * so the token type is what distinguishes the levels.
+ *
+ * @param input The NUL-terminated input.
+ * @param level The level to apply to @c CosStrictGroup_NumberSyntax .
+ * @param out_type Receives the type of the first token.
+ * @param out_had_error Receives whether an error was propagated.
+ *
+ * @return @c true if the fixture was built and a token was read.
+ */
+static bool
+tokenize_number_at_level_(const char *input,
+                          CosStrictLevel level,
+                          CosToken_Type *out_type,
+                          bool *out_had_error)
+{
+    CosMemoryStream *stream = NULL;
+    CosTokenizer *tokenizer = NULL;
+    bool built = false;
+
+    *out_type = CosToken_Type_Unknown;
+    *out_had_error = false;
+
+    stream = cos_memory_stream_create_readonly(input, strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+
+    CosParserOptions options = cos_parser_options_make_default();
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_NumberSyntax,
+                                        level);
+
+    tokenizer = cos_tokenizer_create((CosStream *)stream, &options);
+    if (!tokenizer) {
+        goto cleanup;
+    }
+
+    CosToken token = {0};
+    CosError error = cos_error_none();
+    if (!cos_tokenizer_get_next_token(tokenizer, &token, &error)) {
+        goto cleanup;
+    }
+
+    *out_type = token.type;
+    *out_had_error = (error.code != COS_ERROR_NONE);
+    cos_token_reset(&token);
+    built = true;
+
+cleanup:
+    if (tokenizer) {
+        cos_tokenizer_destroy(tokenizer);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    return built;
+}
+
+/**
+ * A real with more fractional digits than COS_REAL_MAX_SIG_FRAC_DIG.
+ *
+ * This branch was unreachable before the strict-mode options existed, so its
+ * behaviour is verified here rather than assumed.
+ */
+static int
+strict_tooManyFractionalDigits_HonoursLevel(void)
+{
+    // COS_REAL_MAX_SIG_FRAC_DIG is 5; this has 8.
+    const char * const input = "1.12345678";
+    CosToken_Type type = CosToken_Type_Unknown;
+    bool had_error = false;
+
+    // Off and Warn both accept the number; only the reporting differs.
+    TEST_EXPECT(tokenize_number_at_level_(input, CosStrictLevel_Off, &type, &had_error));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(!had_error);
+
+    TEST_EXPECT(tokenize_number_at_level_(input, CosStrictLevel_Warn, &type, &had_error));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(!had_error);
+
+    // Error rejects it: the number does not become a Real token.
+    TEST_EXPECT(tokenize_number_at_level_(input, CosStrictLevel_Error, &type, &had_error));
+    TEST_EXPECT(type == CosToken_Type_Unknown);
+    TEST_EXPECT(had_error);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * A real within the digit limit must not trip the check at any level.
+ */
+static int
+strict_fractionalDigitsWithinLimit_AlwaysAccepted(void)
+{
+    const char * const input = "1.12345";
+    CosToken_Type type = CosToken_Type_Unknown;
+    bool had_error = false;
+
+    TEST_EXPECT(tokenize_number_at_level_(input, CosStrictLevel_Error, &type, &had_error));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(!had_error);
+
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Test driver
 
 TEST_MAIN()
@@ -673,6 +787,10 @@ TEST_MAIN()
     TEST_EXPECT(whitespace_singleSpacePredicate_ReturnsFalseForLineFeed() == EXIT_SUCCESS);
     TEST_EXPECT(whitespace_bareCrPredicate_ReturnsFalseForCrLf() == EXIT_SUCCESS);
     TEST_EXPECT(whitespace_multipleSpaces_NotSingleSpace() == EXIT_SUCCESS);
+
+    /* Strict mode */
+    TEST_EXPECT(strict_tooManyFractionalDigits_HonoursLevel() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_fractionalDigitsWithinLimit_AlwaysAccepted() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

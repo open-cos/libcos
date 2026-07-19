@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 #include "parse/CosObjParser.h"
 
+#include <libcos/CosDoc.h>
 #include <libcos/CosObjID.h>
 #include <libcos/common/CosData.h>
 #include <libcos/common/CosError.h>
@@ -239,7 +240,12 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
         goto failure;
     }
 
-    tokenizer = cos_tokenizer_create(mem_stream);
+    // Objects inside an object stream are judged by the same rules as objects
+    // outside one, so the document's options are threaded into this nested
+    // parse rather than defaulting.
+    const CosParserOptions options = cos_doc_get_parser_options(doc);
+
+    tokenizer = cos_tokenizer_create(mem_stream, &options);
     if (!tokenizer) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                            "Failed to create object stream tokenizer"),
@@ -247,7 +253,7 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
         goto failure;
     }
 
-    obj_parser = cos_obj_parser_create_with_tokenizer(doc, tokenizer);
+    obj_parser = cos_obj_parser_create_with_tokenizer(doc, tokenizer, &options);
     if (!obj_parser) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                            "Failed to create object stream parser"),

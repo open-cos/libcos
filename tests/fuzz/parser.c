@@ -36,7 +36,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
     }
 
     /* The document owns the parser; the parser only borrows the stream. */
-    CosParser * const parser = cos_parser_create(doc, (CosStream *)stream);
+    CosParser * const parser = cos_parser_create(doc, (CosStream *)stream, NULL);
     if (parser) {
         (void)cos_parser_parse(parser, NULL);
     }
