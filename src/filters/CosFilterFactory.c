@@ -28,6 +28,7 @@ cos_filter_name_matches_(const CosString *name,
 
 CosStream *
 cos_filter_create_for_name_(const CosString *name,
+                            const CosFilterOptions * COS_Nullable options,
                             CosError * COS_Nullable out_error)
 {
     COS_IMPL_PARAM_CHECK(name != NULL);
@@ -59,6 +60,8 @@ cos_filter_create_for_name_(const CosString *name,
                             out_error);
         return NULL;
     }
+
+    cos_filter_set_options_((CosFilter *)filter, options);
 
     return filter;
 }

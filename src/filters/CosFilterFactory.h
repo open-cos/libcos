@@ -8,6 +8,7 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosTypes.h>
+#include <libcos/filters/CosFilter.h>
 
 COS_DECLS_BEGIN
 COS_ASSUME_NONNULL_BEGIN
@@ -16,6 +17,7 @@ COS_ASSUME_NONNULL_BEGIN
  * Creates a decode filter for a PDF stream filter name.
  *
  * @param name The filter name, e.g. @c "FlateDecode" or its abbreviation @c "Fl".
+ * @param options The filter behaviour options, or @c NULL for the defaults.
  * @param out_error On failure, set to describe the error.
  *
  * @return A new filter stream (owned; close with @c cos_stream_close), or @c NULL
@@ -24,9 +26,10 @@ COS_ASSUME_NONNULL_BEGIN
  */
 CosStream * COS_Nullable
 cos_filter_create_for_name_(const CosString *name,
+                            const CosFilterOptions * COS_Nullable options,
                             CosError * COS_Nullable out_error)
     COS_OWNERSHIP_RETURNS
-    COS_ATTR_ACCESS_WRITE_ONLY(2);
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

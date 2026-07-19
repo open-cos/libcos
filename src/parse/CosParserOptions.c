@@ -21,7 +21,7 @@ COS_ASSUME_NONNULL_BEGIN
  * out-of-bounds read. C99 has no _Static_assert, hence the array-size idiom.
  */
 typedef char cos_strict_group_count_matches_enum_
-    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_StreamLength + 1)) ? 1 : -1];
+    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_FilterEndOfData + 1)) ? 1 : -1];
 
 CosParserOptions
 cos_parser_options_make_default(void)
@@ -31,6 +31,13 @@ cos_parser_options_make_default(void)
     for (unsigned int i = 0; i < COS_STRICT_GROUP_COUNT; i++) {
         options.strict_levels[i] = CosStrictLevel_Warn;
     }
+
+    // Unlike the other groups, a filter's end-of-data marker defaults to Off
+    // rather than Warn: real files omit it routinely, and both Adobe and pdfium
+    // treat the end of the source data as an implicit terminator without
+    // complaint, so warning on it by default would be noise. Callers who want
+    // to police it can raise the level explicitly.
+    options.strict_levels[CosStrictGroup_FilterEndOfData] = CosStrictLevel_Off;
 
     options.interior_sign_behaviour = CosInteriorSignBehaviour_Merge;
     options.stream_length_behaviour = CosStreamLengthBehaviour_Trust;
@@ -147,20 +154,16 @@ cos_parser_options_get_int_overflow_behaviour(const CosParserOptions *options)
 }
 
 bool
-cos_options_report_(const CosParserOptions *options,
-                    CosDiagnosticHandler * COS_Nullable handler,
-                    CosStrictGroup group,
-                    const char *message,
-                    CosError * COS_Nullable out_error)
+cos_strict_level_report_(CosStrictLevel level,
+                         CosDiagnosticHandler * COS_Nullable handler,
+                         const char *message,
+                         CosError * COS_Nullable out_error)
 {
-    COS_IMPL_PARAM_CHECK(options != NULL);
     COS_IMPL_PARAM_CHECK(message != NULL);
-    if (!options || !message) {
+    if (!message) {
         return true;
     }
 
-    const CosStrictLevel level =
-        cos_parser_options_get_strict_level(options, group);
     if (level == CosStrictLevel_Off) {
         return true;
     }
@@ -177,6 +180,25 @@ cos_options_report_(const CosParserOptions *options,
     }
 
     return true;
+}
+
+bool
+cos_options_report_(const CosParserOptions *options,
+                    CosDiagnosticHandler * COS_Nullable handler,
+                    CosStrictGroup group,
+                    const char *message,
+                    CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(options != NULL);
+    COS_IMPL_PARAM_CHECK(message != NULL);
+    if (!options || !message) {
+        return true;
+    }
+
+    return cos_strict_level_report_(cos_parser_options_get_strict_level(options, group),
+                                    handler,
+                                    message,
+                                    out_error);
 }
 
 CosParserOptions

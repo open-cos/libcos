@@ -19,7 +19,7 @@ COS_ASSUME_NONNULL_BEGIN
  * only values that are themselves valid groups.
  */
 enum {
-    COS_STRICT_GROUP_COUNT = 10,
+    COS_STRICT_GROUP_COUNT = 11,
 };
 
 /**
@@ -118,6 +118,23 @@ typedef enum CosStrictGroup {
      * @c CosStrictLevel_Warn , and rejected at @c CosStrictLevel_Error .
      */
     CosStrictGroup_StreamLength,
+
+    /**
+     * A filter's end-of-data marker is missing or malformed, such as the
+     * @c ~> that terminates an ASCII85Decode stream or the @c > that
+     * terminates an ASCIIHexDecode stream.
+     *
+     * The specification requires the marker, but Adobe and pdfium treat the
+     * end of the source data as an implicit terminator and recover. This
+     * group's level decides how the deviation is handled: silently accepted at
+     * @c CosStrictLevel_Off , decoded with a warning at @c CosStrictLevel_Warn ,
+     * and rejected at @c CosStrictLevel_Error .
+     *
+     * Alone among the groups this defaults to @c CosStrictLevel_Off rather than
+     * @c CosStrictLevel_Warn : a missing marker is common enough in real files,
+     * and tolerated widely enough, that warning on it by default would be noise.
+     */
+    CosStrictGroup_FilterEndOfData,
 } CosStrictGroup;
 
 /*
@@ -237,9 +254,10 @@ typedef struct CosParserOptions {
 } CosParserOptions;
 
 /**
- * Returns the default options: every group at @c CosStrictLevel_Warn ,
- * @c CosInteriorSignBehaviour_Merge , @c CosStreamLengthBehaviour_Trust , and
- * @c CosIntOverflowBehaviour_PromoteToReal .
+ * Returns the default options: every group at @c CosStrictLevel_Warn except
+ * @c CosStrictGroup_FilterEndOfData , which defaults to @c CosStrictLevel_Off
+ * (see its documentation for why), plus @c CosInteriorSignBehaviour_Merge ,
+ * @c CosStreamLengthBehaviour_Trust , and @c CosIntOverflowBehaviour_PromoteToReal .
  *
  * These are the options used when a @c NULL options pointer is passed.
  *

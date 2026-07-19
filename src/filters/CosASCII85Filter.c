@@ -135,8 +135,14 @@ cos_ascii85_fill_decode_buffer_(CosFilter *filter,
     while (count < COS_ASCII85_BLOCK_SIZE) {
         size_t read_count = cos_stream_read(source_stream, &ch, 1, error);
         if (read_count == 0) {
-            // End of underlying stream reached unexpectedly.
+            // The source ended without the "~>" end-of-data marker.
             filter->buffer.eod = true;
+            if (!cos_filter_report_end_of_data_(filter,
+                                                "ASCII85Decode stream is missing the ~> end-of-data marker",
+                                                error)) {
+                filter->buffer.length = 0;
+                return 0;
+            }
             break;
         }
         if (cos_is_whitespace(ch)) {
@@ -147,12 +153,15 @@ cos_ascii85_fill_decode_buffer_(CosFilter *filter,
         if (ch == '~') {
             uint8_t next_ch;
             read_count = cos_stream_read(source_stream, &next_ch, 1, error);
-            if (read_count == 0 || next_ch != '>') {
-                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_ARGUMENT,
-                                                   "Malformed end-of-data marker"),
-                                    error);
-            }
             filter->buffer.eod = true;
+            if (read_count == 0 || next_ch != '>') {
+                if (!cos_filter_report_end_of_data_(filter,
+                                                    "ASCII85Decode stream has a malformed ~> end-of-data marker",
+                                                    error)) {
+                    filter->buffer.length = 0;
+                    return 0;
+                }
+            }
             break;
         }
 

@@ -9,6 +9,7 @@
 #include "common/CosCheckedArith.h"
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
+#include "objects/CosStreamObjNode-Private.h"
 #include "parse/CosBaseParser.h"
 #include "parse/CosParserOptions-Private.h"
 
@@ -1243,6 +1244,16 @@ cos_handle_stream_(CosObjParser *parser,
         // cos_stream_obj_node_create closed `encoded` but not `dict_obj`.
         goto failure;
     }
+
+    // Carry the parse-time filter options onto the node, so the strictness
+    // chosen at parse time governs the node's later on-demand decoding.
+    const CosFilterOptions filter_options = {
+        .eod_strict_level =
+            cos_parser_options_get_strict_level(&(parser->base.options),
+                                                CosStrictGroup_FilterEndOfData),
+        .diagnostic_handler = parser->base.diagnostic_handler,
+    };
+    cos_stream_obj_node_set_filter_options_(stream_obj, &filter_options);
 
     COS_LOG_TRACE(cos_log_context_get_default(),
                   "Stream object parsed successfully.");

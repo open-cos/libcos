@@ -6,7 +6,9 @@
 #include "common/Assert.h"
 #include "common/CosMacros.h"
 
+#include <libcos/common/CosError.h>
 #include <libcos/filters/CosASCII85Filter.h>
+#include <libcos/filters/CosFilter.h>
 #include <libcos/io/CosMemoryStream.h>
 
 #include <stdio.h>
@@ -145,12 +147,104 @@ TEST_CASE_BEGIN(decode_partial_block)
 }
 TEST_CASE_END
 
+static void
+ascii85_set_eod_level(CosASCII85Filter *ascii85_filter,
+                      CosStrictLevel level)
+{
+    const CosFilterOptions options = {
+        .eod_strict_level = level,
+        .diagnostic_handler = NULL,
+    };
+    cos_filter_set_options_((CosFilter *)ascii85_filter, &options);
+}
+
+TEST_CASE_BEGIN(missing_marker_tolerated_when_off)
+{
+    /* "88/" encodes "Hi" but the "~>" end-of-data marker is absent. At
+     * CosStrictLevel_Off the source EOF is an implicit terminator. */
+    char input[] = "88/";
+
+    ascii85_set_eod_level(fixture->ascii85_filter, CosStrictLevel_Off);
+
+    if (!ascii85_set_source(fixture->ascii85_filter, input, sizeof(input) - 1)) {
+        TEST_FAILURE();
+    }
+
+    unsigned char output[2] = {0};
+    CosError error = {COS_ERROR_NONE, NULL};
+    const size_t read_count = cos_stream_read((CosStream *)fixture->ascii85_filter,
+                                              output,
+                                              sizeof(output),
+                                              &error);
+
+    const unsigned char expected[] = {0x48, 0x69}; // "Hi"
+    if (read_count != sizeof(expected) ||
+        memcmp(output, expected, read_count) != 0 ||
+        error.code != COS_ERROR_NONE) {
+        TEST_FAILURE();
+    }
+}
+TEST_CASE_END
+
+TEST_CASE_BEGIN(missing_marker_rejected_when_error)
+{
+    /* The same input, but at CosStrictLevel_Error the absent "~>" marker
+     * fails the decode with COS_ERROR_SYNTAX rather than being swallowed. */
+    char input[] = "88/";
+
+    ascii85_set_eod_level(fixture->ascii85_filter, CosStrictLevel_Error);
+
+    if (!ascii85_set_source(fixture->ascii85_filter, input, sizeof(input) - 1)) {
+        TEST_FAILURE();
+    }
+
+    unsigned char output[2] = {0};
+    CosError error = {COS_ERROR_NONE, NULL};
+    const size_t read_count = cos_stream_read((CosStream *)fixture->ascii85_filter,
+                                              output,
+                                              sizeof(output),
+                                              &error);
+
+    if (read_count != 0 || error.code != COS_ERROR_SYNTAX) {
+        TEST_FAILURE();
+    }
+}
+TEST_CASE_END
+
+TEST_CASE_BEGIN(malformed_marker_rejected_when_error)
+{
+    /* A "~" not followed by ">" is a malformed marker; at CosStrictLevel_Error
+     * it is reported and fails rather than being silently accepted. */
+    char input[] = "88/~x";
+
+    ascii85_set_eod_level(fixture->ascii85_filter, CosStrictLevel_Error);
+
+    if (!ascii85_set_source(fixture->ascii85_filter, input, sizeof(input) - 1)) {
+        TEST_FAILURE();
+    }
+
+    unsigned char output[2] = {0};
+    CosError error = {COS_ERROR_NONE, NULL};
+    const size_t read_count = cos_stream_read((CosStream *)fixture->ascii85_filter,
+                                              output,
+                                              sizeof(output),
+                                              &error);
+
+    if (read_count != 0 || error.code != COS_ERROR_SYNTAX) {
+        TEST_FAILURE();
+    }
+}
+TEST_CASE_END
+
 TEST_MAIN()
 {
     TestFixture fixture = {0};
     TEST_RUN(decode_alphabet, &fixture);
     TEST_RUN(decode_z_group, &fixture);
     TEST_RUN(decode_partial_block, &fixture);
+    TEST_RUN(missing_marker_tolerated_when_off, &fixture);
+    TEST_RUN(missing_marker_rejected_when_error, &fixture);
+    TEST_RUN(malformed_marker_rejected_when_error, &fixture);
 
     return EXIT_SUCCESS;
 }

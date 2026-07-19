@@ -5,6 +5,7 @@
 #include "libcos/filters/CosFilter.h"
 
 #include "common/Assert.h"
+#include "parse/CosParserOptions-Private.h"
 
 #include <libcos/common/CosMacros.h>
 
@@ -43,6 +44,18 @@ static const CosStreamFunctions cos_filter_stream_functions_ = {
 
 // Public function implementations
 
+CosFilterOptions
+cos_filter_options_make_default(void)
+{
+    // Off, not Warn, to match the CosStrictGroup_FilterEndOfData default: a
+    // missing end-of-data marker is common and widely tolerated, so it is
+    // silent unless a caller raises the level.
+    return (CosFilterOptions){
+        .eod_strict_level = CosStrictLevel_Off,
+        .diagnostic_handler = NULL,
+    };
+}
+
 void
 cos_filter_init(CosFilter *filter,
                 const CosFilterFunctions *filter_functions)
@@ -59,6 +72,7 @@ cos_filter_init(CosFilter *filter,
     filter->source = NULL;
     filter->filter_functions = *filter_functions;
     filter->buffer = (CosFilterBuffer){0};
+    filter->options = cos_filter_options_make_default();
 }
 
 void
@@ -97,6 +111,35 @@ cos_filter_detach_source(CosFilter *filter)
     }
 
     filter->source = NULL;
+}
+
+void
+cos_filter_set_options_(CosFilter *filter,
+                        const CosFilterOptions * COS_Nullable options)
+{
+    COS_API_PARAM_CHECK(filter != NULL);
+    if (COS_UNLIKELY(!filter)) {
+        return;
+    }
+
+    filter->options = options ? *options : cos_filter_options_make_default();
+}
+
+bool
+cos_filter_report_end_of_data_(CosFilter *filter,
+                               const char *message,
+                               CosError * COS_Nullable out_error)
+{
+    COS_API_PARAM_CHECK(filter != NULL);
+    COS_API_PARAM_CHECK(message != NULL);
+    if (COS_UNLIKELY(!filter || !message)) {
+        return true;
+    }
+
+    return cos_strict_level_report_(filter->options.eod_strict_level,
+                                    filter->options.diagnostic_handler,
+                                    message,
+                                    out_error);
 }
 
 // Private function implementations

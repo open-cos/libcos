@@ -28,6 +28,33 @@ CosParserOptions
 cos_parser_options_resolve_(const CosParserOptions * COS_Nullable options);
 
 /**
+ * Reports a deviation from the specification at an explicit strict level.
+ *
+ * The level-based counterpart to @c cos_options_report_ , for callers that hold
+ * a resolved @c CosStrictLevel rather than a full @c CosParserOptions (such as
+ * the decode filters, which carry only the level governing their end-of-data
+ * markers). Silent at @c CosStrictLevel_Off , a warning diagnostic at
+ * @c CosStrictLevel_Warn , and an error diagnostic plus a @c COS_ERROR_SYNTAX
+ * propagation at @c CosStrictLevel_Error .
+ *
+ * @param level The level governing this deviation.
+ * @param handler Where to send the diagnostic, or @c NULL to use the default
+ * handler.
+ * @param message The message to report. Diagnostics do not copy it, so it must
+ * be a string literal or otherwise outlive the call.
+ * @param out_error Set if the level escalates the deviation to an error.
+ *
+ * @return @c true if the caller may continue, @c false if the deviation was
+ * escalated to an error and the caller must abort.
+ */
+bool
+cos_strict_level_report_(CosStrictLevel level,
+                         CosDiagnosticHandler * COS_Nullable handler,
+                         const char *message,
+                         CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(4);
+
+/**
  * Reports a deviation from the specification under a strict-mode group.
  *
  * Applies the group's level: silent at @c CosStrictLevel_Off , a warning

@@ -979,14 +979,21 @@ strict_nullOptions_MatchesDefaults(void)
 }
 
 static int
-strict_defaultOptions_WarnForEveryGroup(void)
+strict_defaultOptions_WarnExceptFilterEod(void)
 {
     const CosParserOptions options = cos_parser_options_make_default();
 
     for (unsigned int i = 0; i < COS_STRICT_GROUP_COUNT; i++) {
+        // Every group defaults to Warn except CosStrictGroup_FilterEndOfData,
+        // which defaults to Off: a missing filter end-of-data marker is common
+        // and widely tolerated, so it is silent unless explicitly raised.
+        const CosStrictLevel expected =
+            ((CosStrictGroup)i == CosStrictGroup_FilterEndOfData)
+                ? CosStrictLevel_Off
+                : CosStrictLevel_Warn;
         TEST_EXPECT(cos_parser_options_get_strict_level(&options,
                                                         (CosStrictGroup)i) ==
-                    CosStrictLevel_Warn);
+                    expected);
     }
 
     // An out-of-range group must not read past the array.
@@ -1032,7 +1039,7 @@ TEST_MAIN()
     TEST_EXPECT(flush_DiscardsPeekedObject() == EXIT_SUCCESS);
 
     /* Strict mode */
-    TEST_EXPECT(strict_defaultOptions_WarnForEveryGroup() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_defaultOptions_WarnExceptFilterEod() == EXIT_SUCCESS);
     TEST_EXPECT(strict_conformingInput_IsSilent() == EXIT_SUCCESS);
     TEST_EXPECT(strict_nullOptions_MatchesDefaults() == EXIT_SUCCESS);
     TEST_EXPECT(strict_refWithDoubleSpace_IsDeviation() == EXIT_SUCCESS);

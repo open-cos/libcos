@@ -42,7 +42,13 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
         return 0;
     }
 
-    CosStream * const filter = cos_filter_create_for_name_(name, NULL);
+    /* Vary the end-of-data strictness across Off/Warn/Error so the fuzzer
+     * covers the missing/malformed-marker reporting paths. */
+    const CosFilterOptions filter_options = {
+        .eod_strict_level = (CosStrictLevel)(data[0] % 3),
+        .diagnostic_handler = NULL,
+    };
+    CosStream * const filter = cos_filter_create_for_name_(name, &filter_options, NULL);
     cos_string_free(name);
     if (!filter) {
         return 0;

@@ -38,6 +38,10 @@ struct CosStreamObjNode {
 
     // Lazily materialized copy of the encoded bytes, for the borrowed get_data API.
     CosData * COS_Nullable materialized;
+
+    // Options for the node's decode filters (such as end-of-data marker
+    // strictness), carried from the parser options.
+    CosFilterOptions filter_options;
 };
 
 CosStreamObjNode *
@@ -77,8 +81,21 @@ cos_stream_obj_node_create(CosDictObjNode *dict,
     stream_obj->encoded = encoded;
     stream_obj->length = length;
     stream_obj->materialized = NULL;
+    stream_obj->filter_options = cos_filter_options_make_default();
 
     return stream_obj;
+}
+
+void
+cos_stream_obj_node_set_filter_options_(CosStreamObjNode *stream_obj,
+                                        const CosFilterOptions * COS_Nullable options)
+{
+    COS_API_PARAM_CHECK(stream_obj != NULL);
+    if (COS_UNLIKELY(!stream_obj)) {
+        return;
+    }
+
+    stream_obj->filter_options = options ? *options : cos_filter_options_make_default();
 }
 
 void
@@ -285,6 +302,7 @@ static CosStream * COS_Nullable
 cos_stream_obj_node_apply_filter_(CosObjNode *name_node,
                                   CosObjNode * COS_Nullable parms_node,
                                   CosStream *source,
+                                  const CosFilterOptions *filter_options,
                                   CosError * COS_Nullable out_error)
 {
     COS_IMPL_PARAM_CHECK(name_node != NULL);
@@ -305,7 +323,7 @@ cos_stream_obj_node_apply_filter_(CosObjNode *name_node,
         goto failure;
     }
 
-    CosStream * const filter = cos_filter_create_for_name_(name, out_error);
+    CosStream * const filter = cos_filter_create_for_name_(name, filter_options, out_error);
     if (!filter) {
         goto failure;
     }
@@ -384,7 +402,11 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
 
     const CosObjNodeType filter_type = cos_obj_node_get_type(filter_node);
     if (filter_type == CosObjNodeType_Name) {
-        return cos_stream_obj_node_apply_filter_(filter_node, parms_node, source, out_error);
+        return cos_stream_obj_node_apply_filter_(filter_node,
+                                                 parms_node,
+                                                 source,
+                                                 &(stream_obj->filter_options),
+                                                 out_error);
     }
     else if (filter_type == CosObjNodeType_Array) {
         CosArrayObjNode * const array = (CosArrayObjNode *)filter_node;
@@ -396,7 +418,11 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
             }
             CosObjNode * const parms = cos_stream_parms_for_index_(parms_node, i);
             // On failure the filter helper has already closed the source.
-            source = cos_stream_obj_node_apply_filter_(element, parms, source, out_error);
+            source = cos_stream_obj_node_apply_filter_(element,
+                                                       parms,
+                                                       source,
+                                                       &(stream_obj->filter_options),
+                                                       out_error);
             if (!source) {
                 return NULL;
             }

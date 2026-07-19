@@ -102,6 +102,12 @@ cos_ascii_hex_fill_decode_buffer_(CosFilter *filter,
     size_t total_read = 0;
 
     while (total_read < COS_FILTER_BUFFER_SIZE) {
+        // The end-of-data marker (or an earlier source EOF) was already
+        // consumed; nothing more to read.
+        if (filter->buffer.eod) {
+            break;
+        }
+
         unsigned char in_block[COS_ASCII_HEX_BLOCK_SIZE] = {0};
         size_t block_length = 0;
         uint8_t ch;
@@ -109,8 +115,14 @@ cos_ascii_hex_fill_decode_buffer_(CosFilter *filter,
         while (block_length < COS_ASCII_HEX_BLOCK_SIZE) {
             size_t read_count = cos_stream_read(source_stream, &ch, 1, error);
             if (read_count == 0) {
-                // End of underlying stream reached unexpectedly.
+                // The source ended without the ">" end-of-data marker.
                 filter->buffer.eod = true;
+                if (!cos_filter_report_end_of_data_(filter,
+                                                    "ASCIIHexDecode stream is missing the > end-of-data marker",
+                                                    error)) {
+                    filter->buffer.length = 0;
+                    return 0;
+                }
                 break;
             }
             if (cos_is_whitespace(ch)) {
