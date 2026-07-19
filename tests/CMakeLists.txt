@@ -28,6 +28,7 @@ set(LIBCOS_TESTS
     unit-tests/indirect-obj.c
     unit-tests/obj.c
     unit-tests/obj-parser.c
+    unit-tests/stream-length.c
     unit-tests/fuzz-mutator.c
 )
 

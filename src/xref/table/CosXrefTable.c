@@ -167,4 +167,56 @@ cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
     return NULL;
 }
 
+bool
+cos_xref_table_find_next_offset_above(const CosXrefTable *table,
+                                      CosStreamOffset offset,
+                                      CosStreamOffset *out_next_offset)
+{
+    COS_API_PARAM_CHECK(table != NULL);
+    COS_API_PARAM_CHECK(out_next_offset != NULL);
+    if (COS_UNLIKELY(!table || !out_next_offset)) {
+        return false;
+    }
+
+    bool found = false;
+    CosStreamOffset best = 0;
+
+    const size_t section_count = cos_xref_table_get_section_count(table);
+    for (size_t si = 0; si < section_count; si++) {
+        CosXrefSection * const section = cos_xref_table_get_section(table, si, NULL);
+        if (!section) {
+            continue;
+        }
+
+        const size_t subsection_count = cos_xref_section_get_subsection_count(section);
+        for (size_t ssi = 0; ssi < subsection_count; ssi++) {
+            CosXrefSubsection * const sub = cos_xref_section_get_subsection(section, ssi, NULL);
+            if (!sub) {
+                continue;
+            }
+
+            const size_t count = cos_xref_subsection_get_entry_count(sub);
+            for (size_t ei = 0; ei < count; ei++) {
+                const CosXrefEntry * const entry = cos_xref_subsection_get_entry(sub, ei, NULL);
+                if (!entry || entry->type != CosXrefEntryType_InUse) {
+                    continue;
+                }
+
+                const CosStreamOffset entry_offset =
+                    (CosStreamOffset)entry->value.in_use.byte_offset;
+                if (entry_offset > offset && (!found || entry_offset < best)) {
+                    best = entry_offset;
+                    found = true;
+                }
+            }
+        }
+    }
+
+    if (found) {
+        *out_next_offset = best;
+    }
+
+    return found;
+}
+
 COS_ASSUME_NONNULL_END

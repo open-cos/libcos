@@ -364,6 +364,84 @@ tokenize_negativePastLongLongMax_IsReal(void)
     return EXIT_SUCCESS;
 }
 
+/*
+ * Tokenizes a single number under a chosen integer-overflow behaviour, with the
+ * NumberSyntax report silenced so it does not interfere.
+ */
+static bool
+tokenize_with_overflow_behaviour_(const char *input,
+                                  CosIntOverflowBehaviour behaviour,
+                                  CosToken_Type *out_type,
+                                  int *out_int)
+{
+    CosMemoryStream *stream = NULL;
+    CosTokenizer *tokenizer = NULL;
+    bool built = false;
+
+    *out_type = CosToken_Type_Unknown;
+    *out_int = 0;
+
+    stream = cos_memory_stream_create_readonly(input, strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+
+    CosParserOptions options = cos_parser_options_make_default();
+    cos_parser_options_set_int_overflow_behaviour(&options, behaviour);
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_NumberSyntax,
+                                        CosStrictLevel_Off);
+
+    tokenizer = cos_tokenizer_create((CosStream *)stream, &options);
+    if (!tokenizer) {
+        goto cleanup;
+    }
+
+    CosToken token = {0};
+    if (!cos_tokenizer_get_next_token(tokenizer, &token, NULL)) {
+        goto cleanup;
+    }
+
+    *out_type = token.type;
+    (void)cos_token_get_integer_value(&token, out_int);
+    cos_token_reset(&token);
+    built = true;
+
+cleanup:
+    if (tokenizer) {
+        cos_tokenizer_destroy(tokenizer);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    return built;
+}
+
+static int
+tokenize_overflowClamp_SaturatesToIntRange(void)
+{
+    CosToken_Type type = CosToken_Type_Unknown;
+    int value = 0;
+
+    // Under Clamp the overflowing integer stays an integer, saturated to the
+    // integer object range rather than promoted to a real.
+    TEST_EXPECT(tokenize_with_overflow_behaviour_("99999999999999999999",
+                                                  CosIntOverflowBehaviour_Clamp,
+                                                  &type,
+                                                  &value));
+    TEST_EXPECT(type == CosToken_Type_Integer);
+    TEST_EXPECT(value == COS_INT_MAX);
+
+    TEST_EXPECT(tokenize_with_overflow_behaviour_("-99999999999999999999",
+                                                  CosIntOverflowBehaviour_Clamp,
+                                                  &type,
+                                                  &value));
+    TEST_EXPECT(type == CosToken_Type_Integer);
+    TEST_EXPECT(value == COS_INT_MIN);
+
+    return EXIT_SUCCESS;
+}
+
 static int
 tokenize_leadingZeros_DoNotOverflow(void)
 {
@@ -992,6 +1070,7 @@ TEST_MAIN()
     TEST_EXPECT(tokenize_longLongMax_IsLongInteger() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_pastLongLongMax_IsReal() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_negativePastLongLongMax_IsReal() == EXIT_SUCCESS);
+    TEST_EXPECT(tokenize_overflowClamp_SaturatesToIntRange() == EXIT_SUCCESS);
     TEST_EXPECT(tokenize_leadingZeros_DoNotOverflow() == EXIT_SUCCESS);
 
     /* Bare delimiter tests */

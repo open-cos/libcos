@@ -1043,8 +1043,33 @@ cos_read_number_(CosTokenizer *tokenizer,
         }
     }
 
-    if (has_decimal_point || int_overflowed) {
+    /*
+     * A pure integer whose magnitude overflowed the accumulator is no longer
+     * representable as an integer object. It is reported here, and the reading
+     * to produce is a behaviour selector: promote to a real (default, matching
+     * Adobe and poppler) or clamp to the integer object range. A number with a
+     * decimal point is a real either way, so it is neither reported nor clamped.
+     */
+    if (int_overflowed && !has_decimal_point) {
+        if (!cos_options_report_(&(tokenizer->options),
+                                 tokenizer->diagnostic_handler,
+                                 CosStrictGroup_NumberSyntax,
+                                 "Integer magnitude too large for an integer object",
+                                 out_error)) {
+            return false;
+        }
+    }
+
+    const CosIntOverflowBehaviour overflow_behaviour =
+        cos_parser_options_get_int_overflow_behaviour(&(tokenizer->options));
+
+    if (has_decimal_point ||
+        (int_overflowed && overflow_behaviour == CosIntOverflowBehaviour_PromoteToReal)) {
         *out_number = cos_number_make_real(is_negative ? -real_value : real_value);
+    }
+    else if (int_overflowed) {
+        // Clamp: saturate to the integer object range.
+        *out_number = cos_number_make_integer(is_negative ? COS_INT_MIN : COS_INT_MAX);
     }
     else {
         // int_value holds the magnitude, so negating cannot overflow.

@@ -21,7 +21,7 @@ COS_ASSUME_NONNULL_BEGIN
  * out-of-bounds read. C99 has no _Static_assert, hence the array-size idiom.
  */
 typedef char cos_strict_group_count_matches_enum_
-    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_CompressedObjGen + 1)) ? 1 : -1];
+    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_StreamLength + 1)) ? 1 : -1];
 
 CosParserOptions
 cos_parser_options_make_default(void)
@@ -33,6 +33,8 @@ cos_parser_options_make_default(void)
     }
 
     options.interior_sign_behaviour = CosInteriorSignBehaviour_Merge;
+    options.stream_length_behaviour = CosStreamLengthBehaviour_Trust;
+    options.int_overflow_behaviour = CosIntOverflowBehaviour_PromoteToReal;
 
     return options;
 }
@@ -96,6 +98,52 @@ cos_parser_options_get_interior_sign_behaviour(const CosParserOptions *options)
     }
 
     return options->interior_sign_behaviour;
+}
+
+void
+cos_parser_options_set_stream_length_behaviour(CosParserOptions *options,
+                                               CosStreamLengthBehaviour behaviour)
+{
+    COS_API_PARAM_CHECK(options != NULL);
+    if (COS_UNLIKELY(!options)) {
+        return;
+    }
+
+    options->stream_length_behaviour = behaviour;
+}
+
+CosStreamLengthBehaviour
+cos_parser_options_get_stream_length_behaviour(const CosParserOptions *options)
+{
+    COS_API_PARAM_CHECK(options != NULL);
+    if (COS_UNLIKELY(!options)) {
+        return CosStreamLengthBehaviour_Trust;
+    }
+
+    return options->stream_length_behaviour;
+}
+
+void
+cos_parser_options_set_int_overflow_behaviour(CosParserOptions *options,
+                                              CosIntOverflowBehaviour behaviour)
+{
+    COS_API_PARAM_CHECK(options != NULL);
+    if (COS_UNLIKELY(!options)) {
+        return;
+    }
+
+    options->int_overflow_behaviour = behaviour;
+}
+
+CosIntOverflowBehaviour
+cos_parser_options_get_int_overflow_behaviour(const CosParserOptions *options)
+{
+    COS_API_PARAM_CHECK(options != NULL);
+    if (COS_UNLIKELY(!options)) {
+        return CosIntOverflowBehaviour_PromoteToReal;
+    }
+
+    return options->int_overflow_behaviour;
 }
 
 bool

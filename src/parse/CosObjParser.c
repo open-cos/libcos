@@ -4,12 +4,15 @@
 
 #include "CosObjParser.h"
 
+#include "CosDoc-Private.h"
 #include "common/Assert.h"
 #include "common/CosCheckedArith.h"
 #include "common/CosDict.h"
 #include "common/CosNumber.h"
 #include "parse/CosBaseParser.h"
 #include "parse/CosParserOptions-Private.h"
+
+#include <libcos/xref/table/CosXrefTable.h>
 
 #include "libcos/common/CosMacros.h"
 
@@ -845,6 +848,159 @@ failure:
     return false;
 }
 
+// The keyword whose position bounds a stream's data during /Length recovery.
+#define COS_ENDSTREAM_KEYWORD "endstream"
+#define COS_ENDSTREAM_KEYWORD_LEN 9u
+#define COS_ENDSTREAM_SCAN_CHUNK 8192u
+
+/**
+ * Scans a stream for the "endstream" keyword within @c [from, bound) .
+ *
+ * The bytes are read in overlapping chunks so that the keyword cannot be split
+ * across a chunk boundary. A negative @p bound means "to the end of the stream".
+ *
+ * @param find_last When @c true the last match in range is returned (used with
+ * an xref bound, so an "endstream" appearing inside the data cannot win); when
+ * @c false the first match is returned.
+ *
+ * @return @c true and sets @p out_kw to the offset of the keyword if found.
+ */
+static bool
+cos_scan_endstream_(CosStream *stream,
+                    CosStreamOffset from,
+                    CosStreamOffset bound,
+                    bool find_last,
+                    CosStreamOffset *out_kw)
+{
+    CosStreamOffset range_end = bound;
+    if (range_end < 0) {
+        if (!cos_stream_seek(stream, 0, CosStreamOffsetWhence_End, NULL)) {
+            return false;
+        }
+        range_end = cos_stream_get_position(stream, NULL);
+    }
+    if (range_end < 0 ||
+        (range_end - from) < (CosStreamOffset)COS_ENDSTREAM_KEYWORD_LEN) {
+        return false;
+    }
+
+    const size_t overlap = COS_ENDSTREAM_KEYWORD_LEN - 1u;
+    unsigned char buf[COS_ENDSTREAM_SCAN_CHUNK + (COS_ENDSTREAM_KEYWORD_LEN - 1u)];
+
+    bool found = false;
+    CosStreamOffset found_kw = 0;
+
+    CosStreamOffset chunk_start = from;
+    size_t carry = 0;                    // carried overlap bytes at buf[0..carry)
+    CosStreamOffset carry_origin = from; // absolute offset of buf[0]
+
+    while (chunk_start < range_end) {
+        const CosStreamOffset remaining = range_end - chunk_start;
+        size_t to_read = COS_ENDSTREAM_SCAN_CHUNK;
+        if ((CosStreamOffset)to_read > remaining) {
+            to_read = (size_t)remaining;
+        }
+
+        if (!cos_stream_seek(stream, chunk_start, CosStreamOffsetWhence_Set, NULL)) {
+            return false;
+        }
+        const size_t nread = cos_stream_read(stream, buf + carry, to_read, NULL);
+        if (nread == 0) {
+            break;
+        }
+        const size_t buf_len = carry + nread;
+
+        for (size_t j = 0; (j + COS_ENDSTREAM_KEYWORD_LEN) <= buf_len; j++) {
+            if (memcmp(buf + j, COS_ENDSTREAM_KEYWORD, COS_ENDSTREAM_KEYWORD_LEN) == 0) {
+                found_kw = carry_origin + (CosStreamOffset)j;
+                found = true;
+                if (!find_last) {
+                    *out_kw = found_kw;
+                    return true;
+                }
+            }
+        }
+
+        chunk_start += (CosStreamOffset)nread;
+        if (nread < to_read) {
+            break; // Reached the end of the stream.
+        }
+
+        // Carry the trailing overlap so a boundary-straddling keyword is caught.
+        memmove(buf, buf + buf_len - overlap, overlap);
+        carry = overlap;
+        carry_origin = chunk_start - (CosStreamOffset)overlap;
+    }
+
+    if (found) {
+        *out_kw = found_kw;
+    }
+    return found;
+}
+
+/**
+ * Given the offset of an "endstream" keyword, returns the end of the stream
+ * data: the byte just before the end-of-line marker preceding the keyword, per
+ * ISO 32000-1 7.3.8. A missing marker is tolerated (the keyword offset is used).
+ */
+static CosStreamOffset
+cos_stream_data_end_before_keyword_(CosStream *stream,
+                                    CosStreamOffset data_start,
+                                    CosStreamOffset kw)
+{
+    if (kw >= data_start + 2) {
+        unsigned char b[2] = {0, 0};
+        if (cos_stream_seek(stream, kw - 2, CosStreamOffsetWhence_Set, NULL) &&
+            cos_stream_read(stream, b, 2, NULL) == 2) {
+            if (b[0] == '\r' && b[1] == '\n') {
+                return kw - 2;
+            }
+            if (b[1] == '\n' || b[1] == '\r') {
+                return kw - 1;
+            }
+        }
+    }
+    else if (kw >= data_start + 1) {
+        unsigned char b = 0;
+        if (cos_stream_seek(stream, kw - 1, CosStreamOffsetWhence_Set, NULL) &&
+            cos_stream_read(stream, &b, 1, NULL) == 1) {
+            if (b == '\n' || b == '\r') {
+                return kw - 1;
+            }
+        }
+    }
+
+    return kw;
+}
+
+/**
+ * Locates the end of a stream's data by finding the "endstream" keyword.
+ *
+ * @param upper_bound The exclusive upper bound to search within, or a negative
+ * value to search to the end of the stream.
+ * @param find_last Whether the last (bounded) or first (unbounded) match wins.
+ * @param out_end Set to the end offset of the stream data on success.
+ */
+static bool
+cos_locate_endstream_(CosStream *stream,
+                      CosStreamOffset data_start,
+                      CosStreamOffset upper_bound,
+                      bool find_last,
+                      CosStreamOffset *out_end,
+                      CosError * COS_Nullable out_error)
+{
+    CosStreamOffset kw = 0;
+    if (!cos_scan_endstream_(stream, data_start, upper_bound, find_last, &kw)) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
+                                           "Unterminated stream: no endstream keyword"),
+                            out_error);
+        return false;
+    }
+
+    *out_end = cos_stream_data_end_before_keyword_(stream, data_start, kw);
+    return true;
+}
+
 static CosObjNode *
 cos_handle_stream_(CosObjParser *parser,
                    const CosObjParserContext *context,
@@ -890,7 +1046,10 @@ cos_handle_stream_(CosObjParser *parser,
     // "The keyword stream that follows the stream dictionary shall be followed by an end-of-line marker."
     // "The keyword endstream shall be preceded by an end-of-line marker."
 
-    int stream_length = -1;
+    // A missing, non-integer, or wrong /Length is recovered from the endstream
+    // keyword rather than being fatal; see the resolution below, once data_start
+    // is known. A negative value marks "no usable /Length".
+    int declared_length = -1;
 
     CosObjNode *length_obj = NULL;
     if (cos_dict_obj_node_get_value_with_string(dict_obj,
@@ -898,17 +1057,8 @@ cos_handle_stream_(CosObjParser *parser,
                                            &length_obj,
                                            NULL) &&
         cos_obj_node_is_integer(length_obj)) {
-        stream_length = cos_int_obj_node_get_value((CosIntObjNode *)length_obj);
+        declared_length = cos_int_obj_node_get_value((CosIntObjNode *)length_obj);
     }
-
-    if (stream_length < 0) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,
-                                           "Stream is missing a valid /Length"),
-                            out_error);
-        goto failure;
-    }
-
-    const size_t length = (size_t)stream_length;
 
     // The tokenizer's stream token stops at the "stream" keyword; the data begins after the
     // end-of-line marker (CRLF or LF) that follows it. Only seekable inputs are supported.
@@ -954,16 +1104,89 @@ cos_handle_stream_(CosObjParser *parser,
         }
     }
 
+    // Resolve the stream length. A present and non-negative /Length is trusted
+    // unless the Verify behaviour is selected; otherwise, and whenever /Length is
+    // missing or non-integer, the extent is recovered by locating the endstream
+    // keyword. The search is bounded above by the next object in the xref table
+    // (so an "endstream" inside the data cannot win), falling back to the end of
+    // the stream when there is no next object, and to a forward scan when the
+    // table is not yet built (as while parsing an xref stream itself).
+    const CosStreamLengthBehaviour length_behaviour =
+        cos_parser_options_get_stream_length_behaviour(&(parser->base.options));
+
+    const bool need_recovery =
+        (declared_length < 0) ||
+        (length_behaviour == CosStreamLengthBehaviour_Verify);
+
+    size_t length;
+    if (!need_recovery) {
+        length = (size_t)declared_length;
+    }
+    else {
+        const CosDoc * const doc = parser->base.doc;
+        const CosXrefTable * const table =
+            doc ? cos_doc_get_xref_table_(doc) : NULL;
+
+        CosStreamOffset next_offset = 0;
+        const bool has_bound =
+            table &&
+            cos_xref_table_find_next_offset_above(table, data_start, &next_offset);
+
+        CosStreamOffset data_end = 0;
+        bool located;
+        if (has_bound) {
+            // Bounded backward scan: the last endstream before the next object.
+            located = cos_locate_endstream_(input_stream, data_start, next_offset,
+                                            true, &data_end, out_error);
+        }
+        else if (table) {
+            // No next object: the stream is the file's last object; bound is EOF.
+            located = cos_locate_endstream_(input_stream, data_start, -1,
+                                            true, &data_end, out_error);
+        }
+        else {
+            // No table yet (xref stream): forward scan to the first endstream.
+            located = cos_locate_endstream_(input_stream, data_start, -1,
+                                            false, &data_end, out_error);
+        }
+        if (!located) {
+            goto failure;
+        }
+
+        const size_t recovered_length = (size_t)(data_end - data_start);
+        if (declared_length < 0) {
+            if (!cos_report_deviation_(&(parser->base),
+                                       CosStrictGroup_StreamLength,
+                                       "Stream /Length is missing or invalid; recovered from the endstream keyword",
+                                       out_error)) {
+                goto failure;
+            }
+            length = recovered_length;
+        }
+        else if ((size_t)declared_length != recovered_length) {
+            if (!cos_report_deviation_(&(parser->base),
+                                       CosStrictGroup_StreamLength,
+                                       "Stream /Length disagrees with the endstream keyword; recovered",
+                                       out_error)) {
+                goto failure;
+            }
+            length = recovered_length;
+        }
+        else {
+            length = (size_t)declared_length;
+        }
+    }
+
     // Capture the encoded bytes as a window over the input (no copy).
     CosStream *encoded = cos_sub_stream_create(input_stream, data_start, length, false, out_error);
     if (!encoded) {
         goto failure;
     }
 
-    // Both operands come from the file. The sum cannot actually overflow today,
-    // because /Length is parsed into an int and rejected when negative, so it
-    // caps at INT_MAX; the check is here so that widening that parse later
-    // cannot silently reintroduce the overflow this replaces.
+    // Both operands come from the file: a trusted /Length caps at INT_MAX, and a
+    // recovered length is bounded by the located endstream, so the sum cannot
+    // actually overflow today. The check guards against a future change to either
+    // bound silently reintroducing the overflow this replaces.
     CosStreamOffset stream_end_position;
     if (cos_ckd_add_off_(&stream_end_position, data_start, (CosStreamOffset)length)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX,

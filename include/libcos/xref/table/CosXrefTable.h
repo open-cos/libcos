@@ -53,6 +53,27 @@ cos_xref_table_find_entry_for_obj_num(const CosXrefTable *table,
                                       CosObjNumber object_number,
                                       CosError * COS_Nullable out_error);
 
+/**
+ * @brief Finds the smallest in-use object byte offset strictly greater than a
+ * given offset.
+ *
+ * Used to bound a stream's extent during /Length recovery: the next object in
+ * the file is an upper bound on where the stream's data can end.
+ *
+ * @param table The cross-reference table.
+ * @param offset The offset to search above.
+ * @param out_next_offset On success, set to the nearest in-use byte offset
+ * greater than @p offset .
+ *
+ * @return @c true if such an offset was found, or @c false if no in-use entry
+ * lies above @p offset .
+ */
+COS_API bool
+cos_xref_table_find_next_offset_above(const CosXrefTable *table,
+                                      CosStreamOffset offset,
+                                      CosStreamOffset *out_next_offset)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
+
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
 

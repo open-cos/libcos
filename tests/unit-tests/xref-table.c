@@ -462,6 +462,99 @@ findEntry_objectInSecondSubsection_ReturnsEntry(void)
     return EXIT_SUCCESS;
 }
 
+// MARK: - Next-offset-above tests
+
+static int
+nextOffset_amongUnorderedOffsets_ReturnsMinimumAbove(void)
+{
+    /*
+     * Offsets are not in object-number order (obj1=300, obj2=100, obj3=200), so
+     * this exercises the "minimum strictly above" logic rather than a scan that
+     * happens to stop at the first entry.
+     */
+    const char *input =
+        "xref\n"
+        "0 4\n"
+        "0000000000 65535 f \n"
+        "0000000300 00000 n \n"
+        "0000000100 00000 n \n"
+        "0000000200 00000 n \n"
+        "trailer\n";
+    CosXrefTable * const table = parse_xref_from_string_(input, NULL);
+    TEST_EXPECT(table != NULL);
+
+    CosStreamOffset next = 0;
+
+    TEST_EXPECT(cos_xref_table_find_next_offset_above(table, 0, &next));
+    TEST_EXPECT(next == 100);
+
+    TEST_EXPECT(cos_xref_table_find_next_offset_above(table, 150, &next));
+    TEST_EXPECT(next == 200);
+
+    TEST_EXPECT(cos_xref_table_find_next_offset_above(table, 250, &next));
+    TEST_EXPECT(next == 300);
+
+    /* Exactly at an offset is excluded (strictly greater). */
+    TEST_EXPECT(cos_xref_table_find_next_offset_above(table, 200, &next));
+    TEST_EXPECT(next == 300);
+
+    cos_xref_table_destroy(table);
+    return EXIT_SUCCESS;
+}
+
+static int
+nextOffset_pastLargestOffset_ReturnsFalse(void)
+{
+    const char *input =
+        "xref\n"
+        "0 3\n"
+        "0000000000 65535 f \n"
+        "0000000100 00000 n \n"
+        "0000000200 00000 n \n"
+        "trailer\n";
+    CosXrefTable * const table = parse_xref_from_string_(input, NULL);
+    TEST_EXPECT(table != NULL);
+
+    CosStreamOffset next = 12345; /* left untouched when nothing is above */
+    TEST_EXPECT(!cos_xref_table_find_next_offset_above(table, 200, &next));
+    TEST_EXPECT(next == 12345);
+
+    cos_xref_table_destroy(table);
+    return EXIT_SUCCESS;
+}
+
+static int
+nextOffset_freeEntriesIgnored_SpansSubsections(void)
+{
+    /*
+     * The free entry (offset field 0) must not be considered, and the query must
+     * look across subsections: obj 0 is free, objs 5 and 6 are in a second
+     * subsection at offsets 100 and 200.
+     */
+    const char *input =
+        "xref\n"
+        "0 1\n"
+        "0000000000 65535 f \n"
+        "5 2\n"
+        "0000000100 00000 n \n"
+        "0000000200 00000 n \n"
+        "trailer\n";
+    CosXrefTable * const table = parse_xref_from_string_(input, NULL);
+    TEST_EXPECT(table != NULL);
+
+    CosStreamOffset next = 0;
+
+    /* 0 would match the free entry's offset field if it were considered. */
+    TEST_EXPECT(cos_xref_table_find_next_offset_above(table, 0, &next));
+    TEST_EXPECT(next == 100);
+
+    TEST_EXPECT(cos_xref_table_find_next_offset_above(table, 100, &next));
+    TEST_EXPECT(next == 200);
+
+    cos_xref_table_destroy(table);
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Error / malformed-input tests
 
 static int
@@ -555,6 +648,11 @@ TEST_MAIN()
     TEST_EXPECT(findEntry_freeObjectZero_ReturnsFreeEntry() == EXIT_SUCCESS);
     TEST_EXPECT(findEntry_objectNotInTable_ReturnsNull() == EXIT_SUCCESS);
     TEST_EXPECT(findEntry_objectInSecondSubsection_ReturnsEntry() == EXIT_SUCCESS);
+
+    /* Next-offset-above */
+    TEST_EXPECT(nextOffset_amongUnorderedOffsets_ReturnsMinimumAbove() == EXIT_SUCCESS);
+    TEST_EXPECT(nextOffset_pastLargestOffset_ReturnsFalse() == EXIT_SUCCESS);
+    TEST_EXPECT(nextOffset_freeEntriesIgnored_SpansSubsections() == EXIT_SUCCESS);
 
     /* Error / malformed-input tests */
     TEST_EXPECT(parse_missingXrefKeyword_ReturnsNull() == EXIT_SUCCESS);

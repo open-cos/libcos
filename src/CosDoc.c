@@ -421,6 +421,17 @@ cos_doc_set_xref_table_(CosDoc *doc,
     doc->xref_table = table;
 }
 
+const CosXrefTable *
+cos_doc_get_xref_table_(const CosDoc *doc)
+{
+    COS_IMPL_PARAM_CHECK(doc != NULL);
+    if (COS_UNLIKELY(!doc)) {
+        return NULL;
+    }
+
+    return doc->xref_table;
+}
+
 void
 cos_doc_set_trailer_(CosDoc *doc,
                      CosTrailer * COS_Nullable trailer)

@@ -15,7 +15,9 @@
 #include <libcos/objects/CosArrayObjNode.h>
 #include <libcos/objects/CosBoolObjNode.h>
 #include <libcos/objects/CosDictObjNode.h>
+#include <libcos/objects/CosIndirectObjNode.h>
 #include <libcos/objects/CosObjNode.h>
+#include <libcos/objects/CosStreamObjNode.h>
 #include <libcos/objects/CosStringObjNode.h>
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
 
@@ -760,6 +762,133 @@ strict_endStreamWithoutEol_IsDeviation(void)
     return expect_deviation_("1 0 obj\n<< /Length 3 >>\nstream\nabcendstream\nendobj\n");
 }
 
+static int
+strict_streamMissingLength_IsDeviation(void)
+{
+    // No /Length at all. With no xref table available here, the extent is
+    // recovered by a forward scan to the endstream keyword: "abc" (3 bytes).
+    return expect_deviation_("1 0 obj\n<< >>\nstream\nabc\nendstream\nendobj\n");
+}
+
+/*
+ * Returns the stream node wrapped by the first parsed indirect object, or NULL.
+ */
+static const CosStreamObjNode * COS_Nullable
+first_stream_obj_(CosObjParser *parser)
+{
+    CosObjNode * const obj = cos_obj_parser_next_object(parser, NULL);
+    if (!obj || cos_obj_node_get_type(obj) != CosObjNodeType_Indirect) {
+        return NULL;
+    }
+
+    CosObjNode * const value =
+        cos_indirect_obj_node_get_value((CosIndirectObjNode *)obj);
+    if (!value || cos_obj_node_get_type(value) != CosObjNodeType_Stream) {
+        return NULL;
+    }
+
+    return (const CosStreamObjNode *)value;
+}
+
+static int
+recover_verifyOverridesWrongLength(void)
+{
+    // /Length says 2, but the data is "abc" (3 bytes). Under the Verify
+    // behaviour the extent is always taken from the endstream keyword, so the
+    // wrong length is overridden and reported under the StreamLength group.
+    const char *input =
+        "1 0 obj\n"
+        "<< /Length 2 >>\n"
+        "stream\n"
+        "abc\n"
+        "endstream\n"
+        "endobj\n";
+
+    DiagnosticCounter counter = {0, 0};
+    CosDoc *doc = cos_doc_create(NULL);
+    TEST_EXPECT(doc != NULL);
+
+    CosDiagnosticHandler * const handler =
+        cos_diagnostic_handler_alloc(&count_diagnostic_, &counter);
+    TEST_EXPECT(handler != NULL);
+    cos_doc_set_diagnostic_handler(doc, handler);
+
+    CosMemoryStream * const stream =
+        cos_memory_stream_create_readonly(input, strlen(input));
+    TEST_EXPECT(stream != NULL);
+
+    CosParserOptions options = cos_parser_options_make_default();
+    cos_parser_options_set_stream_length_behaviour(&options,
+                                                   CosStreamLengthBehaviour_Verify);
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_StreamLength,
+                                        CosStrictLevel_Warn);
+
+    CosObjParser * const parser =
+        cos_obj_parser_create(doc, (CosStream *)stream, &options);
+    TEST_EXPECT(parser != NULL);
+
+    const CosStreamObjNode * const stream_obj = first_stream_obj_(parser);
+    TEST_EXPECT(stream_obj != NULL);
+    TEST_EXPECT(cos_stream_obj_node_get_length(stream_obj) == 3);
+    TEST_EXPECT(counter.warnings > 0);
+    TEST_EXPECT(counter.errors == 0);
+
+    cos_obj_parser_destroy(parser);
+    cos_stream_close((CosStream *)stream);
+    cos_doc_destroy(doc);
+    cos_diagnostic_handler_free(handler);
+    return EXIT_SUCCESS;
+}
+
+static int
+recover_trustKeepsCorrectLengthSilent(void)
+{
+    // A correct /Length under the default Trust behaviour is used as-is: no
+    // scan, no StreamLength diagnostic.
+    const char *input =
+        "1 0 obj\n"
+        "<< /Length 3 >>\n"
+        "stream\n"
+        "abc\n"
+        "endstream\n"
+        "endobj\n";
+
+    DiagnosticCounter counter = {0, 0};
+    CosDoc *doc = cos_doc_create(NULL);
+    TEST_EXPECT(doc != NULL);
+
+    CosDiagnosticHandler * const handler =
+        cos_diagnostic_handler_alloc(&count_diagnostic_, &counter);
+    TEST_EXPECT(handler != NULL);
+    cos_doc_set_diagnostic_handler(doc, handler);
+
+    CosMemoryStream * const stream =
+        cos_memory_stream_create_readonly(input, strlen(input));
+    TEST_EXPECT(stream != NULL);
+
+    CosParserOptions options = cos_parser_options_make_default();
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_StreamLength,
+                                        CosStrictLevel_Warn);
+
+    CosObjParser * const parser =
+        cos_obj_parser_create(doc, (CosStream *)stream, &options);
+    TEST_EXPECT(parser != NULL);
+
+    const CosStreamObjNode * const stream_obj = first_stream_obj_(parser);
+    TEST_EXPECT(stream_obj != NULL);
+    TEST_EXPECT(cos_stream_obj_node_get_length(stream_obj) == 3);
+    TEST_EXPECT(counter.warnings == 0);
+    TEST_EXPECT(counter.errors == 0);
+
+    cos_obj_parser_destroy(parser);
+    cos_stream_close((CosStream *)stream);
+    cos_doc_destroy(doc);
+    cos_diagnostic_handler_free(handler);
+    return EXIT_SUCCESS;
+}
+
 /**
  * A negative object number must be rejected at every level, including Off.
  *
@@ -914,6 +1043,9 @@ TEST_MAIN()
     TEST_EXPECT(strict_streamWithBareCr_IsDeviation() == EXIT_SUCCESS);
     TEST_EXPECT(strict_streamWithoutEol_IsDeviation() == EXIT_SUCCESS);
     TEST_EXPECT(strict_endStreamWithoutEol_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_streamMissingLength_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(recover_verifyOverridesWrongLength() == EXIT_SUCCESS);
+    TEST_EXPECT(recover_trustKeepsCorrectLengthSilent() == EXIT_SUCCESS);
     TEST_EXPECT(strict_negativeObjNumber_AlwaysRejected() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;

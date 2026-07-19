@@ -26,6 +26,17 @@ cos_doc_set_xref_table_(CosDoc *doc,
                         CosXrefTable * COS_Nullable table)
     COS_OWNERSHIP_HOLDS(2);
 
+/**
+ * Returns the document's cross-reference table, or @c NULL if it has not been
+ * built yet (as when an xref stream is still being parsed).
+ *
+ * @param doc The document.
+ *
+ * @return The cross-reference table, or @c NULL .
+ */
+const CosXrefTable * COS_Nullable
+cos_doc_get_xref_table_(const CosDoc *doc);
+
 void
 cos_doc_set_trailer_(CosDoc *doc,
                      CosTrailer * COS_Nullable trailer)

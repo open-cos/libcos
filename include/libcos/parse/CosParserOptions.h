@@ -19,7 +19,7 @@ COS_ASSUME_NONNULL_BEGIN
  * only values that are themselves valid groups.
  */
 enum {
-    COS_STRICT_GROUP_COUNT = 9,
+    COS_STRICT_GROUP_COUNT = 10,
 };
 
 /**
@@ -105,6 +105,19 @@ typedef enum CosStrictGroup {
      * ignores the generation number of a reference to one.
      */
     CosStrictGroup_CompressedObjGen,
+
+    /**
+     * A stream whose /Length is missing, non-integer, or does not agree with
+     * the position of the endstream keyword.
+     *
+     * The specification requires /Length to give the exact byte count, but
+     * Adobe and pdfium treat it as a hint and recover the true extent from the
+     * endstream keyword. @c CosStreamLengthBehaviour selects when that recovery
+     * runs; this group's level decides how the disagreement is handled: silently
+     * fixed at @c CosStrictLevel_Off , adjusted with a warning at
+     * @c CosStrictLevel_Warn , and rejected at @c CosStrictLevel_Error .
+     */
+    CosStrictGroup_StreamLength,
 } CosStrictGroup;
 
 /*
@@ -150,6 +163,51 @@ typedef enum CosInteriorSignBehaviour {
 } CosInteriorSignBehaviour;
 
 /**
+ * What the parser does with a stream's declared /Length.
+ *
+ * Governed for reporting purposes by @c CosStrictGroup_StreamLength .
+ */
+typedef enum CosStreamLengthBehaviour {
+    /**
+     * A present and non-negative /Length is used as-is. Recovery from the
+     * endstream keyword runs only when /Length is missing or non-integer.
+     *
+     * This is what libcos did before recovery became selectable.
+     */
+    CosStreamLengthBehaviour_Trust,
+
+    /**
+     * The stream extent is always located from the endstream keyword, and a
+     * present /Length that disagrees with it is overridden.
+     *
+     * This is what pdfium does; it catches a /Length that is present but wrong.
+     */
+    CosStreamLengthBehaviour_Verify,
+} CosStreamLengthBehaviour;
+
+/**
+ * What the parser produces for an integer literal whose magnitude exceeds the
+ * @c long @c long accumulator, i.e. is too large for any integer object.
+ *
+ * Governed for reporting purposes by @c CosStrictGroup_NumberSyntax .
+ */
+typedef enum CosIntOverflowBehaviour {
+    /**
+     * The value becomes a real, carrying on in floating point. Precision is
+     * lost but no digits are dropped.
+     *
+     * This is what Adobe and poppler do, and what libcos did before the reading
+     * became selectable.
+     */
+    CosIntOverflowBehaviour_PromoteToReal,
+
+    /**
+     * The value is clamped to the integer object range and stays an integer.
+     */
+    CosIntOverflowBehaviour_Clamp,
+} CosIntOverflowBehaviour;
+
+/**
  * Controls how strictly the parser judges its input, and which reading it
  * takes where implementations legitimately differ.
  *
@@ -166,11 +224,22 @@ typedef struct CosParserOptions {
      * How a sign in the middle of a number is read.
      */
     CosInteriorSignBehaviour interior_sign_behaviour;
+
+    /**
+     * What the parser does with a stream's declared /Length.
+     */
+    CosStreamLengthBehaviour stream_length_behaviour;
+
+    /**
+     * What the parser produces for an integer that overflows the accumulator.
+     */
+    CosIntOverflowBehaviour int_overflow_behaviour;
 } CosParserOptions;
 
 /**
- * Returns the default options: every group at @c CosStrictLevel_Warn , and
- * @c CosInteriorSignBehaviour_Merge .
+ * Returns the default options: every group at @c CosStrictLevel_Warn ,
+ * @c CosInteriorSignBehaviour_Merge , @c CosStreamLengthBehaviour_Trust , and
+ * @c CosIntOverflowBehaviour_PromoteToReal .
  *
  * These are the options used when a @c NULL options pointer is passed.
  *
@@ -225,6 +294,46 @@ cos_parser_options_set_interior_sign_behaviour(CosParserOptions *options,
  */
 COS_API CosInteriorSignBehaviour
 cos_parser_options_get_interior_sign_behaviour(const CosParserOptions *options);
+
+/**
+ * Sets what the parser does with a stream's declared /Length.
+ *
+ * @param options The options to modify.
+ * @param behaviour The behaviour to take.
+ */
+COS_API void
+cos_parser_options_set_stream_length_behaviour(CosParserOptions *options,
+                                               CosStreamLengthBehaviour behaviour);
+
+/**
+ * Gets what the parser does with a stream's declared /Length.
+ *
+ * @param options The options to query.
+ *
+ * @return The selected behaviour, or the default if @p options is @c NULL .
+ */
+COS_API CosStreamLengthBehaviour
+cos_parser_options_get_stream_length_behaviour(const CosParserOptions *options);
+
+/**
+ * Sets what the parser produces for an integer that overflows the accumulator.
+ *
+ * @param options The options to modify.
+ * @param behaviour The behaviour to take.
+ */
+COS_API void
+cos_parser_options_set_int_overflow_behaviour(CosParserOptions *options,
+                                              CosIntOverflowBehaviour behaviour);
+
+/**
+ * Gets what the parser produces for an integer that overflows the accumulator.
+ *
+ * @param options The options to query.
+ *
+ * @return The selected behaviour, or the default if @p options is @c NULL .
+ */
+COS_API CosIntOverflowBehaviour
+cos_parser_options_get_int_overflow_behaviour(const CosParserOptions *options);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END
