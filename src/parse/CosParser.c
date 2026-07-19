@@ -517,8 +517,8 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     // error, while a revisited /XRefStm is merely skipped, so the two are tracked separately: one
     // shared set would spuriously reject a file that reaches the same xref stream both as a
     // revision's /XRefStm and as another revision's /Prev target.
-    CosArray *visited = cos_array_create(sizeof(CosStreamOffset), NULL, 8);
-    CosArray *visited_xref_stms = cos_array_create(sizeof(CosStreamOffset), NULL, 2);
+    CosArray *visited = cos_array_create(NULL, sizeof(CosStreamOffset), NULL, 8);
+    CosArray *visited_xref_stms = cos_array_create(NULL, sizeof(CosStreamOffset), NULL, 2);
     size_t revision_count = 0;
 
     if (!visited || !visited_xref_stms) {

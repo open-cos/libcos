@@ -45,7 +45,8 @@ cos_xref_section_create(void)
         goto failure;
     }
 
-    subsections = cos_array_create(sizeof(CosXrefSubsection *),
+    subsections = cos_array_create(NULL,
+                                   sizeof(CosXrefSubsection *),
                                    &cos_xref_subsection_array_callbacks_,
                                    0);
     if (COS_UNLIKELY(!subsections)) {

@@ -31,7 +31,8 @@ cos_array_destroy(CosArray *array)
     COS_DEALLOCATOR_FUNC;
 
 COS_API CosArray * COS_Nullable
-cos_array_create(size_t element_size,
+cos_array_create(CosAllocator * COS_Nullable allocator,
+                 size_t element_size,
                  const CosArrayCallbacks * COS_Nullable callbacks,
                  size_t capacity_hint)
     COS_ALLOCATOR_FUNC

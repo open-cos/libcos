@@ -9,6 +9,7 @@
 #include "common/CosContainerUtils.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,13 @@ struct CosArray {
     size_t capacity;
 
     CosArrayCallbacks callbacks;
+
+    /**
+     * The allocator that owns every block this array allocates, or @c NULL to
+     * use the default (libc) allocator. The same allocator must be used to free
+     * them, so it is captured at creation and used by resize and destroy.
+     */
+    CosAllocator * COS_Nullable allocator;
 };
 
 static void
@@ -56,7 +64,8 @@ cos_array_resize_(CosArray *array,
 // MARK: - Public
 
 CosArray *
-cos_array_create(size_t element_size,
+cos_array_create(CosAllocator * COS_Nullable allocator,
+                 size_t element_size,
                  const CosArrayCallbacks * COS_Nullable callbacks,
                  size_t capacity_hint)
 {
@@ -68,14 +77,14 @@ cos_array_create(size_t element_size,
     CosArray *array = NULL;
     unsigned char *data = NULL;
 
-    array = calloc(1, sizeof(CosArray));
+    array = cos_calloc(allocator, 1, sizeof(CosArray));
     if (!array) {
         goto failure;
     }
 
     const size_t capacity = cos_container_round_capacity_(capacity_hint);
 
-    data = calloc(capacity, element_size);
+    data = cos_calloc(allocator, capacity, element_size);
     if (!data) {
         goto failure;
     }
@@ -84,6 +93,7 @@ cos_array_create(size_t element_size,
     array->element_size = element_size;
     array->count = 0;
     array->capacity = capacity;
+    array->allocator = allocator;
 
     if (callbacks) {
         array->callbacks = *callbacks;
@@ -92,12 +102,10 @@ cos_array_create(size_t element_size,
     return array;
 
 failure:
-    if (array) {
-        free(array);
-    }
-    if (data) {
-        free(data);
-    }
+    // array->allocator has not been set on this path, so both blocks are freed
+    // through the allocator parameter that allocated them.
+    cos_free(allocator, array);
+    cos_free(allocator, data);
     return NULL;
 }
 
@@ -117,8 +125,8 @@ cos_array_destroy(CosArray *array)
         }
     }
 
-    free(array->data);
-    free(array);
+    cos_free(array->allocator, array->data);
+    cos_free(array->allocator, array);
 }
 
 // MARK: - Accessors
@@ -536,7 +544,7 @@ cos_array_resize_(CosArray *array,
         return false;
     }
 
-    unsigned char * const new_data = realloc(array->data, allocation_size);
+    unsigned char * const new_data = cos_realloc(array->allocator, array->data, allocation_size);
     if (!new_data) {
         return false;
     }

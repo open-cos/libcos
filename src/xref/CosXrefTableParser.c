@@ -161,7 +161,6 @@ static const CosArrayCallbacks cos_xref_entry_array_callbacks_ = {
     .release = cos_xref_entry_release_callback_,
 };
 
-
 static CosXrefSubsection *
 cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
                                         CosError * COS_Nullable out_error)
@@ -205,7 +204,8 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
      *
      * The release callback lets cos_array_destroy free each CosXrefEntry.
      */
-    entries = cos_array_create(sizeof(CosXrefEntry *),
+    entries = cos_array_create(NULL,
+                               sizeof(CosXrefEntry *),
                                &cos_xref_entry_array_callbacks_,
                                0);
     if (COS_UNLIKELY(!entries)) {

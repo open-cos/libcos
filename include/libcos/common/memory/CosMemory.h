@@ -26,6 +26,13 @@ cos_alloc(CosAllocator * COS_Nullable allocator,
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC_INDEX(cos_free, 2);
 
 COS_API void * COS_Nullable
+cos_calloc(CosAllocator * COS_Nullable allocator,
+           size_t count,
+           size_t size)
+    COS_ALLOCATOR_FUNC_SIZES(2, 3)
+    COS_ALLOCATOR_FUNC_MATCHED_DEALLOC_INDEX(cos_free, 2);
+
+COS_API void * COS_Nullable
 cos_realloc(CosAllocator * COS_Nullable allocator,
             void * COS_Nullable ptr,
             size_t size)

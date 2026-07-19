@@ -332,6 +332,18 @@
     COS_WARN_UNUSED_RESULT
 
 /**
+ * @brief Marks a function as an allocator that returns a pointer to memory whose
+ * size is the product of two arguments (the @c calloc convention).
+ *
+ * @param size_index1 The index of the first size argument.
+ * @param size_index2 The index of the second size argument.
+ */
+#define COS_ALLOCATOR_FUNC_SIZES(size_index1, size_index2) \
+    COS_ATTR_MALLOC                                        \
+    COS_ATTR_ALLOC_SIZES(size_index1, size_index2)         \
+        COS_WARN_UNUSED_RESULT
+
+/**
  * @brief Marks a function as the matching allocator of the specified deallocator.
  *
  * @param deallocator The deallocator function.

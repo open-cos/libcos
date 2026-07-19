@@ -30,6 +30,7 @@ set(LIBCOS_TESTS
     unit-tests/obj-parser.c
     unit-tests/stream-length.c
     unit-tests/fuzz-mutator.c
+    unit-tests/malloc-failure.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
@@ -42,7 +43,10 @@ create_test_sourcelist(LIBCOS_TEST_SOURCES
 add_executable(libcos-test
     ${LIBCOS_TEST_SOURCES}
     CosTest.h
-
+    # Shared test support: the fault-injecting allocator and OOM test driver.
+    # Not a test itself, so it lives outside LIBCOS_TESTS/create_test_sourcelist.
+    support/CosFaultAllocator.h
+    support/CosFaultAllocator.c
 )
 
 foreach (TEST_SOURCE ${LIBCOS_TESTS})

@@ -49,7 +49,8 @@ cos_array_obj_node_alloc(CosArray * COS_Nullable array)
         array_obj->value = COS_nonnull_cast(array);
     }
     else {
-        CosArray * const new_array = cos_array_create(sizeof(CosObjNode *),
+        CosArray * const new_array = cos_array_create(NULL,
+                                                      sizeof(CosObjNode *),
                                                       &cos_array_obj_node_callbacks,
                                                       0);
         if (!new_array) {
