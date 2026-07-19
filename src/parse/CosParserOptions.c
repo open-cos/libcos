@@ -8,6 +8,8 @@
 #include "parse/CosParserOptions-Private.h"
 
 #include <libcos/common/CosDefines.h>
+#include <libcos/common/CosDiagnosticHandler.h>
+#include <libcos/common/CosError.h>
 
 #include <stddef.h>
 
@@ -19,7 +21,7 @@ COS_ASSUME_NONNULL_BEGIN
  * out-of-bounds read. C99 has no _Static_assert, hence the array-size idiom.
  */
 typedef char cos_strict_group_count_matches_enum_
-    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_UndefinedRefs + 1)) ? 1 : -1];
+    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_CompressedObjGen + 1)) ? 1 : -1];
 
 CosParserOptions
 cos_parser_options_make_default(void)
@@ -69,6 +71,39 @@ cos_parser_options_get_strict_level(const CosParserOptions *options,
     }
 
     return options->strict_levels[(unsigned int)group];
+}
+
+bool
+cos_options_report_(const CosParserOptions *options,
+                    CosDiagnosticHandler * COS_Nullable handler,
+                    CosStrictGroup group,
+                    const char *message,
+                    CosError * COS_Nullable out_error)
+{
+    COS_IMPL_PARAM_CHECK(options != NULL);
+    COS_IMPL_PARAM_CHECK(message != NULL);
+    if (!options || !message) {
+        return true;
+    }
+
+    const CosStrictLevel level =
+        cos_parser_options_get_strict_level(options, group);
+    if (level == CosStrictLevel_Off) {
+        return true;
+    }
+
+    cos_diagnose(handler ? handler : cos_diagnostic_handler_get_default(),
+                 (level == CosStrictLevel_Error) ? CosDiagnosticLevel_Error
+                                                 : CosDiagnosticLevel_Warning,
+                 message);
+
+    if (level == CosStrictLevel_Error) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX, message),
+                            out_error);
+        return false;
+    }
+
+    return true;
 }
 
 CosParserOptions

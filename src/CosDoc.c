@@ -172,12 +172,18 @@ cos_doc_get_object(CosDoc *doc,
             return NULL;
 
         case CosXrefEntryType_Compressed:
-            // Compressed objects always have generation number zero.
+            // Compressed objects always have generation number zero, so a
+            // reference carrying any other generation is malformed. Adobe
+            // ignores the generation number here rather than failing, so by
+            // default the reference still resolves.
             if (obj_id.gen_number != 0) {
-                cos_error_propagate(error,
-                                    cos_error_make(COS_ERROR_XREF,
-                                                   "Generation number mismatch"));
-                return NULL;
+                if (!cos_options_report_(&(doc->parser_options),
+                                         doc->diagnostic_handler,
+                                         CosStrictGroup_CompressedObjGen,
+                                         "Non-zero generation number on a compressed object",
+                                         error)) {
+                    return NULL;
+                }
             }
             break;
 

@@ -65,6 +65,58 @@ cleanup:
     return result;
 }
 
+/**
+ * Parses @p input with a single strict group set to @p level .
+ *
+ * @param input The NUL-terminated input.
+ * @param group The group to override.
+ * @param level The level to apply to @p group .
+ * @param out_error On failure, receives the error.
+ *
+ * @return @c true if the parse succeeded.
+ */
+static bool
+parse_pdf_at_level_(const char *input,
+                    CosStrictGroup group,
+                    CosStrictLevel level,
+                    CosError * COS_Nullable out_error)
+{
+    CosDoc *doc = NULL;
+    CosMemoryStream *stream = NULL;
+    CosParser *parser = NULL;
+    bool result = false;
+
+    doc = cos_doc_create(NULL);
+    if (!doc) {
+        goto cleanup;
+    }
+
+    stream = cos_memory_stream_create_readonly(input,
+                                               strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+
+    CosParserOptions options = cos_parser_options_make_default();
+    cos_parser_options_set_strict_level(&options, group, level);
+
+    parser = cos_parser_create(doc, (CosStream *)stream, &options);
+    if (!parser) {
+        goto cleanup;
+    }
+
+    result = cos_parser_parse(parser, out_error);
+
+cleanup:
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    return result;
+}
+
 // MARK: - Happy-path test
 
 /*
@@ -173,21 +225,60 @@ parse_invalidVersionMinorNotDigit_ReturnsError(void)
 
 // MARK: - EOF marker tests
 
+/* Well-formed header and xref/trailer, but no %%EOF at all. */
+static const char k_pdf_without_eof_marker[] =
+    "%PDF-1.0\n"
+    "xref\n"
+    "0 1\n"
+    "0000000000 65535 f \n"
+    "trailer\n"
+    "<< /Size 1 >>\n"
+    "startxref\n"
+    "9\n";
+
+/*
+ * "%EOF" uses a single '%', not "%%EOF", so the backward scanner does not find
+ * the five-byte marker. Equivalent to it being absent.
+ */
+static const char k_pdf_with_malformed_eof_marker[] =
+    "%PDF-1.0\n"
+    "xref\n"
+    "0 1\n"
+    "0000000000 65535 f \n"
+    "trailer\n"
+    "<< /Size 1 >>\n"
+    "startxref\n"
+    "9\n"
+    "%EOF";
+
+/*
+ * Adobe does not require the marker, so by default the parse falls back to the
+ * startxref keyword and succeeds. CosStrictGroup_EofMarker restores the
+ * requirement.
+ */
 static int
-parse_missingEofMarker_ReturnsError(void)
+parse_missingEofMarker_ToleratedByDefault(void)
 {
-    /* Well-formed header and xref/trailer, but no %%EOF at all. */
     CosError error = cos_error_none();
-    const bool result = parse_pdf_(
-        "%PDF-1.0\n"
-        "xref\n"
-        "0 1\n"
-        "0000000000 65535 f \n"
-        "trailer\n"
-        "<< /Size 1 >>\n"
-        "startxref\n"
-        "9\n",
-        &error);
+    TEST_EXPECT(parse_pdf_(k_pdf_without_eof_marker, &error));
+    TEST_EXPECT(error.code == COS_ERROR_NONE);
+
+    TEST_EXPECT(parse_pdf_at_level_(k_pdf_without_eof_marker,
+                                    CosStrictGroup_EofMarker,
+                                    CosStrictLevel_Off,
+                                    &error));
+
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_missingEofMarker_RejectedWhenStrict(void)
+{
+    CosError error = cos_error_none();
+    const bool result = parse_pdf_at_level_(k_pdf_without_eof_marker,
+                                            CosStrictGroup_EofMarker,
+                                            CosStrictLevel_Error,
+                                            &error);
 
     TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
@@ -196,14 +287,69 @@ parse_missingEofMarker_ReturnsError(void)
 }
 
 static int
-parse_eofMarkerMalformed_ReturnsError(void)
+parse_eofMarkerMalformed_ToleratedByDefault(void)
 {
-    /*
-     * "%EOF" uses a single '%', not "%%EOF".  The backward scanner
-     * searches for the five-byte sequence "%%EOF" and will not find it.
-     */
     CosError error = cos_error_none();
-    const bool result = parse_pdf_(
+    TEST_EXPECT(parse_pdf_(k_pdf_with_malformed_eof_marker, &error));
+    TEST_EXPECT(error.code == COS_ERROR_NONE);
+
+    return EXIT_SUCCESS;
+}
+
+static int
+parse_eofMarkerMalformed_RejectedWhenStrict(void)
+{
+    CosError error = cos_error_none();
+    const bool result = parse_pdf_at_level_(k_pdf_with_malformed_eof_marker,
+                                            CosStrictGroup_EofMarker,
+                                            CosStrictLevel_Error,
+                                            &error);
+
+    TEST_EXPECT(!result);
+    TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
+
+    return EXIT_SUCCESS;
+}
+
+/*
+ * Neither the marker nor the keyword: there is nothing left to anchor on, so
+ * this fails at every level.
+ */
+static int
+parse_missingEofAndStartxref_AlwaysRejected(void)
+{
+    static const char input[] =
+        "%PDF-1.0\n"
+        "xref\n"
+        "0 1\n"
+        "0000000000 65535 f \n"
+        "trailer\n"
+        "<< /Size 1 >>\n";
+
+    CosError error = cos_error_none();
+    const bool result = parse_pdf_at_level_(input,
+                                            CosStrictGroup_EofMarker,
+                                            CosStrictLevel_Off,
+                                            &error);
+
+    TEST_EXPECT(!result);
+    TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
+
+    return EXIT_SUCCESS;
+}
+
+// MARK: - Header position tests
+
+/*
+ * Adobe searches the first 1024 bytes for the header, so junk prepended to an
+ * otherwise valid file is tolerated. The xref offset is unchanged, because it
+ * is measured from the true start of the file.
+ */
+static int
+parse_headerAfterJunk_ToleratedByDefault(void)
+{
+    static const char input[] =
+        "JUNK"
         "%PDF-1.0\n"
         "xref\n"
         "0 1\n"
@@ -211,9 +357,38 @@ parse_eofMarkerMalformed_ReturnsError(void)
         "trailer\n"
         "<< /Size 1 >>\n"
         "startxref\n"
-        "9\n"
-        "%EOF",
-        &error);
+        "13\n"
+        "%%EOF";
+
+    CosError error = cos_error_none();
+    TEST_EXPECT(parse_pdf_(input, &error));
+    TEST_EXPECT(error.code == COS_ERROR_NONE);
+
+    TEST_EXPECT(!parse_pdf_at_level_(input,
+                                     CosStrictGroup_HeaderPosition,
+                                     CosStrictLevel_Error,
+                                     &error));
+    TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
+
+    return EXIT_SUCCESS;
+}
+
+/*
+ * A header past the 1024-byte search window is not found at any level.
+ */
+static int
+parse_headerBeyondScanWindow_AlwaysRejected(void)
+{
+    char input[2048];
+    memset(input, ' ', sizeof(input));
+    memcpy(input + 1100, "%PDF-1.0\n", 9);
+    input[sizeof(input) - 1] = '\0';
+
+    CosError error = cos_error_none();
+    const bool result = parse_pdf_at_level_(input,
+                                            CosStrictGroup_HeaderPosition,
+                                            CosStrictLevel_Off,
+                                            &error);
 
     TEST_EXPECT(!result);
     TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
@@ -413,8 +588,13 @@ TEST_MAIN()
     TEST_EXPECT(parse_invalidVersionMinorNotDigit_ReturnsError() == EXIT_SUCCESS);
 
     /* EOF marker format */
-    TEST_EXPECT(parse_missingEofMarker_ReturnsError() == EXIT_SUCCESS);
-    TEST_EXPECT(parse_eofMarkerMalformed_ReturnsError() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_missingEofMarker_ToleratedByDefault() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_missingEofMarker_RejectedWhenStrict() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_missingEofAndStartxref_AlwaysRejected() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_eofMarkerMalformed_ToleratedByDefault() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_eofMarkerMalformed_RejectedWhenStrict() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_headerAfterJunk_ToleratedByDefault() == EXIT_SUCCESS);
+    TEST_EXPECT(parse_headerBeyondScanWindow_AlwaysRejected() == EXIT_SUCCESS);
 
     /* startxref / xref-offset */
     TEST_EXPECT(parse_missingXrefOffset_ReturnsError() == EXIT_SUCCESS);

@@ -721,6 +721,154 @@ strict_fractionalDigitsWithinLimit_AlwaysAccepted(void)
     return EXIT_SUCCESS;
 }
 
+/**
+ * Reads the first token of @p input with the number-signs group at @p level .
+ */
+static bool
+tokenize_signs_at_level_(const char *input,
+                         CosStrictLevel level,
+                         CosToken_Type *out_type,
+                         double *out_real,
+                         int *out_int)
+{
+    CosMemoryStream *stream = NULL;
+    CosTokenizer *tokenizer = NULL;
+    bool built = false;
+
+    *out_type = CosToken_Type_Unknown;
+    *out_real = 0.0;
+    *out_int = 0;
+
+    stream = cos_memory_stream_create_readonly(input, strlen(input));
+    if (!stream) {
+        goto cleanup;
+    }
+
+    CosParserOptions options = cos_parser_options_make_default();
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_NumberSigns,
+                                        level);
+    // Keep the fractional-digit check out of the way of these inputs.
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_NumberSyntax,
+                                        CosStrictLevel_Off);
+
+    tokenizer = cos_tokenizer_create((CosStream *)stream, &options);
+    if (!tokenizer) {
+        goto cleanup;
+    }
+
+    CosToken token = {0};
+    if (!cos_tokenizer_get_next_token(tokenizer, &token, NULL)) {
+        goto cleanup;
+    }
+
+    *out_type = token.type;
+    (void)cos_token_value_get_real_number(&token.value, out_real);
+    (void)cos_token_get_integer_value(&token, out_int);
+    cos_token_reset(&token);
+    built = true;
+
+cleanup:
+    if (tokenizer) {
+        cos_tokenizer_destroy(tokenizer);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    return built;
+}
+
+/**
+ * An interior sign is skipped and the digits run together.
+ *
+ * Matches PDFBox, which special-cases these exact shapes (PDFBOX-5829 has
+ * "-12.-1"). Note this differs from Ghostscript, which stops at the sign.
+ */
+static int
+signs_interiorSign_DigitsRunTogether(void)
+{
+    CosToken_Type type = CosToken_Type_Unknown;
+    double real = 0.0;
+    int integer = 0;
+
+    TEST_EXPECT(tokenize_signs_at_level_("1.2-3", CosStrictLevel_Off, &type, &real, &integer));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(real > 1.2299 && real < 1.2301);
+
+    TEST_EXPECT(tokenize_signs_at_level_("-12.-1", CosStrictLevel_Off, &type, &real, &integer));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(real < -12.0999 && real > -12.1001);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * With nothing but zeros before it, the interior sign is the number's sign.
+ *
+ * PDFBOX-2990 has "0.00000-33917698", which means a small negative number.
+ */
+static int
+signs_beforeSignificantDigit_SetsTheSign(void)
+{
+    CosToken_Type type = CosToken_Type_Unknown;
+    double real = 0.0;
+    int integer = 0;
+
+    TEST_EXPECT(tokenize_signs_at_level_("0.00000-33917698",
+                                         CosStrictLevel_Off,
+                                         &type, &real, &integer));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(real < 0.0);
+
+    // A repeated leading sign, as in PDFBOX-4289's "--16.33".
+    TEST_EXPECT(tokenize_signs_at_level_("--16.33", CosStrictLevel_Off, &type, &real, &integer));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(real < -16.32 && real > -16.34);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * At Error the sign terminates the number, which is the pre-existing behaviour.
+ */
+static int
+signs_strictLevel_TerminatesTheNumber(void)
+{
+    CosToken_Type type = CosToken_Type_Unknown;
+    double real = 0.0;
+    int integer = 0;
+
+    TEST_EXPECT(tokenize_signs_at_level_("1.2-3", CosStrictLevel_Error, &type, &real, &integer));
+    TEST_EXPECT(type == CosToken_Type_Real);
+    TEST_EXPECT(real > 1.1999 && real < 1.2001);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * Well-formed numbers are unaffected at every level.
+ */
+static int
+signs_wellFormedNumbers_Unaffected(void)
+{
+    CosToken_Type type = CosToken_Type_Unknown;
+    double real = 0.0;
+    int integer = 0;
+
+    for (int level = CosStrictLevel_Off; level <= CosStrictLevel_Error; level++) {
+        TEST_EXPECT(tokenize_signs_at_level_("-7", (CosStrictLevel)level, &type, &real, &integer));
+        TEST_EXPECT(type == CosToken_Type_Integer);
+        TEST_EXPECT(integer == -7);
+
+        TEST_EXPECT(tokenize_signs_at_level_("-1.5", (CosStrictLevel)level, &type, &real, &integer));
+        TEST_EXPECT(type == CosToken_Type_Real);
+        TEST_EXPECT(real < -1.49 && real > -1.51);
+    }
+
+    return EXIT_SUCCESS;
+}
+
 // MARK: - Test driver
 
 TEST_MAIN()
@@ -791,6 +939,12 @@ TEST_MAIN()
     /* Strict mode */
     TEST_EXPECT(strict_tooManyFractionalDigits_HonoursLevel() == EXIT_SUCCESS);
     TEST_EXPECT(strict_fractionalDigitsWithinLimit_AlwaysAccepted() == EXIT_SUCCESS);
+
+    /* Interior signs */
+    TEST_EXPECT(signs_interiorSign_DigitsRunTogether() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_beforeSignificantDigit_SetsTheSign() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_strictLevel_TerminatesTheNumber() == EXIT_SUCCESS);
+    TEST_EXPECT(signs_wellFormedNumbers_Unaffected() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

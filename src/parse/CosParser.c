@@ -10,6 +10,7 @@
 #include "objects/CosStreamObjNode-Private.h"
 #include "parse/CosBaseParser.h"
 #include "parse/CosObjParser.h"
+#include "parse/CosParserOptions-Private.h"
 #include "xref/CosXrefStreamParser.h"
 
 #include <libcos/CosDoc.h>
@@ -46,6 +47,14 @@ struct CosParser {
  * set's linear membership scan.
  */
 #define COS_XREF_MAX_REVISIONS 1024
+
+/**
+ * How far into the file the "%PDF-" header is searched for.
+ *
+ * Adobe scans the first 1024 bytes rather than requiring the header at byte
+ * zero. See @c CosStrictGroup_HeaderPosition .
+ */
+#define COS_HEADER_SCAN_SIZE 1024
 
 // MARK: - Forward declarations
 
@@ -231,13 +240,19 @@ cos_parser_parse_header_(CosParser *parser,
         return false;
     }
 
-    // "%PDF-X.Y" is 8 bytes minimum; read a bit more to be safe.
-    unsigned char header[20];
+    /*
+     * The header is required at byte zero, but Adobe searches the first 1024
+     * bytes for it, so files with junk prepended (a stray HTTP header, a
+     * concatenated wrapper) are still readable. Read that whole window and
+     * locate the marker within it; the offset it is found at is what
+     * CosStrictGroup_HeaderPosition governs.
+     */
+    unsigned char header[COS_HEADER_SCAN_SIZE];
     memset(header, 0, sizeof(header));
 
     const size_t bytes_read = cos_stream_read(stream,
                                               header,
-                                              sizeof(header) - 1,
+                                              sizeof(header),
                                               out_error);
     if (bytes_read < 8) {
         cos_error_propagate(out_error,
@@ -246,17 +261,38 @@ cos_parser_parse_header_(CosParser *parser,
         return false;
     }
 
-    if (memcmp(header, "%PDF-", 5) != 0) {
+    // The version digits need 3 bytes beyond the 5-byte marker.
+    size_t header_offset = 0;
+    bool found_header = false;
+    for (size_t i = 0; (i + 8) <= bytes_read; i++) {
+        if (memcmp(&header[i], "%PDF-", 5) == 0) {
+            header_offset = i;
+            found_header = true;
+            break;
+        }
+    }
+
+    if (!found_header) {
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_SYNTAX,
                                            "Not a PDF file: missing %%PDF- header"));
         return false;
     }
 
+    if (header_offset > 0) {
+        if (!cos_options_report_(&(parser->base.options),
+                                 parser->base.diagnostic_handler,
+                                 CosStrictGroup_HeaderPosition,
+                                 "The %%PDF- header does not start at the beginning of the file",
+                                 out_error)) {
+            return false;
+        }
+    }
+
     // Header format: "%PDF-M.m" where M is major and m is minor digit.
-    const unsigned char major_ch = header[5];
-    const unsigned char dot_ch = header[6];
-    const unsigned char minor_ch = header[7];
+    const unsigned char major_ch = header[header_offset + 5];
+    const unsigned char dot_ch = header[header_offset + 6];
+    const unsigned char minor_ch = header[header_offset + 7];
 
     if (major_ch < '0' || major_ch > '9' ||
         dot_ch != '.' ||
@@ -337,10 +373,48 @@ cos_parser_find_startxref_(CosParser *parser,
     }
 
     if (eof_pos < 0) {
-        cos_error_propagate(out_error,
-                            cos_error_make(COS_ERROR_SYNTAX,
-                                           "%%EOF marker not found"));
-        goto cleanup;
+        // Adobe does not require the marker. Anchor on the last startxref
+        // keyword instead of failing outright.
+        if (!cos_options_report_(&(parser->base.options),
+                                 parser->base.diagnostic_handler,
+                                 CosStrictGroup_EofMarker,
+                                 "%%EOF marker not found",
+                                 out_error)) {
+            goto cleanup;
+        }
+
+        int startxref_pos = -1;
+        for (int i = (int)bytes_read - 9; i >= 0; i--) {
+            if (memcmp(&buffer[i], "startxref", 9) == 0) {
+                startxref_pos = i;
+                break;
+            }
+        }
+
+        if (startxref_pos < 0) {
+            cos_error_propagate(out_error,
+                                cos_error_make(COS_ERROR_SYNTAX,
+                                               "Neither %%EOF nor 'startxref' was found"));
+            goto cleanup;
+        }
+
+        /*
+         * Walk forwards over the keyword and its offset integer, then stand
+         * where %%EOF would have been. The backward parse below is then
+         * identical for both the present and the absent case.
+         */
+        int scan = startxref_pos + 9;
+        while (scan < (int)bytes_read &&
+               (buffer[scan] == '\n' || buffer[scan] == '\r' ||
+                buffer[scan] == ' ' || buffer[scan] == '\t')) {
+            scan++;
+        }
+        while (scan < (int)bytes_read &&
+               buffer[scan] >= '0' && buffer[scan] <= '9') {
+            scan++;
+        }
+
+        eof_pos = scan;
     }
 
     {

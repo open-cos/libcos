@@ -138,26 +138,11 @@ cos_report_deviation_(CosBaseParser *parser,
         return true;
     }
 
-    const CosStrictLevel level =
-        cos_parser_options_get_strict_level(&(parser->options), group);
-    if (level == CosStrictLevel_Off) {
-        return true;
-    }
-
-    if (parser->diagnostic_handler) {
-        cos_diagnose(parser->diagnostic_handler,
-                     (level == CosStrictLevel_Error) ? CosDiagnosticLevel_Error
-                                                     : CosDiagnosticLevel_Warning,
-                     message);
-    }
-
-    if (level == CosStrictLevel_Error) {
-        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_SYNTAX, message),
-                            out_error);
-        return false;
-    }
-
-    return true;
+    return cos_options_report_(&(parser->options),
+                               parser->diagnostic_handler,
+                               group,
+                               message,
+                               out_error);
 }
 
 CosObjParser *

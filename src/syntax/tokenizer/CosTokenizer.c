@@ -908,9 +908,18 @@ cos_read_number_(CosTokenizer *tokenizer,
     bool has_sign = false;
     bool is_negative = false;
     bool has_decimal_point = false;
+    bool has_interior_sign = false;
+    bool has_significant_digit = false;
     unsigned int digit_count = 0;
     unsigned int fractional_digit_count = 0;
     double fractional_scale = 0.1;
+
+    // A sign that appears once digits have started is not legal PDF, but real
+    // producers emit it ("0.00000-33917698", "-12.-1"). Whether it terminates
+    // the number or is skipped over is decided by CosStrictGroup_NumberSigns.
+    const CosStrictLevel sign_level =
+        cos_parser_options_get_strict_level(&(tokenizer->options),
+                                            CosStrictGroup_NumberSigns);
 
     /*
      * The magnitude of the integer part, accumulated unsigned; the sign is
@@ -931,6 +940,9 @@ cos_read_number_(CosTokenizer *tokenizer,
         const int digit_value = cos_decimal_digit_to_int_(c);
         if (digit_value >= 0) {
             digit_count++;
+            if (digit_value > 0) {
+                has_significant_digit = true;
+            }
 
             if (has_decimal_point) {
                 fractional_digit_count++;
@@ -953,10 +965,33 @@ cos_read_number_(CosTokenizer *tokenizer,
                 }
             }
         }
-        else if ((c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) &&
-                 !(has_sign || has_decimal_point || digit_count > 0)) {
-            has_sign = true;
-            is_negative = (c == CosCharacterSet_HyphenMinus);
+        else if (c == CosCharacterSet_PlusSign || c == CosCharacterSet_HyphenMinus) {
+            if (!(has_sign || has_decimal_point || digit_count > 0)) {
+                // The ordinary leading sign.
+                has_sign = true;
+                is_negative = (c == CosCharacterSet_HyphenMinus);
+            }
+            else if (sign_level == CosStrictLevel_Error) {
+                // Strict: the sign is not part of this number.
+                cos_stream_reader_ungetc(tokenizer->stream_reader);
+                break;
+            }
+            else {
+                has_interior_sign = true;
+
+                if (!has_significant_digit) {
+                    /*
+                     * Nothing but zeros so far, so the producer meant this as
+                     * the sign: "0.00000-33917698" is -0.0000033917698 and
+                     * "--16.33" is -16.33. PDFBox special-cases both shapes
+                     * (PDFBOX-2990, PDFBOX-4289).
+                     */
+                    has_sign = true;
+                    is_negative = (c == CosCharacterSet_HyphenMinus);
+                }
+                // Otherwise the sign is simply dropped and the digits run
+                // together, so "1.2-3" is 1.23 and "-12.-1" is -12.1.
+            }
         }
         else if (c == CosCharacterSet_FullStop && !has_decimal_point) {
             // Switch to reading the fractional part of a real number.
@@ -980,21 +1015,22 @@ cos_read_number_(CosTokenizer *tokenizer,
         return false;
     }
 
+    if (has_interior_sign) {
+        // Never escalates: the Error case already terminated the number above,
+        // so reaching here means the sign was accepted.
+        (void)cos_options_report_(&(tokenizer->options),
+                                  tokenizer->diagnostic_handler,
+                                  CosStrictGroup_NumberSigns,
+                                  "Sign in the middle of a number was ignored",
+                                  NULL);
+    }
+
     if (fractional_digit_count > COS_REAL_MAX_SIG_FRAC_DIG) {
-        const CosStrictLevel level =
-            cos_parser_options_get_strict_level(&(tokenizer->options),
-                                                CosStrictGroup_NumberSyntax);
-        if (level != CosStrictLevel_Off) {
-            cos_diagnose(tokenizer->diagnostic_handler,
-                         (level == CosStrictLevel_Error) ? CosDiagnosticLevel_Error
-                                                         : CosDiagnosticLevel_Warning,
-                         "Too many fractional digits");
-        }
-        if (level == CosStrictLevel_Error) {
-            if (out_error) {
-                *out_error = cos_error_make(COS_ERROR_SYNTAX,
-                                            "Too many fractional digits");
-            }
+        if (!cos_options_report_(&(tokenizer->options),
+                                 tokenizer->diagnostic_handler,
+                                 CosStrictGroup_NumberSyntax,
+                                 "Too many fractional digits",
+                                 out_error)) {
             return false;
         }
     }

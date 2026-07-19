@@ -19,7 +19,7 @@ COS_ASSUME_NONNULL_BEGIN
  * only values that are themselves valid groups.
  */
 enum {
-    COS_STRICT_GROUP_COUNT = 5,
+    COS_STRICT_GROUP_COUNT = 9,
 };
 
 /**
@@ -72,6 +72,39 @@ typedef enum CosStrictGroup {
      * An indirect reference that does not resolve to an object.
      */
     CosStrictGroup_UndefinedRefs,
+
+    /**
+     * A minus sign in the middle of a number, such as "1.2-3" or "-12.-1".
+     *
+     * At @c CosStrictLevel_Off and @c CosStrictLevel_Warn the interior signs
+     * are ignored and the digits are read as one number, matching Adobe and
+     * PDFBox; at @c CosStrictLevel_Error the number is rejected.
+     */
+    CosStrictGroup_NumberSigns,
+
+    /**
+     * A "%PDF-" header that does not start at byte zero.
+     *
+     * Adobe searches the first 1024 bytes for the header rather than
+     * requiring it at the start of the file.
+     */
+    CosStrictGroup_HeaderPosition,
+
+    /**
+     * A missing "%%EOF" marker at the end of the file.
+     *
+     * Adobe does not appear to require it; the startxref keyword is located
+     * directly when it is absent.
+     */
+    CosStrictGroup_EofMarker,
+
+    /**
+     * A non-zero generation number on a reference to a compressed object.
+     *
+     * Objects in an object stream always have generation zero, and Adobe
+     * ignores the generation number of a reference to one.
+     */
+    CosStrictGroup_CompressedObjGen,
 } CosStrictGroup;
 
 /**

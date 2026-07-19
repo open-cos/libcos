@@ -4,6 +4,8 @@
 
 #include "CosTest.h"
 
+#include "CosDoc-Private.h"
+
 #include <libcos/CosDoc.h>
 #include <libcos/CosObjID.h>
 #include <libcos/CosParser.h>
@@ -251,6 +253,58 @@ resolves_compressed_pages(void)
     return EXIT_SUCCESS;
 }
 
+/*
+ * A reference to a compressed object with a non-zero generation number.
+ *
+ * Objects in an object stream always have generation zero, so such a reference
+ * is malformed. Adobe ignores the generation number rather than failing, so by
+ * default it still resolves; CosStrictGroup_CompressedObjGen restores the
+ * check.
+ */
+static int
+resolves_compressed_object_ignoring_generation(void)
+{
+    CosMemoryStream *stream = NULL;
+    CosDoc *doc = parse_pdf_bytes_(obj_stream_pdf, sizeof(obj_stream_pdf), &stream);
+    TEST_EXPECT(doc != NULL);
+
+    CosError error = cos_error_none();
+    CosObjNode *indirect = cos_doc_get_object(doc, cos_obj_id_make(3, 7), &error);
+    TEST_EXPECT(indirect != NULL);
+    TEST_EXPECT(error.code == COS_ERROR_NONE);
+
+    CosObjNode *value = cos_indirect_obj_node_get_value((CosIndirectObjNode *)indirect);
+    TEST_EXPECT(dict_type_is_(value, "Pages"));
+
+    cos_obj_node_release(indirect);
+    cos_doc_destroy(doc);
+    cos_stream_close((CosStream *)stream);
+    return EXIT_SUCCESS;
+}
+
+static int
+rejects_compressed_object_generation_when_strict(void)
+{
+    CosMemoryStream *stream = NULL;
+    CosDoc *doc = parse_pdf_bytes_(obj_stream_pdf, sizeof(obj_stream_pdf), &stream);
+    TEST_EXPECT(doc != NULL);
+
+    CosParserOptions options = cos_doc_get_parser_options(doc);
+    cos_parser_options_set_strict_level(&options,
+                                        CosStrictGroup_CompressedObjGen,
+                                        CosStrictLevel_Error);
+    cos_doc_set_parser_options_(doc, &options);
+
+    CosError error = cos_error_none();
+    CosObjNode *indirect = cos_doc_get_object(doc, cos_obj_id_make(3, 7), &error);
+    TEST_EXPECT(indirect == NULL);
+    TEST_EXPECT(error.code == COS_ERROR_SYNTAX);
+
+    cos_doc_destroy(doc);
+    cos_stream_close((CosStream *)stream);
+    return EXIT_SUCCESS;
+}
+
 static int
 resolves_compressed_root(void)
 {
@@ -344,6 +398,8 @@ TEST_MAIN()
     TEST_EXPECT(resolves_compressed_catalog() == EXIT_SUCCESS);
     TEST_EXPECT(resolves_compressed_pages() == EXIT_SUCCESS);
     TEST_EXPECT(resolves_compressed_root() == EXIT_SUCCESS);
+    TEST_EXPECT(resolves_compressed_object_ignoring_generation() == EXIT_SUCCESS);
+    TEST_EXPECT(rejects_compressed_object_generation_when_strict() == EXIT_SUCCESS);
     TEST_EXPECT(repeat_fetch_hits_cache() == EXIT_SUCCESS);
     TEST_EXPECT(extends_is_exposed_as_metadata() == EXIT_SUCCESS);
     TEST_EXPECT(missing_extends_is_invalid_id() == EXIT_SUCCESS);
