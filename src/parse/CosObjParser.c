@@ -625,8 +625,7 @@ cos_handle_array_(CosObjParser *parser,
 
     cos_base_parser_advance(&(parser->base));
 
-    array = cos_array_create(NULL,
-                             sizeof(CosObjNode *),
+    array = cos_array_create(sizeof(CosObjNode *),
                              &cos_array_obj_node_callbacks,
                              0);
     if (!array) {

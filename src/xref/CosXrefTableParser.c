@@ -204,8 +204,7 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
      *
      * The release callback lets cos_array_destroy free each CosXrefEntry.
      */
-    entries = cos_array_create(NULL,
-                               sizeof(CosXrefEntry *),
+    entries = cos_array_create(sizeof(CosXrefEntry *),
                                &cos_xref_entry_array_callbacks_,
                                0);
     if (COS_UNLIKELY(!entries)) {

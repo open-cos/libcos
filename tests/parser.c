@@ -35,7 +35,7 @@ TEST_NAME(COS_ATTR_UNUSED int argc,
         goto failure;
     }
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto failure;
     }

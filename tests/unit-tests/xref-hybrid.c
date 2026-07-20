@@ -191,7 +191,7 @@ hybrid_parse_(unsigned char *buffer,
         return NULL;
     }
 
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     CosMemoryStream *stream = NULL;
     CosParser *parser = NULL;
     CosError error = cos_error_none();

@@ -13,7 +13,6 @@
 #include <libcos/CosParser.h>
 #include <libcos/CosTrailer.h>
 #include <libcos/common/CosError.h>
-#include <libcos/common/memory/CosAllocator.h>
 #include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosIndirectObjNode.h>
@@ -31,7 +30,6 @@ COS_ASSUME_NONNULL_BEGIN
 struct CosDoc {
     int version;
 
-    CosAllocator *allocator;
     CosObjNode * COS_Nullable root;
 
     CosParser * COS_Nullable parser;
@@ -52,19 +50,14 @@ struct CosDoc {
 };
 
 CosDoc *
-cos_doc_create(CosAllocator * COS_Nullable allocator)
+cos_doc_create(void)
 {
-    CosAllocator * const doc_allocator = allocator ? allocator : CosAllocatorDefault;
-
-    CosDoc * const doc = cos_alloc(doc_allocator,
-                                   sizeof(CosDoc));
+    CosDoc * const doc = cos_malloc(sizeof(CosDoc));
     if (!doc) {
         return NULL;
     }
 
     memset(doc, 0, sizeof(CosDoc));
-
-    doc->allocator = doc_allocator;
 
     // Not left zeroed: an all-zero CosParserOptions would silence every group,
     // whereas the documented default is to warn.
@@ -100,18 +93,7 @@ cos_doc_destroy(CosDoc *doc)
         doc->obj_cache = NULL;
     }
 
-    cos_free(doc->allocator, doc);
-}
-
-CosAllocator *
-cos_doc_get_allocator(const CosDoc *doc)
-{
-    COS_API_PARAM_CHECK(doc != NULL);
-    if (COS_UNLIKELY(!doc)) {
-        return NULL;
-    }
-
-    return doc->allocator;
+    cos_free(doc);
 }
 
 int

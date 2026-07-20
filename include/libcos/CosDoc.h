@@ -21,20 +21,9 @@ cos_doc_destroy(CosDoc *doc)
     COS_DEALLOCATOR_FUNC;
 
 COS_API CosDoc * COS_Nullable
-cos_doc_create(CosAllocator * COS_Nullable allocator)
+cos_doc_create(void)
     COS_ALLOCATOR_FUNC
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC(cos_doc_destroy);
-
-/**
- * Returns the allocator used by the document.
- *
- * @param doc The document.
- *
- * @return The allocator used by the document, or @c NULL if no allocator is set.
- */
-COS_API CosAllocator * COS_Nullable
-cos_doc_get_allocator(const CosDoc *doc)
-    COS_WARN_UNUSED_RESULT;
 
 COS_API int
 cos_doc_get_version(CosDoc *doc);

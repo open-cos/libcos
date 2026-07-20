@@ -22,11 +22,6 @@ enum {
 
 struct CosBaseParser {
     /**
-     * The allocator used by the parser.
-     */
-    CosAllocator *allocator;
-
-    /**
      * The document being parsed.
      */
     CosDoc *doc;

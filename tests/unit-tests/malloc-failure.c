@@ -12,21 +12,21 @@
 COS_ASSUME_NONNULL_BEGIN
 
 /*
- * The operation under test: build a CosArray through the injected allocator,
- * grow it past its initial capacity (forcing a resize), read an item back, and
- * tear it down. Every allocation -- the array struct, its data buffer, and the
- * resize -- routes through the allocator, so each is a distinct injection point.
+ * The operation under test: build a CosArray, grow it past its initial capacity
+ * (forcing a resize), read an item back, and tear it down. Every allocation --
+ * the array struct, its data buffer, and the resize -- routes through the global
+ * cos_* functions, so each is a distinct injection point while the fault
+ * allocator is installed.
  *
  * It returns false the moment any allocation fails, always destroying whatever
  * it managed to create so the fault allocator's outstanding count returns to 0.
  */
 static bool
-oom_build_and_grow_array_(CosAllocator *allocator,
-                          void * COS_Nullable ctx)
+oom_build_and_grow_array_(void * COS_Nullable ctx)
 {
     (void)ctx;
 
-    CosArray * const array = cos_array_create(allocator, sizeof(int), NULL, 4);
+    CosArray * const array = cos_array_create(sizeof(int), NULL, 4);
     if (!array) {
         return false;
     }

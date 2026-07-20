@@ -48,8 +48,7 @@ cos_xref_table_create(void)
         goto failure;
     }
 
-    sections = cos_array_create(NULL,
-                                sizeof(CosXrefSection *),
+    sections = cos_array_create(sizeof(CosXrefSection *),
                                 &cos_xref_section_array_callbacks_,
                                 0);
     if (COS_UNLIKELY(!sections)) {

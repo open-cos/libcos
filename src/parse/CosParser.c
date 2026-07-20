@@ -342,8 +342,7 @@ cos_parser_find_startxref_(CosParser *parser,
         return false;
     }
 
-    CosAllocator * const allocator = parser->base.allocator;
-    unsigned char * const buffer = cos_alloc(allocator, scan_size);
+    unsigned char * const buffer = cos_malloc(scan_size);
     if (!buffer) {
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_MEMORY,
@@ -353,7 +352,7 @@ cos_parser_find_startxref_(CosParser *parser,
 
     const size_t bytes_read = cos_stream_read(stream, buffer, scan_size, out_error);
     if (bytes_read == 0) {
-        cos_free(allocator, buffer);
+        cos_free(buffer);
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_IO,
                                            "Failed to read end-of-file region"));
@@ -482,7 +481,7 @@ cos_parser_find_startxref_(CosParser *parser,
     }
 
 cleanup:
-    cos_free(allocator, buffer);
+    cos_free(buffer);
     return result;
 }
 
@@ -517,8 +516,8 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
     // error, while a revisited /XRefStm is merely skipped, so the two are tracked separately: one
     // shared set would spuriously reject a file that reaches the same xref stream both as a
     // revision's /XRefStm and as another revision's /Prev target.
-    CosArray *visited = cos_array_create(NULL, sizeof(CosStreamOffset), NULL, 8);
-    CosArray *visited_xref_stms = cos_array_create(NULL, sizeof(CosStreamOffset), NULL, 2);
+    CosArray *visited = cos_array_create(sizeof(CosStreamOffset), NULL, 8);
+    CosArray *visited_xref_stms = cos_array_create(sizeof(CosStreamOffset), NULL, 2);
     size_t revision_count = 0;
 
     if (!visited || !visited_xref_stms) {

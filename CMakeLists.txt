@@ -184,7 +184,6 @@ target_sources(libcos PRIVATE
     src/common/_CosInternalDefines.h
     src/common/cos-strerror.c
     src/common/cos-strerror.h
-    src/common/memory/CosAllocator.c
     src/common/memory/CosMemory.c
     src/common/memory/CosRefCounter.c
     src/common/memory/CosRefCounter.h
@@ -267,7 +266,6 @@ target_sources(libcos PUBLIC
     include/libcos/common/CosRingBuffer.h
     include/libcos/common/CosString.h
     include/libcos/common/CosTypes.h
-    include/libcos/common/memory/CosAllocator.h
     include/libcos/common/memory/CosMemory.h
     include/libcos/filters/CosASCII85Filter.h
     include/libcos/filters/CosASCIIHexFilter.h

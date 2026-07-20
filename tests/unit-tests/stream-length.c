@@ -31,7 +31,7 @@ parse_pdf_bytes_(const char *bytes,
 {
     *out_stream = NULL;
 
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     if (!doc) {
         return NULL;
     }

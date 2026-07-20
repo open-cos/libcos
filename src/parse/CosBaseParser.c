@@ -31,11 +31,6 @@ cos_base_parser_init(CosBaseParser *parser,
         return false;
     }
 
-    CosAllocator * const allocator = cos_doc_get_allocator(document);
-    if (!allocator) {
-        return false;
-    }
-
     CosTokenizer *tokenizer = NULL;
     CosToken *token_buffer = NULL;
 
@@ -44,13 +39,10 @@ cos_base_parser_init(CosBaseParser *parser,
         goto failure;
     }
 
-    token_buffer = cos_alloc(allocator,
-                             sizeof(CosToken) * 3);
+    token_buffer = cos_malloc(sizeof(CosToken) * 3);
     if (!token_buffer) {
         goto failure;
     }
-
-    parser->allocator = allocator;
 
     parser->doc = document;
     parser->input_stream = input_stream;
@@ -84,7 +76,7 @@ failure:
         cos_tokenizer_destroy(tokenizer);
     }
     if (token_buffer) {
-        cos_free(allocator, token_buffer);
+        cos_free(token_buffer);
     }
     return false;
 }
@@ -102,18 +94,11 @@ cos_base_parser_init_with_tokenizer(CosBaseParser *parser,
         return false;
     }
 
-    CosAllocator * const allocator = cos_doc_get_allocator(document);
-    if (!allocator) {
-        return false;
-    }
-
-    CosToken *token_buffer = cos_alloc(allocator,
-                                       sizeof(CosToken) * COS_BASE_PARSER_TOKEN_BUFFER_SIZE);
+    CosToken *token_buffer = cos_malloc(sizeof(CosToken) * COS_BASE_PARSER_TOKEN_BUFFER_SIZE);
     if (!token_buffer) {
         return false;
     }
 
-    parser->allocator = allocator;
     parser->doc = document;
     parser->input_stream = NULL;
     parser->tokenizer = tokenizer;
@@ -157,10 +142,10 @@ cos_base_parser_destroy(CosBaseParser *parser)
     }
 
     if (parser->token_buffer) {
-        cos_free(parser->allocator, parser->token_buffer);
+        cos_free(parser->token_buffer);
     }
 
-    cos_free(parser->allocator, parser);
+    cos_free(parser);
 }
 
 CosToken * COS_Nullable

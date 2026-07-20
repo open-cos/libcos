@@ -115,7 +115,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data,
         return 0;
     }
 
-    CosDoc * const doc = cos_doc_create(NULL);
+    CosDoc * const doc = cos_doc_create();
     if (!doc) {
         cos_stream_close((CosStream *)stream);
         return 0;

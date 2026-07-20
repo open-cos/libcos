@@ -20,7 +20,7 @@ parse_pdf_(const char *bytes,
            size_t size,
            CosErrorCode *out_code)
 {
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     CosMemoryStream *stream = NULL;
     CosParser *parser = NULL;
     CosError error = cos_error_none();

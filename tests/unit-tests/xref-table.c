@@ -43,7 +43,7 @@ parse_xref_from_string_(const char *input,
     CosXrefTable *table = NULL;
     CosXrefSection *section = NULL;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }

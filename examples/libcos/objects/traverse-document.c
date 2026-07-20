@@ -226,7 +226,7 @@ EXAMPLE_MAIN()
     CosError error = cos_error_none();
     int result = EXIT_FAILURE;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         fprintf(stderr, "Failed to create document\n");
         goto cleanup;

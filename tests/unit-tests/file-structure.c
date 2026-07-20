@@ -36,7 +36,7 @@ parse_pdf_(const char *input,
     CosParser *parser = NULL;
     bool result = false;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }
@@ -86,7 +86,7 @@ parse_pdf_at_level_(const char *input,
     CosParser *parser = NULL;
     bool result = false;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }

@@ -22,7 +22,7 @@ parse_expecting_failure_(const char *bytes,
                          size_t size,
                          CosError *out_error)
 {
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     CosMemoryStream *stream = NULL;
     CosParser *parser = NULL;
     CosError error = cos_error_none();

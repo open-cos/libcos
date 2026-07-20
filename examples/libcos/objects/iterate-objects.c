@@ -248,7 +248,7 @@ EXAMPLE_MAIN()
     int result = EXIT_FAILURE;
 
     /* Create the document. */
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         fprintf(stderr, "Failed to create document\n");
         goto cleanup;

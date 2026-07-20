@@ -195,8 +195,7 @@ cos_xref_stream_add_subsection_(CosXrefSection *section,
      * Growing on demand keeps the allocation in step with the entries actually
      * read, which the loop below stops at as soon as the data runs out.
      */
-    CosArray *entries = cos_array_create(NULL,
-                                         sizeof(CosXrefEntry *),
+    CosArray *entries = cos_array_create(sizeof(CosXrefEntry *),
                                          &cos_xref_stream_entry_array_callbacks_,
                                          0);
     if (COS_UNLIKELY(!entries)) {

@@ -38,8 +38,7 @@ cos_xref_subsection_create(CosObjNumber first_object_number,
         entries = existing_entries;
     }
     else {
-        entries = cos_array_create(NULL,
-                                   sizeof(CosXrefEntry *),
+        entries = cos_array_create(sizeof(CosXrefEntry *),
                                    NULL,
                                    entry_count);
         if (COS_UNLIKELY(!entries)) {

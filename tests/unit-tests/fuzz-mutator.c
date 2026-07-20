@@ -332,7 +332,7 @@ parse_bytes_(const unsigned char *data,
         return false;
     }
 
-    CosDoc * const doc = cos_doc_create(NULL);
+    CosDoc * const doc = cos_doc_create();
     if (!doc) {
         cos_stream_close((CosStream *)stream);
         return false;

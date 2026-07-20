@@ -59,7 +59,7 @@ parse_objects_(const char *input,
     CosObjParser *parser = NULL;
     size_t count = 0;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }
@@ -188,7 +188,7 @@ parse_string_value_(const char *input,
     *out_stream = NULL;
     *out_node = NULL;
 
-    CosDoc * const doc = cos_doc_create(NULL);
+    CosDoc * const doc = cos_doc_create();
     if (!doc) {
         return NULL;
     }
@@ -331,7 +331,7 @@ parse_array_element_types_(const char *input,
     CosObjParser *parser = NULL;
     size_t count = NOT_A_CONTAINER;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }
@@ -382,7 +382,7 @@ parse_dict_entry_count_(const char *input)
     CosObjParser *parser = NULL;
     size_t count = NOT_A_CONTAINER;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }
@@ -506,7 +506,7 @@ flush_DiscardsPeekedObject(void)
     CosObjParser *parser = NULL;
     int result = EXIT_FAILURE;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     stream = cos_memory_stream_create_readonly("true false", strlen("true false"));
     if (!doc || !stream) {
         goto cleanup;
@@ -619,7 +619,7 @@ parse_at_level_(const char *input,
     out_counter->errors = 0;
     *out_object_count = 0;
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto cleanup;
     }
@@ -811,7 +811,7 @@ recover_verifyOverridesWrongLength(void)
         "endobj\n";
 
     DiagnosticCounter counter = {0, 0};
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     TEST_EXPECT(doc != NULL);
 
     CosDiagnosticHandler * const handler =
@@ -863,7 +863,7 @@ recover_trustKeepsCorrectLengthSilent(void)
         "endobj\n";
 
     DiagnosticCounter counter = {0, 0};
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     TEST_EXPECT(doc != NULL);
 
     CosDiagnosticHandler * const handler =

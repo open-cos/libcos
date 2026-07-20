@@ -44,7 +44,7 @@ parse_pdf_(const char *input,
     CosParser *parser = NULL;
     CosError error = cos_error_none();
 
-    doc = cos_doc_create(NULL);
+    doc = cos_doc_create();
     if (!doc) {
         goto failure;
     }

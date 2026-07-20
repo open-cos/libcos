@@ -32,7 +32,7 @@ parse_pdf_bytes_(const unsigned char *bytes,
                  size_t size,
                  CosMemoryStream * COS_Nullable * COS_Nullable out_stream)
 {
-    CosDoc *doc = cos_doc_create(NULL);
+    CosDoc *doc = cos_doc_create();
     CosMemoryStream *stream = NULL;
     CosParser *parser = NULL;
     CosError error = cos_error_none();

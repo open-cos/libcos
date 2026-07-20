@@ -4,17 +4,16 @@
 
 #include "support/CosFaultAllocator.h"
 
-#include <libcos/common/memory/CosAllocator.h>
+#include <libcos/common/memory/CosMemory.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 COS_ASSUME_NONNULL_BEGIN
 
-struct CosFaultAllocator {
-    /** The wrapped allocator handed to the code under test. */
-    CosAllocator *allocator;
-
+// The mutable state behind an installed fault allocator, passed as the
+// allocator's user_data so the callbacks stay reentrant (no file-static state).
+typedef struct CosFaultControl {
     /** The 1-based request number to fail on, or 0 to disable injection. */
     size_t fail_at;
 
@@ -29,41 +28,41 @@ struct CosFaultAllocator {
 
     /** Live allocations: +1 on success, -1 on free. */
     size_t outstanding;
-};
+} CosFaultControl;
 
-// MARK: - Callbacks
+// MARK: - Fault allocator callbacks
 
 static bool
-cos_fault_should_fail_(CosFaultAllocator *fault_allocator)
+cos_fault_should_fail_(CosFaultControl *control)
 {
-    fault_allocator->call_count += 1;
+    control->call_count += 1;
 
-    if (fault_allocator->fail_at == 0) {
+    if (control->fail_at == 0) {
         return false;
     }
 
-    const bool reached = (fault_allocator->mode == COS_FAULT_PERSISTENT)
-                             ? (fault_allocator->call_count >= fault_allocator->fail_at)
-                             : (fault_allocator->call_count == fault_allocator->fail_at);
+    const bool reached = (control->mode == COS_FAULT_PERSISTENT)
+                             ? (control->call_count >= control->fail_at)
+                             : (control->call_count == control->fail_at);
     if (reached) {
-        fault_allocator->triggered = true;
+        control->triggered = true;
     }
     return reached;
 }
 
 static void * COS_Nullable
-cos_fault_alloc_(size_t size,
-                 void * COS_Nullable user_data)
+cos_fault_malloc_(size_t size,
+                  void * COS_Nullable user_data)
 {
-    CosFaultAllocator * const fault_allocator = user_data;
+    CosFaultControl * const control = user_data;
 
-    if (cos_fault_should_fail_(fault_allocator)) {
+    if (cos_fault_should_fail_(control)) {
         return NULL;
     }
 
     void * const ptr = malloc(size);
     if (ptr) {
-        fault_allocator->outstanding += 1;
+        control->outstanding += 1;
     }
     return ptr;
 }
@@ -73,9 +72,9 @@ cos_fault_realloc_(void * COS_Nullable ptr,
                    size_t size,
                    void * COS_Nullable user_data)
 {
-    CosFaultAllocator * const fault_allocator = user_data;
+    CosFaultControl * const control = user_data;
 
-    if (cos_fault_should_fail_(fault_allocator)) {
+    if (cos_fault_should_fail_(control)) {
         // A failed realloc leaves the original block allocated and untouched, so
         // the outstanding count is unchanged.
         return NULL;
@@ -84,7 +83,7 @@ cos_fault_realloc_(void * COS_Nullable ptr,
     void * const new_ptr = realloc(ptr, size);
     if (new_ptr && !ptr) {
         // Acted as an allocation of a fresh block.
-        fault_allocator->outstanding += 1;
+        control->outstanding += 1;
     }
     // A successful grow/shrink of an existing block is one block in, one out:
     // the outstanding count does not change.
@@ -92,91 +91,13 @@ cos_fault_realloc_(void * COS_Nullable ptr,
 }
 
 static void
-cos_fault_dealloc_(void *ptr,
-                   void * COS_Nullable user_data)
+cos_fault_free_(void *ptr,
+                void * COS_Nullable user_data)
 {
-    CosFaultAllocator * const fault_allocator = user_data;
+    CosFaultControl * const control = user_data;
 
-    fault_allocator->outstanding -= 1;
+    control->outstanding -= 1;
     free(ptr);
-}
-
-static const CosAllocatorCallbacks k_fault_callbacks = {
-    .alloc = &cos_fault_alloc_,
-    .realloc = &cos_fault_realloc_,
-    .dealloc = &cos_fault_dealloc_,
-    .retain = NULL,
-    .release = NULL,
-};
-
-// MARK: - Lifecycle
-
-CosFaultAllocator *
-cos_fault_allocator_create(void)
-{
-    CosFaultAllocator * const fault_allocator = calloc(1, sizeof(CosFaultAllocator));
-    if (!fault_allocator) {
-        return NULL;
-    }
-
-    // The wrapped allocator is built off the default allocator, so its own
-    // bookkeeping never runs through the callbacks above.
-    CosAllocator * const allocator = cos_allocator_create(NULL,
-                                                          &k_fault_callbacks,
-                                                          fault_allocator);
-    if (!allocator) {
-        free(fault_allocator);
-        return NULL;
-    }
-
-    fault_allocator->allocator = allocator;
-    return fault_allocator;
-}
-
-void
-cos_fault_allocator_destroy(CosFaultAllocator * COS_Nullable fault_allocator)
-{
-    if (!fault_allocator) {
-        return;
-    }
-
-    cos_allocator_destroy(fault_allocator->allocator);
-    free(fault_allocator);
-}
-
-CosAllocator *
-cos_fault_allocator_get(CosFaultAllocator *fault_allocator)
-{
-    return fault_allocator->allocator;
-}
-
-void
-cos_fault_allocator_arm(CosFaultAllocator *fault_allocator,
-                        size_t fail_at,
-                        CosFaultMode mode)
-{
-    fault_allocator->fail_at = fail_at;
-    fault_allocator->mode = mode;
-    fault_allocator->call_count = 0;
-    fault_allocator->triggered = false;
-}
-
-bool
-cos_fault_allocator_was_triggered(const CosFaultAllocator *fault_allocator)
-{
-    return fault_allocator->triggered;
-}
-
-size_t
-cos_fault_allocator_total_allocs(const CosFaultAllocator *fault_allocator)
-{
-    return fault_allocator->call_count;
-}
-
-size_t
-cos_fault_allocator_outstanding(const CosFaultAllocator *fault_allocator)
-{
-    return fault_allocator->outstanding;
 }
 
 // MARK: - OOM test driver
@@ -186,13 +107,24 @@ cos_oom_test_run(CosOomTestFunc func,
                  void * COS_Nullable ctx,
                  CosFaultMode mode)
 {
-    CosFaultAllocator * const fault_allocator = cos_fault_allocator_create();
-    if (!fault_allocator) {
-        (void)fprintf(stderr, "OOM test: could not create the fault allocator\n");
-        return EXIT_FAILURE;
-    }
+    CosFaultControl control = {
+        .fail_at = 0,
+        .mode = mode,
+        .call_count = 0,
+        .triggered = false,
+        .outstanding = 0,
+    };
 
-    CosAllocator * const allocator = cos_fault_allocator_get(fault_allocator);
+    const CosMemoryAllocator fault_allocator = {
+        .malloc = &cos_fault_malloc_,
+        .realloc = &cos_fault_realloc_,
+        .free = &cos_fault_free_,
+        .user_data = &control,
+    };
+
+    // Saved so the process's normal allocator is restored no matter how the loop
+    // ends -- the fault allocator is only ever installed around func itself.
+    const CosMemoryAllocator previous = cos_get_memory_allocator();
 
     int result = EXIT_FAILURE;
 
@@ -201,22 +133,24 @@ cos_oom_test_run(CosOomTestFunc func,
     const size_t max_iterations = 100000;
 
     for (size_t n = 1; n <= max_iterations; n++) {
-        cos_fault_allocator_arm(fault_allocator, n, mode);
+        control.fail_at = n;
+        control.call_count = 0;
+        control.triggered = false;
+        control.outstanding = 0;
 
-        const bool success = func(allocator, ctx);
+        cos_set_memory_allocator(&fault_allocator);
+        const bool success = func(ctx);
+        cos_set_memory_allocator(&previous);
 
-        const bool triggered = cos_fault_allocator_was_triggered(fault_allocator);
-        const size_t outstanding = cos_fault_allocator_outstanding(fault_allocator);
-
-        if (outstanding != 0) {
+        if (control.outstanding != 0) {
             (void)fprintf(stderr,
                           "OOM test: leaked %zu block(s) at fail_at=%zu\n",
-                          outstanding,
+                          control.outstanding,
                           n);
             goto out;
         }
 
-        if (triggered) {
+        if (control.triggered) {
             if (success) {
                 (void)fprintf(stderr,
                               "OOM test: reported success despite injected failure at fail_at=%zu\n",
@@ -245,7 +179,7 @@ cos_oom_test_run(CosOomTestFunc func,
                   max_iterations);
 
 out:
-    cos_fault_allocator_destroy(fault_allocator);
+    cos_set_memory_allocator(&previous);
     return result;
 }
 

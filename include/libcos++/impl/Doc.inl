@@ -26,7 +26,7 @@ struct DocDeleter {
 
 Doc::Doc()
 {
-    CosDoc * const doc = cos_doc_create(nullptr);
+    CosDoc * const doc = cos_doc_create();
     if (doc == nullptr) {
         throw std::bad_alloc();
     }
