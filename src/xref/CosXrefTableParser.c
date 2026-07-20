@@ -114,13 +114,27 @@ cos_xref_table_parser_parse_section(CosXrefTableParser *parser,
     }
 
     // Parse subsections until the 'trailer' keyword, EOF, or a non-integer token.
-    while (!cos_base_parser_matches_next_token(&(parser->base),
+    while (true) {
+        // These are speculative peeks: a failed token read is absorbed as "not
+        // that token / no token" and terminates the scan, returning the section
+        // built so far (a transient failure is re-read on the next peek). Mark
+        // the region benign so an injected failure here is not mistaken for one
+        // that must propagate. The subsection parse below is load-bearing and
+        // stays outside the region.
+        cos_begin_benign_malloc();
+        const bool at_end =
+            cos_base_parser_matches_next_token(&(parser->base),
                                                CosToken_Type_Trailer,
-                                               out_error) &&
-           !cos_base_parser_matches_next_token(&(parser->base),
+                                               out_error) ||
+            cos_base_parser_matches_next_token(&(parser->base),
                                                CosToken_Type_EOF,
-                                               out_error) &&
-           cos_base_parser_has_next_token(&(parser->base))) {
+                                               out_error) ||
+            !cos_base_parser_has_next_token(&(parser->base));
+        cos_end_benign_malloc();
+        if (at_end) {
+            break;
+        }
+
         if (!cos_base_parser_matches_next_token(&(parser->base),
                                                 CosToken_Type_Integer,
                                                 out_error)) {

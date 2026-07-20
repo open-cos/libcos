@@ -9,6 +9,7 @@
 #include <libcos/common/CosDefines.h>
 #include <libcos/common/CosTypes.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 COS_DECLS_BEGIN
@@ -90,6 +91,40 @@ cos_realloc(void * COS_Nullable ptr,
     COS_DEALLOCATOR_FUNC_INDEX(1)
     COS_ALLOCATOR_FUNC_SIZE(2)
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC_INDEX(cos_free, 1);
+
+// MARK: - Benign-malloc regions
+
+/**
+ * Marks the start of a benign-malloc region.
+ *
+ * Allocations made while a region is active are ones whose failure the caller is
+ * prepared to absorb gracefully -- typically a speculative peek that treats a
+ * failed read as "nothing there" and retries. Regions nest: each
+ * @c cos_begin_benign_malloc must be balanced by a @c cos_end_benign_malloc .
+ *
+ * The default allocator is indifferent to this state; it exists so an
+ * instrumented allocator (the OOM fault injector) can tell an absorbed failure
+ * apart from one that must propagate. Outside a testing build this is a no-op.
+ */
+COS_API void
+cos_begin_benign_malloc(void);
+
+/**
+ * Marks the end of a benign-malloc region opened by @c cos_begin_benign_malloc .
+ */
+COS_API void
+cos_end_benign_malloc(void);
+
+/**
+ * Whether execution is currently inside a benign-malloc region.
+ *
+ * Intended for an instrumented allocator deciding whether a failure it injects
+ * needs to propagate. Always @c false outside a testing build.
+ *
+ * @return @c true if at least one region is open.
+ */
+COS_API bool
+cos_memory_in_benign_region(void);
 
 COS_ASSUME_NONNULL_END
 COS_DECLS_END

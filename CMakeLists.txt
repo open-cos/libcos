@@ -34,6 +34,16 @@ cmake_dependent_option(COS_DETERMINISTIC_FUZZING "Enable deterministic fuzzing" 
     "COS_BUILD_FOR_FUZZING" OFF
 )
 
+# Compile in the benign-malloc tracking that the OOM fault-injection tests rely
+# on. On by default for Debug builds; off for release so production carries no
+# cost (the begin/end/query functions become no-ops).
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_cos_oom_testing_default ON)
+else ()
+    set(_cos_oom_testing_default OFF)
+endif ()
+option(COS_ENABLE_OOM_TESTING "Compile in benign-malloc tracking for OOM fault tests" ${_cos_oom_testing_default})
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -546,6 +556,9 @@ target_compile_definitions(libcos PRIVATE
     $<$<COMPILE_LANGUAGE:C>:${COS_C_COMPILE_DEFINITIONS}>
     $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_COMPILE_DEFINITIONS}>
 )
+if (COS_ENABLE_OOM_TESTING)
+    target_compile_definitions(libcos PRIVATE COS_OOM_TESTING)
+endif ()
 target_compile_options(libcos PRIVATE
     $<$<COMPILE_LANGUAGE:C>:${COS_C_FLAGS_WARNINGS}>
     $<$<COMPILE_LANGUAGE:CXX>:${COS_CXX_FLAGS_WARNINGS}>

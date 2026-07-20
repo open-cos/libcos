@@ -8,9 +8,12 @@
 #include "parse/CosObjParser.h"
 
 #include <libcos/CosDoc.h>
+#include <libcos/CosParser.h>
+#include <libcos/CosTrailer.h>
 #include <libcos/common/CosArray.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
+#include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosObjNode.h>
 
 #include <stdlib.h>
@@ -187,15 +190,100 @@ cleanup:
     return ok;
 }
 
+// MARK: - Document parser
+
 /*
- * A full file-structure OOM test (CosParser over a complete PDF) is deliberately
- * not driven here yet. The parser is leak-safe under injection, but its xref and
- * trailer scanning legitimately tolerates a transient allocation failure in a
- * speculative peek (e.g. matches_next_token for the "trailer" keyword) and still
- * produces the correct result. Asserting "every injected fault fails the parse"
- * would therefore false-positive on those absorbed allocations; distinguishing
- * them needs SQLite-style benign-malloc regions, which are not yet implemented.
+ * Minimal but structurally complete PDF: header, a one-entry xref table, a
+ * trailer dictionary, startxref and %%EOF. Byte offsets are chosen so startxref
+ * points at the "xref" keyword (offset 9); see tests/unit-tests/file-structure.c
+ * for the annotated layout this mirrors.
+ *
+ * The xref scanning here is what motivated benign-malloc regions: its speculative
+ * peeks (matches_next_token for "trailer"/EOF) absorb a transient allocation
+ * failure and still parse correctly. Those peeks are now marked benign, so an
+ * injected failure there is not mistaken for one that must propagate.
  */
+static const char k_minimal_pdf[] =
+    "%PDF-1.0\n"
+    "xref\n"
+    "0 1\n"
+    "0000000000 65535 f \n"
+    "trailer\n"
+    "<< /Size 1 >>\n"
+    "startxref\n"
+    "9\n"
+    "%%EOF";
+
+/*
+ * The operation under test: parse the complete file structure through a
+ * CosParser and tear the whole pipeline down. Returns true only if the parse
+ * succeeds AND yields a complete trailer (the /Size entry is present).
+ *
+ * The completeness check is what gives the test teeth. The dictionary and xref
+ * scanners are lenient: a token read that fails -- through EOF, malformed input
+ * or an injected allocation failure alike -- degrades to "return what was parsed
+ * so far". A failure that leaves the trailer complete is absorbed inside a
+ * benign region and correctly reported as success; a failure that truncates the
+ * trailer drops /Size, so requiring it turns that truncation into a graceful
+ * failure here rather than a false success.
+ */
+static bool
+oom_parse_document_(void * COS_Nullable ctx)
+{
+    (void)ctx;
+
+    CosDoc *doc = NULL;
+    CosMemoryStream *stream = NULL;
+    CosParser *parser = NULL;
+    bool ok = false;
+
+    doc = cos_doc_create();
+    if (!doc) {
+        goto cleanup;
+    }
+
+    stream = cos_memory_stream_create_readonly(k_minimal_pdf,
+                                               strlen(k_minimal_pdf));
+    if (!stream) {
+        goto cleanup;
+    }
+
+    const CosParserOptions options = oom_strict_options_();
+    parser = cos_parser_create(doc, (CosStream *)stream, &options);
+    if (!parser) {
+        goto cleanup;
+    }
+    // parser is now owned by doc; cos_doc_destroy will free it.
+
+    if (!cos_parser_parse(parser, NULL)) {
+        goto cleanup;
+    }
+
+    // Require a complete trailer: an absorbed allocation failure that truncated
+    // the trailer dictionary drops the /Size entry, which must not pass as a
+    // successful parse.
+    const CosTrailer * const trailer = cos_doc_get_trailer(doc);
+    if (!trailer) {
+        goto cleanup;
+    }
+    const CosDictObjNode * const trailer_dict = cos_trailer_get_dict(trailer);
+    CosObjNode *size_value = NULL;
+    if (!trailer_dict ||
+        !cos_dict_obj_node_get_value_with_string(trailer_dict, "Size", &size_value, NULL)) {
+        goto cleanup;
+    }
+
+    ok = true;
+
+cleanup:
+    if (doc) {
+        cos_doc_destroy(doc);
+    }
+    if (stream) {
+        cos_stream_close((CosStream *)stream);
+    }
+    return ok;
+}
 
 // MARK: - Test driver
 
@@ -223,6 +311,18 @@ test_objects_oom_persistent(void)
     return cos_oom_test_run(oom_parse_objects_, NULL, COS_FAULT_PERSISTENT);
 }
 
+static int
+test_document_oom_transient(void)
+{
+    return cos_oom_test_run(oom_parse_document_, NULL, COS_FAULT_TRANSIENT);
+}
+
+static int
+test_document_oom_persistent(void)
+{
+    return cos_oom_test_run(oom_parse_document_, NULL, COS_FAULT_PERSISTENT);
+}
+
 TEST_MAIN()
 {
     TEST_EXPECT(test_array_oom_transient() == EXIT_SUCCESS);
@@ -230,6 +330,9 @@ TEST_MAIN()
 
     TEST_EXPECT(test_objects_oom_transient() == EXIT_SUCCESS);
     TEST_EXPECT(test_objects_oom_persistent() == EXIT_SUCCESS);
+
+    TEST_EXPECT(test_document_oom_transient() == EXIT_SUCCESS);
+    TEST_EXPECT(test_document_oom_persistent() == EXIT_SUCCESS);
 
     return EXIT_SUCCESS;
 }

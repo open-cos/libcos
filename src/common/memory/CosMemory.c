@@ -133,4 +133,58 @@ cos_free(void * COS_Nullable ptr)
     cos_allocator_.free(ptr, cos_allocator_.user_data);
 }
 
+// MARK: - Benign-malloc regions
+
+#ifdef COS_OOM_TESTING
+
+// The nesting depth of the currently open benign-malloc regions. Like the
+// allocator above, this is not guarded: the fault injector that reads it runs
+// single-threaded around the operation under test. Only compiled in when OOM
+// testing is enabled; production builds carry none of this.
+static size_t cos_benign_depth_ = 0;
+
+void
+cos_begin_benign_malloc(void)
+{
+    cos_benign_depth_ += 1;
+}
+
+void
+cos_end_benign_malloc(void)
+{
+    COS_ASSERT(cos_benign_depth_ > 0,
+               "Unbalanced cos_end_benign_malloc without a matching begin");
+    if (cos_benign_depth_ > 0) {
+        cos_benign_depth_ -= 1;
+    }
+}
+
+bool
+cos_memory_in_benign_region(void)
+{
+    return cos_benign_depth_ > 0;
+}
+
+#else
+
+void
+cos_begin_benign_malloc(void)
+{
+    // No-op: benign-malloc tracking is a testing-only facility.
+}
+
+void
+cos_end_benign_malloc(void)
+{
+    // No-op: benign-malloc tracking is a testing-only facility.
+}
+
+bool
+cos_memory_in_benign_region(void)
+{
+    return false;
+}
+
+#endif /* COS_OOM_TESTING */
+
 COS_ASSUME_NONNULL_END

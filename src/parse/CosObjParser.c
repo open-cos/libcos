@@ -740,7 +740,22 @@ cos_handle_dict_(CosObjParser *parser,
     }
 
     bool entry_success = false;
-    while (cos_base_parser_has_next_token(&(parser->base))) {
+    while (true) {
+        // Speculative loop guard: a dictionary ends cleanly at the '>>' handled
+        // inside cos_handle_dict_entry_(); this peek only guards against running
+        // off the end. The peek's token read collapses EOF, malformed input and
+        // an allocation failure alike into "no token", and the handler is lenient
+        // by design -- it returns the dict built so far (see
+        // parse_dictWithNonNameKey_DropsEntry). An injected allocation failure
+        // here therefore degrades to that same best-effort partial dict, so the
+        // read is marked benign: its failure is absorbed, not propagated.
+        cos_begin_benign_malloc();
+        const bool has_token = cos_base_parser_has_next_token(&(parser->base));
+        cos_end_benign_malloc();
+        if (!has_token) {
+            break;
+        }
+
         entry_success = cos_handle_dict_entry_(parser,
                                                context,
                                                new_dict,
@@ -756,10 +771,17 @@ cos_handle_dict_(CosObjParser *parser,
         goto failure;
     }
 
-    // Check if the next token denotes the beginning of a stream object's data.
-    if (cos_base_parser_matches_next_token(&(parser->base),
-                                           CosToken_Type_Stream,
-                                           out_error)) {
+    // Speculative lookahead: does a stream follow this dictionary? A failed
+    // token read degrades to "no stream", which is the correct outcome for a
+    // plain dictionary; a genuine stream would instead desync and be caught
+    // downstream (the unconsumed 'stream' keyword). Mark the read benign so an
+    // injected allocation failure here is absorbed rather than propagated.
+    cos_begin_benign_malloc();
+    const bool is_stream = cos_base_parser_matches_next_token(&(parser->base),
+                                                              CosToken_Type_Stream,
+                                                              out_error);
+    cos_end_benign_malloc();
+    if (is_stream) {
         return cos_handle_stream_(parser,
                                   context,
                                   dict_obj,
