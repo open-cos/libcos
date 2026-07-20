@@ -12,6 +12,7 @@
 #include <libcos/common/CosData.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosString.h>
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/io/CosMemoryStream.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/objects/CosDictObjNode.h>
@@ -267,7 +268,7 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
                                         CosObjParserFlag_DirectObj);
 
     if (count > 0) {
-        entries = calloc(count, sizeof(CosObjStreamEntry));
+        entries = cos_calloc(count, sizeof(CosObjStreamEntry));
         if (!entries) {
             COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                                "Failed to allocate object stream entries"),
@@ -287,7 +288,7 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
         goto failure;
     }
 
-    obj_stream = calloc(1, sizeof(CosObjStream));
+    obj_stream = cos_calloc(1, sizeof(CosObjStream));
     if (!obj_stream) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                            "Failed to allocate object stream"),
@@ -318,7 +319,7 @@ failure:
         cos_stream_close(mem_stream);
     }
     if (entries) {
-        free(entries);
+        cos_free(entries);
     }
     if (decoded) {
         cos_data_free(decoded);
@@ -345,12 +346,12 @@ cos_obj_stream_destroy(CosObjStream *obj_stream)
         cos_stream_close(COS_nonnull_cast(obj_stream->mem_stream));
     }
     if (obj_stream->entries) {
-        free(obj_stream->entries);
+        cos_free(obj_stream->entries);
     }
     if (obj_stream->decoded) {
         cos_data_free(COS_nonnull_cast(obj_stream->decoded));
     }
-    free(obj_stream);
+    cos_free(obj_stream);
 }
 
 size_t

@@ -2,6 +2,7 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/io/string-support.h"
 #include "config.h"
 
@@ -80,7 +81,7 @@ cos_vasprintf(const char *format,
                "The formatted length should be less than SIZE_MAX");
 
     const size_t buffer_size = ((size_t)formatted_length) + 1;
-    char * const buffer = malloc(buffer_size * sizeof(char));
+    char * const buffer = cos_malloc(buffer_size * sizeof(char));
     if (!buffer) {
         return NULL;
     }
@@ -92,7 +93,7 @@ cos_vasprintf(const char *format,
                                       args);
     if (num_written < 0) {
         // An error occurred.
-        free(buffer);
+        cos_free(buffer);
         return NULL;
     }
 
@@ -127,7 +128,7 @@ cos_strndup(const char *str,
 
     const size_t copy_len = (str_len < n) ? str_len : n;
 
-    char * const str_copy = malloc((copy_len + 1) * sizeof(char));
+    char * const str_copy = cos_malloc((copy_len + 1) * sizeof(char));
     if (!str_copy) {
         return NULL;
     }

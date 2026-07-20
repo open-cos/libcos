@@ -2,6 +2,7 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosBoolObjNode.h"
 
 #include "common/Assert.h"
@@ -23,7 +24,7 @@ struct CosBoolObjNode {
 CosBoolObjNode *
 cos_bool_obj_node_alloc(bool value)
 {
-    CosBoolObjNode * const obj = calloc(1, sizeof(CosBoolObjNode));
+    CosBoolObjNode * const obj = cos_calloc(1, sizeof(CosBoolObjNode));
     if (!obj) {
         return NULL;
     }
@@ -42,7 +43,7 @@ cos_bool_obj_node_free(CosBoolObjNode *bool_obj)
         return;
     }
 
-    free(bool_obj);
+    cos_free(bool_obj);
 }
 
 bool

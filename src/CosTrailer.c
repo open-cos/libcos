@@ -7,6 +7,7 @@
 #include "CosTrailer-Private.h"
 #include "common/Assert.h"
 
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosDictObjNode.h>
 
 #include <stdlib.h>
@@ -23,7 +24,7 @@ CosTrailer *
 cos_trailer_create(CosDictObjNode *dict,
                    CosStreamOffset xref_offset)
 {
-    CosTrailer * const trailer = malloc(sizeof(CosTrailer));
+    CosTrailer * const trailer = cos_malloc(sizeof(CosTrailer));
     if (!trailer) {
         return NULL;
     }
@@ -43,7 +44,7 @@ cos_trailer_destroy(CosTrailer *trailer)
     while (current) {
         CosTrailer * const prev = current->prev;
         cos_dict_obj_node_destroy(current->dict);
-        free(current);
+        cos_free(current);
         current = prev;
     }
 }

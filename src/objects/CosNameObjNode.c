@@ -2,6 +2,7 @@
 // Created by david on 15/10/23.
 //
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosNameObjNode.h"
 
 #include "common/Assert.h"
@@ -29,7 +30,7 @@ cos_name_obj_node_alloc(CosString *value)
         return NULL;
     }
 
-    CosNameObjNode * const name_obj = calloc(1, sizeof(CosNameObjNode));
+    CosNameObjNode * const name_obj = cos_calloc(1, sizeof(CosNameObjNode));
     if (!name_obj) {
         return NULL;
     }
@@ -49,7 +50,7 @@ cos_name_obj_node_free(CosNameObjNode *name_obj)
     }
 
     cos_string_free(name_obj->value);
-    free(name_obj);
+    cos_free(name_obj);
 }
 
 const CosString *

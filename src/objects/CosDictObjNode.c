@@ -2,6 +2,7 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosDictObjNode.h"
 
 #include "common/Assert.h"
@@ -80,7 +81,7 @@ const CosDictValueCallbacks cos_dict_obj_node_value_callbacks = {
 CosDictObjNode *
 cos_dict_obj_node_create(CosDict * COS_Nullable dict)
 {
-    CosDictObjNode * const dict_obj = calloc(1, sizeof(CosDictObjNode));
+    CosDictObjNode * const dict_obj = cos_calloc(1, sizeof(CosDictObjNode));
     if (!dict_obj) {
         goto failure;
     }
@@ -106,7 +107,7 @@ cos_dict_obj_node_create(CosDict * COS_Nullable dict)
 
 failure:
     if (dict_obj) {
-        free(dict_obj);
+        cos_free(dict_obj);
     }
     return NULL;
 }
@@ -119,7 +120,7 @@ cos_dict_obj_node_destroy(CosDictObjNode *dict_obj)
     }
 
     cos_dict_destroy(dict_obj->value);
-    free(dict_obj);
+    cos_free(dict_obj);
 }
 
 size_t

@@ -2,6 +2,7 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosIntObjNode.h"
 
 #include "common/Assert.h"
@@ -24,7 +25,7 @@ struct CosIntObjNode {
 CosIntObjNode *
 cos_int_obj_node_alloc(int value)
 {
-    CosIntObjNode * const int_obj = calloc(1, sizeof(CosIntObjNode));
+    CosIntObjNode * const int_obj = cos_calloc(1, sizeof(CosIntObjNode));
     if (!int_obj) {
         return NULL;
     }
@@ -43,7 +44,7 @@ cos_int_obj_node_free(CosIntObjNode *int_obj)
         return;
     }
 
-    free(int_obj);
+    cos_free(int_obj);
 }
 
 int

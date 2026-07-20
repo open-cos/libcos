@@ -3,6 +3,7 @@
  */
 
 #include "libcos/filters/CosFlateFilter.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 #include "common/CosError.h"
@@ -69,7 +70,7 @@ cos_flate_fill_decode_buffer_(CosFilter *filter,
 CosFlateFilter *
 cos_flate_filter_create(void)
 {
-    CosFlateFilter * const flate_filter = calloc(1, sizeof(CosFlateFilter));
+    CosFlateFilter * const flate_filter = cos_calloc(1, sizeof(CosFlateFilter));
     if (COS_UNLIKELY(!flate_filter)) {
         goto failure;
     }
@@ -82,7 +83,7 @@ cos_flate_filter_create(void)
 
 failure:
     if (flate_filter) {
-        free(flate_filter);
+        cos_free(flate_filter);
     }
     return NULL;
 }
@@ -104,7 +105,7 @@ cos_flate_filter_init_(CosFlateFilter *flate_filter)
     cos_filter_init(&(flate_filter->base),
                     &flate_filter_functions_);
 
-    context = calloc(1, sizeof(CosFlateFilterContext));
+    context = cos_calloc(1, sizeof(CosFlateFilterContext));
     if (COS_UNLIKELY(!context)) {
         goto failure;
     }
@@ -121,7 +122,7 @@ cos_flate_filter_init_(CosFlateFilter *flate_filter)
 
 failure:
     if (context) {
-        free(context);
+        cos_free(context);
     }
     if (decoder) {
         cos_flate_decoder_destroy(decoder);
@@ -141,7 +142,7 @@ cos_flate_filter_close_(CosFilter *filter)
         if (flate_filter->context->decoder) {
             cos_flate_decoder_destroy(flate_filter->context->decoder);
         }
-        free(flate_filter->context);
+        cos_free(flate_filter->context);
     }
 }
 

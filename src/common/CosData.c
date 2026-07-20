@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,12 +27,15 @@ cos_data_alloc(size_t capacity_hint)
     CosData *data = NULL;
     unsigned char *bytes = NULL;
 
-    data = malloc(sizeof(CosData));
+    data = cos_malloc(sizeof(CosData));
     if (!data) {
         goto failure;
     }
 
-    bytes = malloc(capacity_hint);
+    // Always allocate at least one byte: a zero-capacity buffer is a valid
+    // request (an empty CosData the caller will grow), but cos_malloc rejects a
+    // zero size. The recorded capacity stays as requested.
+    bytes = cos_malloc(capacity_hint > 0 ? capacity_hint : 1);
     if (!bytes) {
         goto failure;
     }
@@ -44,10 +48,10 @@ cos_data_alloc(size_t capacity_hint)
 
 failure:
     if (data) {
-        free(data);
+        cos_free(data);
     }
     if (bytes) {
-        free(bytes);
+        cos_free(bytes);
     }
     return NULL;
 }
@@ -59,8 +63,8 @@ cos_data_free(CosData *data)
         return;
     }
 
-    free(data->bytes);
-    free(data);
+    cos_free(data->bytes);
+    cos_free(data);
 }
 
 CosData *
@@ -223,7 +227,7 @@ cos_data_resize_(CosData *data,
 
     const size_t new_capacity = required_capacity;
 
-    unsigned char * const new_bytes = realloc(data->bytes,
+    unsigned char * const new_bytes = cos_realloc(data->bytes,
                                               new_capacity);
     if (!new_bytes) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,

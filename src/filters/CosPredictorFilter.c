@@ -11,6 +11,7 @@
 #include "common/Assert.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/io/CosStream.h>
 
 #include <stdint.h>
@@ -162,13 +163,13 @@ cos_predictor_filter_create_(int predictor,
         bpp = 1;
     }
 
-    CosPredictorFilter * const predictor_filter = calloc(1, sizeof(CosPredictorFilter));
+    CosPredictorFilter * const predictor_filter = cos_calloc(1, sizeof(CosPredictorFilter));
     if (COS_UNLIKELY(!predictor_filter)) {
         goto memory_failure;
     }
 
     if (COS_UNLIKELY(!cos_predictor_filter_init_(predictor_filter, png, colors, bpp, row_len))) {
-        free(predictor_filter);
+        cos_free(predictor_filter);
         goto memory_failure;
     }
 
@@ -207,7 +208,7 @@ cos_predictor_filter_init_(CosPredictorFilter *predictor_filter,
     cos_filter_init(&(predictor_filter->base),
                     &predictor_filter_functions_);
 
-    CosPredictorFilterContext * const context = calloc(1, sizeof(CosPredictorFilterContext));
+    CosPredictorFilterContext * const context = cos_calloc(1, sizeof(CosPredictorFilterContext));
     if (COS_UNLIKELY(!context)) {
         return false;
     }
@@ -216,12 +217,12 @@ cos_predictor_filter_init_(CosPredictorFilter *predictor_filter,
     context->colors = colors;
     context->bpp = bpp;
     context->row_len = row_len;
-    context->cur_row = calloc(1, row_len);
-    context->prev_row = calloc(1, row_len);
+    context->cur_row = cos_calloc(1, row_len);
+    context->prev_row = cos_calloc(1, row_len);
     if (COS_UNLIKELY(!context->cur_row || !context->prev_row)) {
-        free(context->cur_row);
-        free(context->prev_row);
-        free(context);
+        cos_free(context->cur_row);
+        cos_free(context->prev_row);
+        cos_free(context);
         return false;
     }
 
@@ -237,9 +238,9 @@ cos_predictor_filter_close_(CosFilter *filter)
 
     CosPredictorFilter * const predictor_filter = (CosPredictorFilter *)filter;
     if (predictor_filter->context) {
-        free(predictor_filter->context->cur_row);
-        free(predictor_filter->context->prev_row);
-        free(predictor_filter->context);
+        cos_free(predictor_filter->context->cur_row);
+        cos_free(predictor_filter->context->prev_row);
+        cos_free(predictor_filter->context);
         predictor_filter->context = NULL;
     }
 }

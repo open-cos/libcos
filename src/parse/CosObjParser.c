@@ -13,6 +13,7 @@
 #include "parse/CosBaseParser.h"
 #include "parse/CosParserOptions-Private.h"
 
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/xref/table/CosXrefTable.h>
 
 #include "libcos/common/CosMacros.h"
@@ -160,7 +161,7 @@ cos_obj_parser_create(CosDoc *document,
         return NULL;
     }
 
-    CosObjParser * const parser = calloc(1, sizeof(CosObjParser));
+    CosObjParser * const parser = cos_calloc(1, sizeof(CosObjParser));
     if (!parser) {
         goto failure;
     }
@@ -176,7 +177,7 @@ cos_obj_parser_create(CosDoc *document,
 
 failure:
     if (parser) {
-        free(parser);
+        cos_free(parser);
     }
     return NULL;
 }
@@ -213,13 +214,13 @@ cos_obj_parser_create_with_tokenizer(CosDoc *document,
         return NULL;
     }
 
-    CosObjParser * const parser = calloc(1, sizeof(CosObjParser));
+    CosObjParser * const parser = cos_calloc(1, sizeof(CosObjParser));
     if (!parser) {
         return NULL;
     }
 
     if (!cos_base_parser_init_with_tokenizer(&(parser->base), document, tokenizer, options)) {
-        free(parser);
+        cos_free(parser);
         return NULL;
     }
 

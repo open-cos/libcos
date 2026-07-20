@@ -3,6 +3,7 @@
  */
 
 #include "libcos/common/CosDict.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 #include "common/CosContainerUtils.h"
@@ -57,7 +58,7 @@ cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
     CosDict *dict = NULL;
     CosDictEntry *entries = NULL;
 
-    dict = calloc(1, sizeof(CosDict));
+    dict = cos_calloc(1, sizeof(CosDict));
     if (!dict) {
         goto failure;
     }
@@ -67,7 +68,7 @@ cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
 
     const size_t capacity = cos_container_round_capacity_(capacity_hint);
 
-    entries = calloc(capacity, sizeof(CosDictEntry));
+    entries = cos_calloc(capacity, sizeof(CosDictEntry));
     if (!entries) {
         goto failure;
     }
@@ -79,10 +80,10 @@ cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
 
 failure:
     if (dict) {
-        free(dict);
+        cos_free(dict);
     }
     if (entries) {
-        free(entries);
+        cos_free(entries);
     }
     return NULL;
 }
@@ -109,9 +110,9 @@ cos_dict_destroy(CosDict *dict)
         }
     }
 
-    free(dict->entries);
+    cos_free(dict->entries);
 
-    free(dict);
+    cos_free(dict);
 }
 
 size_t
@@ -277,7 +278,7 @@ cos_dict_grow_(CosDict *dict,
 
     CosDictEntry *new_entries = NULL;
 
-    new_entries = calloc(new_capacity, sizeof(CosDictEntry));
+    new_entries = cos_calloc(new_capacity, sizeof(CosDictEntry));
     if (COS_UNLIKELY(!new_entries)) {
         goto failure;
     }
@@ -306,13 +307,13 @@ cos_dict_grow_(CosDict *dict,
         new_entry->value = old_entry->value;
     }
 
-    free(old_entries);
+    cos_free(old_entries);
 
     return true;
 
 failure:
     if (new_entries) {
-        free(new_entries);
+        cos_free(new_entries);
     }
     return false;
 }

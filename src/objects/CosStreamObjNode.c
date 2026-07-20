@@ -13,6 +13,7 @@
 
 #include <libcos/common/CosData.h>
 #include <libcos/common/CosString.h>
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/filters/CosFilter.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/io/CosSubStream.h>
@@ -69,7 +70,7 @@ cos_stream_obj_node_create(CosDictObjNode *dict,
     }
     (void)cos_stream_seek(encoded, 0, CosStreamOffsetWhence_Set, NULL);
 
-    CosStreamObjNode * const stream_obj = malloc(sizeof(CosStreamObjNode));
+    CosStreamObjNode * const stream_obj = cos_malloc(sizeof(CosStreamObjNode));
     if (!stream_obj) {
         cos_stream_close(encoded);
         return NULL;
@@ -112,7 +113,7 @@ cos_stream_obj_node_destroy(CosStreamObjNode *stream_obj)
     if (stream_obj->materialized) {
         cos_data_free(COS_nonnull_cast(stream_obj->materialized));
     }
-    free(stream_obj);
+    cos_free(stream_obj);
 }
 
 CosDictObjNode *

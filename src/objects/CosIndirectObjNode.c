@@ -2,6 +2,7 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosIndirectObjNode.h"
 
 #include "common/Assert.h"
@@ -43,7 +44,7 @@ cos_indirect_obj_node_alloc(CosObjID id,
         return NULL;
     }
 
-    CosIndirectObjNode * const indirect_obj = calloc(1, sizeof(CosIndirectObjNode));
+    CosIndirectObjNode * const indirect_obj = cos_calloc(1, sizeof(CosIndirectObjNode));
     if (!indirect_obj) {
         return NULL;
     }
@@ -65,7 +66,7 @@ cos_indirect_obj_node_free(CosIndirectObjNode *indirect_obj)
 
     cos_obj_node_release(indirect_obj->value);
 
-    free(indirect_obj);
+    cos_free(indirect_obj);
 }
 
 CosObjID

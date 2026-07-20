@@ -10,6 +10,8 @@
 #include "common/_CosInternalDefines.h"
 #include "io/string-support.h"
 
+#include <libcos/common/memory/CosMemory.h>
+
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -137,7 +139,7 @@ cos_strerror_r_(int errnum)
     size_t buffer_size = COS_STRERROR_BUFFER_LENGTH;
 
     while (buffer_size < COS_STRERROR_MAX_LENGTH) {
-        char * const new_buffer = realloc(buffer,
+        char * const new_buffer = cos_realloc(buffer,
                                           buffer_size * sizeof(char));
         if (!new_buffer) {
             goto failure;
@@ -163,7 +165,7 @@ cos_strerror_r_(int errnum)
 
 failure:
     if (buffer) {
-        free(buffer);
+        cos_free(buffer);
     }
     return NULL;
 }

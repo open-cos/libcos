@@ -9,6 +9,7 @@
 #include "libcos/io/CosFileStream.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +72,7 @@ cos_file_stream_create(const char *path,
         goto failure;
     }
 
-    file_stream = calloc(1, sizeof(CosFileStream));
+    file_stream = cos_calloc(1, sizeof(CosFileStream));
     if (COS_UNLIKELY(!file_stream)) {
         goto failure;
     }
@@ -87,7 +88,7 @@ failure:
         (void)fclose(file);
     }
     if (file_stream) {
-        free(file_stream);
+        cos_free(file_stream);
     }
     return NULL;
 }

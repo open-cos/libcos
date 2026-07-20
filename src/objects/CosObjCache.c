@@ -8,6 +8,7 @@
 
 #include <libcos/common/CosDict.h>
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosObjNode.h>
 
 #include <stdint.h>
@@ -61,7 +62,7 @@ cos_obj_cache_create(size_t capacity_hint)
     CosObjCache *cache = NULL;
     CosDict *dict = NULL;
 
-    cache = calloc(1, sizeof(CosObjCache));
+    cache = cos_calloc(1, sizeof(CosObjCache));
     if (!cache) {
         goto failure;
     }
@@ -78,7 +79,7 @@ cos_obj_cache_create(size_t capacity_hint)
 
 failure:
     if (cache) {
-        free(cache);
+        cos_free(cache);
     }
     if (dict) {
         cos_dict_destroy(dict);
@@ -94,7 +95,7 @@ cos_obj_cache_destroy(CosObjCache *cache)
     }
 
     cos_dict_destroy(cache->dict);
-    free(cache);
+    cos_free(cache);
 }
 
 // MARK: - Operations

@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/io/string-support.h"
 
 #include <stdio.h>
@@ -59,7 +60,7 @@ cos_log_context_create(CosLogLevel level,
         return NULL;
     }
 
-    CosLogContext *log_context = calloc(1, sizeof(CosLogContext));
+    CosLogContext *log_context = cos_calloc(1, sizeof(CosLogContext));
     if (!log_context) {
         return NULL;
     }
@@ -79,7 +80,7 @@ cos_log_context_destroy(CosLogContext *log_context)
         return;
     }
 
-    free(log_context);
+    cos_free(log_context);
 }
 
 CosLogLevel
@@ -148,7 +149,7 @@ cos_logv(CosLogContext *log_context,
 
     log_context->log_func(log_context, message_level, message);
 
-    free(message);
+    cos_free(message);
 }
 
 static void

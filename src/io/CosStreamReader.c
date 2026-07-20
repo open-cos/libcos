@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/io/CosStream.h"
 
 #include <stdio.h>
@@ -47,14 +48,14 @@ cos_stream_reader_create(CosStream *input_stream)
     CosStreamReader *reader = NULL;
     unsigned char *buffer = NULL;
 
-    reader = malloc(sizeof(CosStreamReader));
+    reader = cos_malloc(sizeof(CosStreamReader));
     if (!reader) {
         goto failure;
     }
 
     reader->input_stream = input_stream;
 
-    buffer = malloc(COS_STREAM_READER_BUFFER_SIZE * sizeof(unsigned char));
+    buffer = cos_malloc(COS_STREAM_READER_BUFFER_SIZE * sizeof(unsigned char));
     if (!buffer) {
         goto failure;
     }
@@ -72,7 +73,7 @@ cos_stream_reader_create(CosStream *input_stream)
 
 failure:
     if (reader) {
-        free(reader);
+        cos_free(reader);
     }
 
     return NULL;
@@ -86,9 +87,9 @@ cos_stream_reader_destroy(CosStreamReader *stream_reader)
         return;
     }
 
-    free(stream_reader->buffer);
+    cos_free(stream_reader->buffer);
 
-    free(stream_reader);
+    cos_free(stream_reader);
 }
 
 void

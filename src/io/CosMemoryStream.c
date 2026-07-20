@@ -8,6 +8,7 @@
 #include "common/CosCheckedArith.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +53,7 @@ cos_memory_stream_create(void *buffer,
         return NULL;
     }
 
-    CosMemoryStream *memory_stream = calloc(1, sizeof(CosMemoryStream));
+    CosMemoryStream *memory_stream = cos_calloc(1, sizeof(CosMemoryStream));
     if (COS_UNLIKELY(!memory_stream)) {
         goto failure;
     }
@@ -78,7 +79,7 @@ cos_memory_stream_create(void *buffer,
 
 failure:
     if (memory_stream) {
-        free(memory_stream);
+        cos_free(memory_stream);
     }
     return NULL;
 }
@@ -101,7 +102,7 @@ cos_memory_stream_create_readonly(const void *buffer,
         .close_func = &cos_memory_stream_close_,
     };
 
-    CosMemoryStream *memory_stream = calloc(1, sizeof(CosMemoryStream));
+    CosMemoryStream *memory_stream = cos_calloc(1, sizeof(CosMemoryStream));
     if (COS_UNLIKELY(!memory_stream)) {
         goto failure;
     }
@@ -118,7 +119,7 @@ cos_memory_stream_create_readonly(const void *buffer,
 
 failure:
     if (memory_stream) {
-        free(memory_stream);
+        cos_free(memory_stream);
     }
     return NULL;
 }
@@ -308,7 +309,7 @@ cos_memory_stream_close_(CosStream *stream)
     CosMemoryStream * const memory_stream = (CosMemoryStream *)stream;
 
     if (memory_stream->free_buffer) {
-        free(memory_stream->buffer.write);
+        cos_free(memory_stream->buffer.write);
     }
 }
 

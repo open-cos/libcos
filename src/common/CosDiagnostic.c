@@ -3,6 +3,7 @@
  */
 
 #include "libcos/common/CosDiagnostic.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 
@@ -14,7 +15,7 @@ CosDiagnostic *
 cos_diagnostic_alloc(CosDiagnosticType type,
                      const char *message)
 {
-    CosDiagnostic * const result = malloc(sizeof(CosDiagnostic));
+    CosDiagnostic * const result = cos_malloc(sizeof(CosDiagnostic));
     if (!result) {
         return NULL;
     }
@@ -30,7 +31,7 @@ cos_diagnostic_free(CosDiagnostic *diagnostic)
 {
     COS_API_PARAM_CHECK(diagnostic != NULL);
 
-    free(diagnostic);
+    cos_free(diagnostic);
 }
 
 COS_ASSUME_NONNULL_END

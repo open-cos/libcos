@@ -3,6 +3,7 @@
  */
 
 #include "libcos/xref/CosXrefTableParser.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 #include "parse/CosBaseParser.h"
@@ -56,7 +57,7 @@ cos_xref_table_parser_create(CosDoc *document,
 
     CosXrefTableParser *parser = NULL;
 
-    parser = calloc(1, sizeof(CosXrefTableParser));
+    parser = cos_calloc(1, sizeof(CosXrefTableParser));
     if (COS_UNLIKELY(!parser)) {
         goto failure;
     }
@@ -72,7 +73,7 @@ cos_xref_table_parser_create(CosDoc *document,
 
 failure:
     if (parser) {
-        free(parser);
+        cos_free(parser);
     }
     return NULL;
 }
@@ -154,7 +155,7 @@ cos_xref_entry_release_callback_(void *item)
     }
 
     CosXrefEntry * const entry = *(CosXrefEntry **)item;
-    free(entry);
+    cos_free(entry);
 }
 
 static const CosArrayCallbacks cos_xref_entry_array_callbacks_ = {
@@ -212,7 +213,7 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
     }
 
     for (unsigned int i = 0; i < entry_count; i++) {
-        entry = calloc(1, sizeof(CosXrefEntry));
+        entry = cos_calloc(1, sizeof(CosXrefEntry));
         if (COS_UNLIKELY(!entry)) {
             goto failure;
         }
@@ -243,7 +244,7 @@ cos_xref_table_parser_parse_subsection_(CosXrefTableParser *parser,
 
 failure:
     if (entry) {
-        free(entry);
+        cos_free(entry);
     }
     if (entries) {
         cos_array_destroy(entries);

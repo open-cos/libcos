@@ -24,14 +24,14 @@ struct CosFlateDecoder {
 CosFlateDecoder *
 cos_flate_decoder_create(void)
 {
-    CosFlateDecoder * const decoder = calloc(1, sizeof(CosFlateDecoder));
+    CosFlateDecoder * const decoder = cos_calloc(1, sizeof(CosFlateDecoder));
     if (COS_UNLIKELY(!decoder)) {
         return NULL;
     }
 
     // A zeroed z_stream selects zlib's default allocators.
     if (inflateInit(&decoder->stream) != Z_OK) {
-        free(decoder);
+        cos_free(decoder);
         return NULL;
     }
 
@@ -44,7 +44,7 @@ cos_flate_decoder_destroy(CosFlateDecoder *decoder)
     COS_IMPL_PARAM_CHECK(decoder != NULL);
 
     (void)inflateEnd(&decoder->stream);
-    free(decoder);
+    cos_free(decoder);
 }
 
 CosFlateStatus

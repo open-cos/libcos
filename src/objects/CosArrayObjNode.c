@@ -2,6 +2,7 @@
 // Created by david on 15/10/23.
 //
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosArrayObjNode.h"
 
 #include "common/Assert.h"
@@ -37,7 +38,7 @@ struct CosArrayObjNode {
 CosArrayObjNode *
 cos_array_obj_node_alloc(CosArray * COS_Nullable array)
 {
-    CosArrayObjNode * const array_obj = calloc(1, sizeof(CosArrayObjNode));
+    CosArrayObjNode * const array_obj = cos_calloc(1, sizeof(CosArrayObjNode));
     if (!array_obj) {
         goto failure;
     }
@@ -63,7 +64,7 @@ cos_array_obj_node_alloc(CosArray * COS_Nullable array)
 
 failure:
     if (array_obj) {
-        free(array_obj);
+        cos_free(array_obj);
     }
     return NULL;
 }
@@ -76,7 +77,7 @@ cos_array_obj_node_free(CosArrayObjNode *array_obj)
     }
 
     cos_array_destroy(array_obj->value);
-    free(array_obj);
+    cos_free(array_obj);
 }
 
 size_t

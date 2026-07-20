@@ -7,6 +7,7 @@
 #include "common/Assert.h"
 
 #include <libcos/common/CosData.h>
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosObjNode.h>
 
 #include <stdio.h>
@@ -29,7 +30,7 @@ cos_string_obj_node_alloc(CosData *data)
         return NULL;
     }
 
-    CosStringObjNode * const string_obj = calloc(1, sizeof(CosStringObjNode));
+    CosStringObjNode * const string_obj = cos_calloc(1, sizeof(CosStringObjNode));
     if (!string_obj) {
         return NULL;
     }
@@ -49,7 +50,7 @@ cos_string_obj_node_free(CosStringObjNode *string_obj)
     }
 
     cos_data_free(string_obj->data);
-    free(string_obj);
+    cos_free(string_obj);
 }
 
 void

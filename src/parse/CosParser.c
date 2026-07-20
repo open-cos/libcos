@@ -119,7 +119,7 @@ cos_parser_create(CosDoc *document,
     CosParser *parser = NULL;
     CosObjParser *obj_parser = NULL;
 
-    parser = calloc(1, sizeof(CosParser));
+    parser = cos_calloc(1, sizeof(CosParser));
     if (!parser) {
         goto failure;
     }

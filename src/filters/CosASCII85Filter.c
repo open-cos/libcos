@@ -2,6 +2,7 @@
  * Copyright (c) 2025 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/filters/CosASCII85Filter.h"
 
 #include "common/Assert.h"
@@ -76,7 +77,7 @@ cos_decode_ascii85_block_(const unsigned char *input,
 CosASCII85Filter *
 cos_ascii85_filter_create(void)
 {
-    CosASCII85Filter * const ascii_85_filter = calloc(1, sizeof(CosASCII85Filter));
+    CosASCII85Filter * const ascii_85_filter = cos_calloc(1, sizeof(CosASCII85Filter));
     if (COS_UNLIKELY(!ascii_85_filter)) {
         goto failure;
     }
@@ -89,7 +90,7 @@ cos_ascii85_filter_create(void)
 
 failure:
     if (ascii_85_filter) {
-        free(ascii_85_filter);
+        cos_free(ascii_85_filter);
     }
     return NULL;
 }

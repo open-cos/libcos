@@ -13,6 +13,7 @@
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosNumber.h"
 #include "libcos/common/CosString.h"
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/syntax/CosLimits.h"
 
 #include <libcos/syntax/tokenizer/CosTokenValue.h>
@@ -138,7 +139,7 @@ cos_tokenizer_create(CosStream *input_stream,
     CosTokenizer *tokenizer = NULL;
     CosStreamReader *stream_reader = NULL;
 
-    tokenizer = calloc(1, sizeof(CosTokenizer));
+    tokenizer = cos_calloc(1, sizeof(CosTokenizer));
     if (!tokenizer) {
         goto failure;
     }
@@ -159,7 +160,7 @@ cos_tokenizer_create(CosStream *input_stream,
 
 failure:
     if (tokenizer) {
-        free(tokenizer);
+        cos_free(tokenizer);
     }
     if (stream_reader) {
         cos_stream_reader_destroy(stream_reader);
@@ -177,7 +178,7 @@ cos_tokenizer_destroy(CosTokenizer *tokenizer)
 
     cos_stream_reader_destroy(tokenizer->stream_reader);
 
-    free(tokenizer);
+    cos_free(tokenizer);
 }
 
 void

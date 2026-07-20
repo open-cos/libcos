@@ -2,6 +2,7 @@
  * Copyright (c) 2024 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosReferenceObjNode.h"
 
 #include "common/Assert.h"
@@ -36,7 +37,7 @@ cos_reference_obj_node_alloc(CosObjID id,
 {
     COS_API_PARAM_CHECK(document != NULL);
 
-    CosReferenceObjNode * const reference_obj = calloc(1, sizeof(CosReferenceObjNode));
+    CosReferenceObjNode * const reference_obj = cos_calloc(1, sizeof(CosReferenceObjNode));
     if (!reference_obj) {
         return NULL;
     }
@@ -58,7 +59,7 @@ cos_reference_obj_node_free(CosReferenceObjNode *reference_obj)
 
     // reference_obj->value is a borrowed pointer owned by the document's object cache, so it is
     // not released here (see cos_reference_obj_node_resolve_value_).
-    free(reference_obj);
+    cos_free(reference_obj);
 }
 
 CosObjID

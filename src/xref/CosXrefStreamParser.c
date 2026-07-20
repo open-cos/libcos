@@ -11,6 +11,7 @@
 #include <libcos/common/CosData.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosString.h>
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/objects/CosArrayObjNode.h>
 #include <libcos/objects/CosDictObjNode.h>
 #include <libcos/objects/CosIntObjNode.h>
@@ -36,7 +37,7 @@ cos_xref_stream_entry_release_(void *item)
     }
 
     CosXrefEntry * const entry = *(CosXrefEntry **)item;
-    free(entry);
+    cos_free(entry);
 }
 
 static const CosArrayCallbacks cos_xref_stream_entry_array_callbacks_ = {
@@ -216,7 +217,7 @@ cos_xref_stream_add_subsection_(CosXrefSection *section,
             goto failure;
         }
 
-        entry = calloc(1, sizeof(CosXrefEntry));
+        entry = cos_calloc(1, sizeof(CosXrefEntry));
         if (COS_UNLIKELY(!entry)) {
             COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                                "Failed to allocate xref entry"),
@@ -270,7 +271,7 @@ cos_xref_stream_add_subsection_(CosXrefSection *section,
 
 failure:
     if (entry) {
-        free(entry);
+        cos_free(entry);
     }
     if (entries) {
         cos_array_destroy(entries);

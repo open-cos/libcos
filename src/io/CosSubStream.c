@@ -8,6 +8,7 @@
 #include "common/CosCheckedArith.h"
 
 #include <libcos/common/CosError.h>
+#include <libcos/common/memory/CosMemory.h>
 
 #include <stdlib.h>
 
@@ -54,7 +55,7 @@ cos_sub_stream_create(CosStream *source,
         return NULL;
     }
 
-    CosSubStream *sub_stream = calloc(1, sizeof(CosSubStream));
+    CosSubStream *sub_stream = cos_calloc(1, sizeof(CosSubStream));
     if (COS_UNLIKELY(!sub_stream)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                            "Failed to allocate sub-stream"),

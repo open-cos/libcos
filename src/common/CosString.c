@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 
+#include <libcos/common/memory/CosMemory.h>
 #include <libcos/io/string-support.h>
 
 #include <stdint.h>
@@ -52,7 +53,7 @@ cos_string_resize_(CosString *string, size_t new_capacity);
 CosString *
 cos_string_alloc(size_t capacity_hint)
 {
-    CosString * const string = malloc(sizeof(CosString));
+    CosString * const string = cos_malloc(sizeof(CosString));
     if (!string) {
         goto failure;
     }
@@ -65,7 +66,7 @@ cos_string_alloc(size_t capacity_hint)
 
 failure:
     if (string) {
-        free(string);
+        cos_free(string);
     }
     return NULL;
 }
@@ -87,7 +88,7 @@ cos_string_alloc_with_strn(const char *str, size_t n)
         return NULL;
     }
 
-    CosString * const string = malloc(sizeof(CosString));
+    CosString * const string = cos_malloc(sizeof(CosString));
     if (!string) {
         goto failure;
     }
@@ -105,7 +106,7 @@ cos_string_alloc_with_strn(const char *str, size_t n)
 
 failure:
     if (string) {
-        free(string);
+        cos_free(string);
     }
     return NULL;
 }
@@ -117,9 +118,9 @@ cos_string_free(CosString *string)
         return;
     }
 
-    free(string->data);
+    cos_free(string->data);
 
-    free(string);
+    cos_free(string);
 }
 
 bool
@@ -143,7 +144,7 @@ cos_string_init_capacity(CosString *string, size_t capacity_hint)
         capacity = COS_STRING_DEFAULT_CAPACITY;
     }
 
-    char * const data = malloc(capacity * sizeof(char));
+    char * const data = cos_malloc(capacity * sizeof(char));
     if (!data) {
         return false;
     }
@@ -418,7 +419,7 @@ cos_string_resize_(CosString *string, size_t new_capacity)
         new_length = new_capacity - 1;
     }
 
-    char * const new_data = realloc(string->data,
+    char * const new_data = cos_realloc(string->data,
                                     new_capacity * sizeof(char));
     if (!new_data) {
         return false;

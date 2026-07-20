@@ -2,6 +2,7 @@
  * Copyright (c) 2025 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/filters/CosASCIIHexFilter.h"
 
 #include "common/Assert.h"
@@ -48,7 +49,7 @@ cos_hex_digit_value(unsigned char character);
 CosASCIIHexFilter *
 cos_ascii_hex_filter_create(void)
 {
-    CosASCIIHexFilter * const ascii_hex_filter = calloc(1, sizeof(CosASCIIHexFilter));
+    CosASCIIHexFilter * const ascii_hex_filter = cos_calloc(1, sizeof(CosASCIIHexFilter));
     if (COS_UNLIKELY(!ascii_hex_filter)) {
         goto failure;
     }
@@ -61,7 +62,7 @@ cos_ascii_hex_filter_create(void)
 
 failure:
     if (ascii_hex_filter) {
-        free(ascii_hex_filter);
+        cos_free(ascii_hex_filter);
     }
     return NULL;
 }

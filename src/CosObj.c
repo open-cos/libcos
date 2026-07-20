@@ -8,6 +8,7 @@
 
 #include "libcos/common/CosError.h"
 #include "libcos/common/CosString.h"
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosArrayObjNode.h"
 #include "libcos/objects/CosBoolObjNode.h"
 #include "libcos/objects/CosDictObjNode.h"
@@ -100,7 +101,7 @@ cos_obj_create(CosObjNode *node)
         return NULL;
     }
 
-    CosObj * const obj = malloc(sizeof(CosObj));
+    CosObj * const obj = cos_malloc(sizeof(CosObj));
     if (COS_UNLIKELY(!obj)) {
         return NULL;
     }
@@ -120,7 +121,7 @@ cos_obj_destroy(CosObj *obj)
     }
 
     cos_obj_node_release(obj->node);
-    free(obj);
+    cos_free(obj);
 }
 
 // MARK: - Type query

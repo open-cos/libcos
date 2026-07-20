@@ -15,6 +15,8 @@
 #include "common/CosError.h"
 #include "filters/flate/CosFlateDecoder.h"
 
+#include <libcos/common/memory/CosMemory.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -194,7 +196,7 @@ cos_flate_build_fixed_(CosFlateDecoder *decoder);
 CosFlateDecoder *
 cos_flate_decoder_create(void)
 {
-    CosFlateDecoder * const decoder = calloc(1, sizeof(CosFlateDecoder));
+    CosFlateDecoder * const decoder = cos_calloc(1, sizeof(CosFlateDecoder));
     if (COS_UNLIKELY(!decoder)) {
         return NULL;
     }
@@ -212,7 +214,7 @@ cos_flate_decoder_destroy(CosFlateDecoder *decoder)
 {
     COS_IMPL_PARAM_CHECK(decoder != NULL);
 
-    free(decoder);
+    cos_free(decoder);
 }
 
 CosFlateStatus

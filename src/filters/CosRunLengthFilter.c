@@ -2,6 +2,7 @@
  * Copyright (c) 2025 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/filters/CosRunLengthFilter.h"
 
 #include "common/Assert.h"
@@ -100,7 +101,7 @@ cos_run_length_decode_copy_run_(CosRunLengthFilter *run_length_filter,
 CosRunLengthFilter *
 cos_run_length_filter_create(void)
 {
-    CosRunLengthFilter * const run_length_filter = calloc(1, sizeof(CosRunLengthFilter));
+    CosRunLengthFilter * const run_length_filter = cos_calloc(1, sizeof(CosRunLengthFilter));
     if (COS_UNLIKELY(!run_length_filter)) {
         return NULL;
     }
@@ -113,7 +114,7 @@ cos_run_length_filter_create(void)
 
 failure:
     if (run_length_filter) {
-        free(run_length_filter);
+        cos_free(run_length_filter);
     }
     return NULL;
 }
@@ -132,7 +133,7 @@ cos_run_length_filter_init_(CosRunLengthFilter *run_length_filter)
     cos_filter_init(&(run_length_filter->base),
                     &run_length_filter_functions_);
 
-    CosRunLengthFilterContext * const context = calloc(1, sizeof(CosRunLengthFilterContext));
+    CosRunLengthFilterContext * const context = cos_calloc(1, sizeof(CosRunLengthFilterContext));
     if (COS_UNLIKELY(!context)) {
         return false;
     }
@@ -151,7 +152,7 @@ cos_run_length_filter_close_(CosFilter *filter)
 
     CosRunLengthFilter * const run_length_filter = (CosRunLengthFilter *)filter;
     if (run_length_filter->context) {
-        free(run_length_filter->context);
+        cos_free(run_length_filter->context);
         run_length_filter->context = NULL;
     }
 }

@@ -8,6 +8,7 @@
 
 #include "libcos/common/CosDiagnostic.h"
 #include "libcos/common/CosLog.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +53,7 @@ CosDiagnosticHandler *
 cos_diagnostic_handler_alloc(CosDiagnosticHandlerFunc handle_func,
                              void * COS_Nullable user_data)
 {
-    CosDiagnosticHandler *handler = calloc(1, sizeof(CosDiagnosticHandler));
+    CosDiagnosticHandler *handler = cos_calloc(1, sizeof(CosDiagnosticHandler));
     if (!handler) {
         return NULL;
     }
@@ -70,7 +71,7 @@ cos_diagnostic_handler_free(CosDiagnosticHandler *handler)
         return;
     }
 
-    free(handler);
+    cos_free(handler);
 }
 
 CosDiagnosticHandler *

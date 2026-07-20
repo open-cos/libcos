@@ -3,6 +3,7 @@
  */
 
 #include "libcos/xref/table/CosXrefTable.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 
@@ -43,7 +44,7 @@ cos_xref_table_create(void)
     CosXrefTable *table = NULL;
     CosArray *sections = NULL;
 
-    table = calloc(1, sizeof(CosXrefTable));
+    table = cos_calloc(1, sizeof(CosXrefTable));
     if (COS_UNLIKELY(!table)) {
         goto failure;
     }
@@ -61,7 +62,7 @@ cos_xref_table_create(void)
 
 failure:
     if (table) {
-        free(table);
+        cos_free(table);
     }
     if (sections) {
         cos_array_destroy(sections);
@@ -80,7 +81,7 @@ cos_xref_table_destroy(CosXrefTable *table)
     if (table->sections) {
         cos_array_destroy(table->sections);
     }
-    free(table);
+    cos_free(table);
 }
 
 size_t

@@ -3,6 +3,7 @@
  */
 
 #include "libcos/xref/table/CosXrefSubsection.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 
@@ -29,7 +30,7 @@ cos_xref_subsection_create(CosObjNumber first_object_number,
     CosXrefSubsection *subsection = NULL;
     CosArray *entries = NULL;
 
-    subsection = calloc(1, sizeof(CosXrefSubsection));
+    subsection = cos_calloc(1, sizeof(CosXrefSubsection));
     if (COS_UNLIKELY(!subsection)) {
         goto failure;
     }
@@ -54,7 +55,7 @@ cos_xref_subsection_create(CosObjNumber first_object_number,
 
 failure:
     if (subsection) {
-        free(subsection);
+        cos_free(subsection);
     }
     if (entries) {
         cos_array_destroy(entries);
@@ -71,7 +72,7 @@ cos_xref_subsection_destroy(CosXrefSubsection *subsection)
     }
 
     cos_array_destroy(subsection->entries);
-    free(subsection);
+    cos_free(subsection);
 }
 
 CosObjNumber

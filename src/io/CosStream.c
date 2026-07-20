@@ -3,6 +3,7 @@
  */
 
 #include "libcos/io/CosStream.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "common/Assert.h"
 
@@ -39,7 +40,7 @@ cos_stream_close(CosStream *stream)
         stream->functions.close_func(stream);
     }
 
-    free(stream);
+    cos_free(stream);
 }
 
 bool

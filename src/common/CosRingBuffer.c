@@ -3,6 +3,7 @@
  */
 
 #include "libcos/common/CosRingBuffer.h"
+#include "libcos/common/memory/CosMemory.h"
 
 #include "Assert.h"
 #include "common/CosError.h"
@@ -73,7 +74,7 @@ cos_ring_buffer_create(size_t element_size,
 
     CosRingBuffer *ring_buffer;
 
-    ring_buffer = calloc(1, sizeof(CosRingBuffer));
+    ring_buffer = cos_calloc(1, sizeof(CosRingBuffer));
     if (!ring_buffer) {
         goto failure;
     }
@@ -81,7 +82,7 @@ cos_ring_buffer_create(size_t element_size,
     ring_buffer->element_size = element_size;
     ring_buffer->capacity = capacity_hint;
     ring_buffer->count = 0;
-    ring_buffer->data = calloc(capacity_hint, element_size);
+    ring_buffer->data = cos_calloc(capacity_hint, element_size);
     if (!ring_buffer->data) {
         goto failure;
     }
@@ -90,7 +91,7 @@ cos_ring_buffer_create(size_t element_size,
 
 failure:
     if (ring_buffer) {
-        free(ring_buffer);
+        cos_free(ring_buffer);
     }
     return NULL;
 }
@@ -102,8 +103,8 @@ cos_ring_buffer_destroy(CosRingBuffer *ring_buffer)
         return;
     }
 
-    free(ring_buffer->data);
-    free(ring_buffer);
+    cos_free(ring_buffer->data);
+    cos_free(ring_buffer);
 }
 
 size_t
@@ -365,7 +366,7 @@ cos_ring_buffer_resize_(CosRingBuffer *ring_buffer,
         new_capacity *= 2;
     }
 
-    unsigned char * const new_data = calloc(new_capacity, ring_buffer->element_size);
+    unsigned char * const new_data = cos_calloc(new_capacity, ring_buffer->element_size);
     if (!new_data) {
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_MEMORY, "Out of memory"));
@@ -403,7 +404,7 @@ cos_ring_buffer_resize_(CosRingBuffer *ring_buffer,
                second_part_size);
     }
 
-    free(ring_buffer->data);
+    cos_free(ring_buffer->data);
 
     ring_buffer->data = new_data;
     ring_buffer->capacity = new_capacity;

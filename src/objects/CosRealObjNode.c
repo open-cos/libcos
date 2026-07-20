@@ -2,6 +2,7 @@
  * Copyright (c) 2023 OpenCOS.
  */
 
+#include "libcos/common/memory/CosMemory.h"
 #include "libcos/objects/CosRealObjNode.h"
 
 #include "common/Assert.h"
@@ -23,7 +24,7 @@ struct CosRealObjNode {
 CosRealObjNode *
 cos_real_obj_node_alloc(double value)
 {
-    CosRealObjNode *result = calloc(1, sizeof(CosRealObjNode));
+    CosRealObjNode *result = cos_calloc(1, sizeof(CosRealObjNode));
     if (!result) {
         return NULL;
     }
@@ -42,7 +43,7 @@ cos_real_obj_node_free(CosRealObjNode *real_obj)
         return;
     }
 
-    free(real_obj);
+    cos_free(real_obj);
 }
 
 double
