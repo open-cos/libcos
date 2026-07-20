@@ -24,21 +24,20 @@ libFuzzer required. This exists so the harnesses cannot silently rot: they are
 compiled against the real API on every build.
 
 To actually fuzz, configure with instrumentation (Clang only; applies ASan and
-coverage to the whole library):
+coverage to the whole library), then launch a harness through its
+`fuzz_<target>` run target:
 
 ```sh
 cmake --preset fuzz -B cmake-build-fuzz
-cmake --build cmake-build-fuzz
-mkdir -p /tmp/cos-fuzz/parser
-cmake-build-fuzz/tests/fuzz/libcos-fuzz-parser \
-    -dict=tests/fuzz/dictionaries/cos.dict \
-    /tmp/cos-fuzz/parser tests/fuzz/corpus/parser/
+cmake --build cmake-build-fuzz --target fuzz_parser
 ```
 
-Note the scratch directory listed **first**: LibFuzzer writes newly discovered
-inputs into the first corpus directory it is given, and reads the rest. Passing
-`tests/fuzz/corpus/parser/` alone would dump thousands of generated files into
-the repository.
+Always drive fuzzing through the run target rather than invoking the harness
+binary directly. It wires the seed corpus, dictionary, live-corpus directory,
+and artifact path for you -- all under `<build>/fuzzing/`, as described in
+[Run targets and engines](#run-targets-and-engines) below. A raw invocation
+instead writes its live corpus and its `crash-*` / `oom-*` reproducers into
+whatever directory it is run from, and nothing gitignores them.
 
 `-DCOS_BUILD_FUZZERS=OFF` skips the targets entirely.
 

@@ -4,12 +4,3 @@
 cmake-build-*
 out/build
 *-cppcheck-build-dir
-
-# LibFuzzer writes these into the working directory. Reproducers worth keeping
-# belong in tests/fuzz/corpus/<target>/.
-crash-*
-leak-*
-oom-*
-timeout-*
-minimized-from-*
-slow-unit-*
