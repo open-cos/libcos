@@ -772,11 +772,17 @@ strict_streamMissingLength_IsDeviation(void)
 
 /*
  * Returns the stream node wrapped by the first parsed indirect object, or NULL.
+ *
+ * The returned node is a borrowed child of the indirect object, which is handed
+ * back through @p out_owner (owned by the caller) so it can be released once the
+ * stream node is no longer needed.
  */
 static const CosStreamObjNode * COS_Nullable
-first_stream_obj_(CosObjParser *parser)
+first_stream_obj_(CosObjParser *parser,
+                  CosObjNode * COS_Nullable *out_owner)
 {
     CosObjNode * const obj = cos_obj_parser_next_object(parser, NULL);
+    *out_owner = obj;
     if (!obj || cos_obj_node_get_type(obj) != CosObjNodeType_Indirect) {
         return NULL;
     }
@@ -828,12 +834,14 @@ recover_verifyOverridesWrongLength(void)
         cos_obj_parser_create(doc, (CosStream *)stream, &options);
     TEST_EXPECT(parser != NULL);
 
-    const CosStreamObjNode * const stream_obj = first_stream_obj_(parser);
+    CosObjNode *owner = NULL;
+    const CosStreamObjNode * const stream_obj = first_stream_obj_(parser, &owner);
     TEST_EXPECT(stream_obj != NULL);
     TEST_EXPECT(cos_stream_obj_node_get_length(stream_obj) == 3);
     TEST_EXPECT(counter.warnings > 0);
     TEST_EXPECT(counter.errors == 0);
 
+    cos_obj_node_release(owner);
     cos_obj_parser_destroy(parser);
     cos_stream_close((CosStream *)stream);
     cos_doc_destroy(doc);
@@ -876,12 +884,14 @@ recover_trustKeepsCorrectLengthSilent(void)
         cos_obj_parser_create(doc, (CosStream *)stream, &options);
     TEST_EXPECT(parser != NULL);
 
-    const CosStreamObjNode * const stream_obj = first_stream_obj_(parser);
+    CosObjNode *owner = NULL;
+    const CosStreamObjNode * const stream_obj = first_stream_obj_(parser, &owner);
     TEST_EXPECT(stream_obj != NULL);
     TEST_EXPECT(cos_stream_obj_node_get_length(stream_obj) == 3);
     TEST_EXPECT(counter.warnings == 0);
     TEST_EXPECT(counter.errors == 0);
 
+    cos_obj_node_release(owner);
     cos_obj_parser_destroy(parser);
     cos_stream_close((CosStream *)stream);
     cos_doc_destroy(doc);
