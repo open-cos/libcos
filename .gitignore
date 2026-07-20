@@ -4,3 +4,4 @@
 cmake-build-*
 out/build
 *-cppcheck-build-dir
+compile_commands.json
