@@ -76,22 +76,24 @@ cos_string_free(CosString *string);
  * Initializes a string with the default capacity.
  *
  * @param string The string to initialize.
+ * @param error On failure, set to describe the error; may be @c NULL.
  *
  * @return @c true if initialization succeeded, @c false otherwise.
  */
 COS_API bool
-cos_string_init(CosString *string);
+cos_string_init(CosString *string, CosError * COS_Nullable error);
 
 /**
  * Initializes a string with the given capacity.
  *
  * @param string The string to initialize.
  * @param capacity_hint A hint for the initial capacity of the string.
+ * @param error On failure, set to describe the error; may be @c NULL.
  *
  * @return @c true if initialization succeeded, @c false otherwise.
  */
 COS_API bool
-cos_string_init_capacity(CosString *string, size_t capacity_hint);
+cos_string_init_capacity(CosString *string, size_t capacity_hint, CosError * COS_Nullable error);
 
 /**
  * @brief Gets the string's nul-terminated character array.
@@ -130,23 +132,24 @@ cos_string_get_capacity(const CosString *string)
  * Creates a copy of the string.
  *
  * @param string The string to copy.
+ * @param error On failure, set to describe the error; may be @c NULL.
  *
  * @return The new string, or @c NULL if memory allocation failed.
  *
  * @note The returned string must be freed with @c cos_string_free().
  */
 COS_API CosString * COS_Nullable
-cos_string_copy(const CosString *string)
+cos_string_copy(const CosString *string, CosError * COS_Nullable error)
     COS_ATTR_MALLOC
     COS_WARN_UNUSED_RESULT
     COS_ATTR_ACCESS_READ_ONLY(1);
 
 COS_API bool
-cos_string_append_str(CosString *string, const char *str)
+cos_string_append_str(CosString *string, const char *str, CosError * COS_Nullable error)
     COS_ATTR_ACCESS_READ_ONLY(2);
 
 COS_API bool
-cos_string_append_strn(CosString *string, const char *str, size_t n)
+cos_string_append_strn(CosString *string, const char *str, size_t n, CosError * COS_Nullable error)
     COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3);
 
 /**
@@ -154,11 +157,12 @@ cos_string_append_strn(CosString *string, const char *str, size_t n)
  *
  * @param string The string to be modified.
  * @param c The character to append.
+ * @param error On failure, set to describe the error; may be @c NULL.
  *
  * @return @c true if the character was appended, @c false otherwise.
  */
 COS_API bool
-cos_string_push_back(CosString *string, char c);
+cos_string_push_back(CosString *string, char c, CosError * COS_Nullable error);
 
 /** @{ **/
 

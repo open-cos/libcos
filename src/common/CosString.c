@@ -6,6 +6,7 @@
 
 #include "common/Assert.h"
 
+#include <libcos/common/CosError.h>
 #include <libcos/common/memory/CosMemory.h>
 #include <libcos/io/string-support.h>
 
@@ -41,14 +42,17 @@ struct CosString {
 };
 
 static bool
-cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
+cos_string_append_strn_impl_(CosString *string, const char *str, size_t n,
+                             CosError * COS_Nullable error)
     COS_ATTR_ACCESS_READ_ONLY_SIZE(2, 3);
 
 static bool
-cos_string_ensure_capacity_(CosString *string, size_t required_capacity);
+cos_string_ensure_capacity_(CosString *string, size_t required_capacity,
+                            CosError * COS_Nullable error);
 
 static bool
-cos_string_resize_(CosString *string, size_t new_capacity);
+cos_string_resize_(CosString *string, size_t new_capacity,
+                   CosError * COS_Nullable error);
 
 CosString *
 cos_string_alloc(size_t capacity_hint)
@@ -58,7 +62,9 @@ cos_string_alloc(size_t capacity_hint)
         goto failure;
     }
 
-    if (!cos_string_init_capacity(string, capacity_hint)) {
+    // The allocation failure is reported through the NULL return, so no error
+    // object is threaded here.
+    if (!cos_string_init_capacity(string, capacity_hint, NULL)) {
         goto failure;
     }
 
@@ -124,15 +130,15 @@ cos_string_free(CosString *string)
 }
 
 bool
-cos_string_init(CosString *string)
+cos_string_init(CosString *string, CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(string != NULL);
 
-    return cos_string_init_capacity(string, 0);
+    return cos_string_init_capacity(string, 0, error);
 }
 
 bool
-cos_string_init_capacity(CosString *string, size_t capacity_hint)
+cos_string_init_capacity(CosString *string, size_t capacity_hint, CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
@@ -146,6 +152,9 @@ cos_string_init_capacity(CosString *string, size_t capacity_hint)
 
     char * const data = cos_malloc(capacity * sizeof(char));
     if (!data) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                           "Failed to allocate memory for string"),
+                            error);
         return false;
     }
 
@@ -193,14 +202,22 @@ cos_string_get_capacity(const CosString *string)
 }
 
 CosString *
-cos_string_copy(const CosString *string)
+cos_string_copy(const CosString *string, CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(string != NULL);
     if (!string) {
         return NULL;
     }
 
-    return cos_string_alloc_with_strn(string->data, string->length);
+    CosString * const copy = cos_string_alloc_with_strn(string->data, string->length);
+    if (!copy) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                           "Failed to allocate memory for string copy"),
+                            error);
+        return NULL;
+    }
+
+    return copy;
 }
 
 CosStringRef
@@ -258,7 +275,7 @@ cos_string_ref_cmp(CosStringRef lhs, CosStringRef rhs)
 }
 
 bool
-cos_string_append_str(CosString *string, const char *str)
+cos_string_append_str(CosString *string, const char *str, CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(string != NULL);
     COS_API_PARAM_CHECK(str != NULL);
@@ -269,20 +286,20 @@ cos_string_append_str(CosString *string, const char *str)
         return true;
     }
 
-    return cos_string_append_strn_impl_(string, str, strlen(str));
+    return cos_string_append_strn_impl_(string, str, strlen(str), error);
 }
 
 bool
-cos_string_append_strn(CosString *string, const char *str, size_t n)
+cos_string_append_strn(CosString *string, const char *str, size_t n, CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(string != NULL);
     COS_API_PARAM_CHECK(str != NULL);
 
-    return cos_string_append_strn_impl_(string, str, n);
+    return cos_string_append_strn_impl_(string, str, n, error);
 }
 
 bool
-cos_string_push_back(CosString *string, char c)
+cos_string_push_back(CosString *string, char c, CosError * COS_Nullable error)
 {
     COS_API_PARAM_CHECK(string != NULL);
 
@@ -291,7 +308,7 @@ cos_string_push_back(CosString *string, char c)
         return true;
     }
 
-    return cos_string_append_strn_impl_(string, &c, 1);
+    return cos_string_append_strn_impl_(string, &c, 1, error);
 }
 
 #if SIZE_MAX == UINT32_MAX
@@ -354,7 +371,8 @@ cos_string_get_hash(const CosString *string)
 }
 
 static bool
-cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
+cos_string_append_strn_impl_(CosString *string, const char *str, size_t n,
+                             CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(string != NULL);
     COS_IMPL_PARAM_CHECK(str != NULL);
@@ -364,7 +382,7 @@ cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
     }
 
     const size_t required_capacity = string->length + n + 1;
-    if (!cos_string_ensure_capacity_(string, required_capacity)) {
+    if (!cos_string_ensure_capacity_(string, required_capacity, error)) {
         return false;
     }
 
@@ -387,7 +405,8 @@ cos_string_append_strn_impl_(CosString *string, const char *str, size_t n)
 }
 
 static bool
-cos_string_ensure_capacity_(CosString *string, size_t required_capacity)
+cos_string_ensure_capacity_(CosString *string, size_t required_capacity,
+                            CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(string != NULL);
 
@@ -401,11 +420,12 @@ cos_string_ensure_capacity_(CosString *string, size_t required_capacity)
         new_capacity *= 2;
     }
 
-    return cos_string_resize_(string, new_capacity);
+    return cos_string_resize_(string, new_capacity, error);
 }
 
 static bool
-cos_string_resize_(CosString *string, size_t new_capacity)
+cos_string_resize_(CosString *string, size_t new_capacity,
+                   CosError * COS_Nullable error)
 {
     COS_IMPL_PARAM_CHECK(string != NULL);
     COS_IMPL_PARAM_CHECK(new_capacity > 0);
@@ -422,6 +442,9 @@ cos_string_resize_(CosString *string, size_t new_capacity)
     char * const new_data = cos_realloc(string->data,
                                     new_capacity * sizeof(char));
     if (!new_data) {
+        COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                           "Failed to allocate memory for string"),
+                            error);
         return false;
     }
     new_data[new_length] = '\0';

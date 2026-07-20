@@ -21,9 +21,11 @@
 #include <io/CosStreamReader.h>
 #include <libcos/CosDoc.h>
 #include <libcos/CosObjID.h>
+#include <libcos/common/CosData.h>
 #include <libcos/common/CosDiagnosticHandler.h>
 #include <libcos/common/CosError.h>
 #include <libcos/common/CosLog.h>
+#include <libcos/common/CosString.h>
 #include <libcos/io/CosStream.h>
 #include <libcos/io/CosSubStream.h>
 #include <libcos/objects/CosArrayObjNode.h>
@@ -1623,6 +1625,8 @@ cos_parse_string_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
 
+    CosData *string_data = NULL;
+
     if (!cos_parser_context_allows_(context,
                                     CosObjParserFlag_StringObj)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -1641,7 +1645,7 @@ cos_parse_string_(CosObjParser *parser,
         goto failure;
     }
 
-    CosData * const string_data = cos_token_move_data_value(token);
+    string_data = cos_token_move_data_value(token);
     if (!string_data) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Failed to parse string object"),
@@ -1652,9 +1656,18 @@ cos_parse_string_(CosObjParser *parser,
     cos_base_parser_advance(&(parser->base));
 
     CosStringObjNode * const string_obj = cos_string_obj_node_alloc(string_data);
+    if (!string_obj) {
+        // The node allocation failed, so ownership of the string data was not
+        // taken; the failure path releases it.
+        goto failure;
+    }
+
     return (CosObjNode *)string_obj;
 
 failure:
+    if (string_data) {
+        cos_data_free(string_data);
+    }
     return NULL;
 }
 
@@ -1665,6 +1678,8 @@ cos_parse_name_(CosObjParser *parser,
 {
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
+
+    CosString *name = NULL;
 
     if (!cos_parser_context_allows_(context,
                                     CosObjParserFlag_NameObj)) {
@@ -1680,7 +1695,7 @@ cos_parse_name_(CosObjParser *parser,
         goto failure;
     }
 
-    CosString * const name = cos_token_move_string_value(token);
+    name = cos_token_move_string_value(token);
     if (!name) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
                                            "Invalid name token"),
@@ -1691,9 +1706,18 @@ cos_parse_name_(CosObjParser *parser,
     cos_base_parser_advance(&(parser->base));
 
     CosNameObjNode * const nameObj = cos_name_obj_node_alloc(name);
+    if (!nameObj) {
+        // The node allocation failed, so ownership of the name string was not
+        // taken; the failure path releases it.
+        goto failure;
+    }
+
     return (CosObjNode *)nameObj;
 
 failure:
+    if (name) {
+        cos_string_free(name);
+    }
     return NULL;
 }
 

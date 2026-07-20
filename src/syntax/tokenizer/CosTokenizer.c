@@ -81,7 +81,8 @@ cos_tokenizer_handle_name_hex_escape_sequence_(CosTokenizer *tokenizer);
 
 static bool
 cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
-                                   CosData *data);
+                                   CosData *data,
+                                   CosError *error);
 
 /**
  * Handles an escape sequence in a literal string.
@@ -274,8 +275,10 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             // This is a name.
             CosString * const string = cos_string_alloc(0);
             if (!string) {
-                // Error: out of memory.
-                break;
+                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                                   "Failed to allocate memory for name"),
+                                    out_error);
+                goto failure;
             }
 
             CosError error;
@@ -297,17 +300,22 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             // This is a literal string.
             CosData * const data = cos_data_alloc(0);
             if (!data) {
-                // Error: out of memory.
-                break;
+                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                                   "Failed to allocate memory for literal string"),
+                                    out_error);
+                goto failure;
             }
 
-            if (cos_tokenizer_read_literal_string_(tokenizer, data)) {
+            CosError error;
+            if (cos_tokenizer_read_literal_string_(tokenizer, data, &error)) {
                 token->type = CosToken_Type_Literal_String;
                 cos_token_value_set_data(&token->value, data);
             }
             else {
                 // Error: invalid literal string.
                 token->type = CosToken_Type_Unknown;
+
+                cos_error_propagate(out_error, error);
 
                 cos_data_free(data);
             }
@@ -322,8 +330,10 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
                 // This is a hex string.
                 CosData * const data = cos_data_alloc(0);
                 if (!data) {
-                    // Error: out of memory.
-                    break;
+                    COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                                       "Failed to allocate memory for hex string"),
+                                        out_error);
+                    goto failure;
                 }
 
                 CosError error;
@@ -411,8 +421,10 @@ cos_tokenizer_read_next_token_(CosTokenizer *tokenizer,
             // This could be a keyword or an unknown token.
             CosString *string = cos_string_alloc(0);
             if (!string) {
-                // Error: out of memory.
-                break;
+                COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                                   "Failed to allocate memory for token"),
+                                    out_error);
+                goto failure;
             }
 
             CosError error;
@@ -621,10 +633,14 @@ cos_tokenizer_read_name_(CosTokenizer *tokenizer,
                                     error);
                 return false;
             }
-            cos_string_push_back(string, (char)hex_value);
+            if (!cos_string_push_back(string, (char)hex_value, error)) {
+                return false;
+            }
         }
         else {
-            cos_string_push_back(string, (char)c);
+            if (!cos_string_push_back(string, (char)c, error)) {
+                return false;
+            }
         }
     }
 
@@ -657,7 +673,8 @@ cos_tokenizer_handle_name_hex_escape_sequence_(CosTokenizer *tokenizer)
 
 static bool
 cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
-                                   CosData *data)
+                                   CosData *data,
+                                   CosError *error)
 {
     COS_IMPL_PARAM_CHECK(tokenizer != NULL);
     COS_IMPL_PARAM_CHECK(data != NULL);
@@ -712,12 +729,19 @@ cos_tokenizer_read_literal_string_(CosTokenizer *tokenizer,
                 break;
         }
 
-        cos_data_push_back(data, (unsigned char)c, NULL);
+        if (!cos_data_push_back(data, (unsigned char)c, error)) {
+            // Out of memory: fail the token so a truncated value is never used.
+            return false;
+        }
 
     continue_label:;
     }
 
     // Error: unterminated literal string.
+    if (error) {
+        *error = cos_error_make(COS_ERROR_SYNTAX,
+                                "Unterminated literal string");
+    }
     return false;
 }
 
@@ -861,7 +885,9 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
                 hex_value = (hex_value << 4) | hex_digit_value;
 
                 // Write the byte to the buffer.
-                cos_data_push_back(data, (unsigned char)hex_value, NULL);
+                if (!cos_data_push_back(data, (unsigned char)hex_value, error)) {
+                    return false;
+                }
 
                 // Reset the hex value.
                 hex_value = 0;
@@ -877,7 +903,9 @@ cos_tokenizer_read_hex_string_(CosTokenizer *tokenizer,
             if (odd_number_of_hex_digits) {
                 // Write the last byte to the buffer.
                 hex_value = (hex_value << 4);
-                cos_data_push_back(data, (unsigned char)hex_value, NULL);
+                if (!cos_data_push_back(data, (unsigned char)hex_value, error)) {
+                    return false;
+                }
             }
             return true;
         }
@@ -1151,11 +1179,7 @@ cos_tokenizer_read_token_(CosTokenizer *tokenizer, CosString *string, CosError *
             return true;
         }
 
-        if (!cos_string_push_back(string, (char)c)) {
-            // Error: out of memory.
-            if (error) {
-                *error = cos_error_make(COS_ERROR_MEMORY, "Out of memory");
-            }
+        if (!cos_string_push_back(string, (char)c, error)) {
             return false;
         }
     }

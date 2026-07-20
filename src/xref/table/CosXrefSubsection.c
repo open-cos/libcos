@@ -28,17 +28,17 @@ cos_xref_subsection_create(CosObjNumber first_object_number,
                            CosArray * COS_Nullable existing_entries)
 {
     CosXrefSubsection *subsection = NULL;
-    CosArray *entries = NULL;
+    // Adopt ownership of existing_entries up front so that every failure path
+    // below frees it -- callers transfer ownership on this call and rely on it
+    // being released even when the subsection allocation itself fails.
+    CosArray *entries = existing_entries;
 
     subsection = cos_calloc(1, sizeof(CosXrefSubsection));
     if (COS_UNLIKELY(!subsection)) {
         goto failure;
     }
 
-    if (existing_entries) {
-        entries = existing_entries;
-    }
-    else {
+    if (!entries) {
         entries = cos_array_create(sizeof(CosXrefEntry *),
                                    NULL,
                                    entry_count);
