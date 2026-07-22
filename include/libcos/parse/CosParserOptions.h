@@ -19,7 +19,7 @@ COS_ASSUME_NONNULL_BEGIN
  * only values that are themselves valid groups.
  */
 enum {
-    COS_STRICT_GROUP_COUNT = 11,
+    COS_STRICT_GROUP_COUNT = 13,
 };
 
 /**
@@ -135,6 +135,37 @@ typedef enum CosStrictGroup {
      * and tolerated widely enough, that warning on it by default would be noise.
      */
     CosStrictGroup_FilterEndOfData,
+
+    /**
+     * A dictionary or array whose tokens run out before its closing @c >> or
+     * @c ] is reached, i.e. a container truncated at the end of the input.
+     *
+     * Adobe and pdfium accept the container built so far rather than discarding
+     * a truncated file. This group's level decides how the truncation is
+     * handled: the partial container is silently accepted at @c CosStrictLevel_Off ,
+     * accepted with a warning at @c CosStrictLevel_Warn , and rejected at
+     * @c CosStrictLevel_Error .
+     *
+     * Like @c CosStrictGroup_FilterEndOfData this defaults to @c CosStrictLevel_Off :
+     * a container truncated by an incomplete download or a clipped file is
+     * common enough that warning on it by default would be noise.
+     */
+    CosStrictGroup_UnterminatedContainer,
+
+    /**
+     * A dictionary entry or array element that fails to parse, such as a
+     * dictionary key that is not a name object or a value that is not a valid
+     * object.
+     *
+     * The container recovers by returning the entries parsed before the bad one
+     * rather than discarding the whole container. This group's level decides how
+     * the malformed entry is handled: it is silently dropped at
+     * @c CosStrictLevel_Off , dropped with a warning at @c CosStrictLevel_Warn ,
+     * and rejected at @c CosStrictLevel_Error . Recovery is a stop-and-return:
+     * the entry and everything after it in the container are dropped, not
+     * individually skipped.
+     */
+    CosStrictGroup_ContainerEntry,
 } CosStrictGroup;
 
 /*

@@ -770,6 +770,38 @@ strict_streamMissingLength_IsDeviation(void)
     return expect_deviation_("1 0 obj\n<< >>\nstream\nabc\nendstream\nendobj\n");
 }
 
+static int
+strict_unterminatedDict_IsDeviation(void)
+{
+    // A dictionary whose tokens run out before the closing '>>'. The entry
+    // /A 1 is parsed, then the input ends: CosStrictGroup_UnterminatedContainer.
+    return expect_deviation_("<< /A 1");
+}
+
+static int
+strict_unterminatedArray_IsDeviation(void)
+{
+    // An array whose tokens run out before the closing ']'.
+    return expect_deviation_("[ 1 2");
+}
+
+static int
+strict_malformedDictEntry_IsDeviation(void)
+{
+    // A non-name dictionary key: the entry fails to parse, and the container
+    // stops at it: CosStrictGroup_ContainerEntry. The dict is terminated, so
+    // CosStrictGroup_UnterminatedContainer does not also fire.
+    return expect_deviation_("<< 1 2 >>");
+}
+
+static int
+strict_malformedArrayElement_IsDeviation(void)
+{
+    // A stray '>>' where an array element is expected: the element fails to
+    // parse and the container stops at it.
+    return expect_deviation_("[ 1 >> ]");
+}
+
 /*
  * Returns the stream node wrapped by the first parsed indirect object, or NULL.
  *
@@ -994,13 +1026,15 @@ strict_defaultOptions_WarnExceptFilterEod(void)
     const CosParserOptions options = cos_parser_options_make_default();
 
     for (unsigned int i = 0; i < COS_STRICT_GROUP_COUNT; i++) {
-        // Every group defaults to Warn except CosStrictGroup_FilterEndOfData,
-        // which defaults to Off: a missing filter end-of-data marker is common
-        // and widely tolerated, so it is silent unless explicitly raised.
+        // Every group defaults to Warn except CosStrictGroup_FilterEndOfData and
+        // CosStrictGroup_UnterminatedContainer, which default to Off: a missing
+        // filter end-of-data marker and a container truncated at end-of-input are
+        // both common and widely tolerated, so they stay silent unless raised.
+        const bool defaults_off =
+            ((CosStrictGroup)i == CosStrictGroup_FilterEndOfData) ||
+            ((CosStrictGroup)i == CosStrictGroup_UnterminatedContainer);
         const CosStrictLevel expected =
-            ((CosStrictGroup)i == CosStrictGroup_FilterEndOfData)
-                ? CosStrictLevel_Off
-                : CosStrictLevel_Warn;
+            defaults_off ? CosStrictLevel_Off : CosStrictLevel_Warn;
         TEST_EXPECT(cos_parser_options_get_strict_level(&options,
                                                         (CosStrictGroup)i) ==
                     expected);
@@ -1061,6 +1095,10 @@ TEST_MAIN()
     TEST_EXPECT(strict_streamWithoutEol_IsDeviation() == EXIT_SUCCESS);
     TEST_EXPECT(strict_endStreamWithoutEol_IsDeviation() == EXIT_SUCCESS);
     TEST_EXPECT(strict_streamMissingLength_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_unterminatedDict_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_unterminatedArray_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_malformedDictEntry_IsDeviation() == EXIT_SUCCESS);
+    TEST_EXPECT(strict_malformedArrayElement_IsDeviation() == EXIT_SUCCESS);
     TEST_EXPECT(recover_verifyOverridesWrongLength() == EXIT_SUCCESS);
     TEST_EXPECT(recover_trustKeepsCorrectLengthSilent() == EXIT_SUCCESS);
     TEST_EXPECT(strict_negativeObjNumber_AlwaysRejected() == EXIT_SUCCESS);

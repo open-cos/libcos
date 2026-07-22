@@ -76,6 +76,28 @@ struct CosObjParser {
     CosObjParserFlags top_level_flags;
 };
 
+/**
+ * The outcome of a single dictionary-entry or array-element parse.
+ *
+ * The container loops must tell apart three cases that a plain @c bool
+ * conflates: reaching the closing delimiter, appending an entry and continuing,
+ * and failing to parse an entry. Only the last is governed by
+ * @c CosStrictGroup_ContainerEntry ; running off the end of the tokens without
+ * ever reaching @c CosContainerStep_Closed is the separate
+ * @c CosStrictGroup_UnterminatedContainer case, which the loop detects rather
+ * than the handler.
+ */
+typedef enum CosContainerStep {
+    /** The closing @c >> or @c ] was consumed; the container ends here. */
+    CosContainerStep_Closed,
+
+    /** An entry or element was parsed and appended; keep going. */
+    CosContainerStep_Continued,
+
+    /** The entry or element failed to parse; @c out_error holds the cause. */
+    CosContainerStep_Failed,
+} CosContainerStep;
+
 static bool
 cos_obj_parser_init_(CosObjParser *self,
                      CosDoc *document,
@@ -150,6 +172,49 @@ cos_report_deviation_(CosBaseParser *parser,
                                group,
                                message,
                                out_error);
+}
+
+/**
+ * Applies the @c CosStrictGroup_ContainerEntry policy to a dictionary entry or
+ * array element that failed to parse.
+ *
+ * The entry handler has already set @p out_error to the specific cause -- a
+ * syntax error, or an allocation failure. The deviation is reported at the
+ * group's level (silent at Off, a warning at Warn, an error at Error), but the
+ * report is passed a @c NULL error so it cannot overwrite that specific cause
+ * with a generic message -- which, for an allocation failure, would mislabel
+ * the out-of-memory as a syntax error. At @c CosStrictLevel_Error the caller
+ * then aborts with the preserved cause; at @c CosStrictLevel_Off and
+ * @c CosStrictLevel_Warn the cause is discarded and the caller returns the
+ * entries parsed so far.
+ *
+ * @return @c true if the container should recover and return what it has built;
+ * @c false if the caller must abort with the cause left in @p out_error.
+ */
+static bool
+cos_recover_container_entry_(CosObjParser *parser,
+                             const char *message,
+                             CosError * COS_Nullable out_error)
+{
+    // Report for observability, but with a NULL error so the handler's specific
+    // cause in out_error survives (see the function comment).
+    (void)cos_report_deviation_(&(parser->base),
+                                CosStrictGroup_ContainerEntry,
+                                message,
+                                NULL);
+
+    if (cos_parser_options_get_strict_level(&(parser->base.options),
+                                            CosStrictGroup_ContainerEntry)
+        == CosStrictLevel_Error) {
+        // Abort with the handler's specific cause, left untouched in out_error.
+        return false;
+    }
+
+    // Off or Warn: discard the entry's cause and recover.
+    if (out_error) {
+        *out_error = cos_error_none();
+    }
+    return true;
 }
 
 CosObjParser *
@@ -356,7 +421,7 @@ cos_handle_array_(CosObjParser *parser,
                   const CosObjParserContext *context,
                   CosError * COS_Nullable out_error);
 
-static bool
+static CosContainerStep
 cos_handle_array_element_(CosObjParser *parser,
                           const CosObjParserContext *context,
                           CosArray *array,
@@ -367,7 +432,7 @@ cos_handle_dict_(CosObjParser *parser,
                  const CosObjParserContext *context,
                  CosError * COS_Nullable out_error);
 
-static bool
+static CosContainerStep
 cos_handle_dict_entry_(CosObjParser *parser,
                        const CosObjParserContext *context,
                        CosDict *dict,
@@ -635,17 +700,58 @@ cos_handle_array_(CosObjParser *parser,
         goto failure;
     }
 
-    bool element_success = false;
-    while (cos_base_parser_has_next_token(&(parser->base))) {
-        // Parse the next array element.
-        element_success = cos_handle_array_element_(parser,
-                                                    context,
-                                                    array,
-                                                    out_error);
-        if (!element_success) {
-            // Or, skip element and continue parsing?
+    while (true) {
+        // Speculative loop guard: the array ends cleanly at the ']' that
+        // cos_handle_array_element_() reports as CosContainerStep_Closed. This
+        // peek only guards against running off the end of the token stream; a
+        // failed token read collapses EOF, malformed input and an allocation
+        // failure alike into "no token", which is the unterminated-array case
+        // handled just below.
+        //
+        // The read is marked benign only while CosStrictGroup_UnterminatedContainer
+        // is below CosStrictLevel_Error: there an unterminated array is accepted,
+        // so an injected allocation failure here degrades to the same partial
+        // array and must not be mistaken for one that propagates. At Error the
+        // unterminated case aborts, so the region is left non-benign to make any
+        // failure -- injected or not -- propagate like the abort it now is.
+        const bool guard_benign =
+            cos_parser_options_get_strict_level(&(parser->base.options),
+                                                CosStrictGroup_UnterminatedContainer)
+            != CosStrictLevel_Error;
+        if (guard_benign) {
+            cos_begin_benign_malloc();
+        }
+        const bool has_token = cos_base_parser_has_next_token(&(parser->base));
+        if (guard_benign) {
+            cos_end_benign_malloc();
+        }
+        if (!has_token) {
+            // Ran off the end without reaching ']': an unterminated array.
+            if (!cos_report_deviation_(&(parser->base),
+                                       CosStrictGroup_UnterminatedContainer,
+                                       "Unterminated array: missing ']'",
+                                       out_error)) {
+                goto failure;
+            }
             break;
         }
+
+        const CosContainerStep step = cos_handle_array_element_(parser,
+                                                               context,
+                                                               array,
+                                                               out_error);
+        if (step == CosContainerStep_Closed) {
+            break;
+        }
+        if (step == CosContainerStep_Failed) {
+            if (!cos_recover_container_entry_(parser,
+                                              "Malformed array element",
+                                              out_error)) {
+                goto failure;
+            }
+            break;
+        }
+        // CosContainerStep_Continued: parse the next element.
     }
 
     CosArrayObjNode * const array_obj = cos_array_obj_node_alloc(array);
@@ -662,7 +768,7 @@ failure:
     return NULL;
 }
 
-static bool
+static CosContainerStep
 cos_handle_array_element_(CosObjParser *parser,
                           const CosObjParserContext *context,
                           CosArray *array,
@@ -676,7 +782,7 @@ cos_handle_array_element_(CosObjParser *parser,
                                            CosToken_Type_ArrayEnd,
                                            out_error)) {
         cos_base_parser_advance(&(parser->base));
-        return false;
+        return CosContainerStep_Closed;
     }
 
     CosObjNode *element = NULL;
@@ -702,13 +808,13 @@ cos_handle_array_element_(CosObjParser *parser,
         goto failure;
     }
 
-    return true;
+    return CosContainerStep_Continued;
 
 failure:
     if (element) {
         cos_obj_node_release(element);
     }
-    return false;
+    return CosContainerStep_Failed;
 }
 
 static CosObjNode *
@@ -739,31 +845,57 @@ cos_handle_dict_(CosObjParser *parser,
         goto failure;
     }
 
-    bool entry_success = false;
     while (true) {
-        // Speculative loop guard: a dictionary ends cleanly at the '>>' handled
-        // inside cos_handle_dict_entry_(); this peek only guards against running
-        // off the end. The peek's token read collapses EOF, malformed input and
-        // an allocation failure alike into "no token", and the handler is lenient
-        // by design -- it returns the dict built so far (see
-        // parse_dictWithNonNameKey_DropsEntry). An injected allocation failure
-        // here therefore degrades to that same best-effort partial dict, so the
-        // read is marked benign: its failure is absorbed, not propagated.
-        cos_begin_benign_malloc();
+        // Speculative loop guard: a dictionary ends cleanly at the '>>' that
+        // cos_handle_dict_entry_() reports as CosContainerStep_Closed. This peek
+        // only guards against running off the end. The peek's token read
+        // collapses EOF, malformed input and an allocation failure alike into
+        // "no token", which is the unterminated-dictionary case handled below.
+        //
+        // The read is marked benign only while CosStrictGroup_UnterminatedContainer
+        // is below CosStrictLevel_Error: there a truncated dictionary is accepted,
+        // so an injected allocation failure here degrades to that same best-effort
+        // partial dict and must not be mistaken for one that propagates. At Error
+        // the truncation aborts, so the region is left non-benign to make any
+        // failure -- injected or not -- propagate like the abort it now is.
+        const bool guard_benign =
+            cos_parser_options_get_strict_level(&(parser->base.options),
+                                                CosStrictGroup_UnterminatedContainer)
+            != CosStrictLevel_Error;
+        if (guard_benign) {
+            cos_begin_benign_malloc();
+        }
         const bool has_token = cos_base_parser_has_next_token(&(parser->base));
-        cos_end_benign_malloc();
+        if (guard_benign) {
+            cos_end_benign_malloc();
+        }
         if (!has_token) {
+            // Ran off the end without reaching '>>': an unterminated dictionary.
+            if (!cos_report_deviation_(&(parser->base),
+                                       CosStrictGroup_UnterminatedContainer,
+                                       "Unterminated dictionary: missing '>>'",
+                                       out_error)) {
+                goto failure;
+            }
             break;
         }
 
-        entry_success = cos_handle_dict_entry_(parser,
-                                               context,
-                                               new_dict,
-                                               out_error);
-        if (!entry_success) {
-            // Or, skip entry and continue parsing?
+        const CosContainerStep step = cos_handle_dict_entry_(parser,
+                                                             context,
+                                                             new_dict,
+                                                             out_error);
+        if (step == CosContainerStep_Closed) {
             break;
         }
+        if (step == CosContainerStep_Failed) {
+            if (!cos_recover_container_entry_(parser,
+                                              "Malformed dictionary entry",
+                                              out_error)) {
+                goto failure;
+            }
+            break;
+        }
+        // CosContainerStep_Continued: parse the next entry.
     }
 
     CosDictObjNode * const dict_obj = cos_dict_obj_node_create(new_dict);
@@ -797,7 +929,7 @@ failure:
     return NULL;
 }
 
-static bool
+static CosContainerStep
 cos_handle_dict_entry_(CosObjParser *parser,
                        const CosObjParserContext *context,
                        CosDict *dict,
@@ -811,7 +943,7 @@ cos_handle_dict_entry_(CosObjParser *parser,
                                            CosToken_Type_DictionaryEnd,
                                            out_error)) {
         cos_base_parser_advance(&(parser->base));
-        return false;
+        return CosContainerStep_Closed;
     }
 
     CosObjNode *key = NULL;
@@ -862,7 +994,7 @@ cos_handle_dict_entry_(CosObjParser *parser,
         goto failure;
     }
 
-    return true;
+    return CosContainerStep_Continued;
 
 failure:
     if (key) {
@@ -871,7 +1003,7 @@ failure:
     if (value) {
         cos_obj_node_release(value);
     }
-    return false;
+    return CosContainerStep_Failed;
 }
 
 // The keyword whose position bounds a stream's data during /Length recovery.

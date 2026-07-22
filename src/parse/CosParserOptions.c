@@ -21,7 +21,7 @@ COS_ASSUME_NONNULL_BEGIN
  * out-of-bounds read. C99 has no _Static_assert, hence the array-size idiom.
  */
 typedef char cos_strict_group_count_matches_enum_
-    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_FilterEndOfData + 1)) ? 1 : -1];
+    [(COS_STRICT_GROUP_COUNT == (CosStrictGroup_ContainerEntry + 1)) ? 1 : -1];
 
 CosParserOptions
 cos_parser_options_make_default(void)
@@ -38,6 +38,13 @@ cos_parser_options_make_default(void)
     // complaint, so warning on it by default would be noise. Callers who want
     // to police it can raise the level explicitly.
     options.strict_levels[CosStrictGroup_FilterEndOfData] = CosStrictLevel_Off;
+
+    // A container truncated before its closing delimiter also defaults to Off,
+    // for the same reason: a clipped or incompletely downloaded file is common,
+    // and both Adobe and pdfium accept the partial container without complaint.
+    // A malformed entry mid-container (CosStrictGroup_ContainerEntry) is genuine
+    // corruption rather than truncation, so it keeps the general Warn default.
+    options.strict_levels[CosStrictGroup_UnterminatedContainer] = CosStrictLevel_Off;
 
     options.interior_sign_behaviour = CosInteriorSignBehaviour_Merge;
     options.stream_length_behaviour = CosStreamLengthBehaviour_Trust;
