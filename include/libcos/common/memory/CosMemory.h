@@ -92,6 +92,50 @@ cos_realloc(void * COS_Nullable ptr,
     COS_ALLOCATOR_FUNC_SIZE(2)
     COS_ALLOCATOR_FUNC_MATCHED_DEALLOC_INDEX(cos_free, 1);
 
+// MARK: - Out-of-memory handler
+
+/**
+ * Called when an allocation through the choke point has failed, to give the
+ * application a chance to release memory and have the allocation retried.
+ *
+ * This is the C library's @c set_new_handler adapted to libcos's allocator: the
+ * handler runs before @c NULL is returned to the caller. It should free whatever
+ * memory it can reclaim and return @c true to have the allocation retried, or
+ * @c false to give up (the caller then sees @c NULL ).
+ *
+ * The handler must not itself allocate through @c cos_malloc / @c cos_calloc /
+ * @c cos_realloc : while it runs, a further allocation failure does not re-enter
+ * it and simply returns @c NULL .
+ *
+ * @param size The byte size of the allocation that failed.
+ * @param attempt How many times this allocation has failed so far: 1 on the
+ * first failure, incrementing on each retry, so the handler can give up once it
+ * has nothing left to free.
+ * @param user_data The user data supplied to @c cos_set_out_of_memory_handler .
+ *
+ * @return @c true to retry the allocation, @c false to give up.
+ */
+typedef bool (*CosOutOfMemoryHandlerFunc)(size_t size,
+                                          unsigned int attempt,
+                                          void * COS_Nullable user_data);
+
+/**
+ * Installs the global out-of-memory handler, or removes it.
+ *
+ * Like the allocator, this is intended to be installed once before any
+ * allocation is made, and is not safe to change concurrently with allocation on
+ * another thread.
+ *
+ * @param handler The handler to install, or @c NULL to remove any handler. With
+ * no handler installed a failed allocation returns @c NULL immediately, which is
+ * the default.
+ * @param user_data Opaque data forwarded to @p handler unchanged; may be
+ * @c NULL .
+ */
+COS_API void
+cos_set_out_of_memory_handler(CosOutOfMemoryHandlerFunc COS_Nullable handler,
+                              void * COS_Nullable user_data);
+
 // MARK: - Benign-malloc regions
 
 /**

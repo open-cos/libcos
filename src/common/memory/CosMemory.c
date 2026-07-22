@@ -48,6 +48,15 @@ cos_default_free_(void *ptr,
 // install once before any allocation, so there is no writer racing the readers.
 static CosMemoryAllocator cos_allocator_ = COS_DEFAULT_ALLOCATOR_INITIALIZER;
 
+// The installed out-of-memory handler, if any, and its user data. Same
+// install-once contract as the allocator above. cos_in_out_of_memory_handler_
+// guards against re-entry: an allocation that fails while the handler runs must
+// not invoke the handler again, or a handler that allocates could recurse
+// without end.
+static CosOutOfMemoryHandlerFunc COS_Nullable cos_out_of_memory_handler_ = NULL;
+static void * COS_Nullable cos_out_of_memory_handler_user_data_ = NULL;
+static bool cos_in_out_of_memory_handler_ = false;
+
 // MARK: - Installation
 
 void
@@ -75,6 +84,38 @@ cos_get_memory_allocator(void)
     return cos_allocator_;
 }
 
+// MARK: - Out-of-memory handler
+
+void
+cos_set_out_of_memory_handler(CosOutOfMemoryHandlerFunc COS_Nullable handler,
+                              void * COS_Nullable user_data)
+{
+    cos_out_of_memory_handler_ = handler;
+    cos_out_of_memory_handler_user_data_ = user_data;
+}
+
+// Invokes the out-of-memory handler after a failed allocation of the given size,
+// returning whether the caller should retry. Returns false when no handler is
+// installed or when already inside the handler (see cos_in_out_of_memory_handler_).
+// Recovery is attempted regardless of any benign-malloc region: the benign flag
+// governs how a failure is classified for the test injector, not whether an
+// application-supplied handler gets a chance to free memory and retry.
+static bool
+cos_out_of_memory_should_retry_(size_t size,
+                                unsigned int attempt)
+{
+    if (!cos_out_of_memory_handler_ || cos_in_out_of_memory_handler_) {
+        return false;
+    }
+
+    cos_in_out_of_memory_handler_ = true;
+    const bool retry = cos_out_of_memory_handler_(size,
+                                                  attempt,
+                                                  cos_out_of_memory_handler_user_data_);
+    cos_in_out_of_memory_handler_ = false;
+    return retry;
+}
+
 // MARK: - Allocation
 
 void *
@@ -82,7 +123,13 @@ cos_malloc(size_t size)
 {
     COS_API_PARAM_CHECK(size > 0);
 
-    return cos_allocator_.malloc(size, cos_allocator_.user_data);
+    void *ptr = cos_allocator_.malloc(size, cos_allocator_.user_data);
+    for (unsigned int attempt = 1;
+         !ptr && cos_out_of_memory_should_retry_(size, attempt);
+         attempt++) {
+        ptr = cos_allocator_.malloc(size, cos_allocator_.user_data);
+    }
+    return ptr;
 }
 
 void *
@@ -120,7 +167,13 @@ cos_realloc(void * COS_Nullable ptr,
         return NULL;
     }
 
-    return cos_allocator_.realloc(ptr, size, cos_allocator_.user_data);
+    void *new_ptr = cos_allocator_.realloc(ptr, size, cos_allocator_.user_data);
+    for (unsigned int attempt = 1;
+         !new_ptr && cos_out_of_memory_should_retry_(size, attempt);
+         attempt++) {
+        new_ptr = cos_allocator_.realloc(ptr, size, cos_allocator_.user_data);
+    }
+    return new_ptr;
 }
 
 void

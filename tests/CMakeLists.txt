@@ -31,6 +31,7 @@ set(LIBCOS_TESTS
     unit-tests/stream-length.c
     unit-tests/fuzz-mutator.c
     unit-tests/malloc-failure.c
+    unit-tests/out-of-memory-handler.c
 )
 
 create_test_sourcelist(LIBCOS_TEST_SOURCES
