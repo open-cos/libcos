@@ -492,27 +492,27 @@ cleanup:
  *
  * The trailer keys consulted below (@c /XRefStm , @c /Encrypt , @c /Root ,
  * @c /Prev ) are all optional: a lookup that reports "absent" simply means the
- * feature does not apply and parsing proceeds. @c cos_dict_obj_node_get_value_with_string
- * allocates a temporary name node to perform the lookup and already returns
- * @c false if that allocation fails -- indistinguishable from, and handled the
- * same as, a genuinely absent key. The lookup is therefore wrapped in a benign
- * region so the OOM fault harness does not treat that absorbed failure as one
- * that must propagate.
+ * feature does not apply and parsing proceeds.
+ *
+ * @c cos_dict_obj_node_get_value_with_string allocates a temporary name node to
+ * perform the lookup; if that allocation fails it returns @c false with
+ * @p out_error set (e.g. @c COS_ERROR_MEMORY ). A genuinely absent key also
+ * returns @c false but leaves @p out_error as @c CosErrorNone , so each caller
+ * distinguishes the two by whether an error was reported and propagates a real
+ * failure rather than mistaking it for absence.
  *
  * @return @c true if @p key is present, with @p out_value set to its value.
  */
 static bool
 cos_parser_trailer_has_key_(const CosDictObjNode *trailer_dict,
                             const char *key,
-                            CosObjNode * COS_Nullable *out_value)
+                            CosObjNode * COS_Nullable *out_value,
+                            CosError * COS_Nullable out_error)
 {
-    cos_begin_benign_malloc();
-    const bool found = cos_dict_obj_node_get_value_with_string(trailer_dict,
-                                                               key,
-                                                               out_value,
-                                                               NULL);
-    cos_end_benign_malloc();
-    return found;
+    return cos_dict_obj_node_get_value_with_string(trailer_dict,
+                                                   key,
+                                                   out_value,
+                                                   out_error);
 }
 
 static bool
@@ -642,7 +642,16 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
             // deliberately marks free so that readers without object-stream support ignore them.
             // Its entries must therefore win over this revision's classic entries.
             CosObjNode * COS_Nullable xref_stm_obj = NULL;
-            if (cos_parser_trailer_has_key_(trailer_dict, "XRefStm", &xref_stm_obj) &&
+            CosError xref_stm_key_error = CosErrorNone;
+            const bool has_xref_stm = cos_parser_trailer_has_key_(trailer_dict, "XRefStm",
+                                                                  &xref_stm_obj, &xref_stm_key_error);
+            if (xref_stm_key_error.code != COS_ERROR_NONE) {
+                cos_error_propagate(out_error, xref_stm_key_error);
+                cos_xref_section_destroy(section);
+                cos_dict_obj_node_destroy(trailer_dict);
+                goto done;
+            }
+            if (has_xref_stm &&
                 xref_stm_obj != NULL &&
                 cos_obj_node_is_integer(COS_nonnull_cast(xref_stm_obj))) {
                 const int xref_stm_value =
@@ -730,8 +739,15 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
             // filter chain fail later on undecryptable stream data. /Encrypt is normally an
             // indirect reference, so only its presence is checked.
             CosObjNode * COS_Nullable encrypt_obj = NULL;
-            if (cos_parser_trailer_has_key_(cos_trailer_get_dict(trailer), "Encrypt",
-                                            &encrypt_obj) &&
+            CosError encrypt_key_error = CosErrorNone;
+            const bool has_encrypt = cos_parser_trailer_has_key_(cos_trailer_get_dict(trailer),
+                                                                 "Encrypt", &encrypt_obj,
+                                                                 &encrypt_key_error);
+            if (encrypt_key_error.code != COS_ERROR_NONE) {
+                cos_error_propagate(out_error, encrypt_key_error);
+                goto done;
+            }
+            if (has_encrypt &&
                 encrypt_obj != NULL) {
                 cos_error_propagate(out_error,
                                     cos_error_make(COS_ERROR_NOT_IMPLEMENTED,
@@ -741,8 +757,14 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
 
             // Resolve /Root from the newest trailer.
             CosObjNode * COS_Nullable root_obj = NULL;
-            if (cos_parser_trailer_has_key_(cos_trailer_get_dict(trailer), "Root",
-                                            &root_obj) &&
+            CosError root_key_error = CosErrorNone;
+            const bool has_root = cos_parser_trailer_has_key_(cos_trailer_get_dict(trailer),
+                                                              "Root", &root_obj, &root_key_error);
+            if (root_key_error.code != COS_ERROR_NONE) {
+                cos_error_propagate(out_error, root_key_error);
+                goto done;
+            }
+            if (has_root &&
                 root_obj != NULL) {
                 cos_doc_set_root_(doc, root_obj);
             }
@@ -755,8 +777,14 @@ cos_parser_parse_xref_and_trailer_(CosParser *parser,
         // Check /Prev to decide whether to continue traversing older revisions.
         CosStreamOffset prev_offset = -1;
         CosObjNode * COS_Nullable prev_obj = NULL;
-        if (cos_parser_trailer_has_key_(cos_trailer_get_dict(trailer), "Prev",
-                                        &prev_obj) &&
+        CosError prev_key_error = CosErrorNone;
+        const bool has_prev = cos_parser_trailer_has_key_(cos_trailer_get_dict(trailer),
+                                                          "Prev", &prev_obj, &prev_key_error);
+        if (prev_key_error.code != COS_ERROR_NONE) {
+            cos_error_propagate(out_error, prev_key_error);
+            goto done;
+        }
+        if (has_prev &&
             prev_obj != NULL &&
             cos_obj_node_is_integer(COS_nonnull_cast(prev_obj))) {
             const int prev_value = cos_int_obj_node_get_value((CosIntObjNode *)prev_obj);

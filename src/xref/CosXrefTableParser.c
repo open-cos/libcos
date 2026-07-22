@@ -115,24 +115,20 @@ cos_xref_table_parser_parse_section(CosXrefTableParser *parser,
 
     // Parse subsections until the 'trailer' keyword, EOF, or a non-integer token.
     while (true) {
-        // These are speculative peeks: a failed token read is absorbed as "not
-        // that token / no token" and terminates the scan, returning the section
-        // built so far (a transient failure is re-read on the next peek). Mark
-        // the region benign so an injected failure here is not mistaken for one
-        // that must propagate. The subsection parse below is load-bearing and
-        // stays outside the region.
-        cos_begin_benign_malloc();
+        // The scan ends at the 'trailer' keyword or EOF (both real tokens). A
+        // NULL peek is undetermined -- the tokenizer could not produce a token
+        // -- and propagates rather than being absorbed as the end of the scan,
+        // which would silently truncate the load-bearing xref.
         CosError scan_error = CosErrorNone;
-        const bool at_end =
-            cos_base_parser_matches_next_token(&(parser->base),
-                                               CosToken_Type_Trailer,
-                                               &scan_error) ||
-            cos_base_parser_matches_next_token(&(parser->base),
-                                               CosToken_Type_EOF,
-                                               &scan_error) ||
-            !cos_base_parser_has_next_token(&(parser->base));
-        cos_end_benign_malloc();
-        if (at_end) {
+        const CosToken * const next_token =
+            cos_base_parser_peek_next_token(&(parser->base), 0, &scan_error);
+        if (!next_token) {
+            cos_error_propagate(out_error, scan_error);
+            cos_xref_section_destroy(section);
+            return NULL;
+        }
+        if (next_token->type == CosToken_Type_Trailer ||
+            next_token->type == CosToken_Type_EOF) {
             break;
         }
 

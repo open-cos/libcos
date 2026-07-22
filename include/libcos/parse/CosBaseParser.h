@@ -136,16 +136,6 @@ cos_base_parser_get_current_token(CosBaseParser *parser,
     COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /**
- * @brief Checks if there is a next token.
- *
- * @param parser The parser.
- *
- * @return @c true if there is a next token, otherwise @c false.
- */
-COS_API bool
-cos_base_parser_has_next_token(CosBaseParser *parser);
-
-/**
  * @brief Peeks a next token without consuming it.
  *
  * Additional tokens are read to fill the buffer up to the specified lookahead index.

@@ -351,7 +351,10 @@ cos_obj_parser_has_next_object(CosObjParser *parser)
         return false;
     }
 
-    const CosObjNode * const obj = cos_obj_parser_peek_object(parser, NULL);
+    // A failed peek (undetermined) collapses to "no object" for this bool
+    // predicate; callers needing the reason call cos_obj_parser_peek_object.
+    CosError peek_error = CosErrorNone;
+    const CosObjNode * const obj = cos_obj_parser_peek_object(parser, &peek_error);
     return (obj != NULL);
 }
 
@@ -707,30 +710,19 @@ cos_handle_array_(CosObjParser *parser,
     while (true) {
         // Speculative loop guard: the array ends cleanly at the ']' that
         // cos_handle_array_element_() reports as CosContainerStep_Closed. This
-        // peek only guards against running off the end of the token stream; a
-        // failed token read collapses EOF, malformed input and an allocation
-        // failure alike into "no token", which is the unterminated-array case
-        // handled just below.
+        // peek only guards against running off the end of the token stream.
         //
-        // The read is marked benign only while CosStrictGroup_UnterminatedContainer
-        // is below CosStrictLevel_Error: there an unterminated array is accepted,
-        // so an injected allocation failure here degrades to the same partial
-        // array and must not be mistaken for one that propagates. At Error the
-        // unterminated case aborts, so the region is left non-benign to make any
-        // failure -- injected or not -- propagate like the abort it now is.
-        const bool guard_benign =
-            cos_parser_options_get_strict_level(&(parser->base.options),
-                                                CosStrictGroup_UnterminatedContainer)
-            != CosStrictLevel_Error;
-        if (guard_benign) {
-            cos_begin_benign_malloc();
+        // A NULL peek is undetermined -- the tokenizer could not produce a
+        // token -- and always propagates. A clean end of input is instead an
+        // EOF token: tokens ran out before ']', an unterminated array.
+        CosError peek_error = CosErrorNone;
+        const CosToken * const next_token =
+            cos_base_parser_peek_next_token(&(parser->base), 0, &peek_error);
+        if (!next_token) {
+            cos_error_propagate(out_error, peek_error);
+            goto failure;
         }
-        const bool has_token = cos_base_parser_has_next_token(&(parser->base));
-        if (guard_benign) {
-            cos_end_benign_malloc();
-        }
-        if (!has_token) {
-            // Ran off the end without reaching ']': an unterminated array.
+        if (next_token->type == CosToken_Type_EOF) {
             if (!cos_report_deviation_(&(parser->base),
                                        CosStrictGroup_UnterminatedContainer,
                                        "Unterminated array: missing ']'",
@@ -852,29 +844,19 @@ cos_handle_dict_(CosObjParser *parser,
     while (true) {
         // Speculative loop guard: a dictionary ends cleanly at the '>>' that
         // cos_handle_dict_entry_() reports as CosContainerStep_Closed. This peek
-        // only guards against running off the end. The peek's token read
-        // collapses EOF, malformed input and an allocation failure alike into
-        // "no token", which is the unterminated-dictionary case handled below.
+        // only guards against running off the end.
         //
-        // The read is marked benign only while CosStrictGroup_UnterminatedContainer
-        // is below CosStrictLevel_Error: there a truncated dictionary is accepted,
-        // so an injected allocation failure here degrades to that same best-effort
-        // partial dict and must not be mistaken for one that propagates. At Error
-        // the truncation aborts, so the region is left non-benign to make any
-        // failure -- injected or not -- propagate like the abort it now is.
-        const bool guard_benign =
-            cos_parser_options_get_strict_level(&(parser->base.options),
-                                                CosStrictGroup_UnterminatedContainer)
-            != CosStrictLevel_Error;
-        if (guard_benign) {
-            cos_begin_benign_malloc();
+        // A NULL peek is undetermined -- the tokenizer could not produce a
+        // token -- and always propagates. A clean end of input is instead an
+        // EOF token: tokens ran out before '>>', an unterminated dictionary.
+        CosError peek_error = CosErrorNone;
+        const CosToken * const next_token =
+            cos_base_parser_peek_next_token(&(parser->base), 0, &peek_error);
+        if (!next_token) {
+            cos_error_propagate(out_error, peek_error);
+            goto failure;
         }
-        const bool has_token = cos_base_parser_has_next_token(&(parser->base));
-        if (guard_benign) {
-            cos_end_benign_malloc();
-        }
-        if (!has_token) {
-            // Ran off the end without reaching '>>': an unterminated dictionary.
+        if (next_token->type == CosToken_Type_EOF) {
             if (!cos_report_deviation_(&(parser->base),
                                        CosStrictGroup_UnterminatedContainer,
                                        "Unterminated dictionary: missing '>>'",
@@ -907,17 +889,22 @@ cos_handle_dict_(CosObjParser *parser,
         goto failure;
     }
 
-    // Speculative lookahead: does a stream follow this dictionary? A failed
-    // token read degrades to "no stream", which is the correct outcome for a
-    // plain dictionary; a genuine stream would instead desync and be caught
-    // downstream (the unconsumed 'stream' keyword). Mark the read benign so an
-    // injected allocation failure here is absorbed rather than propagated.
-    cos_begin_benign_malloc();
-    CosError stream_lookahead_error = CosErrorNone;
-    const bool is_stream = cos_base_parser_matches_next_token(&(parser->base),
-                                                              CosToken_Type_Stream,
-                                                              &stream_lookahead_error);
-    cos_end_benign_malloc();
+    // Speculative lookahead: does a stream follow this dictionary? A token that
+    // is not 'stream' means a plain dictionary; a genuine stream would instead
+    // desync and be caught downstream (the unconsumed 'stream' keyword).
+    //
+    // A NULL peek is undetermined and propagates -- releasing dict_obj, which
+    // now owns new_dict -- rather than being guessed as "no stream". Any actual
+    // token that is not 'stream' (including EOF) means a plain dictionary.
+    CosError stream_peek_error = CosErrorNone;
+    const CosToken * const lookahead_token =
+        cos_base_parser_peek_next_token(&(parser->base), 0, &stream_peek_error);
+    if (!lookahead_token) {
+        cos_error_propagate(out_error, stream_peek_error);
+        cos_obj_node_release((CosObjNode *)dict_obj);
+        return NULL;
+    }
+    const bool is_stream = (lookahead_token->type == CosToken_Type_Stream);
     if (is_stream) {
         return cos_handle_stream_(parser,
                                   context,

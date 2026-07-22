@@ -161,21 +161,6 @@ cos_base_parser_get_current_token(CosBaseParser *parser,
     return cos_base_parser_peek_next_token(parser, 0, out_error);
 }
 
-bool
-cos_base_parser_has_next_token(CosBaseParser *parser)
-{
-    COS_API_PARAM_CHECK(parser != NULL);
-    if (COS_UNLIKELY(!parser)) {
-        return false;
-    }
-
-    // A failed read (undetermined) collapses to "no token" here; callers that
-    // must tell the two apart peek directly and inspect the error.
-    CosError peek_error = CosErrorNone;
-    const CosToken *token = cos_base_parser_peek_next_token(parser, 0, &peek_error);
-    return (token != NULL);
-}
-
 CosToken *
 cos_base_parser_peek_next_token(CosBaseParser *parser,
                                 unsigned int lookahead,

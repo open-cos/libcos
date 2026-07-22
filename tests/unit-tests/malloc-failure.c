@@ -198,10 +198,10 @@ cleanup:
  * points at the "xref" keyword (offset 9); see tests/unit-tests/file-structure.c
  * for the annotated layout this mirrors.
  *
- * The xref scanning here is what motivated benign-malloc regions: its speculative
- * peeks (matches_next_token for "trailer"/EOF) absorb a transient allocation
- * failure and still parse correctly. Those peeks are now marked benign, so an
- * injected failure there is not mistaken for one that must propagate.
+ * The xref and trailer scanning here reads speculatively, but an allocation
+ * failure in those peeks now propagates (a NULL peek is "undetermined", not
+ * "no token") rather than being absorbed, so an injected failure fails the
+ * parse gracefully instead of returning a truncated result as success.
  */
 static const char k_minimal_pdf[] =
     "%PDF-1.0\n"
@@ -220,12 +220,11 @@ static const char k_minimal_pdf[] =
  * succeeds AND yields a complete trailer (the /Size entry is present).
  *
  * The completeness check is what gives the test teeth. The dictionary and xref
- * scanners are lenient: a token read that fails -- through EOF, malformed input
- * or an injected allocation failure alike -- degrades to "return what was parsed
- * so far". A failure that leaves the trailer complete is absorbed inside a
- * benign region and correctly reported as success; a failure that truncates the
- * trailer drops /Size, so requiring it turns that truncation into a graceful
- * failure here rather than a false success.
+ * scanners are lenient about genuine truncation (EOF or malformed input degrades
+ * to "return what was parsed so far"), but an injected allocation failure now
+ * propagates rather than being absorbed, so it fails the parse. Requiring /Size
+ * also catches any residual path that returns a truncated trailer as a false
+ * success.
  */
 static bool
 oom_parse_document_(void * COS_Nullable ctx)

@@ -188,6 +188,14 @@ cos_dict_obj_node_get_value_with_string(const CosDictObjNode *dict_obj,
     return result;
 
 failure:
+    // Only reached when allocating the temporary key/name node failed. Report it
+    // as out-of-memory so callers can tell this apart from a genuinely absent
+    // key, which cos_dict_get reports by returning false with out_error left as
+    // CosErrorNone.
+    COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
+                                       "Failed to allocate key for dictionary lookup"),
+                        out_error);
+
     if (key_str) {
         cos_string_free(key_str);
     }
