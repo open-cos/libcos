@@ -122,13 +122,14 @@ cos_xref_table_parser_parse_section(CosXrefTableParser *parser,
         // that must propagate. The subsection parse below is load-bearing and
         // stays outside the region.
         cos_begin_benign_malloc();
+        CosError scan_error = CosErrorNone;
         const bool at_end =
             cos_base_parser_matches_next_token(&(parser->base),
                                                CosToken_Type_Trailer,
-                                               out_error) ||
+                                               &scan_error) ||
             cos_base_parser_matches_next_token(&(parser->base),
                                                CosToken_Type_EOF,
-                                               out_error) ||
+                                               &scan_error) ||
             !cos_base_parser_has_next_token(&(parser->base));
         cos_end_benign_malloc();
         if (at_end) {
@@ -280,7 +281,7 @@ cos_xref_table_parser_read_subsection_header_(CosXrefTableParser *parser,
     }
 
     // Read the first object number.
-    const CosToken * const first_token = cos_base_parser_get_current_token(&(parser->base));
+    const CosToken * const first_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!first_token || first_token->type != CosToken_Type_Integer)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Expected integer for subsection first object number"),
@@ -298,7 +299,7 @@ cos_xref_table_parser_read_subsection_header_(CosXrefTableParser *parser,
     cos_base_parser_advance(&(parser->base));
 
     // Read the entry count.
-    const CosToken * const count_token = cos_base_parser_get_current_token(&(parser->base));
+    const CosToken * const count_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!count_token || count_token->type != CosToken_Type_Integer)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Expected integer for subsection entry count"),
@@ -337,7 +338,7 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
     }
 
     // Read the first number (byte offset or next free object number).
-    const CosToken * const first_token = cos_base_parser_get_current_token(&(parser->base));
+    const CosToken * const first_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!first_token || first_token->type != CosToken_Type_Integer)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Expected integer for xref entry first field"),
@@ -355,7 +356,7 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
     cos_base_parser_advance(&(parser->base));
 
     // Read the generation number.
-    const CosToken * const gen_token = cos_base_parser_get_current_token(&(parser->base));
+    const CosToken * const gen_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!gen_token || gen_token->type != CosToken_Type_Integer)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Expected integer for xref entry generation number"),
@@ -373,7 +374,7 @@ cos_xref_table_parser_read_entry_(CosXrefTableParser *parser,
     cos_base_parser_advance(&(parser->base));
 
     // Read the keyword: 'n' (in-use) or 'f' (free).
-    const CosToken * const keyword_token = cos_base_parser_get_current_token(&(parser->base));
+    const CosToken * const keyword_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!keyword_token)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Missing xref entry keyword"),

@@ -10,6 +10,7 @@
 #include "syntax/tokenizer/CosTokenizer-Private.h"
 
 #include "libcos/CosDoc.h"
+#include "libcos/common/CosError.h"
 #include "libcos/common/memory/CosMemory.h"
 
 #include <libcos/syntax/tokenizer/CosTokenizer.h>
@@ -149,14 +150,15 @@ cos_base_parser_destroy(CosBaseParser *parser)
 }
 
 CosToken * COS_Nullable
-cos_base_parser_get_current_token(CosBaseParser *parser)
+cos_base_parser_get_current_token(CosBaseParser *parser,
+                                  CosError * COS_Nullable out_error)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     if (COS_UNLIKELY(!parser)) {
         return NULL;
     }
 
-    return cos_base_parser_peek_next_token(parser, 0);
+    return cos_base_parser_peek_next_token(parser, 0, out_error);
 }
 
 bool
@@ -167,13 +169,17 @@ cos_base_parser_has_next_token(CosBaseParser *parser)
         return false;
     }
 
-    const CosToken *token = cos_base_parser_peek_next_token(parser, 0);
+    // A failed read (undetermined) collapses to "no token" here; callers that
+    // must tell the two apart peek directly and inspect the error.
+    CosError peek_error = CosErrorNone;
+    const CosToken *token = cos_base_parser_peek_next_token(parser, 0, &peek_error);
     return (token != NULL);
 }
 
 CosToken *
 cos_base_parser_peek_next_token(CosBaseParser *parser,
-                                unsigned int lookahead)
+                                unsigned int lookahead,
+                                CosError * COS_Nullable out_error)
 {
     COS_API_PARAM_CHECK(parser != NULL);
     if (COS_UNLIKELY(!parser)) {
@@ -181,6 +187,9 @@ cos_base_parser_peek_next_token(CosBaseParser *parser,
     }
 
     if (lookahead >= parser->token_buffer_size) {
+        cos_error_propagate(out_error,
+                            cos_error_make(COS_ERROR_OUT_OF_RANGE,
+                                           "Lookahead index exceeds the token buffer size"));
         return NULL;
     }
 
@@ -189,9 +198,14 @@ cos_base_parser_peek_next_token(CosBaseParser *parser,
         if (i >= parser->token_count) {
             CosToken *token = &(parser->token_buffer[i]);
 
+            // A failed read is "undetermined", not "no token" (a clean end of
+            // input arrives as an EOF token): propagate the reason instead of
+            // silently returning NULL.
+            CosError token_error = CosErrorNone;
             if (!cos_tokenizer_get_next_token(parser->tokenizer,
                                               token,
-                                              NULL)) {
+                                              &token_error)) {
+                cos_error_propagate(out_error, token_error);
                 return NULL;
             }
 
@@ -246,12 +260,12 @@ cos_base_parser_matches_next_token(CosBaseParser *parser,
         return false;
     }
 
-    CosToken * const token = cos_base_parser_peek_next_token(parser, 0);
+    const CosToken * const token = cos_base_parser_peek_next_token(parser, 0, out_error);
     if (!token) {
+        // Undetermined: out_error carries the reason. A token of a different
+        // type instead returns false with out_error untouched.
         return false;
     }
-
-    (void)out_error;
 
     return (token->type == type);
 }

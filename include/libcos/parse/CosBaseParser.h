@@ -124,11 +124,16 @@ cos_base_parser_destroy(CosBaseParser *parser);
  * @brief Gets the parser's current token.
  *
  * @param parser The parser.
+ * @param out_error Set to the reason when @c NULL is returned; not modified when
+ * a token is returned. Callers should initialize it to @c CosErrorNone .
  *
- * @return The current token, or @c NULL if there is no current token.
+ * @return The current token, or @c NULL if it could not be determined (see
+ * @p out_error ).
  */
 COS_API CosToken * COS_Nullable
-cos_base_parser_get_current_token(CosBaseParser *parser);
+cos_base_parser_get_current_token(CosBaseParser *parser,
+                                  CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(2);
 
 /**
  * @brief Checks if there is a next token.
@@ -145,14 +150,23 @@ cos_base_parser_has_next_token(CosBaseParser *parser);
  *
  * Additional tokens are read to fill the buffer up to the specified lookahead index.
  *
+ * A @c NULL return means the peek could not be determined -- an allocation or
+ * I/O failure prevented the read -- which is distinct from a clean end of
+ * input; end of input arrives as a @c CosToken_Type_EOF token. The reason is
+ * reported through @p out_error .
+ *
  * @param parser The parser.
  * @param lookahead The lookahead index.
+ * @param out_error Set to the reason when @c NULL is returned; not modified when
+ * a token is returned. Callers should initialize it to @c CosErrorNone .
  *
- * @return The peeked next token, or @c NULL if there is no next token.
+ * @return The peeked next token, or @c NULL if it could not be determined.
  */
 COS_API CosToken * COS_Nullable
 cos_base_parser_peek_next_token(CosBaseParser *parser,
-                                unsigned int lookahead);
+                                unsigned int lookahead,
+                                CosError * COS_Nullable out_error)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 /**
  * @brief Advances the parser to the next token.
@@ -170,9 +184,12 @@ cos_base_parser_advance(CosBaseParser *parser);
  *
  * @param parser The parser to check.
  * @param type The token type to match.
- * @param out_error Optional output parameter for errors.
+ * @param out_error Set to the reason when the next token could not be
+ * determined; not modified otherwise.
  *
- * @return @c true if the next token matches the specified type, otherwise @c false.
+ * @return @c true if the next token matches @p type . @c false if it does not
+ * match, or if the peek could not be determined -- in the latter case
+ * @p out_error is set (its code is not @c COS_ERROR_NONE ).
  */
 COS_API bool
 cos_base_parser_matches_next_token(CosBaseParser *parser,

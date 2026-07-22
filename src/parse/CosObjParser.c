@@ -476,7 +476,7 @@ cos_next_object_(CosObjParser *parser,
         return NULL;
     }
 
-    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (!token) {
         goto failure;
     }
@@ -575,22 +575,26 @@ cos_handle_integer_or_indirect_(CosObjParser *parser,
     COS_IMPL_PARAM_CHECK(parser != NULL);
     COS_IMPL_PARAM_CHECK(context != NULL);
 
-    CosToken *current_token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken *current_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!current_token ||
                      current_token->type != CosToken_Type_Integer)) {
         goto failure;
     }
     // We have an integer token on the stack.
 
-    // Peek up to two more tokens to determine if this is an indirect object reference or definition, or just an integer.
-    CosToken * const second_token = cos_base_parser_peek_next_token(&(parser->base), 1);
+    // Peek up to two more tokens to determine if this is an indirect object
+    // reference or definition, or just an integer. A failed peek here is
+    // absorbed as "just an integer" (see the integer_obj fallback), so its
+    // reason is kept out of out_error with a throwaway error.
+    CosError lookahead_error = CosErrorNone;
+    CosToken * const second_token = cos_base_parser_peek_next_token(&(parser->base), 1, &lookahead_error);
     if (!second_token ||
         second_token->type != CosToken_Type_Integer) {
         goto integer_obj;
     }
     // We have two integer tokens on the stack.
 
-    CosToken * const third_token = cos_base_parser_peek_next_token(&(parser->base), 2);
+    CosToken * const third_token = cos_base_parser_peek_next_token(&(parser->base), 2, &lookahead_error);
     if (!third_token) {
         goto integer_obj;
     }
@@ -636,7 +640,7 @@ cos_handle_integer_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Integer)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -682,7 +686,7 @@ cos_handle_array_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_ArrayStart)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -909,9 +913,10 @@ cos_handle_dict_(CosObjParser *parser,
     // downstream (the unconsumed 'stream' keyword). Mark the read benign so an
     // injected allocation failure here is absorbed rather than propagated.
     cos_begin_benign_malloc();
+    CosError stream_lookahead_error = CosErrorNone;
     const bool is_stream = cos_base_parser_matches_next_token(&(parser->base),
                                                               CosToken_Type_Stream,
-                                                              out_error);
+                                                              &stream_lookahead_error);
     cos_end_benign_malloc();
     if (is_stream) {
         return cos_handle_stream_(parser,
@@ -1177,7 +1182,7 @@ cos_handle_stream_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken * const stream_token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken * const stream_token = cos_base_parser_get_current_token(&(parser->base), out_error);
     if (COS_UNLIKELY(!stream_token ||
                      stream_token->type != CosToken_Type_Stream)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
@@ -1372,7 +1377,7 @@ cos_handle_stream_(CosObjParser *parser,
                                            out_error)) {
         // "The keyword endstream shall be preceded by an end-of-line marker."
         const CosToken * const endstream_token =
-            cos_base_parser_get_current_token(&(parser->base));
+            cos_base_parser_get_current_token(&(parser->base), out_error);
         if (endstream_token &&
             !cos_token_whitespace_is_eol(&(endstream_token->leading_whitespace))) {
             if (!cos_report_deviation_(&(parser->base),
@@ -1723,7 +1728,7 @@ cos_handle_indirect_def_(CosObjParser *parser,
         // "The object number and endobj keyword shall each be preceded by an
         // EOL marker."
         const CosToken * const endobj_token =
-            cos_base_parser_get_current_token(&(parser->base));
+            cos_base_parser_get_current_token(&(parser->base), out_error);
         if (endobj_token &&
             !cos_token_whitespace_is_eol(&(endobj_token->leading_whitespace))) {
             if (!cos_report_deviation_(&(parser->base),
@@ -1789,7 +1794,7 @@ cos_parse_string_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken *token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken *token = cos_base_parser_get_current_token(&(parser->base), error);
     if (COS_UNLIKELY(!token ||
                      (token->type != CosToken_Type_Literal_String &&
                       token->type != CosToken_Type_Hex_String))) {
@@ -1843,7 +1848,7 @@ cos_parse_name_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken * const token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken * const token = cos_base_parser_get_current_token(&(parser->base), error);
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Name)) {
         goto failure;
@@ -1891,7 +1896,7 @@ cos_handle_real_(CosObjParser *parser,
         goto failure;
     }
 
-    CosToken *token = cos_base_parser_get_current_token(&(parser->base));
+    CosToken *token = cos_base_parser_get_current_token(&(parser->base), error);
     if (COS_UNLIKELY(!token ||
                      token->type != CosToken_Type_Real)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_INVALID_STATE,
