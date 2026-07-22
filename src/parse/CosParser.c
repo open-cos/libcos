@@ -488,20 +488,23 @@ cleanup:
 // MARK: - Phases 3–5: Xref table, trailer dict, root reference
 
 /**
- * Looks up an optional trailer key by name.
+ * Looks up an optional trailer key by name and reports whether it is present.
  *
  * The trailer keys consulted below (@c /XRefStm , @c /Encrypt , @c /Root ,
- * @c /Prev ) are all optional: a lookup that reports "absent" simply means the
- * feature does not apply and parsing proceeds.
+ * @c /Prev ) are all optional: an absent key simply means the feature does not
+ * apply and parsing proceeds.
  *
  * @c cos_dict_obj_node_get_value_with_string allocates a temporary name node to
  * perform the lookup; if that allocation fails it returns @c false with
- * @p out_error set (e.g. @c COS_ERROR_MEMORY ). A genuinely absent key also
- * returns @c false but leaves @p out_error as @c CosErrorNone , so each caller
- * distinguishes the two by whether an error was reported and propagates a real
- * failure rather than mistaking it for absence.
+ * @p out_error set (e.g. @c COS_ERROR_MEMORY ). A genuine absence, by contrast,
+ * is a successful lookup yielding a @c NULL value. This wrapper folds that into
+ * a presence predicate while still surfacing a real failure through
+ * @p out_error , so each caller checks @p out_error before treating a @c false
+ * result as "absent".
  *
- * @return @c true if @p key is present, with @p out_value set to its value.
+ * @return @c true if @p key is present, with @p out_value set to its value;
+ * @c false if the key is absent or the lookup failed (@p out_error tells the
+ * two apart).
  */
 static bool
 cos_parser_trailer_has_key_(const CosDictObjNode *trailer_dict,
@@ -509,10 +512,15 @@ cos_parser_trailer_has_key_(const CosDictObjNode *trailer_dict,
                             CosObjNode * COS_Nullable *out_value,
                             CosError * COS_Nullable out_error)
 {
-    return cos_dict_obj_node_get_value_with_string(trailer_dict,
-                                                   key,
-                                                   out_value,
-                                                   out_error);
+    *out_value = NULL;
+    if (!cos_dict_obj_node_get_value_with_string(trailer_dict,
+                                                 key,
+                                                 out_value,
+                                                 out_error)) {
+        return false;
+    }
+
+    return (*out_value != NULL);
 }
 
 static bool

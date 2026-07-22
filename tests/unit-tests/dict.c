@@ -192,7 +192,7 @@ set_equalButDistinctKey_releasesDisplacedKeyAndValue(void)
     TEST_EXPECT(cos_dict_get_count(dict) == 1);
 
     void *found = NULL;
-    TEST_EXPECT(cos_dict_get(dict, &key_a, &found, NULL));
+    TEST_EXPECT(cos_dict_get(dict, &key_a, &found));
     TEST_EXPECT(found == &value_2);
 
     /* Destroying releases the pair still held, and no more. */
@@ -259,7 +259,7 @@ get_existingKey_returnsValue(void)
     cos_dict_set(dict, (void *)1, (void *)100, NULL);
 
     void *out = NULL;
-    TEST_EXPECT(cos_dict_get(dict, (void *)1, &out, NULL));
+    TEST_EXPECT(cos_dict_get(dict, (void *)1, &out));
     TEST_EXPECT(out == (void *)100);
 
     cos_dict_destroy(dict);
@@ -273,7 +273,7 @@ get_nonExistingKey_returnsFalse(void)
     TEST_EXPECT(dict != NULL);
 
     void *out = NULL;
-    TEST_EXPECT(!cos_dict_get(dict, (void *)1, &out, NULL));
+    TEST_EXPECT(!cos_dict_get(dict, (void *)1, &out));
     TEST_EXPECT(out == NULL);
 
     cos_dict_destroy(dict);

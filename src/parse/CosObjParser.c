@@ -1202,11 +1202,17 @@ cos_handle_stream_(CosObjParser *parser,
     int declared_length = -1;
 
     CosObjNode *length_obj = NULL;
-    if (cos_dict_obj_node_get_value_with_string(dict_obj,
-                                           "Length",
-                                           &length_obj,
-                                           NULL) &&
-        cos_obj_node_is_integer(length_obj)) {
+    CosError length_error = CosErrorNone;
+    if (!cos_dict_obj_node_get_value_with_string(dict_obj,
+                                            "Length",
+                                            &length_obj,
+                                            &length_error)) {
+        // Could not perform the lookup (out-of-memory); a genuinely missing or
+        // non-integer /Length is instead recovered from the endstream keyword.
+        COS_ERROR_PROPAGATE(length_error, out_error);
+        goto failure;
+    }
+    if (length_obj && cos_obj_node_is_integer(length_obj)) {
         declared_length = cos_int_obj_node_get_value((CosIntObjNode *)length_obj);
     }
 

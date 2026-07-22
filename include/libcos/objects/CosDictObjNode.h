@@ -50,32 +50,39 @@ COS_API size_t
 cos_dict_obj_node_get_count(const CosDictObjNode *dict_obj);
 
 /**
- * @brief Gets the object value for a given key in a dictionary object.
+ * @brief Looks up the object value for a given key in a dictionary object.
+ *
+ * A pure lookup that cannot fail, so it has no error channel.
  *
  * @param dict_obj The dictionary object.
  * @param key The key.
- * @param out_value The output parameter for the object value.
- * @param out_error The error information.
+ * @param[out] out_value Receives the value if the key is present, or @c NULL if
+ * it is absent. Always written.
  *
- * @return @c true if the object value was found, otherwise @c false.
+ * @return @c true if the key was present, @c false if it was absent.
  */
 COS_API bool
 cos_dict_obj_node_get_value(const CosDictObjNode *dict_obj,
                        CosNameObjNode *key,
-                       CosObjNode * COS_Nullable * COS_Nonnull out_value,
-                       CosError * COS_Nullable out_error)
-    COS_ATTR_ACCESS_WRITE_ONLY(3)
-    COS_ATTR_ACCESS_WRITE_ONLY(4);
+                       CosObjNode * COS_Nullable * COS_Nonnull out_value)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 /**
- * @brief Gets the object value for a given key in a dictionary object.
+ * @brief Looks up the object value for a given string key in a dictionary object.
+ *
+ * Allocating the temporary key node can fail, so a genuine absence and a real
+ * failure are reported distinctly: an absent key is a @b success (returns
+ * @c true with @c *out_value set to @c NULL), while an allocation failure
+ * returns @c false with @p out_error set.
  *
  * @param dict_obj The dictionary object.
  * @param key The key, as a nul-terminated string.
- * @param out_value The output parameter for the object value.
- * @param out_error The error information.
+ * @param[out] out_value On success, receives the value, or @c NULL if the key
+ * is absent.
+ * @param out_error On failure, receives the error information.
  *
- * @return @c true if the object value was found, otherwise @c false.
+ * @return @c true on success (whether or not the key was present), @c false if
+ * the lookup could not be performed.
  */
 COS_API bool
 cos_dict_obj_node_get_value_with_string(const CosDictObjNode *dict_obj,

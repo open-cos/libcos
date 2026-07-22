@@ -61,12 +61,17 @@ cos_xref_stream_read_be_(const unsigned char *bytes,
 static int
 cos_xref_stream_dict_int_(CosDictObjNode *dict,
                           const char *key,
-                          int default_value)
+                          int default_value,
+                          CosError * COS_Nullable out_error)
 {
     CosObjNode *value = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, key, &value, NULL) ||
-        !value ||
+    if (!cos_dict_obj_node_get_value_with_string(dict, key, &value, out_error)) {
+        // Could not perform the lookup (out-of-memory); surfaced via out_error.
+        return default_value;
+    }
+    if (!value ||
         !cos_obj_node_is_integer(value)) {
+        // Genuinely absent or not an integer -- fall back, no error.
         return default_value;
     }
     return cos_int_obj_node_get_value((CosIntObjNode *)value);
@@ -78,8 +83,10 @@ cos_xref_stream_check_type_(CosDictObjNode *dict,
                             CosError * COS_Nullable out_error)
 {
     CosObjNode *type_node = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, "Type", &type_node, NULL) ||
-        !type_node ||
+    if (!cos_dict_obj_node_get_value_with_string(dict, "Type", &type_node, out_error)) {
+        return false;
+    }
+    if (!type_node ||
         !cos_obj_node_is_name(type_node)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Xref stream is missing a /Type /XRef entry"),
@@ -106,8 +113,10 @@ cos_xref_stream_read_w_(CosDictObjNode *dict,
                         CosError * COS_Nullable out_error)
 {
     CosObjNode *w_node = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, "W", &w_node, NULL) ||
-        !w_node ||
+    if (!cos_dict_obj_node_get_value_with_string(dict, "W", &w_node, out_error)) {
+        return false;
+    }
+    if (!w_node ||
         !cos_obj_node_is_array(w_node)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                            "Xref stream is missing a /W array"),
@@ -328,8 +337,11 @@ cos_xref_stream_parse_section_(CosStreamObjNode *xref_stream,
     // Subsections come from /Index (pairs of first-object-number and count), defaulting to a
     // single subsection covering [0, /Size).
     CosObjNode *index_node = NULL;
+    if (!cos_dict_obj_node_get_value_with_string(dict, "Index", &index_node, out_error)) {
+        goto failure;
+    }
+    // A present-but-malformed /Index (not an array) is treated as absent.
     const bool have_index =
-        cos_dict_obj_node_get_value_with_string(dict, "Index", &index_node, NULL) &&
         index_node != NULL &&
         cos_obj_node_is_array(index_node);
 
@@ -370,7 +382,12 @@ cos_xref_stream_parse_section_(CosStreamObjNode *xref_stream,
         }
     }
     else {
-        const int size = cos_xref_stream_dict_int_(dict, "Size", -1);
+        CosError size_error = CosErrorNone;
+        const int size = cos_xref_stream_dict_int_(dict, "Size", -1, &size_error);
+        if (size_error.code != COS_ERROR_NONE) {
+            COS_ERROR_PROPAGATE(size_error, out_error);
+            goto failure;
+        }
         if (size < 0) {
             COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_XREF,
                                                "Xref stream is missing a valid /Size"),

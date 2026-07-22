@@ -129,8 +129,7 @@ cos_dict_get_count(const CosDict *dict)
 bool
 cos_dict_get(CosDict *dict,
              void *key,
-             void * COS_Nullable * COS_Nonnull out_value,
-             CosError * COS_Nullable out_error)
+             void * COS_Nullable * COS_Nonnull out_value)
 {
     COS_API_PARAM_CHECK(dict != NULL);
     COS_API_PARAM_CHECK(key != NULL);
@@ -139,12 +138,11 @@ cos_dict_get(CosDict *dict,
         return false;
     }
 
-    (void)out_error;
-
     const size_t hash = cos_dict_hash_(dict, key);
 
     CosDictEntry * const entry = cos_dict_find_entry_(dict, key, hash);
     if (!entry || entry->key == NULL) {
+        *out_value = NULL;
         return false;
     }
 

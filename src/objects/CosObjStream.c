@@ -60,8 +60,10 @@ cos_obj_stream_dict_int_(CosDictObjNode *dict,
                          CosError * COS_Nullable out_error)
 {
     CosObjNode *value = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, key, &value, NULL) ||
-        !value ||
+    if (!cos_dict_obj_node_get_value_with_string(dict, key, &value, out_error)) {
+        return false;
+    }
+    if (!value ||
         !cos_obj_node_is_integer(value)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_PARSE,
                                            "Object stream dictionary is missing a required integer entry"),
@@ -87,8 +89,10 @@ cos_obj_stream_check_dict_(CosDictObjNode *dict,
                            CosError * COS_Nullable out_error)
 {
     CosObjNode *type_node = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, "Type", &type_node, NULL) ||
-        !type_node ||
+    if (!cos_dict_obj_node_get_value_with_string(dict, "Type", &type_node, out_error)) {
+        return false;
+    }
+    if (!type_node ||
         !cos_obj_node_is_name(type_node)) {
         COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_PARSE,
                                            "Object stream is missing a /Type /ObjStm entry"),
@@ -112,12 +116,17 @@ cos_obj_stream_check_dict_(CosDictObjNode *dict,
 // It is a hint only -- the chain is not followed -- so a missing or malformed entry is not an
 // error and yields CosObjID_Invalid.
 static CosObjID
-cos_obj_stream_read_extends_(CosDictObjNode *dict)
+cos_obj_stream_read_extends_(CosDictObjNode *dict,
+                             CosError * COS_Nullable out_error)
 {
     CosObjNode *extends_node = NULL;
-    if (!cos_dict_obj_node_get_value_with_string(dict, "Extends", &extends_node, NULL) ||
-        !extends_node ||
+    if (!cos_dict_obj_node_get_value_with_string(dict, "Extends", &extends_node, out_error)) {
+        // Could not perform the lookup (out-of-memory); surfaced via out_error.
+        return CosObjID_Invalid;
+    }
+    if (!extends_node ||
         cos_obj_node_get_type(extends_node) != CosObjNodeType_Reference) {
+        // Absent or malformed -- a hint only, so not an error.
         return CosObjID_Invalid;
     }
 
@@ -212,7 +221,12 @@ cos_obj_stream_create(const CosStreamObjNode *stream_obj,
         return NULL;
     }
 
-    const CosObjID extends_id = cos_obj_stream_read_extends_(dict);
+    CosError extends_error = CosErrorNone;
+    const CosObjID extends_id = cos_obj_stream_read_extends_(dict, &extends_error);
+    if (extends_error.code != COS_ERROR_NONE) {
+        COS_ERROR_PROPAGATE(extends_error, out_error);
+        return NULL;
+    }
 
     CosObjStream *obj_stream = NULL;
     CosData *decoded = NULL;

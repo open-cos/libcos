@@ -50,11 +50,23 @@ cos_dict_create(const CosDictKeyCallbacks *key_callbacks,
 COS_API size_t
 cos_dict_get_count(const CosDict *dict);
 
+/**
+ * Looks up the value for a key in a dictionary.
+ *
+ * A pure lookup that cannot fail, so it has no error channel.
+ *
+ * @param dict The dictionary.
+ * @param key The key to look up.
+ * @param[out] out_value Receives the value if the key is present, or @c NULL if
+ * it is absent. Always written.
+ *
+ * @return @c true if the key was present, @c false if it was absent.
+ */
 COS_API bool
 cos_dict_get(CosDict *dict,
              void *key,
-             void * COS_Nullable * COS_Nonnull out_value,
-             CosError * COS_Nullable out_error);
+             void * COS_Nullable * COS_Nonnull out_value)
+    COS_ATTR_ACCESS_WRITE_ONLY(3);
 
 COS_API bool
 cos_dict_set(CosDict *dict,

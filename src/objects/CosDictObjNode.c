@@ -137,8 +137,7 @@ cos_dict_obj_node_get_count(const CosDictObjNode *dict_obj)
 bool
 cos_dict_obj_node_get_value(const CosDictObjNode *dict_obj,
                        CosNameObjNode *key,
-                       CosObjNode * COS_Nullable *out_value,
-                       CosError * COS_Nullable out_error)
+                       CosObjNode * COS_Nullable *out_value)
 {
     COS_API_PARAM_CHECK(dict_obj != NULL);
     COS_API_PARAM_CHECK(key != NULL);
@@ -149,8 +148,7 @@ cos_dict_obj_node_get_value(const CosDictObjNode *dict_obj,
 
     return cos_dict_get(dict_obj->value,
                         key,
-                        (void **)out_value,
-                        out_error);
+                        (void **)out_value);
 }
 
 bool
@@ -179,19 +177,18 @@ cos_dict_obj_node_get_value_with_string(const CosDictObjNode *dict_obj,
         goto failure;
     }
 
-    const bool result = cos_dict_get(dict_obj->value,
-                                     name_obj,
-                                     (void **)out_value,
-                                     out_error);
+    // A genuine absence is success: cos_dict_get sets *out_value to NULL.
+    (void)cos_dict_get(dict_obj->value,
+                       name_obj,
+                       (void **)out_value);
     cos_name_obj_node_free(name_obj);
 
-    return result;
+    return true;
 
 failure:
     // Only reached when allocating the temporary key/name node failed. Report it
-    // as out-of-memory so callers can tell this apart from a genuinely absent
-    // key, which cos_dict_get reports by returning false with out_error left as
-    // CosErrorNone.
+    // as out-of-memory and return false; a genuinely absent key is instead a
+    // success with *out_value left as NULL.
     COS_ERROR_PROPAGATE(cos_error_make(COS_ERROR_MEMORY,
                                        "Failed to allocate key for dictionary lookup"),
                         out_error);

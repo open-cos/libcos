@@ -241,9 +241,14 @@ cos_stream_obj_node_get_decoded_length_hint(const CosStreamObjNode *stream_obj,
                                             "DL",
                                             &length_obj,
                                             out_error)) {
+        // The lookup could not be performed (out-of-memory).
         return false;
     }
-    else if (!cos_obj_node_is_integer(length_obj)) {
+    if (!length_obj) {
+        // No /DL entry: there is simply no hint available, which is not an error.
+        return false;
+    }
+    if (!cos_obj_node_is_integer(length_obj)) {
         cos_error_propagate(out_error,
                             cos_error_make(COS_ERROR_PARSE,
                                            "The /DL entry in the stream dictionary is not an integer"));
@@ -260,7 +265,8 @@ cos_stream_obj_node_get_decoded_length_hint(const CosStreamObjNode *stream_obj,
 static int
 cos_stream_parms_int_(CosObjNode * COS_Nullable parms,
                       const char *key,
-                      int default_value)
+                      int default_value,
+                      CosError * COS_Nullable out_error)
 {
     if (!parms || cos_obj_node_get_type(parms) != CosObjNodeType_Dict) {
         return default_value;
@@ -270,10 +276,12 @@ cos_stream_parms_int_(CosObjNode * COS_Nullable parms,
     if (!cos_dict_obj_node_get_value_with_string((CosDictObjNode *)parms,
                                             key,
                                             &value,
-                                            NULL)) {
+                                            out_error)) {
+        // Could not perform the lookup (out-of-memory); surfaced via out_error.
         return default_value;
     }
     if (!value || !cos_obj_node_is_integer(value)) {
+        // Genuinely absent or not an integer -- fall back, no error.
         return default_value;
     }
 
@@ -334,11 +342,22 @@ cos_stream_obj_node_apply_filter_(CosObjNode *name_node,
     cos_filter_attach_source((CosFilter *)filter, source);
 
     // Apply a predictor post-process if /DecodeParms requests one.
-    const int predictor = cos_stream_parms_int_(parms_node, "Predictor", 1);
+    CosError parms_error = CosErrorNone;
+    const int predictor = cos_stream_parms_int_(parms_node, "Predictor", 1, &parms_error);
+    if (parms_error.code != COS_ERROR_NONE) {
+        COS_ERROR_PROPAGATE(parms_error, out_error);
+        cos_stream_close(filter);
+        return NULL;
+    }
     if (predictor > 1) {
-        const int colors = cos_stream_parms_int_(parms_node, "Colors", 1);
-        const int bits_per_component = cos_stream_parms_int_(parms_node, "BitsPerComponent", 8);
-        const int columns = cos_stream_parms_int_(parms_node, "Columns", 1);
+        const int colors = cos_stream_parms_int_(parms_node, "Colors", 1, &parms_error);
+        const int bits_per_component = cos_stream_parms_int_(parms_node, "BitsPerComponent", 8, &parms_error);
+        const int columns = cos_stream_parms_int_(parms_node, "Columns", 1, &parms_error);
+        if (parms_error.code != COS_ERROR_NONE) {
+            COS_ERROR_PROPAGATE(parms_error, out_error);
+            cos_stream_close(filter);
+            return NULL;
+        }
 
         CosPredictorFilter * const predictor_filter =
             cos_predictor_filter_create_(predictor,
@@ -383,8 +402,11 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
     if (!cos_dict_obj_node_get_value_with_string(stream_obj->dict_obj,
                                             "Filter",
                                             &filter_node,
-                                            NULL) ||
-        !filter_node) {
+                                            out_error)) {
+        // The lookup could not be performed (out-of-memory).
+        goto failure;
+    }
+    if (!filter_node) {
         return source;
     }
 
@@ -394,11 +416,17 @@ cos_stream_obj_node_create_decode_stream(const CosStreamObjNode *stream_obj,
     if (!cos_dict_obj_node_get_value_with_string(stream_obj->dict_obj,
                                             "DecodeParms",
                                             &parms_node,
-                                            NULL)) {
-        (void)cos_dict_obj_node_get_value_with_string(stream_obj->dict_obj,
+                                            out_error)) {
+        goto failure;
+    }
+    if (!parms_node) {
+        // /DecodeParms absent: fall back to its abbreviation /DP.
+        if (!cos_dict_obj_node_get_value_with_string(stream_obj->dict_obj,
                                                  "DP",
                                                  &parms_node,
-                                                 NULL);
+                                                 out_error)) {
+            goto failure;
+        }
     }
 
     const CosObjNodeType filter_type = cos_obj_node_get_type(filter_node);

@@ -112,8 +112,7 @@ cos_obj_cache_get(CosObjCache *cache,
     void *value = NULL;
     if (cos_dict_get(cache->dict,
                      (void *)(uintptr_t)obj_number,
-                     &value,
-                     NULL)) {
+                     &value)) {
         return (CosObjNode *)value;
     }
 
